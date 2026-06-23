@@ -89,7 +89,7 @@ class Ayah {
   final String translation;
   final int juz;
   final int hizb;
-  final String tafseer;
+  String tafseer;
 
   Ayah({
     required this.number,
@@ -101,6 +101,28 @@ class Ayah {
     this.tafseer = '',
   });
 
+  static String _cleanBasmalah(String text, int numberInSurah, int globalNumber) {
+    if (numberInSurah != 1) return text;
+    // Do not clean Basmalah for Surah 1 (Al-Fatiha), which corresponds to global ayah numbers 1 to 7
+    if (globalNumber >= 1 && globalNumber <= 7) return text;
+    final basmalahs = [
+      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
+      "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ",
+      "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
+      "بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    ];
+    for (final basmalah in basmalahs) {
+      if (text.startsWith(basmalah)) {
+        if (text.trim() == basmalah) {
+          return text;
+        }
+        return text.substring(basmalah.length).trim();
+      }
+    }
+    return text;
+  }
+
   factory Ayah.fromEditions(
     Map<String, dynamic> arabicJson, 
     Map<String, dynamic> englishJson, 
@@ -108,10 +130,13 @@ class Ayah {
   ) {
     final hizbQuarter = arabicJson['hizbQuarter'] as int? ?? 1;
     final calculatedHizb = ((hizbQuarter - 1) ~/ 4) + 1;
+    final numInSurah = arabicJson['numberInSurah'] as int;
+    final rawText = arabicJson['text'] as String;
+    final globalNum = arabicJson['number'] as int;
     return Ayah(
-      number: arabicJson['number'] as int,
-      numberInSurah: arabicJson['numberInSurah'] as int,
-      text: arabicJson['text'] as String,
+      number: globalNum,
+      numberInSurah: numInSurah,
+      text: _cleanBasmalah(rawText, numInSurah, globalNum),
       translation: englishJson['text'] as String,
       juz: arabicJson['juz'] as int,
       hizb: calculatedHizb,
@@ -125,10 +150,13 @@ class Ayah {
     final transText = (transList != null && transList.isNotEmpty)
         ? transList[0]['text'] as String? ?? ''
         : '';
+    final numInSurah = json['verse_number'] as int? ?? (json['verse_key'] != null ? int.parse(json['verse_key'].toString().split(':')[1]) : 1);
+    final rawText = json['text_uthmani'] as String? ?? json['text'] as String? ?? '';
+    final globalNum = json['id'] as int? ?? 0;
     return Ayah(
-      number: json['id'] as int? ?? 0,
-      numberInSurah: json['verse_number'] as int? ?? (json['verse_key'] != null ? int.parse(json['verse_key'].toString().split(':')[1]) : 1),
-      text: json['text_uthmani'] as String? ?? json['text'] as String? ?? '',
+      number: globalNum,
+      numberInSurah: numInSurah,
+      text: _cleanBasmalah(rawText, numInSurah, globalNum),
       translation: transText.isNotEmpty ? transText : (json['text_simple'] as String? ?? json['translation'] as String? ?? ''),
       juz: json['juz_number'] as int? ?? 0,
       hizb: json['hizb_number'] as int? ?? 0,
@@ -147,10 +175,13 @@ class Ayah {
   };
 
   factory Ayah.fromJson(Map<String, dynamic> json) {
+    final numInSurah = json['numberInSurah'] as int;
+    final rawText = json['text'] as String;
+    final globalNum = json['number'] as int;
     return Ayah(
-      number: json['number'] as int,
-      numberInSurah: json['numberInSurah'] as int,
-      text: json['text'] as String,
+      number: globalNum,
+      numberInSurah: numInSurah,
+      text: _cleanBasmalah(rawText, numInSurah, globalNum),
       translation: json['translation'] as String,
       juz: json['juz'] as int,
       hizb: json['hizb'] as int? ?? 0,

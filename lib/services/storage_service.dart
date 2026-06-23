@@ -78,6 +78,32 @@ class StorageService {
     return jsonDecode(raw) as Map<String, dynamic>;
   }
 
+  int determineSmartCalculationMethod(String city, String country) {
+    final loc = '$city $country'.toLowerCase();
+    if (loc.contains('egypt') || loc.contains('مصر') || loc.contains('alexandria') || loc.contains('الإسكندرية') || loc.contains('cairo') || loc.contains('القاهرة')) {
+      return 5; // Egypt (Egyptian General Authority of Survey)
+    } else if (loc.contains('saudi') || loc.contains('سعودية') || loc.contains('makkah') || loc.contains('mecca') || loc.contains('مكة') || loc.contains('riyadh') || loc.contains('الرياض') || loc.contains('madinah') || loc.contains('المدينة')) {
+      return 4; // Umm Al-Qura
+    } else if (loc.contains('turkey') || loc.contains('türkiye') || loc.contains('turk') || loc.contains('تركيا') || loc.contains('istanbul') || loc.contains('إسطنبول') || loc.contains('ankara') || loc.contains('أنقرة')) {
+      return 13; // Turkey (Diyanet)
+    } else if (loc.contains('united states') || loc.contains('usa') || loc.contains('canada') || loc.contains('america') || loc.contains('أمريكا') || loc.contains('كندا')) {
+      return 2; // ISNA
+    } else if (loc.contains('singapore') || loc.contains('سنغافورة')) {
+      return 11; // Singapore
+    } else if (loc.contains('russia') || loc.contains('روسيا')) {
+      return 14; // Russia
+    } else if (loc.contains('uae') || loc.contains('emirates') || loc.contains('إمارات') || loc.contains('dubai') || loc.contains('دبي') || loc.contains('abu dhabi') || loc.contains('أبوظبي')) {
+      return 16; // UAE
+    } else if (loc.contains('qatar') || loc.contains('قطر')) {
+      return 10; // Qatar
+    } else if (loc.contains('france') || loc.contains('فرنسا') || loc.contains('paris') || loc.contains('باريس')) {
+      return 12; // France
+    } else if (loc.contains('pakistan') || loc.contains('باكستان') || loc.contains('india') || loc.contains('الهند') || loc.contains('bangladesh') || loc.contains('بنجلاديش') || loc.contains('karachi') || loc.contains('كاراتشي')) {
+      return 1; // Karachi
+    }
+    return 3; // Muslim World League (MWL) as general fallback
+  }
+
   Future<bool> setLocation(String city, String country, double lat, double lng, String source) async {
     final data = {
       'city': city,
@@ -86,6 +112,11 @@ class StorageService {
       'longitude': lng,
       'source': source
     };
+    
+    // Automatically determine calculation method based on location
+    final smartMethod = determineSmartCalculationMethod(city, country);
+    await setInt('calc_method', smartMethod);
+
     return await setString('user_location', jsonEncode(data));
   }
 

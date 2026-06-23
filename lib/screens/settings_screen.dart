@@ -36,13 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   bool _hideContinuousBorders = false;
   bool _autoBookmark = true;
 
-  // Add notification triggers
-  bool _alertFajr = true;
-  bool _alertDhuhr = true;
-  bool _alertAsr = true;
-  bool _alertMaghrib = true;
-  bool _alertIsha = true;
-
   // Permissions and wake lock
   bool _exactAlarmPermitted = true;
   bool _batteryIgnored = true;
@@ -51,13 +44,18 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   // Focus lock
   int _focusLockDuration = 0;
   bool _focusAutoStart = false;
-  
-  // Pre-azan reminder
-  int _preAzanReminder = 0;
+  String _focusLockType = 'app_only'; // app_only vs whole_phone
 
   bool _morningAzkarReminder = true;
   bool _eveningAzkarReminder = true;
   bool _todaysVerseReminder = true;
+
+  // New settings options
+  bool _use24hFormat = false;
+  bool _swipeSurahNavigation = true;
+  String _preAdhanAlertMode = 'vibrate'; // vibrate vs voice
+  String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
+  String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
 
   @override
   void initState() {
@@ -73,20 +71,20 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     _hideContinuousBorders = widget.storage.getBool('setting_hide_continuous_borders', defaultValue: false);
     _autoBookmark = widget.storage.getBool('setting_auto_bookmark', defaultValue: true);
 
-    _alertFajr = widget.storage.getBool('alert_fajr', defaultValue: true);
-    _alertDhuhr = widget.storage.getBool('alert_dhuhr', defaultValue: true);
-    _alertAsr = widget.storage.getBool('alert_asr', defaultValue: true);
-    _alertMaghrib = widget.storage.getBool('alert_maghrib', defaultValue: true);
-    _alertIsha = widget.storage.getBool('alert_isha', defaultValue: true);
-
     _keepScreenAwake = widget.storage.getBool('keep_screen_awake', defaultValue: false);
     _focusLockDuration = widget.storage.getInt('focus_lock_duration', defaultValue: 0);
     _focusAutoStart = widget.storage.getBool('focus_auto_start', defaultValue: false);
-    _preAzanReminder = widget.storage.getInt('pre_azan_reminder_minutes', defaultValue: 0);
+    _focusLockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
 
     _morningAzkarReminder = widget.storage.getBool('morning_azkar_reminder', defaultValue: true);
     _eveningAzkarReminder = widget.storage.getBool('evening_azkar_reminder', defaultValue: true);
     _todaysVerseReminder = widget.storage.getBool('todays_verse_reminder', defaultValue: true);
+
+    _use24hFormat = widget.storage.getBool('use_24h_format', defaultValue: false);
+    _swipeSurahNavigation = widget.storage.getBool('swipe_surah_navigation', defaultValue: true);
+    _preAdhanAlertMode = widget.storage.getString('pre_adhan_alert_mode', defaultValue: 'vibrate');
+    _adhanAlertMode = widget.storage.getString('adhan_alert_mode', defaultValue: 'real_reciter');
+    _adhanReciter = widget.storage.getString('adhan_reciter', defaultValue: 'mishary');
 
     _checkPermissions();
   }
@@ -107,11 +105,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Future<void> _checkPermissions() async {
     try {
       final alarm = await _platform.invokeMethod<bool>('checkExactAlarmPermission') ?? true;
-      // checkBatteryOptimization returns true if optimization is enabled, so we invert it to reflect ignored status
       final batteryOptimized = await _platform.invokeMethod<bool>('checkBatteryOptimization') ?? false;
       setState(() {
         _exactAlarmPermitted = alarm;
-        _batteryIgnored = !batteryOptimized; // true means ignored, false means not ignored
+        _batteryIgnored = batteryOptimized; // true means ignored (disabled), false means optimized (not ignored)
       });
     } catch (_) {}
   }
@@ -160,24 +157,55 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     await widget.storage.setBool('focus_auto_start', val);
   }
 
-  Future<void> _changePreAzanReminder(int? minutes) async {
-    if (minutes != null) {
+  Future<void> _toggleUse24hFormat(bool val) async {
+    setState(() {
+      _use24hFormat = val;
+    });
+    await widget.storage.setBool('use_24h_format', val);
+  }
+
+  Future<void> _toggleSwipeSurahNavigation(bool val) async {
+    setState(() {
+      _swipeSurahNavigation = val;
+    });
+    await widget.storage.setBool('swipe_surah_navigation', val);
+  }
+
+  Future<void> _changePreAdhanAlertMode(String? val) async {
+    if (val != null) {
       setState(() {
-        _preAzanReminder = minutes;
+        _preAdhanAlertMode = val;
       });
-      await widget.storage.setInt('pre_azan_reminder_minutes', minutes);
-      try {
-        final loc = widget.storage.getLocation();
-        final method = widget.storage.getInt('calc_method', defaultValue: 2);
-        final school = widget.storage.getInt('asr_method', defaultValue: 0);
-        final prayerData = await ApiService.fetchPrayerTimes(
-          latitude: loc['latitude'],
-          longitude: loc['longitude'],
-          method: method,
-          school: school,
-        );
-        await NotificationService().schedulePrayerAlarms(prayerData, widget.storage);
-      } catch (_) {}
+      await widget.storage.setString('pre_adhan_alert_mode', val);
+    }
+  }
+
+  Future<void> _changeAdhanAlertMode(String? val) async {
+    if (val != null) {
+      setState(() {
+        _adhanAlertMode = val;
+      });
+      await widget.storage.setString('adhan_alert_mode', val);
+      await _rescheduleAlarms();
+    }
+  }
+
+  Future<void> _changeAdhanReciter(String? val) async {
+    if (val != null) {
+      setState(() {
+        _adhanReciter = val;
+      });
+      await widget.storage.setString('adhan_reciter', val);
+      await _rescheduleAlarms();
+    }
+  }
+
+  Future<void> _changeFocusLockType(String? val) async {
+    if (val != null) {
+      setState(() {
+        _focusLockType = val;
+      });
+      await widget.storage.setString('focus_lock_type', val);
     }
   }
 
@@ -220,8 +248,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       widget.onThemeChanged();
     }
   }
-
-
 
   Future<void> _rescheduleAlarms() async {
     try {
@@ -292,12 +318,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     await widget.storage.setBool('setting_auto_bookmark', val);
   }
 
-  Future<void> _toggleAlert(String key, bool val, Function(bool) updateState) async {
-    updateState(val);
-    await widget.storage.setBool(key, val);
-    await _rescheduleAlarms();
-  }
-
   Future<void> _resetApp() async {
     unawaited(showDialog(
       context: context,
@@ -345,6 +365,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               await widget.storage.setBool('keep_screen_awake', false);
               await widget.storage.setInt('focus_lock_duration', 0);
               await widget.storage.setBool('focus_auto_start', false);
+              await widget.storage.setString('focus_lock_type', 'app_only');
+
+              await widget.storage.setBool('use_24h_format', false);
+              await widget.storage.setBool('swipe_surah_navigation', true);
+              await widget.storage.setString('pre_adhan_alert_mode', 'vibrate');
+              await widget.storage.setString('adhan_alert_mode', 'real_reciter');
+              await widget.storage.setString('adhan_reciter', 'mishary');
               
               TranslationService.setLanguage('ar');
               
@@ -357,14 +384,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 _continuousPlay = true;
                 _hideContinuousBorders = false;
                 _autoBookmark = true;
-                _alertFajr = true;
-                _alertDhuhr = true;
-                _alertAsr = true;
-                _alertMaghrib = true;
-                _alertIsha = true;
                 _keepScreenAwake = false;
                 _focusLockDuration = 0;
                 _focusAutoStart = false;
+                _focusLockType = 'app_only';
+                _use24hFormat = false;
+                _swipeSurahNavigation = true;
+                _preAdhanAlertMode = 'vibrate';
+                _adhanAlertMode = 'real_reciter';
+                _adhanReciter = 'mishary';
               });
               navigator.pop();
               widget.onThemeChanged();
@@ -435,6 +463,26 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     onChanged: _changeFont,
                   ),
                 ),
+                const Divider(height: 1, color: Colors.white10),
+                SwitchListTile(
+                  title: Text(TranslationService.isArabic ? "تنسيق الوقت ٢٤ ساعة" : "24-Hour Time Format"),
+                  subtitle: Text(TranslationService.isArabic 
+                      ? "عرض أوقات الصلاة بتنسيق ٢٤ ساعة بدلاً من ١٢ ساعة" 
+                      : "Display prayer times in 24h format instead of 12h"),
+                  activeThumbColor: const Color(0xFFE5C158),
+                  value: _use24hFormat,
+                  onChanged: _toggleUse24hFormat,
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                SwitchListTile(
+                  title: Text(TranslationService.isArabic ? "سحب الشاشة للانتقال بين السور" : "Swipe to Navigate Surahs"),
+                  subtitle: Text(TranslationService.isArabic 
+                      ? "اسحب لليمين أو اليسار للانتقال إلى السورة التالية أو السابقة" 
+                      : "Swipe left or right to read the previous or next Surah"),
+                  activeThumbColor: const Color(0xFFE5C158),
+                  value: _swipeSurahNavigation,
+                  onChanged: _toggleSwipeSurahNavigation,
+                ),
               ],
             ),
           ),
@@ -485,6 +533,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       dropdownColor: theme.cardColor,
                       items: [
                         DropdownMenuItem(
+                          value: 1, 
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "جامعة العلوم الإسلامية بكراتشي" : "University of Islamic Sciences, Karachi"),
+                          ),
+                        ),
+                        DropdownMenuItem(
                           value: 2, 
                           child: Align(
                             alignment: AlignmentDirectional.centerStart,
@@ -521,12 +576,47 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                           ),
                         ),
                         DropdownMenuItem(
+                          value: 10, 
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "وزارة الأوقاف والشؤون الإسلامية (قطر)" : "Ministry of Awqaf (Qatar)"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 11, 
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "المجلس الإسلامي السنغافوري (MUIS)" : "Majlis Ugama Islam Singapura (MUIS)"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 12, 
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "اتحاد المنظمات الإسلامية بفرنسا (UOIF)" : "Union of Islamic Organisations of France (UOIF)"),
+                          ),
+                        ),
+                        DropdownMenuItem(
                           value: 13, 
                           child: Align(
                             alignment: AlignmentDirectional.centerStart,
                             child: Text(TranslationService.isArabic 
                                 ? "تركيا (الشؤون الدينية)" 
                                 : "Turkey (Diyanet)"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 14, 
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "الإدارة الدينية لمسلمي روسيا الاتحادية" : "Spiritual Administration of Muslims of Russia"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 16, 
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "الهيئة العامة للشؤون الإسلامية والأوقاف (الإمارات)" : "General Authority of Islamic Affairs & Endowments (UAE)"),
                           ),
                         ),
                       ],
@@ -574,62 +664,121 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ),
           const SizedBox(height: 20),
 
-          // Section Notifications
-          _buildSectionHeader(TranslationService.t('athan_notif_label')),
+          // Section Notifications & Alerts
+          _buildSectionHeader(TranslationService.isArabic ? "الإشعارات والتنبيهات" : "Notifications & Alerts"),
           Card(
             color: theme.cardColor,
             child: Column(
               children: [
-                SwitchListTile(
-                  title: Text(TranslationService.t('fajr_notif')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _alertFajr,
-                  onChanged: (val) => _toggleAlert('alert_fajr', val, (v) => setState(() => _alertFajr = v)),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('dhuhr_notif')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _alertDhuhr,
-                  onChanged: (val) => _toggleAlert('alert_dhuhr', val, (v) => setState(() => _alertDhuhr = v)),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('asr_notif')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _alertAsr,
-                  onChanged: (val) => _toggleAlert('alert_asr', val, (v) => setState(() => _alertAsr = v)),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('maghrib_notif')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _alertMaghrib,
-                  onChanged: (val) => _toggleAlert('alert_maghrib', val, (v) => setState(() => _alertMaghrib = v)),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('isha_notif')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _alertIsha,
-                  onChanged: (val) => _toggleAlert('alert_isha', val, (v) => setState(() => _alertIsha = v)),
-                ),
-                const Divider(height: 1, color: Colors.white10),
                 ListTile(
-                  title: Text(TranslationService.t('pre_azan_reminder')),
-                  trailing: DropdownButton<int>(
-                    value: _preAzanReminder,
+                  title: Text(TranslationService.isArabic ? "نوع تنبيه ما قبل الأذان" : "Pre-Athan Alert Style"),
+                  subtitle: Text(TranslationService.isArabic 
+                      ? "تنبيه قبل الأذان بـ ١٠ دقائق" 
+                      : "Alert 10 minutes before the Athan"),
+                  trailing: DropdownButton<String>(
+                    value: _preAdhanAlertMode,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
-                      DropdownMenuItem(value: 0, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "إيقاف" : "None"))),
-                      DropdownMenuItem(value: 5, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "قبل ٥ دقائق" : "5 minutes before"))),
-                      DropdownMenuItem(value: 10, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "قبل ١٠ دقائق" : "10 minutes before"))),
-                      DropdownMenuItem(value: 15, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "قبل ١٥ دقيقة" : "15 minutes before"))),
+                      DropdownMenuItem(
+                        value: 'vibrate',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "اهتزاز فقط" : "Vibrate Only"),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'voice',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "تنبيه صوتي" : "Voice Announcement"),
+                        ),
+                      ),
                     ],
-                    onChanged: _changePreAzanReminder,
+                    onChanged: _changePreAdhanAlertMode,
                   ),
                 ),
+                const Divider(height: 1, color: Colors.white10),
+                ListTile(
+                  title: Text(TranslationService.isArabic ? "نوع تنبيه الأذان" : "Athan Alert Style"),
+                  subtitle: Text(TranslationService.isArabic 
+                      ? "التنبيه عند دخول وقت الصلاة" 
+                      : "Alert when prayer time starts"),
+                  trailing: DropdownButton<String>(
+                    value: _adhanAlertMode,
+                    underline: const SizedBox(),
+                    dropdownColor: theme.cardColor,
+                    items: [
+                      DropdownMenuItem(
+                        value: 'silent',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "صامت" : "Silent"),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'vibrate',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "اهتزاز" : "Vibrate"),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'real_reciter',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "أذان بصوت المؤذن" : "Real Reciter Adhan"),
+                        ),
+                      ),
+                    ],
+                    onChanged: _changeAdhanAlertMode,
+                  ),
+                ),
+                if (_adhanAlertMode == 'real_reciter') ...[
+                  const Divider(height: 1, color: Colors.white10),
+                  ListTile(
+                    title: Text(TranslationService.isArabic ? "المؤذن" : "Athan Reciter"),
+                    subtitle: Text(TranslationService.isArabic 
+                        ? "اختر صوت المؤذن للأذان" 
+                        : "Select voice for the Athan"),
+                    trailing: DropdownButton<String>(
+                      value: _adhanReciter,
+                      underline: const SizedBox(),
+                      dropdownColor: theme.cardColor,
+                      items: [
+                        DropdownMenuItem(
+                          value: 'mishary',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "مشاري العفاسي" : "Mishary Alafasy"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'abdul_basit',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "عبد الباسط عبد الصمد" : "Abdul Basit"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'makkah',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "أذان الحرم المكي" : "Makkah Haram"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'madinah',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Madinah Haram"),
+                          ),
+                        ),
+                      ],
+                      onChanged: _changeAdhanReciter,
+                    ),
+                  ),
+                ],
                 const Divider(height: 1, color: Colors.white10),
                 SwitchListTile(
                   title: Text(TranslationService.t('morning_azkar_reminder')),
@@ -823,6 +972,35 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   ),
                 ),
                 if (_focusLockDuration > 0) ...[
+                  const Divider(height: 1, color: Colors.white10),
+                  ListTile(
+                    title: Text(TranslationService.isArabic ? "نوع قفل التركيز" : "Focus Lock Mode"),
+                    subtitle: Text(TranslationService.isArabic 
+                        ? "اختر قفل التطبيق فقط أو قفل الهاتف بالكامل" 
+                        : "Choose whether to lock the app or the entire phone"),
+                    trailing: DropdownButton<String>(
+                      value: _focusLockType,
+                      underline: const SizedBox(),
+                      dropdownColor: theme.cardColor,
+                      items: [
+                        DropdownMenuItem(
+                          value: 'app_only',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "قفل التطبيق فقط" : "App Lock Only"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'whole_phone',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "قفل الهاتف بالكامل" : "Whole Phone Lock"),
+                          ),
+                        ),
+                      ],
+                      onChanged: _changeFocusLockType,
+                    ),
+                  ),
                   const Divider(height: 1, color: Colors.white10),
                   SwitchListTile(
                     title: Text(TranslationService.t('focus_setting_auto')),

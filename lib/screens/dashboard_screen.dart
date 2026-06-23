@@ -6,10 +6,13 @@ import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/notification_service.dart';
+import '../services/quran_verses.dart';
+import 'qibla_screen.dart';
+import 'tasbih_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final StorageService storage;
-  final Function(int) onTabChange;
+  final Function(int, {int? subTab}) onTabChange;
   final Map<String, dynamic> lastBookmark;
   final VoidCallback onContinueReading;
   final Function(int) onStartFocusLock;
@@ -37,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? _lastLoadedLocation;
   int? _lastLoadedCalcMethod;
   int? _lastLoadedAsrMethod;
+  late PredefinedVerse _randomVerse;
 
   static const List<Map<String, String>> _versePresets = [
     {'text': 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ', 'ref': 'سورة البقرة: ٢٥٥'},
@@ -74,6 +78,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    final randIndex = (DateTime.now().microsecondsSinceEpoch) % QuranVersesData.verses.length;
+    _randomVerse = QuranVersesData.verses[randIndex];
     _loadPrayerTimes();
     _startCountdownTimer();
   }
@@ -99,6 +105,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  String _getCurrentPrayerName() {
+    if (_prayerData == null) return '';
+    final now = DateTime.now();
+    final todayStr = now.toIso8601String().substring(0, 10);
+
+    final prayers = {
+      'Fajr': _prayerData!.fajr,
+      'Sunrise': _prayerData!.sunrise,
+      'Dhuhr': _prayerData!.dhuhr,
+      'Asr': _prayerData!.asr,
+      'Maghrib': _prayerData!.maghrib,
+      'Isha': _prayerData!.isha,
+    };
+
+    final List<MapEntry<String, DateTime>> list = [];
+    prayers.forEach((name, timeStr) {
+      final cleanTime = timeStr.split(' ')[0];
+      try {
+        list.add(MapEntry(name, DateTime.parse("${todayStr}T$cleanTime:00")));
+      } catch (_) {}
+    });
+
+    list.sort((a, b) => a.value.compareTo(b.value));
+
+    for (int i = list.length - 1; i >= 0; i--) {
+      if (now.isAfter(list[i].value)) {
+        return list[i].key;
+      }
+    }
+    return 'Isha';
+  }
+
+  String _formatTime(String time24h) {
+    final clean = time24h.split(' ')[0].trim();
+    final use24h = widget.storage.getBool('use_24h_format', defaultValue: false);
+    if (use24h) return clean;
+    final parts = clean.split(':');
+    if (parts.length < 2) return clean;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return clean;
+    final isPm = hour >= 12;
+    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
+    final displayMinute = minute.toString().padLeft(2, '0');
+    final suffix = isPm 
+        ? (TranslationService.isArabic ? "م" : "PM") 
+        : (TranslationService.isArabic ? "ص" : "AM");
+    return "$displayHour:$displayMinute $suffix";
   }
 
   Future<void> _loadPrayerTimes() async {
@@ -277,25 +333,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return "$hours:$minutes:$seconds";
   }
 
-  String _getCurrentPrayerName() {
-    switch (_nextPrayerName) {
-      case 'Fajr':
-        return 'Isha';
-      case 'Sunrise':
-        return 'Fajr';
-      case 'Dhuhr':
-        return 'Sunrise';
-      case 'Asr':
-        return 'Dhuhr';
-      case 'Maghrib':
-        return 'Asr';
-      case 'Isha':
-        return 'Maghrib';
-      default:
-        return 'Fajr';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final location = widget.storage.getLocation();
@@ -353,7 +390,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    TranslationService.t('hardship_ease'),
+                    _randomVerse.getDisplayString(TranslationService.isArabic),
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -535,26 +572,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     }
                   },
                 ),
-                _buildQuickCard(
-                  context: context,
-                  icon: Icons.wb_sunny_outlined,
-                  title: TranslationService.t('morning_azkar'),
-                  subtitle: TranslationService.t('morning_azkar_sub'),
-                  onTap: () => widget.onTabChange(5), // Azkar Tab
-                ),
-                _buildQuickCard(
-                  context: context,
-                  icon: Icons.dark_mode_outlined,
-                  title: TranslationService.t('evening_azkar'),
-                  subtitle: TranslationService.t('evening_azkar_sub'),
-                  onTap: () => widget.onTabChange(5), // Azkar Tab
-                ),
-                _buildQuickCard(
-                  context: context,
-                  icon: Icons.fingerprint,
-                  title: TranslationService.t('digital_tasbih'),
-                  subtitle: TranslationService.t('tasbih_sub'),
-                  onTap: () => widget.onTabChange(4), // Tasbih Tab
+                const SizedBox(height: 12),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 0.95,
+                  children: [
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.menu_book,
+                      title: TranslationService.t('quran'),
+                      onTap: () => widget.onTabChange(1),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.access_time_filled,
+                      title: TranslationService.t('prayer'),
+                      onTap: () => widget.onTabChange(2, subTab: 0),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.explore,
+                      title: TranslationService.t('qibla'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => QiblaScreen(storage: widget.storage)),
+                        );
+                      },
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.fingerprint,
+                      title: TranslationService.t('tasbih'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => TasbihScreen(storage: widget.storage)),
+                        );
+                      },
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.wb_sunny_outlined,
+                      title: TranslationService.t('morning_azkar'),
+                      onTap: () => widget.onTabChange(3, subTab: 0),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.nights_stay_outlined,
+                      title: TranslationService.t('evening_azkar'),
+                      onTap: () => widget.onTabChange(3, subTab: 1),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.grid_view,
+                      title: TranslationService.t('names_of_allah'),
+                      onTap: () => widget.onTabChange(3, subTab: 4),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.calendar_month,
+                      title: TranslationService.t('hijri_calendar'),
+                      onTap: () => widget.onTabChange(2, subTab: 2),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.table_chart,
+                      title: TranslationService.t('prayer_calendar'),
+                      onTap: () => widget.onTabChange(2, subTab: 1),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -594,17 +685,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _isLoading
                 ? const SizedBox.shrink()
                 : SizedBox(
-                    height: 110,
+                    height: 120,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       children: [
-                        _buildPrayerBarCard(theme, TranslationService.t('fajr'), _prayerData?.fajr ?? "--:--", true),
-                        _buildPrayerBarCard(theme, TranslationService.t('sunrise'), _prayerData?.sunrise ?? "--:--", false),
-                        _buildPrayerBarCard(theme, TranslationService.t('dhuhr'), _prayerData?.dhuhr ?? "--:--", false),
-                        _buildPrayerBarCard(theme, TranslationService.t('asr'), _prayerData?.asr ?? "--:--", false),
-                        _buildPrayerBarCard(theme, TranslationService.t('maghrib'), _prayerData?.maghrib ?? "--:--", false),
-                        _buildPrayerBarCard(theme, TranslationService.t('isha'), _prayerData?.isha ?? "--:--", false),
+                        _buildPrayerBarCard(theme, TranslationService.t('fajr'), _prayerData?.fajr ?? "--:--", _getCurrentPrayerName() == 'Fajr', Icons.cloud_queue),
+                        _buildPrayerBarCard(theme, TranslationService.t('sunrise'), _prayerData?.sunrise ?? "--:--", _getCurrentPrayerName() == 'Sunrise', Icons.wb_sunny_outlined),
+                        _buildPrayerBarCard(theme, TranslationService.t('dhuhr'), _prayerData?.dhuhr ?? "--:--", _getCurrentPrayerName() == 'Dhuhr', Icons.wb_sunny),
+                        _buildPrayerBarCard(theme, TranslationService.t('asr'), _prayerData?.asr ?? "--:--", _getCurrentPrayerName() == 'Asr', Icons.wb_twilight),
+                        _buildPrayerBarCard(theme, TranslationService.t('maghrib'), _prayerData?.maghrib ?? "--:--", _getCurrentPrayerName() == 'Maghrib', Icons.wb_cloudy_outlined),
+                        _buildPrayerBarCard(theme, TranslationService.t('isha'), _prayerData?.isha ?? "--:--", _getCurrentPrayerName() == 'Isha', Icons.nights_stay),
                       ],
                     ),
                   ),
@@ -628,7 +719,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          value.split(' ')[0], // Trim timezone
+          _formatTime(value),
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -710,10 +801,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildPrayerBarCard(ThemeData theme, String name, String time, bool isCurrent) {
-    // Strip timezone
-    final displayTime = time.split(' ')[0];
-    
+  Widget _buildGridServiceCard({
+    required ThemeData theme,
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      color: theme.cardColor,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.04),
+          width: 1.0,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5C158).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: const Color(0xFFE5C158), size: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrayerBarCard(ThemeData theme, String name, String time, bool isCurrent, IconData icon) {
     return Container(
       width: 100,
       margin: const EdgeInsetsDirectional.only(end: 8),
@@ -728,6 +867,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Icon(
+            icon, 
+            color: isCurrent ? const Color(0xFFE5C158) : theme.textTheme.bodyMedium?.color?.withOpacity(0.5), 
+            size: 18
+          ),
+          const SizedBox(height: 8),
           Text(
             name,
             style: TextStyle(
@@ -736,11 +881,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: isCurrent ? const Color(0xFFE5C158) : theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
-            displayTime,
+            _formatTime(time),
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),

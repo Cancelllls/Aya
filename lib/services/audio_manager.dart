@@ -36,11 +36,14 @@ class AudioManager {
   bool _usingPlayerA = true;
   bool _isTransitioning = false;
   Timer? _crossfadeTimer;
+  Duration? _currentDuration;
+  int _preloadedIndex = -1;
 
   void _cancelCrossfade() {
     _crossfadeTimer?.cancel();
     _crossfadeTimer = null;
     _isTransitioning = false;
+    _currentDuration = null;
   }
 
   AudioPlayer get activePlayer => _usingPlayerA ? _playerA : _playerB;
@@ -104,6 +107,28 @@ class AudioManager {
       }
     });
 
+    p.onDurationChanged.listen((d) {
+      if (p == activePlayer) {
+        _currentDuration = d;
+      }
+    });
+
+    p.onPositionChanged.listen((pos) {
+      if (p != activePlayer || _isTransitioning) return;
+      
+      final dur = _currentDuration;
+      if (dur != null && dur.inMilliseconds > 0) {
+        final remaining = dur.inMilliseconds - pos.inMilliseconds;
+        // Start crossfading 1.2s before the end of the ayah
+        if (remaining <= 1200 && remaining > 0 && _currentIndex < _currentPlaylist.length - 1) {
+          final continuous = _storage.getBool('setting_continuous_play', defaultValue: true);
+          if (continuous) {
+            _playNextAyahWithCrossfade();
+          }
+        }
+      }
+    });
+
     p.onPlayerComplete.listen((event) {
       if (p == activePlayer) {
         _handlePlaybackComplete();
@@ -128,6 +153,29 @@ class AudioManager {
       if (response.statusCode == 200) {
         await localFile.writeAsBytes(response.bodyBytes);
       }
+    } catch (_) {}
+  }
+
+  void _preloadNextAyah() async {
+    final nextIndex = _currentIndex + 1;
+    if (nextIndex < 0 || nextIndex >= _currentPlaylist.length) return;
+    
+    final nextAyah = _currentPlaylist[nextIndex];
+    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    final url = ApiService.buildAyahAudioUrl(nextAyah.number, reciter: reciter);
+    final localPath = await _getLocalAyahPath(nextAyah.number, reciter);
+    final localFile = File(localPath);
+    final isOffline = await localFile.exists();
+
+    final nextPlayer = inactivePlayer;
+    try {
+      await nextPlayer.setVolume(0.0);
+      if (isOffline) {
+        await nextPlayer.setSource(DeviceFileSource(localPath));
+      } else {
+        await nextPlayer.setSource(UrlSource(url));
+      }
+      _preloadedIndex = nextIndex;
     } catch (_) {}
   }
 
@@ -171,6 +219,9 @@ class AudioManager {
         await activePlayer.play(UrlSource(url));
         _cacheAyahBackground(url, localFile);
       }
+      
+      _currentDuration = null;
+      _preloadNextAyah();
       
       playState.value = AudioPlayState(
         surahNum: _surahNum,
@@ -257,6 +308,7 @@ class AudioManager {
   }
 
   void _handlePlaybackComplete() {
+    if (_isTransitioning) return;
     final continuous = _storage.getBool('setting_continuous_play', defaultValue: true);
     if (continuous && _currentIndex >= 0 && _currentIndex < _currentPlaylist.length - 1) {
       _playNextAyahWithCrossfade();
@@ -300,12 +352,20 @@ class AudioManager {
 
     try {
       await nextPlay.setVolume(0.0);
-      if (isOffline) {
-        await nextPlay.play(DeviceFileSource(localPath));
+      final isPreloaded = _preloadedIndex == nextIndex;
+      if (isPreloaded) {
+        await nextPlay.resume();
       } else {
-        await nextPlay.play(UrlSource(url));
-        _cacheAyahBackground(url, localFile);
+        if (isOffline) {
+          await nextPlay.play(DeviceFileSource(localPath));
+        } else {
+          await nextPlay.play(UrlSource(url));
+          _cacheAyahBackground(url, localFile);
+        }
       }
+
+      _currentDuration = null;
+      _preloadNextAyah();
 
       playState.value = AudioPlayState(
         surahNum: _surahNum,

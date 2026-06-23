@@ -10,7 +10,7 @@ class TranslationService {
 
   static final Map<String, Map<String, String>> _keys = {
     'en': {
-      'app_title': 'Aya App',
+      'app_title': 'Aya',
       'home': 'Home',
       'quran': 'Quran',
       'prayer': 'Prayer',
@@ -200,9 +200,12 @@ class TranslationService {
       'morning_azkar_reminder': 'Morning Azkar Reminder',
       'evening_azkar_reminder': 'Evening Azkar Reminder',
       'todays_verse_reminder': "Today's Verse Reminder",
+      'names_of_allah': 'Names of Allah',
+      'hijri_calendar': 'Hijri Calendar',
+      'prayer_calendar': 'Prayer Calendar',
     },
     'ar': {
-      'app_title': 'تطبيق آية',
+      'app_title': 'آية',
       'home': 'الرئيسية',
       'quran': 'القرآن',
       'prayer': 'الصلاة',
@@ -392,6 +395,9 @@ class TranslationService {
       'morning_azkar_reminder': 'تذكير أذكار الصباح',
       'evening_azkar_reminder': 'تذكير أذكار المساء',
       'todays_verse_reminder': 'تذكير آية اليوم',
+      'names_of_allah': 'أسماء الله',
+      'hijri_calendar': 'التقويم الهجري',
+      'prayer_calendar': 'جدول الصلوات',
     }
   };
 

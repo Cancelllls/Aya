@@ -21,12 +21,16 @@ class AzkarScreen extends StatefulWidget {
 class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final Map<String, int> _countsCache = {};
+  bool _showTranslation = true;
+  bool _showTransliteration = true;
 
   @override
   void initState() {
     super.initState();
+    _showTranslation = widget.storage.getBool('azkar_show_translation', defaultValue: true);
+    _showTransliteration = widget.storage.getBool('azkar_show_transliteration', defaultValue: true);
     _tabController = TabController(
-      length: 4, 
+      length: 5, 
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
@@ -41,7 +45,7 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   @override
   void didUpdateWidget(covariant AzkarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTabIndex != widget.initialTabIndex) {
+    if (oldWidget.initialTabIndex != widget.initialTabIndex || _tabController.index != widget.initialTabIndex) {
       _tabController.animateTo(widget.initialTabIndex);
     }
   }
@@ -111,6 +115,55 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
 
     return Column(
       children: [
+        // Language Option Chips
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            children: [
+              FilterChip(
+                label: Text(
+                  TranslationService.isArabic ? "إظهار الترجمة" : "Show Translation",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: _showTranslation ? Colors.black : Colors.white70,
+                  ),
+                ),
+                selected: _showTranslation,
+                selectedColor: const Color(0xFFE5C158),
+                checkmarkColor: Colors.black,
+                backgroundColor: theme.cardColor,
+                onSelected: (val) {
+                  setState(() {
+                    _showTranslation = val;
+                  });
+                  widget.storage.setBool('azkar_show_translation', val);
+                },
+              ),
+              const SizedBox(width: 8),
+              FilterChip(
+                label: Text(
+                  TranslationService.isArabic ? "النطق اللاتيني" : "Transliteration",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: _showTransliteration ? Colors.black : Colors.white70,
+                  ),
+                ),
+                selected: _showTransliteration,
+                selectedColor: const Color(0xFFE5C158),
+                checkmarkColor: Colors.black,
+                backgroundColor: theme.cardColor,
+                onSelected: (val) {
+                  setState(() {
+                    _showTransliteration = val;
+                  });
+                  widget.storage.setBool('azkar_show_transliteration', val);
+                },
+              ),
+            ],
+          ),
+        ),
         // Category Tabs
         Container(
           height: 56,
@@ -199,6 +252,25 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                   ],
                 ),
               ),
+              Tab(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(TranslationService.isArabic ? "أسماء الله" : "Allah's Names"),
+                    const SizedBox(height: 2),
+                    Text(
+                      "99",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: _tabController.index == 4
+                            ? const Color(0xFFE5C158)
+                            : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -213,6 +285,7 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
               _buildAzkarList(AzkarData.evening, theme),
               _buildAzkarList(AzkarData.postPrayer, theme),
               _buildAzkarList(AzkarData.daily, theme),
+              _buildNamesOfAllahGrid(theme),
             ],
           ),
         ),
@@ -323,29 +396,35 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Divider(color: Colors.white10),
-                      const SizedBox(height: 8),
+                      if ((_showTransliteration && item.transliteration.isNotEmpty) || (_showTranslation && item.translation.isNotEmpty)) ...[
+                        const Divider(color: Colors.white10),
+                        const SizedBox(height: 8),
+                      ],
                       // Transliteration (Italicized)
-                      Text(
-                        item.transliteration,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-                          height: 1.4,
+                      if (_showTransliteration && item.transliteration.isNotEmpty) ...[
+                        Text(
+                          item.transliteration,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+                      ],
                       // English Translation
-                      Text(
-                        item.translation,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
-                          height: 1.4,
+                      if (_showTranslation && item.translation.isNotEmpty) ...[
+                        Text(
+                          item.translation,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+                      ],
                       // Reference citation
                       Text(
                         "${TranslationService.isArabic ? 'المصدر' : 'Source'}: ${item.reference}",
@@ -362,6 +441,97 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildNamesOfAllahGrid(ThemeData theme) {
+    final list = NamesOfAllahData.names;
+    return GridView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.0,
+      ),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final item = list[index];
+        return Card(
+          color: theme.cardColor,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Colors.white.withOpacity(0.04),
+              width: 1.0,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5C158).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "#${item.number}",
+                      style: const TextStyle(
+                        color: Color(0xFFE5C158),
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  item.arabic,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE5C158),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (_showTransliteration)
+                  Text(
+                    item.transliteration,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ),
+                  ),
+                if (_showTranslation) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    item.translation,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

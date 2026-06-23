@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -44,6 +47,93 @@ void backgroundPrayerTimesUpdateCallback() async {
   } catch (e) {
     // ignore: avoid_print
     print('Error in background location prayer times update callback: $e');
+  }
+}
+
+@pragma('vm:entry-point')
+void backgroundPreAdhanCallback(int id) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    final storage = await StorageService.getInstance();
+    final alertMode = storage.getString('pre_adhan_alert_mode', defaultValue: 'vibrate');
+    const platform = MethodChannel('com.noor.noor_app/system');
+    
+    if (alertMode == 'vibrate') {
+      await platform.invokeMethod('vibrate', {
+        'pattern': [0, 200, 200, 500, 200, 1000]
+      });
+    } else if (alertMode == 'voice') {
+      await platform.invokeMethod('speak', {
+        'text': TranslationService.isArabic ? 'اقترب موعد الأذان' : 'Adhan is approaching',
+        'lang': TranslationService.currentLanguage
+      });
+    }
+  } catch (e) {
+    // ignore: avoid_print
+    print('Error in backgroundPreAdhanCallback: $e');
+  }
+}
+
+@pragma('vm:entry-point')
+void backgroundAdhanCallback(int id) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    final storage = await StorageService.getInstance();
+    final adhanMode = storage.getString('adhan_alert_mode', defaultValue: 'real_reciter');
+    const platform = MethodChannel('com.noor.noor_app/system');
+    
+    if (adhanMode == 'vibrate') {
+      await platform.invokeMethod('vibrate', {
+        'pattern': [0, 200, 200, 500, 200, 1000]
+      });
+    } else if (adhanMode == 'real_reciter') {
+      final reciter = storage.getString('adhan_reciter', defaultValue: 'mishary');
+      final prayerIndex = (id - 4000) % 10;
+      final isFajr = prayerIndex == 1;
+      
+      String url = '';
+      if (isFajr) {
+        switch (reciter) {
+          case 'mishary':
+            url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
+            break;
+          case 'abdul_basit':
+            url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
+            break;
+          case 'makkah':
+            url = 'https://www.islamcan.com/adhan/audio/azan2.mp3';
+            break;
+          case 'madinah':
+            url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+            break;
+          default:
+            url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
+        }
+      } else {
+        switch (reciter) {
+          case 'mishary':
+            url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
+            break;
+          case 'abdul_basit':
+            url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
+            break;
+          case 'makkah':
+            url = 'https://www.islamcan.com/adhan/audio/azan20.mp3';
+            break;
+          case 'madinah':
+            url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+            break;
+          default:
+            url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
+        }
+      }
+      
+      final player = AudioPlayer();
+      await player.play(UrlSource(url));
+    }
+  } catch (e) {
+    // ignore: avoid_print
+    print('Error in backgroundAdhanCallback: $e');
   }
 }
 
@@ -113,10 +203,15 @@ class NotificationService {
   }
 
   Future<void> schedulePrayerAlarms(PrayerTimeData prayerData, StorageService storage) async {
-    // Cancel only scheduled prayer times notifications (IDs 1-70) and pre-Athan reminders (IDs 2000-2070) to prevent deleting other notification types
+    // Cancel scheduled prayer notifications and alarms
     for (int i = 1; i <= 70; i++) {
       await _notificationsPlugin.cancel(id: i);
       await _notificationsPlugin.cancel(id: i + 2000);
+      try {
+        await AndroidAlarmManager.cancel(i + 1000); // GPS check
+        await AndroidAlarmManager.cancel(i + 3000); // Pre-adhan alarm
+        await AndroidAlarmManager.cancel(i + 4000); // Adhan alarm
+      } catch (_) {}
     }
 
     final alertFajr = storage.getBool('alert_fajr', defaultValue: true);
@@ -124,8 +219,6 @@ class NotificationService {
     final alertAsr = storage.getBool('alert_asr', defaultValue: true);
     final alertMaghrib = storage.getBool('alert_maghrib', defaultValue: true);
     final alertIsha = storage.getBool('alert_isha', defaultValue: true);
-
-    final preAzanMinutes = storage.getInt('pre_azan_reminder_minutes', defaultValue: 0);
 
     final prayersToSchedule = <String, String>{};
     if (alertFajr && prayerData.fajr.isNotEmpty) prayersToSchedule['Fajr'] = prayerData.fajr;
@@ -199,9 +292,8 @@ class NotificationService {
             );
           }
 
-          // Schedule pre-Athan notification if configured
-          if (preAzanMinutes > 0) {
-            final preAzanTime = scheduledDate.subtract(Duration(minutes: preAzanMinutes));
+          // Schedule pre-Athan notification
+            final preAzanTime = scheduledDate.subtract(const Duration(minutes: 10));
             if (preAzanTime.isAfter(now)) {
               final tzPreDateTime = tz.TZDateTime.from(preAzanTime, tz.local);
               final preNotificationId = notificationId + 2000;
@@ -211,8 +303,8 @@ class NotificationService {
                   id: preNotificationId,
                   title: TranslationService.isArabic ? 'اقترب موعد الأذان' : 'Athan is approaching',
                   body: TranslationService.isArabic 
-                      ? 'بقي $preAzanMinutes دقائق على أذان الـ $name.'
-                      : '$preAzanMinutes minutes remaining until $name Athan.',
+                      ? 'بقي ١٠ دقائق على أذان الـ $name.'
+                      : '10 minutes remaining until $name Athan.',
                   scheduledDate: tzPreDateTime,
                   notificationDetails: notificationDetails,
                   androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -223,8 +315,8 @@ class NotificationService {
                   id: preNotificationId,
                   title: TranslationService.isArabic ? 'اقترب موعد الأذان' : 'Athan is approaching',
                   body: TranslationService.isArabic 
-                      ? 'بقي $preAzanMinutes دقائق على أذان الـ $name.'
-                      : '$preAzanMinutes minutes remaining until $name Athan.',
+                      ? 'بقي ١٠ دقائق على أذان الـ $name.'
+                      : '10 minutes remaining until $name Athan.',
                   scheduledDate: tzPreDateTime,
                   notificationDetails: notificationDetails,
                   androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -232,7 +324,34 @@ class NotificationService {
                 );
               }
             }
-          }
+
+            // Schedule background alarms on Android
+            if (Platform.isAndroid) {
+              final adhanAlarmId = notificationId + 4000;
+              try {
+                await AndroidAlarmManager.oneShotAt(
+                  scheduledDate,
+                  adhanAlarmId,
+                  backgroundAdhanCallback,
+                  exact: true,
+                  wakeup: true,
+                );
+              } catch (_) {}
+
+              final preAdhanTimeVal = scheduledDate.subtract(const Duration(minutes: 10));
+              if (preAdhanTimeVal.isAfter(now)) {
+                final preAdhanAlarmId = notificationId + 3000;
+                try {
+                  await AndroidAlarmManager.oneShotAt(
+                    preAdhanTimeVal,
+                    preAdhanAlarmId,
+                    backgroundPreAdhanCallback,
+                    exact: true,
+                    wakeup: true,
+                  );
+                } catch (_) {}
+              }
+            }
 
           // Cancel previous background alarm for this prayer time to prevent duplicates
           final alarmId = notificationId + 1000;

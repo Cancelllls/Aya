@@ -27,6 +27,10 @@ class SurahReaderScreen extends StatefulWidget {
 }
 
 class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTickerProviderStateMixin {
+  late Surah _currentSurah;
+  List<Surah> _allSurahs = [];
+  bool _swipeSurahNavigation = true;
+
   List<Ayah> _ayahList = [];
   bool _isLoading = true;
   double _fontSizeMultiplier = 1.0;
@@ -67,12 +71,53 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
+    _currentSurah = widget.surah;
     _readingMode = widget.storage.getString('reading_mode', defaultValue: 'translation');
     _hideContinuousBorders = widget.storage.getBool('setting_hide_continuous_borders', defaultValue: false);
+    _swipeSurahNavigation = widget.storage.getBool('swipe_surah_navigation', defaultValue: true);
     _tabController = TabController(length: 4, vsync: this, initialIndex: _modeToIndex(_readingMode));
     _loadAyahs();
     _checkBookmarkStatus();
+    _loadAllSurahs();
     AudioManager.instance.playState.addListener(_onPlayStateChanged);
+  }
+
+  Future<void> _loadAllSurahs() async {
+    try {
+      final list = await ApiService.fetchSurahList();
+      setState(() {
+        _allSurahs = list;
+      });
+    } catch (_) {}
+  }
+
+  void _navigateToSurah(Surah newSurah) {
+    setState(() {
+      _currentSurah = newSurah;
+      _isLoading = true;
+      _ayahList = [];
+      _ayahKeys.clear();
+      _pageKeys.clear();
+      _pageRecognizers.clear();
+    });
+    _loadAyahs();
+    _checkBookmarkStatus();
+  }
+
+  void _goToNextSurah() {
+    if (_allSurahs.isEmpty) return;
+    final currentIdx = _allSurahs.indexWhere((s) => s.number == _currentSurah.number);
+    if (currentIdx != -1 && currentIdx < _allSurahs.length - 1) {
+      _navigateToSurah(_allSurahs[currentIdx + 1]);
+    }
+  }
+
+  void _goToPrevSurah() {
+    if (_allSurahs.isEmpty) return;
+    final currentIdx = _allSurahs.indexWhere((s) => s.number == _currentSurah.number);
+    if (currentIdx != -1 && currentIdx > 0) {
+      _navigateToSurah(_allSurahs[currentIdx - 1]);
+    }
   }
 
   @override
@@ -108,7 +153,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "${widget.surah.name} - ${TranslationService.isArabic ? 'آية' : 'Ayah'} ${ayah.numberInSurah}",
+                    "${_currentSurah.name} - ${TranslationService.isArabic ? 'آية' : 'Ayah'} ${ayah.numberInSurah}",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -157,7 +202,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   void _onPlayStateChanged() {
     final playState = AudioManager.instance.playState.value;
     if (playState.isPlaying &&
-        playState.surahNum == widget.surah.number &&
+        playState.surahNum == _currentSurah.number &&
         playState.ayahNum > 0 &&
         playState.ayahNum != _lastScrolledAyah) {
       _lastScrolledAyah = playState.ayahNum;
@@ -168,7 +213,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   void _checkBookmarkStatus() {
     final bookmarks = widget.storage.getBookmarks();
     final b = bookmarks.firstWhere(
-      (element) => element['surahNumber'] == widget.surah.number,
+      (element) => element['surahNumber'] == _currentSurah.number,
       orElse: () => {},
     );
     setState(() {
@@ -180,7 +225,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   Future<void> _loadAyahs() async {
     setState(() => _isLoading = true);
     try {
-      final list = await ApiService.fetchSurahDetails(widget.surah.number);
+      final list = await ApiService.fetchSurahDetails(_currentSurah.number);
       setState(() {
         _ayahList = list;
         _isLoading = false;
@@ -202,7 +247,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   }
 
   void _bookmarkAyah(int ayahNum) async {
-    await widget.storage.addBookmark(widget.surah.number, widget.surah.englishName, ayahNum);
+    await widget.storage.addBookmark(_currentSurah.number, _currentSurah.englishName, ayahNum);
     if (!mounted) return;
     setState(() {
       _isBookmarked = true;
@@ -218,7 +263,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
 
   void _toggleBookmark() async {
     if (_isBookmarked) {
-      await widget.storage.removeBookmark(widget.surah.number);
+      await widget.storage.removeBookmark(_currentSurah.number);
       if (!mounted) return;
       setState(() {
         _isBookmarked = false;
@@ -229,7 +274,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
       );
     } else {
       final targetAyah = _bookmarkedAyahNumber ?? 1;
-      await widget.storage.addBookmark(widget.surah.number, widget.surah.englishName, targetAyah);
+      await widget.storage.addBookmark(_currentSurah.number, _currentSurah.englishName, targetAyah);
       if (!mounted) return;
       setState(() {
         _isBookmarked = true;
@@ -311,8 +356,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
             children: [
               Text(
                 TranslationService.isArabic
-                    ? "${widget.surah.name} : الآية ${ayah.numberInSurah}"
-                    : "${widget.surah.englishName} : Verse ${ayah.numberInSurah}",
+                    ? "${_currentSurah.name} : الآية ${ayah.numberInSurah}"
+                    : "${_currentSurah.englishName} : Verse ${ayah.numberInSurah}",
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 20),
@@ -322,7 +367,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
                 onTap: () {
                   Navigator.pop(context);
                   final idx = _ayahList.indexOf(ayah);
-                  AudioManager.instance.playAyah(widget.surah.number, widget.surah.englishName, _ayahList, idx);
+                  AudioManager.instance.playAyah(_currentSurah.number, _currentSurah.englishName, _ayahList, idx);
                 },
               ),
               ListTile(
@@ -353,7 +398,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
 
   String _getHizbRangeText() {
     if (_ayahList.isEmpty) {
-      return "${TranslationService.t('juz')} ${widget.surah.startingJuz} • ${TranslationService.t('hizb')} ${widget.surah.startingHizb}";
+      return "${TranslationService.t('juz')} ${_currentSurah.startingJuz} • ${TranslationService.t('hizb')} ${_currentSurah.startingHizb}";
     }
     final uniqueJuz = _ayahList.map((e) => e.juz).toSet().toList()..sort();
     final uniqueHizb = _ayahList.map((e) => e.hizb).toSet().toList()..sort();
@@ -427,7 +472,7 @@ border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.35), width: 1.5)
       child: Column(
         children: [
           Text(
-            widget.surah.name,
+            _currentSurah.name,
             style: GoogleFonts.amiri(
               color: const Color(0xFFE5C158),
               fontSize: 28,
@@ -436,7 +481,7 @@ border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.35), width: 1.5)
           ),
           const SizedBox(height: 4),
           Text(
-            widget.surah.englishName,
+            _currentSurah.englishName,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
@@ -444,7 +489,7 @@ border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.35), width: 1.5)
             ),
           ),
           Text(
-            "${widget.surah.englishNameTranslation} • ${widget.surah.numberOfAyahs} ${TranslationService.t('verses')}",
+            "${_currentSurah.englishNameTranslation} • ${_currentSurah.numberOfAyahs} ${TranslationService.t('verses')}",
             style: TextStyle(
               fontSize: 11,
               // ignore: deprecated_member_use
@@ -468,11 +513,11 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.surah.englishName,
+              _currentSurah.englishName,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              "${widget.surah.name} • ${_getHizbRangeText()}",
+              "${_currentSurah.name} • ${_getHizbRangeText()}",
               style: TextStyle(fontSize: 11, color: theme.appBarTheme.foregroundColor?.withOpacity(0.7)),
             ),
           ],
@@ -496,48 +541,6 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                 ),
                 builder: (context) => StatefulBuilder(
                   builder: (context, setModalState) {
-                    Widget buildModeButton(String mode, String label, IconData icon) {
-                      final isSelected = _readingMode == mode;
-                      return Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            // ignore: deprecated_member_use
-backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.transparent,
-                            side: BorderSide(
-                              color: isSelected ? const Color(0xFFE5C158) : theme.dividerColor,
-                              width: isSelected ? 1.5 : 1.0,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () async {
-                            setState(() {
-                              _readingMode = mode;
-                            });
-                            setModalState(() {});
-                            await widget.storage.setString('reading_mode', mode);
-                          },
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(icon, color: isSelected ? const Color(0xFFE5C158) : theme.textTheme.bodyMedium?.color?.withOpacity(0.6), size: 20),
-                              const SizedBox(height: 4),
-                              Text(
-                                label,
-                                style: TextStyle(
-                                  color: isSelected ? const Color(0xFFE5C158) : theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
-                                  fontSize: 11,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
                     return Container(
                       padding: const EdgeInsets.all(24),
                       child: Column(
@@ -592,11 +595,22 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
           ),
         ],
       ),
-      body: _isLoading
-    ? const Center(
-        child: CircularProgressIndicator(color: Color(0xFFE5C158)),
-      )
-    : Column(
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: (details) {
+          if (!_swipeSurahNavigation) return;
+          if (details.primaryVelocity == null) return;
+          if (details.primaryVelocity! > 150) {
+            _goToNextSurah();
+          } else if (details.primaryVelocity! < -150) {
+            _goToPrevSurah();
+          }
+        },
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+              )
+            : Column(
         children: [
           Container(
             decoration: BoxDecoration(
@@ -688,7 +702,7 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                                   ),
                                   icon: (playState.isLoading &&
                                           playState.surahNum ==
-                                              widget.surah.number &&
+                                              _currentSurah.number &&
                                           playState.ayahNum == 0)
                                       ? const SizedBox(
                                           width: 12,
@@ -700,7 +714,7 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                                       : const Icon(Icons.play_arrow, size: 16),
                                   label: Text((playState.isLoading &&
                                           playState.surahNum ==
-                                              widget.surah.number &&
+                                              _currentSurah.number &&
                                           playState.ayahNum == 0)
                                       ? (TranslationService.isArabic
                                           ? 'تحميل...'
@@ -708,15 +722,15 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                                       : TranslationService.t('play')),
                                   onPressed: () {
                                     AudioManager.instance.playSurah(
-                                        widget.surah.number,
-                                        widget.surah.englishName,
+                                        _currentSurah.number,
+                                        _currentSurah.englishName,
                                         _ayahList);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
                                           TranslationService.isArabic
-                                              ? 'جاري تشغيل سورة ${widget.surah.name}...'
-                                              : 'Streaming Surah ${widget.surah.englishName}...',
+                                              ? 'جاري تشغيل سورة ${_currentSurah.name}...'
+                                              : 'Streaming Surah ${_currentSurah.englishName}...',
                                         ),
                                         duration: const Duration(seconds: 2),
                                       ),
@@ -737,8 +751,8 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                                   itemCount: _ayahList.length + 1,
                                   itemBuilder: (context, index) {
                                     if (index == 0) {
-                                      if (widget.surah.number == 9 ||
-                                          widget.surah.number == 1) {
+                                      if (_currentSurah.number == 9 ||
+                                          _currentSurah.number == 1) {
                                         return const SizedBox.shrink();
                                       }
                                       return Container(
@@ -782,14 +796,15 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildAyahCard(Ayah ayah, ThemeData theme, AudioPlayState playState) {
     final isDark = theme.brightness == Brightness.dark;
     final key = _ayahKeys.putIfAbsent(ayah.numberInSurah, () => GlobalKey());
     final isBookmarked = _bookmarkedAyahNumber == ayah.numberInSurah;
-    final isPlaying = playState.isPlaying && playState.surahNum == widget.surah.number && playState.ayahNum == ayah.numberInSurah;
+    final isPlaying = playState.isPlaying && playState.surahNum == _currentSurah.number && playState.ayahNum == ayah.numberInSurah;
     final isHighlighted = isBookmarked || isPlaying;
 
     return Container(
@@ -847,7 +862,7 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      "${widget.surah.number}:${ayah.numberInSurah}",
+                      "${_currentSurah.number}:${ayah.numberInSurah}",
                       style: TextStyle(
                         color: const Color(0xFFE5C158),
                         fontSize: 11,
@@ -876,7 +891,7 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                         tooltip: 'Bookmark this Verse',
                       ),
                       IconButton(
-                        icon: (playState.isLoading && playState.surahNum == widget.surah.number && playState.ayahNum == ayah.numberInSurah)
+                        icon: (playState.isLoading && playState.surahNum == _currentSurah.number && playState.ayahNum == ayah.numberInSurah)
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
@@ -885,7 +900,7 @@ backgroundColor: isSelected ? const Color(0xFFE5C158).withOpacity(0.1) : Colors.
                             : const Icon(Icons.play_circle_outline, size: 20, color: Color(0xFFE5C158)),
                         onPressed: () {
                           final idx = _ayahList.indexOf(ayah);
-                          AudioManager.instance.playAyah(widget.surah.number, widget.surah.englishName, _ayahList, idx);
+                          AudioManager.instance.playAyah(_currentSurah.number, _currentSurah.englishName, _ayahList, idx);
                         },
                         tooltip: 'Play Verse Audio',
                       ),
@@ -964,7 +979,7 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.85),
           return Column(
             children: [
               _buildSurahHeaderBanner(theme, isDark),
-              if (widget.surah.number != 9 && widget.surah.number != 1)
+              if (_currentSurah.number != 9 && _currentSurah.number != 1)
                 Container(
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 20),
@@ -1001,7 +1016,7 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.85),
         final List<InlineSpan> spans = [];
         for (var ayah in chunk) {
           final isBookmarked = _bookmarkedAyahNumber == ayah.numberInSurah;
-          final isPlaying = playState.isPlaying && playState.surahNum == widget.surah.number && playState.ayahNum == ayah.numberInSurah;
+          final isPlaying = playState.isPlaying && playState.surahNum == _currentSurah.number && playState.ayahNum == ayah.numberInSurah;
           final isHighlighted = isBookmarked || isPlaying;
 
           final recognizer = TapGestureRecognizer()..onTap = () => _showAyahActionSheet(ayah);

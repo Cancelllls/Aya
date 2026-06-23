@@ -48,6 +48,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   }
 
   Future<void> _setupGPS() async {
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+    final cardColor = Theme.of(context).cardColor;
     setState(() {
       _isRequestingGPS = true;
       _gpsStatusText = TranslationService.t('welcome_gps_status_checking');
@@ -72,6 +74,49 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
       if (permission == LocationPermission.deniedForever) {
         throw Exception(TranslationService.t('welcome_gps_status_denied_forever'));
+      }
+
+      if (isAndroid && permission == LocationPermission.whileInUse) {
+        final bool proceed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogCtx) => AlertDialog(
+            backgroundColor: cardColor,
+            title: Text(
+              TranslationService.isArabic ? "مطلوب إذن الموقع دائماً" : "Location Permission 'Always' Required",
+              style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              TranslationService.isArabic
+                  ? "يتطلب التطبيق إذن الموقع 'سماح طوال الوقت' لتحديث مواقيت الصلاة تلقائياً في الخلفية بدون فتح التطبيق. يرجى الضغط على زر المتابعة لتغيير الإذن من إعدادات الهاتف إلى 'السماح طوال الوقت'."
+                  : "The app requires the location permission set to 'Allow all the time' to update prayer times automatically in the background. Please click continue to change it to 'Allow all the time' in your settings.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158)),
+                onPressed: () => Navigator.pop(dialogCtx, true),
+                child: Text(TranslationService.isArabic ? "متابعة" : "Continue", style: const TextStyle(color: Colors.black)),
+              ),
+            ],
+          ),
+        ) ?? false;
+
+        if (proceed) {
+          await Geolocator.openAppSettings();
+          await Future.delayed(const Duration(seconds: 3));
+          if (!mounted) return;
+          permission = await Geolocator.checkPermission();
+        }
+      }
+
+      if (isAndroid && permission != LocationPermission.always) {
+        throw Exception(TranslationService.isArabic 
+            ? "يرجى منح إذن الموقع 'السماح طوال الوقت' للاستمرار." 
+            : "Please grant 'Allow all the time' location permission to proceed.");
       }
 
       setState(() => _gpsStatusText = TranslationService.t('welcome_gps_status_fetching'));

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
+import 'storage_service.dart';
 
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
@@ -242,7 +243,25 @@ class ApiService {
     throw Exception('Failed to fetch Surah list. No internet and no cached data.');
   }
 
+  static Future<void> _injectTafsirIfCached(int surahNumber, List<Ayah> ayahs) async {
+    try {
+      final storage = await StorageService.getInstance();
+      final tafsirRaw = storage.getString('cached_tafsir_$surahNumber');
+      if (tafsirRaw.isNotEmpty) {
+        final decoded = jsonDecode(tafsirRaw);
+        final tafsirAyahs = decoded['data']['ayahs'] as List<dynamic>;
+        for (int i = 0; i < ayahs.length; i++) {
+          if (i < tafsirAyahs.length) {
+            ayahs[i].tafseer = tafsirAyahs[i]['text'] as String? ?? '';
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   static Future<List<Ayah>> fetchSurahDetails(int surahNumber) async {
+    List<Ayah>? ayahs;
+
     // Primary: AlQuran Cloud (full edition with Tafseer)
     try {
       final response = await http.get(Uri.parse('$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,ar.muyassar')).timeout(const Duration(seconds: 5));
@@ -254,59 +273,70 @@ class ApiService {
         final arabic = editions[0]['ayahs'] as List<dynamic>;
         final english = editions[1]['ayahs'] as List<dynamic>;
         final tafseer = editions.length > 2 ? editions[2]['ayahs'] as List<dynamic>? : null;
-        final ayahs = <Ayah>[];
+        final list = <Ayah>[];
         for (int i = 0; i < arabic.length; i++) {
-          ayahs.add(Ayah.fromEditions(
+          list.add(Ayah.fromEditions(
             arabic[i] as Map<String, dynamic>,
             english[i] as Map<String, dynamic>,
             tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
           ));
         }
-        return ayahs;
+        ayahs = list;
       }
     } catch (_) {}
 
-    // Fallback: Quran.com API (v4)
-    try {
-      final uri = Uri.https('api.quran.com', '/api/v4/verses/by_chapter/$surahNumber', {
-        'translations': '20',
-        'fields': 'text_uthmani',
-        'per_page': '500',
-      });
-      final response = await http.get(uri).timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final body = response.body;
-        await _cacheString('cached_surah_${surahNumber}_details_qurancom', body);
-        final data = jsonDecode(body) as Map<String, dynamic>;
-        final verses = data['verses'] as List<dynamic>;
-        return verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
-      }
-    } catch (_) {}
-
-    // Fallback to local cache
-    final cached = await _getCachedString('cached_surah_${surahNumber}_details');
-    if (cached != null) {
-      final data = jsonDecode(cached) as Map<String, dynamic>;
-      final editions = data['data'] as List<dynamic>;
-      final arabic = editions[0]['ayahs'] as List<dynamic>;
-      final english = editions[1]['ayahs'] as List<dynamic>;
-      final tafseer = editions.length > 2 ? editions[2]['ayahs'] as List<dynamic>? : null;
-      final ayahs = <Ayah>[];
-      for (int i = 0; i < arabic.length; i++) {
-        ayahs.add(Ayah.fromEditions(
-          arabic[i] as Map<String, dynamic>,
-          english[i] as Map<String, dynamic>,
-          tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
-        ));
-      }
-      return ayahs;
+    if (ayahs == null) {
+      // Fallback: Quran.com API (v4)
+      try {
+        final uri = Uri.https('api.quran.com', '/api/v4/verses/by_chapter/$surahNumber', {
+          'translations': '20',
+          'fields': 'text_uthmani',
+          'per_page': '500',
+        });
+        final response = await http.get(uri).timeout(const Duration(seconds: 5));
+        if (response.statusCode == 200) {
+          final body = response.body;
+          await _cacheString('cached_surah_${surahNumber}_details_qurancom', body);
+          final data = jsonDecode(body) as Map<String, dynamic>;
+          final verses = data['verses'] as List<dynamic>;
+          ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
+        }
+      } catch (_) {}
     }
 
-    final cachedQC = await _getCachedString('cached_surah_${surahNumber}_details_qurancom');
-    if (cachedQC != null) {
-      final data = jsonDecode(cachedQC) as Map<String, dynamic>;
-      final verses = data['verses'] as List<dynamic>;
-      return verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
+    if (ayahs == null) {
+      // Fallback to local cache
+      final cached = await _getCachedString('cached_surah_${surahNumber}_details');
+      if (cached != null) {
+        final data = jsonDecode(cached) as Map<String, dynamic>;
+        final editions = data['data'] as List<dynamic>;
+        final arabic = editions[0]['ayahs'] as List<dynamic>;
+        final english = editions[1]['ayahs'] as List<dynamic>;
+        final tafseer = editions.length > 2 ? editions[2]['ayahs'] as List<dynamic>? : null;
+        final list = <Ayah>[];
+        for (int i = 0; i < arabic.length; i++) {
+          list.add(Ayah.fromEditions(
+            arabic[i] as Map<String, dynamic>,
+            english[i] as Map<String, dynamic>,
+            tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
+          ));
+        }
+        ayahs = list;
+      }
+    }
+
+    if (ayahs == null) {
+      final cachedQC = await _getCachedString('cached_surah_${surahNumber}_details_qurancom');
+      if (cachedQC != null) {
+        final data = jsonDecode(cachedQC) as Map<String, dynamic>;
+        final verses = data['verses'] as List<dynamic>;
+        ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
+      }
+    }
+
+    if (ayahs != null) {
+      await _injectTafsirIfCached(surahNumber, ayahs);
+      return ayahs;
     }
 
     throw Exception('Failed to load verses for Surah $surahNumber. No internet and no cached data.');
@@ -348,6 +378,59 @@ class ApiService {
       }
     } catch (_) {}
     return {'city': 'My Location', 'country': 'GPS'};
+  }
+
+  // ─── Monthly Calendar ─────────────────────────────────────────────────────
+  static Future<List<dynamic>> fetchMonthlyCalendar({
+    required double latitude,
+    required double longitude,
+    required int method,
+    required int school,
+    required int month,
+    required int year,
+  }) async {
+    try {
+      final uri = Uri.https('api.aladhan.com', '/v1/calendar', {
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'method': method.toString(),
+        'school': school.toString(),
+        'month': month.toString(),
+        'year': year.toString(),
+      });
+      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        return decoded['data'] as List<dynamic>;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<List<dynamic>> fetchMonthlyCalendarByCity({
+    required String city,
+    required String country,
+    required int method,
+    required int school,
+    required int month,
+    required int year,
+  }) async {
+    try {
+      final uri = Uri.https('api.aladhan.com', '/v1/calendarByCity', {
+        'city': city,
+        'country': country,
+        'method': method.toString(),
+        'school': school.toString(),
+        'month': month.toString(),
+        'year': year.toString(),
+      });
+      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        return decoded['data'] as List<dynamic>;
+      }
+    } catch (_) {}
+    return [];
   }
 
   // ─── Audio URLs ────────────────────────────────────────────────────────

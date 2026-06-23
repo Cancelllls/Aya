@@ -10,15 +10,23 @@ import android.view.WindowManager
 import android.provider.Settings
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.speech.tts.TextToSpeech
+import android.os.Vibrator
+import android.os.VibrationEffect
+import java.util.Locale
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
     private val CHANNEL = "com.noor.noor_app/system"
+    private var tts: TextToSpeech? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize Text-To-Speech
+        tts = TextToSpeech(this, this)
         
         // Natively support up to 144Hz screens by requesting the highest refresh rate mode
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -45,6 +53,27 @@ class MainActivity : FlutterActivity() {
                 window.attributes = params
             } catch (e: Exception) {}
         }
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts?.language = Locale("ar")
+        }
+    }
+
+    private fun speak(text: String, lang: String) {
+        try {
+            tts?.language = Locale(lang)
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        } catch (e: Exception) {}
+    }
+
+    override fun onDestroy() {
+        try {
+            tts?.stop()
+            tts?.shutdown()
+        } catch (e: Exception) {}
+        super.onDestroy()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -97,7 +126,14 @@ class MainActivity : FlutterActivity() {
                             startActivity(intent)
                             result.success(true)
                         } catch (e: Exception) {
-                            result.error("ERROR", e.message, null)
+                            // Fallback to general settings screen
+                            try {
+                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                startActivity(intent)
+                                result.success(true)
+                            } catch (ex: Exception) {
+                                result.error("ERROR", ex.message, null)
+                            }
                         }
                     } else {
                         result.success(true)
@@ -110,6 +146,42 @@ class MainActivity : FlutterActivity() {
                     } else {
                         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     }
+                    result.success(true)
+                }
+                "startLockTask" -> {
+                    try {
+                        startLockTask()
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("ERROR", e.message, null)
+                    }
+                }
+                "stopLockTask" -> {
+                    try {
+                        stopLockTask()
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("ERROR", e.message, null)
+                    }
+                }
+                "vibrate" -> {
+                    val patternList = call.argument<List<Int>>("pattern")
+                    val pattern = patternList?.map { it.toLong() }?.toLongArray() ?: longArrayOf(0, 500, 300, 500)
+                    val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    if (vibrator.hasVibrator()) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator.vibrate(pattern, -1)
+                        }
+                    }
+                    result.success(true)
+                }
+                "speak" -> {
+                    val text = call.argument<String>("text") ?: ""
+                    val lang = call.argument<String>("lang") ?: "ar"
+                    speak(text, lang)
                     result.success(true)
                 }
                 "updateWidget" -> {

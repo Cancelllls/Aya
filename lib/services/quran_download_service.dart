@@ -310,4 +310,63 @@ class QuranDownloadService extends ChangeNotifier {
     _textDownloadProgress = 0.0;
     notifyListeners();
   }
+
+  // --- Tafsir Download Logic ---
+  bool _isDownloadingTafsir = false;
+  double _tafsirDownloadProgress = 0.0;
+  bool get isDownloadingTafsir => _isDownloadingTafsir;
+  double get tafsirDownloadProgress => _tafsirDownloadProgress;
+
+  int getDownloadedTafsirCount(StorageService storage) {
+    int count = 0;
+    for (int i = 1; i <= 114; i++) {
+      final cached = storage.getString('cached_tafsir_$i');
+      if (cached.isNotEmpty) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  Future<void> downloadAllTafsir(StorageService storage) async {
+    if (_isDownloadingTafsir) return;
+    _isDownloadingTafsir = true;
+    _tafsirDownloadProgress = 0.0;
+    notifyListeners();
+
+    int downloaded = 0;
+    for (int i = 1; i <= 114; i++) {
+      if (!_isDownloadingTafsir) break;
+      final cached = storage.getString('cached_tafsir_$i');
+      if (cached.isEmpty) {
+        try {
+          final url = 'https://api.alquran.cloud/v1/surah/$i/ar.muyassar';
+          final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+          if (response.statusCode == 200) {
+            await storage.setString('cached_tafsir_$i', response.body);
+          }
+        } catch (_) {}
+      }
+      downloaded++;
+      _tafsirDownloadProgress = downloaded / 114.0;
+      notifyListeners();
+    }
+
+    _isDownloadingTafsir = false;
+    notifyListeners();
+  }
+
+  void cancelTafsirDownload() {
+    _isDownloadingTafsir = false;
+    notifyListeners();
+  }
+
+  Future<void> deleteAllTafsir(StorageService storage) async {
+    _isDownloadingTafsir = false;
+    for (int i = 1; i <= 114; i++) {
+      await storage.remove('cached_tafsir_$i');
+    }
+    _tafsirDownloadProgress = 0.0;
+    notifyListeners();
+  }
 }

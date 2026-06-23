@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'services/storage_service.dart';
 import 'services/translation_service.dart';
 import 'services/notification_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/quran_screen.dart';
 import 'screens/prayer_times_screen.dart';
-import 'screens/qibla_screen.dart';
-import 'screens/tasbih_screen.dart';
 import 'screens/azkar_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/surah_reader_screen.dart';
@@ -243,6 +242,7 @@ class MainScaffold extends StatefulWidget {
 class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderStateMixin {
   int _currentTab = 0;
   int _azkarInitialTab = 0;
+  int _prayerInitialTab = 0;
   Timer? _focusTimer;
   Timer? _autoLockTimer;
   int _focusTimeRemaining = 0;
@@ -273,12 +273,12 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       } else if (payload == 'azkar_morning') {
         setState(() {
           _azkarInitialTab = 0; // Morning sub-tab
-          _currentTab = 5; // Azkar tab
+          _currentTab = 3; // Azkar tab
         });
       } else if (payload == 'azkar_evening') {
         setState(() {
           _azkarInitialTab = 1; // Evening sub-tab
-          _currentTab = 5; // Azkar tab
+          _currentTab = 3; // Azkar tab
         });
       } else if (payload == 'quran_verse') {
         setState(() {
@@ -286,6 +286,41 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         });
       }
     });
+
+    _fetchLocationOnOpen();
+  }
+
+  Future<void> _fetchLocationOnOpen() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 8),
+          ),
+        );
+        final address = await ApiService.reverseGeocode(position.latitude, position.longitude);
+        await widget.storage.setLocation(
+          address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location'),
+          address['country'] ?? 'GPS',
+          position.latitude,
+          position.longitude,
+          'gps',
+        );
+        final method = widget.storage.getInt('calc_method', defaultValue: 2);
+        final school = widget.storage.getInt('asr_method', defaultValue: 0);
+        final prayerData = await ApiService.fetchPrayerTimes(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          method: method,
+          school: school,
+        );
+        await NotificationService().schedulePrayerAlarms(prayerData, widget.storage);
+      }
+    } catch (_) {}
   }
 
   Future<void> _applyWakeLockOnLaunch() async {
@@ -334,10 +369,27 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       _isFocusOverlayShowing = true;
     });
 
+    final lockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+    if (lockType == 'whole_phone') {
+      try {
+        const platform = MethodChannel('com.noor.noor_app/system');
+        platform.invokeMethod('startLockTask');
+      } catch (_) {}
+    }
+
     _focusTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_focusTimeRemaining <= 1) {
         timer.cancel();
         _pulseController.stop();
+        
+        final lockTypeInner = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+        if (lockTypeInner == 'whole_phone') {
+          try {
+            const platform = MethodChannel('com.noor.noor_app/system');
+            platform.invokeMethod('stopLockTask');
+          } catch (_) {}
+        }
+
         setState(() {
           _focusTimeRemaining = 0;
           _isFocusOverlayShowing = false;
@@ -359,6 +411,15 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   void _bypassFocusLock() {
     _focusTimer?.cancel();
     _pulseController.stop();
+
+    final lockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+    if (lockType == 'whole_phone') {
+      try {
+        const platform = MethodChannel('com.noor.noor_app/system');
+        platform.invokeMethod('stopLockTask');
+      } catch (_) {}
+    }
+
     setState(() {
       _focusTimeRemaining = 0;
       _isFocusOverlayShowing = false;
@@ -425,8 +486,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         onTabChange: (index, {subTab}) {
           setState(() {
             _currentTab = index;
-            if (subTab != null) {
+            if (index == 3 && subTab != null) {
               _azkarInitialTab = subTab;
+            } else if (index == 2 && subTab != null) {
+              _prayerInitialTab = subTab;
             }
           });
         },
@@ -439,12 +502,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       ),
       PrayerTimesScreen(
         storage: widget.storage,
-      ),
-      QiblaScreen(
-        storage: widget.storage,
-      ),
-      TasbihScreen(
-        storage: widget.storage,
+        initialSubTab: _prayerInitialTab,
       ),
       AzkarScreen(
         storage: widget.storage,
@@ -456,8 +514,6 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       TranslationService.t('app_title'),
       TranslationService.t('quran'),
       TranslationService.t('prayer'),
-      TranslationService.t('qibla'),
-      TranslationService.t('tasbih'),
       TranslationService.t('azkar'),
     ];
 
@@ -762,16 +818,6 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
               icon: const Icon(Icons.access_time),
               activeIcon: const Icon(Icons.access_time_filled),
               label: TranslationService.t('prayer'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.explore_outlined),
-              activeIcon: const Icon(Icons.explore),
-              label: TranslationService.t('qibla'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.fingerprint_outlined),
-              activeIcon: const Icon(Icons.fingerprint),
-              label: TranslationService.t('tasbih'),
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.volunteer_activism_outlined),
