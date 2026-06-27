@@ -36,24 +36,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   double _fontSizeMultiplier = 1.0;
   String _readingMode = 'translation'; // 'translation', 'arabic_only', 'tafseer', 'continuous'
   bool _isBookmarked = false;
-  TabController? _tabController;
   int? _bookmarkedAyahNumber;
   int? _lastScrolledAyah;
-  // Helper to map mode to tab index
-  int _modeToIndex(String mode) {
-    switch (mode) {
-      case 'translation':
-        return 0;
-      case 'arabic_only':
-        return 1;
-      case 'tafseer':
-        return 2;
-      case 'continuous':
-        return 3;
-      default:
-        return 0;
-    }
-  }
 
   Ticker? _ticker;
   double _scrollSpeed = 1.0;
@@ -71,11 +55,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
+    final bool immersive = widget.storage.getBool('setting_immersive_reader', defaultValue: false);
+    if (immersive) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+    }
     _currentSurah = widget.surah;
-    _readingMode = widget.storage.getString('reading_mode', defaultValue: 'translation');
+    _readingMode = widget.storage.getString('reading_mode', defaultValue: 'continuous');
     _hideContinuousBorders = widget.storage.getBool('setting_hide_continuous_borders', defaultValue: false);
     _swipeSurahNavigation = widget.storage.getBool('swipe_surah_navigation', defaultValue: true);
-    _tabController = TabController(length: 4, vsync: this, initialIndex: _modeToIndex(_readingMode));
     _loadAyahs();
     _checkBookmarkStatus();
     _loadAllSurahs();
@@ -122,6 +111,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     AudioManager.instance.playState.removeListener(_onPlayStateChanged);
     _ticker?.dispose();
     _resumeTimer?.cancel();
@@ -530,6 +520,83 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
             onPressed: _toggleBookmark,
             tooltip: 'Bookmark Surah',
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.chrome_reader_mode, color: Colors.white),
+            tooltip: TranslationService.isArabic ? "تغيير نمط العرض" : "Change View Mode",
+            color: theme.cardColor,
+            onSelected: (mode) {
+              setState(() {
+                _readingMode = mode;
+                widget.storage.setString('reading_mode', mode);
+              });
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'continuous',
+                child: Row(
+                  children: [
+                    Icon(Icons.menu_book, color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : Colors.white54),
+                    const SizedBox(width: 8),
+                    Text(
+                      TranslationService.isArabic ? "المصحف المتصل" : "Continuous",
+                      style: TextStyle(
+                        color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : null,
+                        fontWeight: _readingMode == 'continuous' ? FontWeight.bold : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'arabic_only',
+                child: Row(
+                  children: [
+                    Icon(Icons.text_format, color: _readingMode == 'arabic_only' ? const Color(0xFFE5C158) : Colors.white54),
+                    const SizedBox(width: 8),
+                    Text(
+                      TranslationService.isArabic ? "العربية فقط" : "Arabic Only",
+                      style: TextStyle(
+                        color: _readingMode == 'arabic_only' ? const Color(0xFFE5C158) : null,
+                        fontWeight: _readingMode == 'arabic_only' ? FontWeight.bold : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'translation',
+                child: Row(
+                  children: [
+                    Icon(Icons.translate, color: _readingMode == 'translation' ? const Color(0xFFE5C158) : Colors.white54),
+                    const SizedBox(width: 8),
+                    Text(
+                      TranslationService.isArabic ? "الترجمة" : "Translation",
+                      style: TextStyle(
+                        color: _readingMode == 'translation' ? const Color(0xFFE5C158) : null,
+                        fontWeight: _readingMode == 'translation' ? FontWeight.bold : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'tafseer',
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: _readingMode == 'tafseer' ? const Color(0xFFE5C158) : Colors.white54),
+                    const SizedBox(width: 8),
+                    Text(
+                      TranslationService.isArabic ? "التفسير" : "Tafsir",
+                      style: TextStyle(
+                        color: _readingMode == 'tafseer' ? const Color(0xFFE5C158) : null,
+                        fontWeight: _readingMode == 'tafseer' ? FontWeight.bold : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.text_fields),
             onPressed: () {
@@ -611,59 +678,8 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                 child: CircularProgressIndicator(color: Color(0xFFE5C158)),
               )
             : Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).canvasColor.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: const Color(0xFFE5C158).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: const Color(0xFFE5C158),
-              unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-              isScrollable: true,
-              tabs: const [
-                Tab(text: 'Translation'),
-                Tab(text: 'Arabic'),
-                Tab(text: 'Tafsir'),
-                Tab(text: 'Continuous'),
-              ],
-              onTap: (index) {
-                setState(() {
-                  switch (index) {
-                    case 0:
-                      _readingMode = 'translation';
-                      break;
-                    case 1:
-                      _readingMode = 'arabic_only';
-                      break;
-                    case 2:
-                      _readingMode = 'tafseer';
-                      break;
-                    case 3:
-                      _readingMode = 'continuous';
-                      break;
-                  }
-                  widget.storage.setString('reading_mode', _readingMode);
-                });
-              },
-            ),
-          ),
-          Expanded(
+                children: [
+                  Expanded(
             child: ValueListenableBuilder<AudioPlayState>(
               valueListenable: AudioManager.instance.playState,
               builder: (context, playState, child) {
@@ -746,8 +762,9 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                               : ListView.builder(
                                   controller: _scrollController,
                                   physics: const BouncingScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 8),
+                                  padding: EdgeInsets.only(
+                                      top: 8,
+                                      bottom: 16.0 + MediaQuery.of(context).padding.bottom + 58.0 + 16.0),
                                   itemCount: _ayahList.length + 1,
                                   itemBuilder: (context, index) {
                                     if (index == 0) {
@@ -972,7 +989,9 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.85),
       child: ListView.builder(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.only(
+            top: 16,
+            bottom: 16.0 + MediaQuery.of(context).padding.bottom + 58.0 + 16.0),
         itemCount: pageCount + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
@@ -1130,6 +1149,7 @@ border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.15), width: 1),
     }
     _scrollSpeed = step;
 
+
     if (_scrollController.hasClients) {
       final maxScroll = _scrollController.position.maxScrollExtent;
       final currentScroll = _scrollController.position.pixels;
@@ -1195,8 +1215,8 @@ border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.15), width: 1),
   }
 
   Widget _buildAutoScrollFloatingControls(bool isDark) {
-    final playState = AudioManager.instance.playState.value;
-    final double bottomOffset = playState.title.isNotEmpty ? 80.0 : 16.0;
+    final double safeBottom = MediaQuery.of(context).padding.bottom;
+    final double bottomOffset = 16.0 + safeBottom;
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),

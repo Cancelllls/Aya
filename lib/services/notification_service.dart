@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
 import 'api_service.dart';
@@ -22,17 +26,26 @@ void backgroundPrayerTimesUpdateCallback() async {
     final storage = await StorageService.getInstance();
     final loc = storage.getLocation();
     if (loc['source'] == 'gps') {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-      final double lat = position.latitude;
-      final double lng = position.longitude;
-      final cityCountry = await ApiService.reverseGeocode(lat, lng);
-      final String city = cityCountry['city'] ?? 'My Location';
-      final String country = cityCountry['country'] ?? 'GPS';
+      Position? position = await ApiService.getBestLocation();
+      double lat;
+      double lng;
+      String city;
+      String country;
+
+      if (position != null) {
+        lat = position.latitude;
+        lng = position.longitude;
+        final cityCountry = await ApiService.reverseGeocode(lat, lng);
+        city = cityCountry['city'] ?? 'My Location';
+        country = cityCountry['country'] ?? 'GPS';
+      } else {
+        final ipLoc = await ApiService.fetchLocationByIP();
+        city = ipLoc['city']!;
+        country = ipLoc['country']!;
+        lat = double.parse(ipLoc['latitude']!);
+        lng = double.parse(ipLoc['longitude']!);
+      }
+
       await storage.setLocation(city, country, lat, lng, 'gps');
       final method = storage.getInt('calc_method', defaultValue: 2);
       final school = storage.getInt('asr_method', defaultValue: 0);
@@ -56,9 +69,11 @@ void backgroundPreAdhanCallback(int id) async {
   try {
     final storage = await StorageService.getInstance();
     final alertMode = storage.getString('pre_adhan_alert_mode', defaultValue: 'vibrate');
-    const platform = MethodChannel('com.noor.noor_app/system');
+    const platform = MethodChannel('com.quran.aya/system');
     
-    if (alertMode == 'vibrate') {
+    if (alertMode == 'silent') {
+      return;
+    } else if (alertMode == 'vibrate') {
       await platform.invokeMethod('vibrate', {
         'pattern': [0, 200, 200, 500, 200, 1000]
       });
@@ -80,7 +95,7 @@ void backgroundAdhanCallback(int id) async {
   try {
     final storage = await StorageService.getInstance();
     final adhanMode = storage.getString('adhan_alert_mode', defaultValue: 'real_reciter');
-    const platform = MethodChannel('com.noor.noor_app/system');
+    const platform = MethodChannel('com.quran.aya/system');
     
     if (adhanMode == 'vibrate') {
       await platform.invokeMethod('vibrate', {
@@ -129,7 +144,41 @@ void backgroundAdhanCallback(int id) async {
       }
       
       final player = AudioPlayer();
-      await player.play(UrlSource(url));
+      
+      final receivePort = ReceivePort();
+      IsolateNameServer.removePortNameMapping('adhan_stop_port');
+      IsolateNameServer.registerPortWithName(receivePort.sendPort, 'adhan_stop_port');
+      
+      receivePort.listen((message) {
+        if (message == 'stop') {
+          player.stop();
+          receivePort.close();
+          IsolateNameServer.removePortNameMapping('adhan_stop_port');
+        }
+      });
+
+      player.onPlayerComplete.listen((_) {
+        receivePort.close();
+        IsolateNameServer.removePortNameMapping('adhan_stop_port');
+      });
+      
+      // Try playing offline first
+      final dir = await getApplicationDocumentsDirectory();
+      final localPath = '${dir.path}/adhan_audio/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
+      final localFile = File(localPath);
+      if (await localFile.exists()) {
+        await player.play(DeviceFileSource(localPath));
+      } else {
+        await player.play(UrlSource(url));
+        // Download it in the background for next time
+        try {
+          await localFile.parent.create(recursive: true);
+          final response = await http.get(Uri.parse(url));
+          if (response.statusCode == 200) {
+            await localFile.writeAsBytes(response.bodyBytes);
+          }
+        } catch (_) {}
+      }
     }
   } catch (e) {
     // ignore: avoid_print
@@ -141,6 +190,118 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
+  static void stopActiveAthan() {
+    final sendPort = IsolateNameServer.lookupPortByName('adhan_stop_port');
+    if (sendPort != null) {
+      sendPort.send('stop');
+    }
+  }
+
+  static Future<void> downloadAllAthanFiles() async {
+    final reciters = ['mishary', 'abdul_basit', 'makkah', 'madinah'];
+    final client = http.Client();
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final folder = Directory('${dir.path}/adhan_audio');
+      if (!await folder.exists()) {
+        await folder.create(recursive: true);
+      }
+
+      for (final reciter in reciters) {
+        for (final isFajr in [true, false]) {
+          final localPath = '${folder.path}/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
+          final localFile = File(localPath);
+          if (await localFile.exists()) {
+            continue;
+          }
+
+          String url = '';
+          if (isFajr) {
+            switch (reciter) {
+              case 'mishary':
+                url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
+                break;
+              case 'abdul_basit':
+                url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
+                break;
+              case 'makkah':
+                url = 'https://www.islamcan.com/adhan/audio/azan2.mp3';
+                break;
+              case 'madinah':
+                url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+                break;
+            }
+          } else {
+            switch (reciter) {
+              case 'mishary':
+                url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
+                break;
+              case 'abdul_basit':
+                url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
+                break;
+              case 'makkah':
+                url = 'https://www.islamcan.com/adhan/audio/azan20.mp3';
+                break;
+              case 'madinah':
+                url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+                break;
+            }
+          }
+
+          try {
+            final response = await client.get(Uri.parse(url));
+            if (response.statusCode == 200) {
+              await localFile.writeAsBytes(response.bodyBytes);
+            }
+          } catch (_) {}
+        }
+      }
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<void> scheduleHijriEventReminder({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+  }) async {
+    if (scheduledDate.isBefore(DateTime.now())) return;
+    
+    const androidDetails = AndroidNotificationDetails(
+      'hijri_reminders',
+      'Hijri Event Reminders',
+      channelDescription: 'Reminders for special Islamic Hijri events',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const notificationDetails = NotificationDetails(android: androidDetails);
+    
+    final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tzDateTime,
+        notificationDetails: notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'prayer_times',
+      );
+    } catch (_) {
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tzDateTime,
+        notificationDetails: notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        payload: 'prayer_times',
+      );
+    }
+  }
 
   static bool timezoneFallbackToUtc = false;
   static final StreamController<String?> selectNotificationStream = StreamController<String?>.broadcast();
@@ -184,6 +345,20 @@ class NotificationService {
       final storage = await StorageService.getInstance();
       await scheduleDailyReminders(storage);
     } catch (_) {}
+  }
+
+  Future<bool> checkPermissions() async {
+    if (Platform.isAndroid) {
+      try {
+        final bool? enabled = await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.areNotificationsEnabled();
+        return enabled ?? false;
+      } catch (_) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<bool> requestPermissions() async {
@@ -292,19 +467,29 @@ class NotificationService {
             );
           }
 
-          // Schedule pre-Athan notification
-            final preAzanTime = scheduledDate.subtract(const Duration(minutes: 10));
+          // Dynamic Pre-Adhan Timing and alerts
+          final int preAdhanMins = storage.getInt('pre_adhan_duration', defaultValue: 10);
+          final String preAdhanAlertMode = storage.getString('pre_adhan_alert_mode', defaultValue: 'vibrate');
+          
+          final isAr = TranslationService.isArabic;
+          final localizedName = isAr ? _arabicPrayerName(name) : name;
+
+          if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
+            final preAzanTime = scheduledDate.subtract(Duration(minutes: preAdhanMins));
             if (preAzanTime.isAfter(now)) {
               final tzPreDateTime = tz.TZDateTime.from(preAzanTime, tz.local);
               final preNotificationId = notificationId + 2000;
               
+              final preTitle = isAr ? 'اقترب موعد الأذان' : 'Athan is approaching';
+              final preBody = isAr 
+                  ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
+                  : '$preAdhanMins minutes remaining until $localizedName Athan.';
+
               try {
                 await _notificationsPlugin.zonedSchedule(
                   id: preNotificationId,
-                  title: TranslationService.isArabic ? 'اقترب موعد الأذان' : 'Athan is approaching',
-                  body: TranslationService.isArabic 
-                      ? 'بقي ١٠ دقائق على أذان الـ $name.'
-                      : '10 minutes remaining until $name Athan.',
+                  title: preTitle,
+                  body: preBody,
                   scheduledDate: tzPreDateTime,
                   notificationDetails: notificationDetails,
                   androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -313,10 +498,8 @@ class NotificationService {
               } catch (_) {
                 await _notificationsPlugin.zonedSchedule(
                   id: preNotificationId,
-                  title: TranslationService.isArabic ? 'اقترب موعد الأذان' : 'Athan is approaching',
-                  body: TranslationService.isArabic 
-                      ? 'بقي ١٠ دقائق على أذان الـ $name.'
-                      : '10 minutes remaining until $name Athan.',
+                  title: preTitle,
+                  body: preBody,
                   scheduledDate: tzPreDateTime,
                   notificationDetails: notificationDetails,
                   androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -324,21 +507,39 @@ class NotificationService {
                 );
               }
             }
+          }
 
-            // Schedule background alarms on Android
-            if (Platform.isAndroid) {
-              final adhanAlarmId = notificationId + 4000;
-              try {
-                await AndroidAlarmManager.oneShotAt(
-                  scheduledDate,
-                  adhanAlarmId,
-                  backgroundAdhanCallback,
-                  exact: true,
-                  wakeup: true,
-                );
-              } catch (_) {}
+          // Schedule main Athan notification with localized names
+          try {
+            await _notificationsPlugin.cancel(id: notificationId); // clean old
+            await _notificationsPlugin.zonedSchedule(
+              id: notificationId,
+              title: isAr ? 'حان الآن موعد صلاة $localizedName' : 'Time for $localizedName',
+              body: isAr 
+                  ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.' 
+                  : 'It is time for the $localizedName prayer.',
+              scheduledDate: tzDateTime,
+              notificationDetails: notificationDetails,
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              payload: 'prayer_times',
+            );
+          } catch (_) {}
 
-              final preAdhanTimeVal = scheduledDate.subtract(const Duration(minutes: 10));
+          // Schedule background alarms on Android
+          if (Platform.isAndroid) {
+            final adhanAlarmId = notificationId + 4000;
+            try {
+              await AndroidAlarmManager.oneShotAt(
+                scheduledDate,
+                adhanAlarmId,
+                backgroundAdhanCallback,
+                exact: true,
+                wakeup: true,
+              );
+            } catch (_) {}
+
+            if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
+              final preAdhanTimeVal = scheduledDate.subtract(Duration(minutes: preAdhanMins));
               if (preAdhanTimeVal.isAfter(now)) {
                 final preAdhanAlarmId = notificationId + 3000;
                 try {
@@ -352,6 +553,7 @@ class NotificationService {
                 } catch (_) {}
               }
             }
+          }
 
           // Cancel previous background alarm for this prayer time to prevent duplicates
           final alarmId = notificationId + 1000;
@@ -377,6 +579,18 @@ class NotificationService {
         }
       }
       id++;
+    }
+  }
+
+  String _arabicPrayerName(String englishName) {
+    switch (englishName.toLowerCase()) {
+      case 'fajr': return 'الفجر';
+      case 'sunrise': return 'الشروق';
+      case 'dhuhr': return 'الظهر';
+      case 'asr': return 'العصر';
+      case 'maghrib': return 'المغرب';
+      case 'isha': return 'العشاء';
+      default: return englishName;
     }
   }
 
@@ -511,6 +725,7 @@ class NotificationService {
           iOS: iosDetails,
         );
 
+        final versePayload = 'quran_verse:${verseObj.surahNumber}:${verseObj.ayahNumber}';
         try {
           await _notificationsPlugin.zonedSchedule(
             id: 3002 + i,
@@ -519,7 +734,7 @@ class NotificationService {
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-            payload: 'quran_verse',
+            payload: versePayload,
           );
         } catch (_) {
           await _notificationsPlugin.zonedSchedule(
@@ -529,7 +744,7 @@ class NotificationService {
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-            payload: 'quran_verse',
+            payload: versePayload,
           );
         }
       }

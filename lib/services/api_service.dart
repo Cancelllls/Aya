@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
@@ -35,13 +36,22 @@ class ApiService {
       if (jsonStr != null) {
         final Map<String, dynamic> decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
         
-        // Invalidate cache after 24 hours
+        // Invalidate cache if it was created before the most recent 7:00 AM
         if (decoded.containsKey('timestamp')) {
           final int timestamp = decoded['timestamp'] as int;
-          final int ageMs = DateTime.now().millisecondsSinceEpoch - timestamp;
-          if (ageMs > 24 * 3600 * 1000) {
+          final DateTime cachedTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+          final DateTime now = DateTime.now();
+          
+          // Calculate the most recent 7:00 AM
+          DateTime mostRecent7am = DateTime(now.year, now.month, now.day, 7, 0, 0);
+          if (now.isBefore(mostRecent7am)) {
+            // If it is currently before 7 AM today, the most recent 7 AM was yesterday
+            mostRecent7am = mostRecent7am.subtract(const Duration(days: 1));
+          }
+          
+          if (cachedTime.isBefore(mostRecent7am)) {
             // ignore: avoid_print
-            print('Cached prayer times expired for key: $key');
+            print('Cached prayer times expired at 7:00 AM for key: $key');
             return null;
           }
         }
@@ -262,7 +272,44 @@ class ApiService {
   static Future<List<Ayah>> fetchSurahDetails(int surahNumber) async {
     List<Ayah>? ayahs;
 
-    // Primary: AlQuran Cloud (full edition with Tafseer)
+    // 1. Offline first: Try to get from local cache
+    try {
+      final cached = await _getCachedString('cached_surah_${surahNumber}_details');
+      if (cached != null) {
+        final data = jsonDecode(cached) as Map<String, dynamic>;
+        final editions = data['data'] as List<dynamic>;
+        final arabic = editions[0]['ayahs'] as List<dynamic>;
+        final english = editions[1]['ayahs'] as List<dynamic>;
+        final tafseer = editions.length > 2 ? editions[2]['ayahs'] as List<dynamic>? : null;
+        final list = <Ayah>[];
+        for (int i = 0; i < arabic.length; i++) {
+          list.add(Ayah.fromEditions(
+            arabic[i] as Map<String, dynamic>,
+            english[i] as Map<String, dynamic>,
+            tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
+          ));
+        }
+        ayahs = list;
+      }
+    } catch (_) {}
+
+    if (ayahs == null) {
+      try {
+        final cachedQC = await _getCachedString('cached_surah_${surahNumber}_details_qurancom');
+        if (cachedQC != null) {
+          final data = jsonDecode(cachedQC) as Map<String, dynamic>;
+          final verses = data['verses'] as List<dynamic>;
+          ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
+        }
+      } catch (_) {}
+    }
+
+    if (ayahs != null) {
+      await _injectTafsirIfCached(surahNumber, ayahs);
+      return ayahs;
+    }
+
+    // 2. Online fallback: Fetch from AlQuran Cloud
     try {
       final response = await http.get(Uri.parse('$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,ar.muyassar')).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
@@ -286,7 +333,7 @@ class ApiService {
     } catch (_) {}
 
     if (ayahs == null) {
-      // Fallback: Quran.com API (v4)
+      // 3. Fallback: Fetch from Quran.com
       try {
         final uri = Uri.https('api.quran.com', '/api/v4/verses/by_chapter/$surahNumber', {
           'translations': '20',
@@ -302,36 +349,6 @@ class ApiService {
           ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
         }
       } catch (_) {}
-    }
-
-    if (ayahs == null) {
-      // Fallback to local cache
-      final cached = await _getCachedString('cached_surah_${surahNumber}_details');
-      if (cached != null) {
-        final data = jsonDecode(cached) as Map<String, dynamic>;
-        final editions = data['data'] as List<dynamic>;
-        final arabic = editions[0]['ayahs'] as List<dynamic>;
-        final english = editions[1]['ayahs'] as List<dynamic>;
-        final tafseer = editions.length > 2 ? editions[2]['ayahs'] as List<dynamic>? : null;
-        final list = <Ayah>[];
-        for (int i = 0; i < arabic.length; i++) {
-          list.add(Ayah.fromEditions(
-            arabic[i] as Map<String, dynamic>,
-            english[i] as Map<String, dynamic>,
-            tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
-          ));
-        }
-        ayahs = list;
-      }
-    }
-
-    if (ayahs == null) {
-      final cachedQC = await _getCachedString('cached_surah_${surahNumber}_details_qurancom');
-      if (cachedQC != null) {
-        final data = jsonDecode(cachedQC) as Map<String, dynamic>;
-        final verses = data['verses'] as List<dynamic>;
-        ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
-      }
     }
 
     if (ayahs != null) {
@@ -378,6 +395,59 @@ class ApiService {
       }
     } catch (_) {}
     return {'city': 'My Location', 'country': 'GPS'};
+  }
+
+  static Future<Position?> getBestLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 7),
+        ),
+      );
+      return position;
+    } catch (e) {
+      // ignore: avoid_print
+      print('getCurrentPosition failed: $e. Trying last known position...');
+    }
+
+    try {
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) return lastKnown;
+    } catch (e) {
+      // ignore: avoid_print
+      print('getLastKnownPosition failed: $e');
+    }
+
+    return null;
+  }
+
+  static Future<Map<String, String>> fetchLocationByIP() async {
+    try {
+      final response = await http.get(Uri.parse('https://ipapi.co/json')).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final city = data['city'] as String? ?? 'Cairo';
+        final country = data['country_name'] as String? ?? 'Egypt';
+        final lat = double.parse((data['latitude'] ?? 30.0444).toString());
+        final lon = double.parse((data['longitude'] ?? 31.2357).toString());
+        return {
+          'city': city,
+          'country': country,
+          'latitude': lat.toString(),
+          'longitude': lon.toString(),
+        };
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('IP-based location failed: $e');
+    }
+    return {
+      'city': 'Cairo',
+      'country': 'Egypt',
+      'latitude': '30.0444',
+      'longitude': '31.2357',
+    };
   }
 
   // ─── Monthly Calendar ─────────────────────────────────────────────────────

@@ -159,7 +159,7 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
     await widget.storage.setInt('widget_tasbih_count', _count);
     await widget.storage.setInt('widget_tasbih_target', _target);
     try {
-      const platform = MethodChannel('com.noor.noor_app/system');
+      const platform = MethodChannel('com.quran.aya/system');
       await platform.invokeMethod('updateWidget');
     } catch (_) {}
   }
@@ -250,8 +250,18 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
     final theme = Theme.of(context);
     final progressPercent = (_count / _target).clamp(0.0, 1.0);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          TranslationService.t('digital_tasbih'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        elevation: 0,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
         // Adapt layout for mobile sizes
         final isCompact = constraints.maxHeight < 550;
 
@@ -421,6 +431,7 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 }

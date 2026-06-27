@@ -4,6 +4,8 @@
     android:minHeight="70dp"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/noor_dhikr_widget"
+    android:previewLayout="@layout/noor_dhikr_widget"
+    android:description="@string/widget_dhikr_description"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">
 </appwidget-provider>

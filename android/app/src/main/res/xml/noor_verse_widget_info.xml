@@ -4,6 +4,8 @@
     android:minHeight="140dp"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/noor_verse_widget"
+    android:previewLayout="@layout/noor_verse_widget"
+    android:description="@string/widget_verse_description"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">
 </appwidget-provider>

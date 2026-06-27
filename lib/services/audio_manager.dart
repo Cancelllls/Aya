@@ -78,7 +78,6 @@ class AudioManager {
         iOS: AudioContextIOS(
           category: AVAudioSessionCategory.playback,
           options: {
-            AVAudioSessionOptions.defaultToSpeaker,
             AVAudioSessionOptions.mixWithOthers,
           },
         ),

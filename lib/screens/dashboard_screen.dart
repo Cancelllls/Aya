@@ -319,7 +319,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (nextDisplay != lastDisplay) {
       await prefs.setString('widget_widget_next_display', nextDisplay);
       try {
-        const platform = MethodChannel('com.noor.noor_app/system');
+        const platform = MethodChannel('com.quran.aya/system');
         await platform.invokeMethod('updateWidget');
       } catch (_) {}
     }

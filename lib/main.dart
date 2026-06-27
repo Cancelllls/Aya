@@ -9,6 +9,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/quran_screen.dart';
 import 'screens/prayer_times_screen.dart';
 import 'screens/azkar_screen.dart';
+import 'screens/hadith_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/surah_reader_screen.dart';
 import 'screens/quran_download_screen.dart';
@@ -92,7 +93,17 @@ class _AyaAppState extends State<AyaApp> {
             selectedItemColor: Color(0xFFB45309),
             unselectedItemColor: Color(0xFF94A3B8),
             elevation: 8,
-          ), dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+          dividerColor: const Color(0xFFE2E8F0),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB45309), width: 2)),
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         );
       case 'black':
         return ThemeData(
@@ -116,7 +127,17 @@ class _AyaAppState extends State<AyaApp> {
             selectedItemColor: AppColors.gold,
             unselectedItemColor: Color(0xFF525252),
             elevation: 8,
-          ), dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1A1A1A)),
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1A1A1A)),
+          dividerColor: const Color(0xFF262626),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF404040))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF404040))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 2)),
+            filled: true,
+            fillColor: const Color(0xFF0D0D0D),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         );
       case 'dark_monet':
         return ThemeData(
@@ -140,7 +161,17 @@ class _AyaAppState extends State<AyaApp> {
             selectedItemColor: Color(0xFF14B8A6),
             unselectedItemColor: Color(0xFF4C5D5A),
             elevation: 8,
-          ), dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1D2927)),
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1D2927)),
+          dividerColor: const Color(0xFF233331),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2D4341))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2D4341))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF14B8A6), width: 2)),
+            filled: true,
+            fillColor: const Color(0xFF161F1E),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         );
       case 'white_monet':
         return ThemeData(
@@ -164,7 +195,17 @@ class _AyaAppState extends State<AyaApp> {
             selectedItemColor: AppColors.teal,
             unselectedItemColor: Color(0xFF94A3B8),
             elevation: 8,
-          ), dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+          dividerColor: const Color(0xFFE2E8F0),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB2CFCA))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB2CFCA))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.teal, width: 2)),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         );
       case 'dark':
       default:
@@ -189,7 +230,17 @@ class _AyaAppState extends State<AyaApp> {
             selectedItemColor: AppColors.gold,
             unselectedItemColor: Color(0xFF475569),
             elevation: 8,
-          ), dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF161C2C)),
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF161C2C)),
+          dividerColor: const Color(0xFF1E293B),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A3A55))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A3A55))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 2)),
+            filled: true,
+            fillColor: const Color(0xFF111520),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         );
     }
   }
@@ -265,7 +316,23 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
 
     _applyWakeLockOnLaunch();
 
+    const platform = MethodChannel('com.quran.aya/system');
+    platform.setMethodCallHandler((call) async {
+      final gesture = widget.storage.getString('athan_stop_gesture', defaultValue: 'both');
+      if (gesture == 'none') return;
+      if (call.method == 'volumeKeyPressed') {
+        if (gesture == 'both' || gesture == 'volume_only') {
+          NotificationService.stopActiveAthan();
+        }
+      } else if (call.method == 'phoneFlippedFaceDown') {
+        if (gesture == 'both' || gesture == 'flip_only') {
+          NotificationService.stopActiveAthan();
+        }
+      }
+    });
+
     _notificationSubscription = NotificationService.selectNotificationStream.stream.listen((payload) {
+      if (payload == null) return;
       if (payload == 'prayer_times') {
         setState(() {
           _currentTab = 2; // Switch to Prayer Times tab
@@ -280,10 +347,21 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
           _azkarInitialTab = 1; // Evening sub-tab
           _currentTab = 3; // Azkar tab
         });
-      } else if (payload == 'quran_verse') {
+      } else if (payload.startsWith('quran_verse')) {
+        // Switch to Quran tab
         setState(() {
-          _currentTab = 1; // Quran tab
+          _currentTab = 1;
         });
+        
+        // If payload contains specific surah:ayah (e.g. quran_verse:2:255)
+        final parts = payload.split(':');
+        if (parts.length >= 3) {
+          final surahNum = int.tryParse(parts[1]);
+          final ayahNum = int.tryParse(parts[2]);
+          if (surahNum != null && ayahNum != null) {
+            _navigateToSpecificVerse(surahNum, ayahNum);
+          }
+        }
       }
     });
 
@@ -296,25 +374,32 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       if (!serviceEnabled) return;
       final permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 8),
-          ),
-        );
-        final address = await ApiService.reverseGeocode(position.latitude, position.longitude);
-        await widget.storage.setLocation(
-          address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location'),
-          address['country'] ?? 'GPS',
-          position.latitude,
-          position.longitude,
-          'gps',
-        );
+        Position? position = await ApiService.getBestLocation();
+        double lat;
+        double lon;
+        String city;
+        String country;
+
+        if (position != null) {
+          lat = position.latitude;
+          lon = position.longitude;
+          final address = await ApiService.reverseGeocode(lat, lon);
+          city = address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location');
+          country = address['country'] ?? 'GPS';
+        } else {
+          final ipLoc = await ApiService.fetchLocationByIP();
+          city = ipLoc['city']!;
+          country = ipLoc['country']!;
+          lat = double.parse(ipLoc['latitude']!);
+          lon = double.parse(ipLoc['longitude']!);
+        }
+
+        await widget.storage.setLocation(city, country, lat, lon, 'gps');
         final method = widget.storage.getInt('calc_method', defaultValue: 2);
         final school = widget.storage.getInt('asr_method', defaultValue: 0);
         final prayerData = await ApiService.fetchPrayerTimes(
-          latitude: position.latitude,
-          longitude: position.longitude,
+          latitude: lat,
+          longitude: lon,
           method: method,
           school: school,
         );
@@ -327,7 +412,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     final keepAwake = widget.storage.getBool('keep_screen_awake', defaultValue: false);
     if (keepAwake) {
       try {
-        const platform = MethodChannel('com.noor.noor_app/system');
+        const platform = MethodChannel('com.quran.aya/system');
         await platform.invokeMethod('setKeepScreenOn', {'enabled': true});
       } catch (_) {}
     }
@@ -372,7 +457,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     final lockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
     if (lockType == 'whole_phone') {
       try {
-        const platform = MethodChannel('com.noor.noor_app/system');
+        const platform = MethodChannel('com.quran.aya/system');
         platform.invokeMethod('startLockTask');
       } catch (_) {}
     }
@@ -385,7 +470,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         final lockTypeInner = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
         if (lockTypeInner == 'whole_phone') {
           try {
-            const platform = MethodChannel('com.noor.noor_app/system');
+            const platform = MethodChannel('com.quran.aya/system');
             platform.invokeMethod('stopLockTask');
           } catch (_) {}
         }
@@ -415,7 +500,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     final lockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
     if (lockType == 'whole_phone') {
       try {
-        const platform = MethodChannel('com.noor.noor_app/system');
+        const platform = MethodChannel('com.quran.aya/system');
         platform.invokeMethod('stopLockTask');
       } catch (_) {}
     }
@@ -430,6 +515,25 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         backgroundColor: Colors.redAccent,
       ),
     );
+  }
+
+  void _navigateToSpecificVerse(int surahNum, int ayahNum) async {
+    try {
+      final surahs = await ApiService.fetchSurahList();
+      final surah = surahs.firstWhere((s) => s.number == surahNum);
+      if (mounted) {
+        unawaited(Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SurahReaderScreen(
+              surah: surah,
+              storage: widget.storage,
+              initialAyahNumber: ayahNum,
+            ),
+          ),
+        ));
+      }
+    } catch (_) {}
   }
 
   Map<String, dynamic> _getLastBookmark() {
@@ -484,11 +588,17 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       DashboardScreen(
         storage: widget.storage, 
         onTabChange: (index, {subTab}) {
+          int targetTab = index;
+          if (index == 2) {
+            targetTab = 3;
+          } else if (index == 3) {
+            targetTab = 4;
+          }
           setState(() {
-            _currentTab = index;
-            if (index == 3 && subTab != null) {
+            _currentTab = targetTab;
+            if (targetTab == 4 && subTab != null) {
               _azkarInitialTab = subTab;
-            } else if (index == 2 && subTab != null) {
+            } else if (targetTab == 3 && subTab != null) {
               _prayerInitialTab = subTab;
             }
           });
@@ -499,6 +609,9 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       ),
       QuranScreen(
         storage: widget.storage, 
+      ),
+      HadithScreen(
+        storage: widget.storage,
       ),
       PrayerTimesScreen(
         storage: widget.storage,
@@ -513,6 +626,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     final List<String> tabTitles = [
       TranslationService.t('app_title'),
       TranslationService.t('quran'),
+      TranslationService.isArabic ? "الحديث الشريف" : "Holy Hadith",
       TranslationService.t('prayer'),
       TranslationService.t('azkar'),
     ];
@@ -545,6 +659,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         await SystemNavigator.pop();
       },
       child: Scaffold(
+        extendBody: false,
         appBar: AppBar(
           title: Text(
             tabTitles[_currentTab],
@@ -586,6 +701,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
           valueListenable: AudioManager.instance.playState,
           builder: (context, audioState, child) {
             final hasPlayer = audioState.title.isNotEmpty;
+
             return Stack(
               children: [
                 Padding(
@@ -793,39 +909,91 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         );
       },
     ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentTab,
-          onTap: (index) {
-            setState(() {
-              _currentTab = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.dashboard_outlined),
-              activeIcon: const Icon(Icons.dashboard),
-              label: TranslationService.t('home'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.menu_book_outlined),
-              activeIcon: const Icon(Icons.menu_book),
-              label: TranslationService.t('quran'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.access_time),
-              activeIcon: const Icon(Icons.access_time_filled),
-              label: TranslationService.t('prayer'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.volunteer_activism_outlined),
-              activeIcon: const Icon(Icons.volunteer_activism),
-              label: TranslationService.t('azkar'),
-            ),
-          ],
-        ),
+        bottomNavigationBar: () {
+          final bottomNavbarStyle = widget.storage.getString('bottom_navbar_style', defaultValue: 'solid');
+          final bottomBarWidget = BottomNavigationBar(
+            currentIndex: _currentTab,
+            onTap: (index) {
+              setState(() {
+                _currentTab = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            selectedFontSize: 11,
+            unselectedFontSize: 11,
+            backgroundColor: bottomNavbarStyle == 'floating' ? Colors.transparent : theme.bottomNavigationBarTheme.backgroundColor,
+            elevation: bottomNavbarStyle == 'floating' ? 0 : null,
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.dashboard_outlined),
+                activeIcon: const Icon(Icons.dashboard),
+                label: TranslationService.t('home'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.menu_book_outlined),
+                activeIcon: const Icon(Icons.menu_book),
+                label: TranslationService.t('quran'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.import_contacts_outlined),
+                activeIcon: const Icon(Icons.import_contacts),
+                label: TranslationService.isArabic ? "الحديث" : "Hadith",
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.access_time),
+                activeIcon: const Icon(Icons.access_time_filled),
+                label: TranslationService.t('prayer'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.volunteer_activism_outlined),
+                activeIcon: const Icon(Icons.volunteer_activism),
+                label: TranslationService.t('azkar'),
+              ),
+            ],
+          );
+          if (bottomNavbarStyle == 'floating') {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16.0,
+                0.0,
+                16.0,
+                16.0 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.cardColor.withOpacity(0.60),
+                  borderRadius: BorderRadius.circular(28.0),
+                  border: Border.all(
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.black.withOpacity(0.06),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                // Theme override forces the BottomNavigationBar to paint
+                // transparent — our container provides the background.
+                child: Theme(
+                  data: theme.copyWith(canvasColor: Colors.transparent),
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeBottom: true,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28.0),
+                      child: bottomBarWidget,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+          return bottomBarWidget;
+        }(),
       ),
     );
   }

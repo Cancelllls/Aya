@@ -1,4 +1,4 @@
-package com.noor.noor_app
+package com.quran.aya
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider

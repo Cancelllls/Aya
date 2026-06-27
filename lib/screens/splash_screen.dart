@@ -1,9 +1,15 @@
+import 'dart:io';
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import '../services/notification_service.dart';
 import 'welcome_screen.dart';
+import 'permission_guard_screen.dart';
 import '../main.dart';
 import '../widgets/islamic_logo_painter.dart';
 
@@ -52,9 +58,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _controller.forward();
 
     // Navigate to next screen after animation completes
-    Future.delayed(const Duration(milliseconds: 2800), () {
-      if (mounted) {
-        final isFirstTime = widget.storage.getBool('first_time_v2', defaultValue: true);
+    Future.delayed(const Duration(milliseconds: 2800), () async {
+      if (!mounted) return;
+
+      // Check permissions
+      final gpsPerm = await Geolocator.checkPermission();
+      final gpsOk = gpsPerm == LocationPermission.always || gpsPerm == LocationPermission.whileInUse;
+      final notifOk = await NotificationService().checkPermissions();
+      bool batteryOk = true;
+      try {
+        const platform = MethodChannel('com.quran.aya/system');
+        batteryOk = await platform.invokeMethod<bool>('checkBatteryOptimization') ?? true;
+      } catch (_) {}
+
+      final allGranted = gpsOk && notifOk && batteryOk;
+      final isFirstTime = widget.storage.getBool('first_time_v2', defaultValue: true);
+      if (isFirstTime && widget.storage.getString('lang_code').isEmpty) {
+        // Auto-detect language
+        final locale = Platform.localeName.toLowerCase();
+        final detectedLang = locale.startsWith('ar') ? 'ar' : 'en';
+        await widget.storage.setString('lang_code', detectedLang);
+        TranslationService.setLanguage(detectedLang);
+        widget.onThemeChanged(); // Update main directionality instantly
+      }
+
+      void navigateToDestination() {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
@@ -90,6 +119,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             transitionDuration: const Duration(milliseconds: 500),
           ),
         );
+      }
+
+      if (isFirstTime) {
+        navigateToDestination();
+      } else {
+        if (allGranted) {
+          navigateToDestination();
+        } else {
+          if (!mounted) return;
+          unawaited(Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PermissionGuardScreen(
+                storage: widget.storage,
+                onPassed: navigateToDestination,
+              ),
+            ),
+          ));
+        }
       }
     });
   }

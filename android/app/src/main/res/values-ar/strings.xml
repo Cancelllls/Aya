@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_prayer_times_label">آية - مواقيت الصلاة</string>
+    <string name="widget_prayer_times_description">يعرض مواقيت الصلاة لليوم حسب موقعك الجغرافي.</string>
+    
+    <string name="widget_verse_label">آية - آية اليوم</string>
+    <string name="widget_verse_description">يعرض آية مختارة يومياً من القرآن الكريم.</string>
+    
+    <string name="widget_dhikr_label">آية - ذِكر اليوم</string>
+    <string name="widget_dhikr_description">يعرض الأدعية والأذكار اليومية المأثورة.</string>
+    
+    <string name="widget_hadith_label">آية - حديث اليوم</string>
+    <string name="widget_hadith_description">يعرض حديثاً شريفاً مأثوراً يومياً.</string>
+    
+    <string name="widget_tasbih_label">آية - مسبحة الأذكار</string>
+    <string name="widget_tasbih_description">عداد تسبيح سريع للأذكار اليومية باللمس.</string>
+</resources>

@@ -1,4 +1,4 @@
-package com.noor.noor_app
+package com.quran.aya
 
 import android.content.Context
 import android.content.Intent
@@ -17,16 +17,28 @@ import java.util.Locale
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 
-class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
-    private val CHANNEL = "com.noor.noor_app/system"
+class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEventListener {
+    private val CHANNEL = "com.quran.aya/system"
     private var tts: TextToSpeech? = null
+    private var channel: MethodChannel? = null
+    private var sensorManager: SensorManager? = null
+    private var accelerometer: Sensor? = null
+    private var lastZ = 0.0f
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
         
         // Initialize Text-To-Speech
         tts = TextToSpeech(this, this)
+        
+        // Initialize Sensors
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         
         // Natively support up to 144Hz screens by requesting the highest refresh rate mode
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -79,8 +91,13 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        val mc = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        channel = mc
+        mc.setMethodCallHandler { call, result ->
             when (call.method) {
+                "getAndroidSdkVersion" -> {
+                    result.success(Build.VERSION.SDK_INT)
+                }
                 "checkExactAlarmPermission" -> {
                     val permitted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -92,18 +109,39 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
                 }
                 "requestExactAlarmPermission" -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        try {
-                            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                                data = Uri.fromParts("package", packageName, null)
+                        runOnUiThread {
+                            var started = false
+                            // On Android 16/15, requesting SCHEDULE_EXACT_ALARM can sometimes block package parameters or fail.
+                            // We attempt to open the App Details Settings or Special App Access directly.
+                            try {
+                                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                    data = Uri.fromParts("package", packageName, null)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(intent)
+                                started = true
+                            } catch (e: Exception) {
+                                try {
+                                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    startActivity(intent)
+                                    started = true
+                                } catch (ex: Exception) {
+                                    // Fallback to details
+                                }
                             }
-                            startActivity(intent)
-                            result.success(true)
-                        } catch (e: Exception) {
-                            // Fallback if package Uri is rejected by some devices
-                            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                            startActivity(intent)
-                            result.success(true)
+                            if (!started) {
+                                try {
+                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", packageName, null)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    startActivity(intent)
+                                } catch (e: Exception) {}
+                            }
                         }
+                        result.success(true)
                     } else {
                         result.success(true)
                     }
@@ -122,13 +160,16 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
                         try {
                             val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                                 data = Uri.parse("package:$packageName")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
                             startActivity(intent)
                             result.success(true)
                         } catch (e: Exception) {
                             // Fallback to general settings screen
                             try {
-                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
                                 startActivity(intent)
                                 result.success(true)
                             } catch (ex: Exception) {
@@ -246,5 +287,41 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        accelerometer?.let {
+            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager?.unregisterListener(this)
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event == null) return
+        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+            val z = event.values[2]
+            if (z < -8.5f && lastZ >= -8.5f) {
+                runOnUiThread {
+                    channel?.invokeMethod("phoneFlippedFaceDown", null)
+                }
+            }
+            lastZ = z
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP) {
+            runOnUiThread {
+                channel?.invokeMethod("volumeKeyPressed", null)
+            }
+        }
+        return super.onKeyDown(keyCode, event)
     }
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_prayer_times_label">Aya - Prayer Times</string>
+    <string name="widget_prayer_times_description">Displays today\'s prayer times at your location.</string>
+    
+    <string name="widget_verse_label">Aya - Daily Verse</string>
+    <string name="widget_verse_description">Displays a selected verse from the Holy Quran daily.</string>
+    
+    <string name="widget_dhikr_label">Aya - Daily Dhikr</string>
+    <string name="widget_dhikr_description">Displays daily Islamic supplications and remembrances.</string>
+    
+    <string name="widget_hadith_label">Aya - Daily Hadith</string>
+    <string name="widget_hadith_description">Displays a daily narration from the Prophet (PBUH).</string>
+    
+    <string name="widget_tasbih_label">Aya - Tasbih Counter</string>
+    <string name="widget_tasbih_description">A quick tap counter widget for daily remembrance.</string>
+</resources>

@@ -5,6 +5,7 @@ import '../models/prayer_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import '../services/notification_service.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   final StorageService storage;
@@ -28,12 +29,18 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   int _selectedSubTab = 0;
   List<dynamic>? _monthlyData;
 
+  int _calendarMonth = DateTime.now().month;
+  int _calendarYear = DateTime.now().year;
+  bool _isCalendarLoading = false;
+
   @override
   void initState() {
     super.initState();
     _selectedSubTab = widget.initialSubTab;
     _calcMethod = widget.storage.getInt('calc_method', defaultValue: 2);
     _asrMethod = widget.storage.getInt('asr_method', defaultValue: 0);
+    _calendarMonth = DateTime.now().month;
+    _calendarYear = DateTime.now().year;
     _loadPrayerTimes();
   }
 
@@ -95,6 +102,208 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         SnackBar(content: Text(TranslationService.isArabic ? 'خطأ في تحميل مواقيت الصلاة: $e' : 'Error loading prayer times: $e')),
       );
     }
+  }
+
+  Future<void> _loadCalendarData() async {
+    setState(() => _isCalendarLoading = true);
+    try {
+      final loc = widget.storage.getLocation();
+      List<dynamic> monthlyList = [];
+      if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
+        monthlyList = await ApiService.fetchMonthlyCalendarByCity(
+          city: loc['city'] ?? 'Cairo',
+          country: loc['country'] ?? 'Egypt',
+          method: _calcMethod,
+          school: _asrMethod,
+          month: _calendarMonth,
+          year: _calendarYear,
+        );
+      } else {
+        monthlyList = await ApiService.fetchMonthlyCalendar(
+          latitude: loc['latitude'],
+          longitude: loc['longitude'],
+          method: _calcMethod,
+          school: _asrMethod,
+          month: _calendarMonth,
+          year: _calendarYear,
+        );
+      }
+      setState(() {
+        _monthlyData = monthlyList;
+        _isCalendarLoading = false;
+      });
+    } catch (_) {
+      setState(() => _isCalendarLoading = false);
+    }
+  }
+
+  void _prevCalendarMonth() {
+    setState(() {
+      if (_calendarMonth == 1) {
+        _calendarMonth = 12;
+        _calendarYear--;
+      } else {
+        _calendarMonth--;
+      }
+    });
+    _loadCalendarData();
+  }
+
+  void _nextCalendarMonth() {
+    setState(() {
+      if (_calendarMonth == 12) {
+        _calendarMonth = 1;
+        _calendarYear++;
+      } else {
+        _calendarMonth++;
+      }
+    });
+    _loadCalendarData();
+  }
+
+  List<Map<String, dynamic>> _getHijriEventsForMonth() {
+    if (_monthlyData == null) return [];
+    final List<Map<String, dynamic>> events = [];
+    
+    for (final day in _monthlyData!) {
+      final hijri = day['date']['hijri'];
+      final hDay = int.tryParse(hijri['day'].toString()) ?? 0;
+      final hMonth = int.tryParse(hijri['month']['number'].toString()) ?? 0;
+      final hMonthAr = hijri['month']['ar'] ?? '';
+      final hYear = hijri['year'] ?? '';
+      final gregDateStr = day['date']['gregorian']['date'] as String;
+
+      String? eventNameAr;
+      String? eventNameEn;
+
+      if (hMonth == 1 && hDay == 1) {
+        eventNameAr = "رأس السنة الهجرية";
+        eventNameEn = "Islamic New Year";
+      } else if (hMonth == 1 && hDay == 10) {
+        eventNameAr = "يوم عاشوراء";
+        eventNameEn = "Day of Ashura";
+      } else if (hMonth == 3 && hDay == 12) {
+        eventNameAr = "المولد النبوي الشريف";
+        eventNameEn = "Mawlid al-Nabi";
+      } else if (hMonth == 7 && hDay == 27) {
+        eventNameAr = "ليلة الإسراء والمعراج";
+        eventNameEn = "Isra' and Mi'raj";
+      } else if (hMonth == 8 && hDay == 15) {
+        eventNameAr = "ليلة النصف من شعبان";
+        eventNameEn = "Mid-Sha'ban";
+      } else if (hMonth == 9 && hDay == 1) {
+        eventNameAr = "بداية شهر رمضان المبارك";
+        eventNameEn = "Start of Ramadan";
+      } else if (hMonth == 10 && hDay == 1) {
+        eventNameAr = "عيد الفطر السعيد";
+        eventNameEn = "Eid al-Fitr";
+      } else if (hMonth == 12 && hDay == 9) {
+        eventNameAr = "يوم عرفة";
+        eventNameEn = "Day of Arafah";
+      } else if (hMonth == 12 && hDay == 10) {
+        eventNameAr = "عيد الأضحى المبارك";
+        eventNameEn = "Eid al-Adha";
+      }
+
+      if (eventNameAr != null) {
+        events.add({
+          'hijriDate': "$hDay $hMonthAr $hYear",
+          'title': TranslationService.isArabic ? eventNameAr : eventNameEn,
+          'gregDate': gregDateStr,
+          'key': "${hMonth}_$hDay",
+        });
+      }
+    }
+    return events;
+  }
+
+  void _showReminderDialog(Map<String, dynamic> event) {
+    final theme = Theme.of(context);
+    final isArabic = TranslationService.isArabic;
+    
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isArabic ? "ضبط تذكير بالحدث" : "Set Event Reminder",
+          style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              event['title'],
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isArabic 
+                  ? "اختر متى تود تلقي إشعار التذكير لهذا الحدث الإسلامي:"
+                  : "Choose when you would like to receive a notification alert for this Islamic event:",
+              style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+            ),
+            const SizedBox(height: 16),
+            _buildReminderOption(dialogCtx, event, 0, isArabic ? "في نفس اليوم" : "On the day"),
+            _buildReminderOption(dialogCtx, event, -1, isArabic ? "قبل بيوم واحد" : "1 day before"),
+            _buildReminderOption(dialogCtx, event, -3, isArabic ? "قبل ٣ أيام" : "3 days before"),
+            _buildReminderOption(dialogCtx, event, -5, isArabic ? "قبل ٥ أيام" : "5 days before"),
+            _buildReminderOption(dialogCtx, event, 1, isArabic ? "بعد بيوم واحد" : "1 day after"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReminderOption(BuildContext dialogCtx, Map<String, dynamic> event, int offsetDays, String label) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(label, style: const TextStyle(fontSize: 14)),
+      trailing: const Icon(Icons.alarm_add, color: Color(0xFFE5C158), size: 20),
+      onTap: () async {
+        Navigator.pop(dialogCtx);
+        
+        final parts = event['gregDate'].split('-');
+        final day = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final year = int.parse(parts[2]);
+        
+        var notifyDate = DateTime(year, month, day, 9, 0); // Remind at 9:00 AM
+        if (offsetDays != 0) {
+          notifyDate = notifyDate.add(Duration(days: offsetDays));
+        }
+
+        final id = event['key'].hashCode + offsetDays;
+        
+        final isArabic = TranslationService.isArabic;
+        final notificationTitle = isArabic ? "تذكير بحدث إسلامي" : "Islamic Event Reminder";
+        final notificationBody = isArabic 
+            ? "يقترب حدث: ${event['title']} (${event['hijriDate']})"
+            : "Approaching event: ${event['title']} (${event['hijriDate']})";
+
+        await NotificationService().scheduleHijriEventReminder(
+          id: id,
+          title: notificationTitle,
+          body: notificationBody,
+          scheduledDate: notifyDate,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isArabic 
+                    ? "تم ضبط التذكير بنجاح!" 
+                    : "Reminder configured successfully!",
+              ),
+              backgroundColor: const Color(0xFF10B981),
+            ),
+          );
+        }
+      },
+    );
   }
 
   @override
@@ -182,25 +391,33 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             : "Please grant 'Allow all the time' location permission to proceed.");
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
-      );
+      Position? position = await ApiService.getBestLocation();
+      double lat;
+      double lon;
+      String city;
+      String country;
 
-      final address = await ApiService.reverseGeocode(position.latitude, position.longitude);
-      await widget.storage.setLocation(
-        address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location'),
-        address['country'] ?? 'GPS',
-        position.latitude,
-        position.longitude,
-        'gps',
-      );
+      if (position != null) {
+        lat = position.latitude;
+        lon = position.longitude;
+        final address = await ApiService.reverseGeocode(lat, lon);
+        city = address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location');
+        country = address['country'] ?? 'GPS';
+      } else {
+        final ipLoc = await ApiService.fetchLocationByIP();
+        city = ipLoc['city']!;
+        country = ipLoc['country']!;
+        lat = double.parse(ipLoc['latitude']!);
+        lon = double.parse(ipLoc['longitude']!);
+      }
+
+      await widget.storage.setLocation(city, country, lat, lon, 'gps');
 
       await _loadPrayerTimes();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(TranslationService.isArabic ? 'تم تحديث الموقع إلى ${address['city']}، ${address['country']}!' : 'Location updated to ${address['city']}, ${address['country']}!')),
+          SnackBar(content: Text(TranslationService.isArabic ? 'تم تحديث الموقع إلى $city، $country!' : 'Location updated to $city, $country!')),
         );
       }
     } catch (e) {
@@ -649,6 +866,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       );
     }
 
+    final events = _getHijriEventsForMonth();
+
     return Card(
       color: theme.cardColor,
       shape: RoundedRectangleBorder(
@@ -659,46 +878,96 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(
-              "$gregMonthName $gregYear  /  $hijriMonthName $hijriYear",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFE5C158)),
-              textAlign: TextAlign.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, color: Color(0xFFE5C158)),
+                  onPressed: _isCalendarLoading ? null : _prevCalendarMonth,
+                ),
+                Expanded(
+                  child: Text(
+                    "$gregMonthName $gregYear  /  $hijriMonthName $hijriYear",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE5C158)),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, color: Color(0xFFE5C158)),
+                  onPressed: _isCalendarLoading ? null : _nextCalendarMonth,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1.5,
-              ),
-              itemCount: 7,
-              itemBuilder: (context, idx) {
-                return Center(
-                  child: Text(
-                    weekdayHeaders[idx],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+            if (_isCalendarLoading)
+              const SizedBox(
+                height: 150,
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+                ),
+              )
+            else ...[
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  childAspectRatio: 1.5,
+                ),
+                itemCount: 7,
+                itemBuilder: (context, idx) {
+                  return Center(
+                    child: Text(
+                      weekdayHeaders[idx],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            const Divider(color: Colors.white12, height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1.0,
+                  );
+                },
               ),
-              itemCount: gridItems.length,
-              itemBuilder: (context, idx) {
-                return gridItems[idx];
-              },
-            ),
+              const Divider(color: Colors.white12, height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  childAspectRatio: 1.0,
+                ),
+                itemCount: gridItems.length,
+                itemBuilder: (context, idx) {
+                  return gridItems[idx];
+                },
+              ),
+              if (events.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white12),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    TranslationService.isArabic ? "المناسبات الهجرية" : "Islamic Events",
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE5C158), fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Column(
+                  children: events.map((event) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(event['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      subtitle: Text("${event['hijriDate']} (${event['gregDate']})", style: const TextStyle(fontSize: 11, color: Colors.white38)),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.notifications_active_outlined, color: Color(0xFFE5C158), size: 20),
+                        onPressed: () => _showReminderDialog(event),
+                      ),
+                    );
+                  }).toList(),
+                )
+              ]
+            ],
           ],
         ),
       ),

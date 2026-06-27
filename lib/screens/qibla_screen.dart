@@ -173,11 +173,21 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     }
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          TranslationService.t('qibla'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
           const SizedBox(height: 10),
           // Info Cards
           Container(
@@ -390,8 +400,9 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
           const SizedBox(height: 16),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatColumn(String label, String value) {
     return Expanded(

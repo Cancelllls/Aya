@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../services/translation_service.dart';
@@ -23,147 +24,182 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final PageController _pageController = PageController();
   late AnimationController _logoController;
   int _currentPage = 0;
-  bool _isRequestingGPS = false;
-  String _gpsStatusText = '';
-  bool _gpsSetupSuccess = false;
+
+  static const _platform = MethodChannel('com.quran.aya/system');
+
+  bool _locationGranted = false;
+  bool _bgLocationGranted = false;
+  bool _exactAlarmGranted = false;
+  bool _notifGranted = false;
+  bool _batteryIgnored = false;
+  int _androidSdkVersion = 24;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 25),
     )..repeat();
+    _initSdkAndPermissions();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _logoController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _setupGPS() async {
-    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
-    final cardColor = Theme.of(context).cardColor;
-    setState(() {
-      _isRequestingGPS = true;
-      _gpsStatusText = TranslationService.t('welcome_gps_status_checking');
-    });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      Future.delayed(const Duration(milliseconds: 400), _checkAllPermissions);
+    }
+  }
+
+  Future<void> _initSdkAndPermissions() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!mounted) return;
-      if (!serviceEnabled) {
-        throw Exception(TranslationService.t('welcome_gps_status_disabled'));
-      }
+      final sdk = await _platform.invokeMethod<int>('getAndroidSdkVersion') ?? 24;
+      _androidSdkVersion = sdk;
+    } catch (_) {
+      _androidSdkVersion = 24;
+    }
+    await _checkAllPermissions();
+  }
 
-      setState(() => _gpsStatusText = TranslationService.t('welcome_gps_status_requesting'));
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (!mounted) return;
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (!mounted) return;
-        if (permission == LocationPermission.denied) {
-          throw Exception(TranslationService.t('welcome_gps_status_denied'));
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        throw Exception(TranslationService.t('welcome_gps_status_denied_forever'));
-      }
-
-      if (isAndroid && permission == LocationPermission.whileInUse) {
-        final bool proceed = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogCtx) => AlertDialog(
-            backgroundColor: cardColor,
-            title: Text(
-              TranslationService.isArabic ? "مطلوب إذن الموقع دائماً" : "Location Permission 'Always' Required",
-              style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              TranslationService.isArabic
-                  ? "يتطلب التطبيق إذن الموقع 'سماح طوال الوقت' لتحديث مواقيت الصلاة تلقائياً في الخلفية بدون فتح التطبيق. يرجى الضغط على زر المتابعة لتغيير الإذن من إعدادات الهاتف إلى 'السماح طوال الوقت'."
-                  : "The app requires the location permission set to 'Allow all the time' to update prayer times automatically in the background. Please click continue to change it to 'Allow all the time' in your settings.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogCtx, false),
-                child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158)),
-                onPressed: () => Navigator.pop(dialogCtx, true),
-                child: Text(TranslationService.isArabic ? "متابعة" : "Continue", style: const TextStyle(color: Colors.black)),
-              ),
-            ],
-          ),
-        ) ?? false;
-
-        if (proceed) {
-          await Geolocator.openAppSettings();
-          await Future.delayed(const Duration(seconds: 3));
-          if (!mounted) return;
-          permission = await Geolocator.checkPermission();
-        }
-      }
-
-      if (isAndroid && permission != LocationPermission.always) {
-        throw Exception(TranslationService.isArabic 
-            ? "يرجى منح إذن الموقع 'السماح طوال الوقت' للاستمرار." 
-            : "Please grant 'Allow all the time' location permission to proceed.");
-      }
-
-      setState(() => _gpsStatusText = TranslationService.t('welcome_gps_status_fetching'));
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-      if (!mounted) return;
-
-      setState(() => _gpsStatusText = TranslationService.t('welcome_gps_status_geocoding'));
-      final address = await ApiService.reverseGeocode(position.latitude, position.longitude);
-      if (!mounted) return;
-
-      await widget.storage.setLocation(
-        address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location'),
-        address['country'] ?? 'GPS',
-        position.latitude,
-        position.longitude,
-        'gps',
-      );
-
-      setState(() => _gpsStatusText = TranslationService.t('welcome_gps_status_notifications'));
-      try {
-        await NotificationService().requestPermissions();
-      } catch (_) {}
-      if (!mounted) return;
-
+  Future<void> _checkAllPermissions() async {
+    final gpsPerm = await Geolocator.checkPermission();
+    final locOk = gpsPerm == LocationPermission.always ||
+        gpsPerm == LocationPermission.whileInUse;
+    final bgLocOk = gpsPerm == LocationPermission.always;
+    final notifOk = await NotificationService().checkPermissions();
+    bool batteryOk = true;
+    try {
+      batteryOk = await _platform.invokeMethod<bool>('checkBatteryOptimization') ?? true;
+    } catch (_) {}
+    bool exactAlarmOk = true;
+    try {
+      exactAlarmOk = await _platform.invokeMethod<bool>('checkExactAlarmPermission') ?? true;
+    } catch (_) {}
+    if (mounted) {
       setState(() {
-        _gpsSetupSuccess = true;
-        _gpsStatusText = '${TranslationService.t('welcome_gps_status_success')}${address['city']}، ${address['country']}!';
-        _isRequestingGPS = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _gpsSetupSuccess = false;
-        final cleanErr = e.toString().replaceAll('Exception: ', '');
-        _gpsStatusText = '${TranslationService.t('welcome_gps_status_failed')}$cleanErr${TranslationService.t('welcome_gps_manual_hint')}';
-        _isRequestingGPS = false;
+        _locationGranted = locOk;
+        _bgLocationGranted = bgLocOk;
+        _notifGranted = notifOk;
+        _batteryIgnored = batteryOk;
+        _exactAlarmGranted = exactAlarmOk;
       });
     }
   }
 
+  Future<void> _requestLocation() async {
+    try {
+      final perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+      } else if (perm == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+        await _checkAllPermissions();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _requestBgLocation() async {
+    try {
+      await Geolocator.openAppSettings();
+    } catch (_) {}
+  }
+
+  Future<void> _requestNotif() async {
+    try {
+      await NotificationService().requestPermissions();
+      await _checkAllPermissions();
+    } catch (_) {}
+  }
+
+  Future<void> _requestBattery() async {
+    try {
+      await _platform.invokeMethod('requestDisableBatteryOptimization');
+    } catch (_) {}
+  }
+
+  Future<void> _requestExactAlarm() async {
+    try {
+      await _platform.invokeMethod('requestExactAlarmPermission');
+    } catch (_) {}
+  }
+
+  void _onProceedClick() {
+    final bgRequired = _androidSdkVersion >= 29;
+    final alarmRequired = _androidSdkVersion >= 31;
+    final allGood = _locationGranted &&
+        (!bgRequired || _bgLocationGranted) &&
+        _notifGranted && _batteryIgnored &&
+        (!alarmRequired || _exactAlarmGranted);
+    if (allGood) {
+        _finishOnboarding();
+        return;
+      }
+
+    final cardColor = Theme.of(context).cardColor;
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            const SizedBox(width: 8),
+            Text(
+              TranslationService.isArabic ? "صلاحيات غير مكتملة" : "Permissions Incomplete",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          TranslationService.isArabic
+              ? "تحذير: إذا واصلت بدون تفعيل صلاحيات الموقع، والتنبيهات، وحفظ البطارية، فقد لا يتم تشغيل الأذان في موعده بدقة في الخلفية أو عند قفل الهاتف. هل تود المتابعة على أي حال؟"
+              : "Warning: If you proceed without granting location, notifications, and battery optimization, Athan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
+          style: const TextStyle(height: 1.5, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text(
+              TranslationService.isArabic ? "الرجوع وتفعيلها" : "Go Back & Enable",
+              style: TextStyle(color: Theme.of(context).primaryColor),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              _finishOnboarding();
+            },
+            child: Text(
+              TranslationService.isArabic ? "متابعة على أي حال" : "Proceed Anyway",
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _finishOnboarding() async {
     await widget.storage.setBool('first_time_v2', false);
+    unawaited(NotificationService.downloadAllAthanFiles());
     widget.onComplete();
   }
 
@@ -408,79 +444,181 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            Icons.location_on_outlined,
+            Icons.security_rounded,
             color: Color(0xFFE5C158),
             size: 64,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Text(
-            TranslationService.t('welcome_gps_title'),
+            TranslationService.isArabic ? "صلاحيات النظام المطلوبة" : "Required System Permissions",
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            TranslationService.t('welcome_gps_desc'),
             textAlign: TextAlign.center,
-            style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 14, height: 1.5),
           ),
-          const SizedBox(height: 36),
-          // Status Box
-          if (_gpsStatusText.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 24),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _gpsSetupSuccess 
-                    ? const Color(0xFF10B981).withOpacity(0.1) 
-                    : const Color(0xFFE5C158).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _gpsSetupSuccess 
-                      ? const Color(0xFF10B981).withOpacity(0.3) 
-                      : const Color(0xFFE5C158).withOpacity(0.2),
+          const SizedBox(height: 8),
+          Text(
+            TranslationService.isArabic
+                ? "يتطلب التطبيق الصلاحيات التالية للعمل بشكل صحيح وتشغيل الأذان في وقته بالخلفية."
+                : "Aya requires the following permissions to function correctly and sound the Athan alarms on time in the background.",
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                _buildPermissionItem(
+                  icon: Icons.location_on,
+                  title: TranslationService.isArabic ? "إذن الموقع الجغرافي" : "Location Permission",
+                  description: TranslationService.isArabic
+                      ? "لحساب مواقيت الصلاة بدقة بناءً على موقعك."
+                      : "Used to calculate prayer times accurately based on your location.",
+                  isGranted: _locationGranted,
+                  onRequest: _requestLocation,
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _gpsSetupSuccess ? Icons.check_circle : Icons.info,
-                    color: _gpsSetupSuccess ? const Color(0xFF10B981) : const Color(0xFFE5C158),
-                    size: 20,
+                // Always Allow — only on API 29+ (Android 10+)
+                if (_androidSdkVersion >= 29) ...[
+                  const SizedBox(height: 10),
+                  _buildPermissionItem(
+                    icon: Icons.location_searching,
+                    title: TranslationService.isArabic ? "السماح دائماً بالموقع" : "Always Allow Location",
+                    description: TranslationService.isArabic
+                        ? "لحساب مواقيت الصلاة في الخلفية حتى عند إغلاق التطبيق."
+                        : "Needed to calculate prayer times in background when app is closed.",
+                    isGranted: _bgLocationGranted,
+                    onRequest: _requestBgLocation,
+                    requiresPrior: !_locationGranted,
+                    priorLabel: TranslationService.isArabic
+                        ? "يتطلب إذن الموقع أولاً"
+                        : "Requires location permission first",
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _gpsStatusText,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: _gpsSetupSuccess ? const Color(0xFF10B981) : (isDark ? Colors.white70 : Colors.black87),
-                      ),
+                ],
+                const SizedBox(height: 10),
+                _buildPermissionItem(
+                  icon: Icons.notifications_active,
+                  title: TranslationService.isArabic ? "إذن الإشعارات" : "Notification Alerts",
+                  description: TranslationService.isArabic
+                      ? "لإرسال تنبيهات الأذان والأذكار في مواقيتها."
+                      : "Used to send sound and voice alerts on prayer times.",
+                  isGranted: _notifGranted,
+                  onRequest: _requestNotif,
+                ),
+                // Alarms & Reminders — only on API 31+ (Android 12+)
+                if (_androidSdkVersion >= 31) ...[
+                  const SizedBox(height: 10),
+                  _buildPermissionItem(
+                    icon: Icons.access_alarm,
+                    title: TranslationService.isArabic ? "التنبيهات والتذكيرات" : "Alarms & Reminders",
+                    description: TranslationService.isArabic
+                        ? "يسمح بجدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
+                        : "Allows scheduling precise Athan alarms even in Doze mode.",
+                    isGranted: _exactAlarmGranted,
+                    onRequest: _requestExactAlarm,
+                  ),
+                ],
+                const SizedBox(height: 10),
+                _buildPermissionItem(
+                  icon: Icons.battery_saver,
+                  title: TranslationService.isArabic ? "تجاهل تحسين البطارية" : "Ignore Battery Optimization",
+                  description: TranslationService.isArabic
+                      ? "لمنع نظام الأندرويد من إيقاف تنبيهات الأذان بالخلفية."
+                      : "Prevents Android from putting Athan alarms to sleep in background.",
+                  isGranted: _batteryIgnored,
+                  onRequest: _requestBattery,
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionItem({
+    required IconData icon,
+    required String title,
+    required String description,
+    required bool isGranted,
+    required VoidCallback onRequest,
+    bool requiresPrior = false,
+    String? priorLabel,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Card(
+      color: theme.cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isGranted
+                    ? Colors.green.withOpacity(0.12)
+                    : theme.primaryColor.withOpacity(0.08),
+              ),
+              child: Icon(
+                icon,
+                color: isGranted ? Colors.green : theme.primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    textAlign: TextAlign.start,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    requiresPrior && priorLabel != null ? priorLabel : description,
+                    style: TextStyle(
+                      color: requiresPrior
+                          ? Colors.orangeAccent
+                          : (isDark ? Colors.white54 : Colors.black54),
+                      fontSize: 11,
+                      height: 1.3,
+                      fontStyle: requiresPrior ? FontStyle.italic : FontStyle.normal,
                     ),
+                    textAlign: TextAlign.start,
                   ),
                 ],
               ),
             ),
-          
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE5C158),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              textStyle: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            icon: _isRequestingGPS 
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                : const Icon(Icons.gps_fixed),
-            label: Text(TranslationService.t('welcome_gps_btn')),
-            onPressed: _isRequestingGPS ? null : _setupGPS,
-          ),
-        ],
+            const SizedBox(width: 8),
+            isGranted
+                ? const Icon(Icons.check_circle, color: Colors.green)
+                : TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.primaryColor,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: requiresPrior ? null : onRequest,
+                    child: Text(
+                      TranslationService.isArabic ? "تفعيل" : "Enable",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -524,7 +662,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   curve: Curves.ease,
                 );
               } else {
-                _finishOnboarding();
+                _onProceedClick();
               }
             },
             child: Text(_currentPage == 2 

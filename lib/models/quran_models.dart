@@ -106,6 +106,9 @@ class Ayah {
     // Do not clean Basmalah for Surah 1 (Al-Fatiha), which corresponds to global ayah numbers 1 to 7
     if (globalNumber >= 1 && globalNumber <= 7) return text;
     final basmalahs = [
+      "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+      "بِسْمِ ٱللَّهِ ٱلرَّحْمَنِ ٱلرَّحِيمِ",
+      "بِسْمِ ٱللهِ ٱلرَّحْمَنِ ٱلرَّحِيمِ",
       "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
       "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
       "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ",

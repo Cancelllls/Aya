@@ -27,8 +27,8 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _showTranslation = widget.storage.getBool('azkar_show_translation', defaultValue: true);
-    _showTransliteration = widget.storage.getBool('azkar_show_transliteration', defaultValue: true);
+    _showTranslation = widget.storage.getBool('azkar_show_translation', defaultValue: !TranslationService.isArabic);
+    _showTransliteration = widget.storage.getBool('azkar_show_transliteration', defaultValue: !TranslationService.isArabic);
     _tabController = TabController(
       length: 5, 
       vsync: this,
@@ -113,183 +113,186 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        // Language Option Chips
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            children: [
-              FilterChip(
-                label: Text(
-                  TranslationService.isArabic ? "إظهار الترجمة" : "Show Translation",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _showTranslation ? Colors.black : Colors.white70,
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        children: [
+          // Language Option Chips
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              children: [
+                FilterChip(
+                  label: Text(
+                    TranslationService.isArabic ? "إظهار الترجمة" : "Show Translation",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _showTranslation ? Colors.black : Colors.white70,
+                    ),
+                  ),
+                  selected: _showTranslation,
+                  selectedColor: const Color(0xFFE5C158),
+                  checkmarkColor: Colors.black,
+                  backgroundColor: theme.cardColor,
+                  onSelected: (val) {
+                    setState(() {
+                      _showTranslation = val;
+                    });
+                    widget.storage.setBool('azkar_show_translation', val);
+                  },
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: Text(
+                    TranslationService.isArabic ? "النطق اللاتيني" : "Transliteration",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _showTransliteration ? Colors.black : Colors.white70,
+                    ),
+                  ),
+                  selected: _showTransliteration,
+                  selectedColor: const Color(0xFFE5C158),
+                  checkmarkColor: Colors.black,
+                  backgroundColor: theme.cardColor,
+                  onSelected: (val) {
+                    setState(() {
+                      _showTransliteration = val;
+                    });
+                    widget.storage.setBool('azkar_show_transliteration', val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          // Category Tabs
+          Container(
+            height: 56,
+            margin: const EdgeInsets.only(top: 4),
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: const Color(0xFFE5C158),
+              labelColor: const Color(0xFFE5C158),
+              unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              isScrollable: true,
+              physics: const BouncingScrollPhysics(),
+              tabs: [
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(TranslationService.t('morning')),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.morning),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _tabController.index == 0
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                selected: _showTranslation,
-                selectedColor: const Color(0xFFE5C158),
-                checkmarkColor: Colors.black,
-                backgroundColor: theme.cardColor,
-                onSelected: (val) {
-                  setState(() {
-                    _showTranslation = val;
-                  });
-                  widget.storage.setBool('azkar_show_translation', val);
-                },
-              ),
-              const SizedBox(width: 8),
-              FilterChip(
-                label: Text(
-                  TranslationService.isArabic ? "النطق اللاتيني" : "Transliteration",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _showTransliteration ? Colors.black : Colors.white70,
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(TranslationService.t('evening')),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.evening),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _tabController.index == 1
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                selected: _showTransliteration,
-                selectedColor: const Color(0xFFE5C158),
-                checkmarkColor: Colors.black,
-                backgroundColor: theme.cardColor,
-                onSelected: (val) {
-                  setState(() {
-                    _showTransliteration = val;
-                  });
-                  widget.storage.setBool('azkar_show_transliteration', val);
-                },
-              ),
-            ],
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(TranslationService.t('post_prayer')),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.postPrayer),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _tabController.index == 2
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(TranslationService.t('daily_duas')),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.daily),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _tabController.index == 3
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(TranslationService.isArabic ? "أسماء الله" : "Allah's Names"),
+                      const SizedBox(height: 2),
+                      Text(
+                        "99",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _tabController.index == 4
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        // Category Tabs
-        Container(
-          height: 56,
-          margin: const EdgeInsets.only(top: 4),
-          child: TabBar(
-            controller: _tabController,
-            indicatorColor: const Color(0xFFE5C158),
-            labelColor: const Color(0xFFE5C158),
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
-            isScrollable: true,
-            physics: const BouncingScrollPhysics(),
-            tabs: [
-              Tab(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(TranslationService.t('morning')),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getTabProgress(AzkarData.morning),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _tabController.index == 0
-                            ? const Color(0xFFE5C158)
-                            : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Tab(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(TranslationService.t('evening')),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getTabProgress(AzkarData.evening),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _tabController.index == 1
-                            ? const Color(0xFFE5C158)
-                            : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Tab(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(TranslationService.t('post_prayer')),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getTabProgress(AzkarData.postPrayer),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _tabController.index == 2
-                            ? const Color(0xFFE5C158)
-                            : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Tab(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(TranslationService.t('daily_duas')),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getTabProgress(AzkarData.daily),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _tabController.index == 3
-                            ? const Color(0xFFE5C158)
-                            : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Tab(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(TranslationService.isArabic ? "أسماء الله" : "Allah's Names"),
-                    const SizedBox(height: 2),
-                    Text(
-                      "99",
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _tabController.index == 4
-                            ? const Color(0xFFE5C158)
-                            : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          
+          // Tab views
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _buildAzkarList(AzkarData.morning, theme),
+                _buildAzkarList(AzkarData.evening, theme),
+                _buildAzkarList(AzkarData.postPrayer, theme),
+                _buildAzkarList(AzkarData.daily, theme),
+                _buildNamesOfAllahGrid(theme),
+              ],
+            ),
           ),
-        ),
-        
-        // Tab views
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              _buildAzkarList(AzkarData.morning, theme),
-              _buildAzkarList(AzkarData.evening, theme),
-              _buildAzkarList(AzkarData.postPrayer, theme),
-              _buildAzkarList(AzkarData.daily, theme),
-              _buildNamesOfAllahGrid(theme),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

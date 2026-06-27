@@ -7,6 +7,7 @@ import '../services/api_service.dart';
 import '../services/notification_service.dart';
 import '../models/prayer_models.dart';
 import 'quran_download_screen.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class SettingsScreen extends StatefulWidget {
   final StorageService storage;
@@ -23,9 +24,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
-  static const _platform = MethodChannel('com.noor.noor_app/system');
+  static const _platform = MethodChannel('com.quran.aya/system');
 
   String _themePreset = 'dark';
+  StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
+  String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-scheherazade';
   String _reciter = 'ar.alafasy';
   
@@ -35,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   bool _continuousPlay = true;
   bool _hideContinuousBorders = false;
   bool _autoBookmark = true;
+  bool _immersiveReader = false;
 
   // Permissions and wake lock
   bool _exactAlarmPermitted = true;
@@ -54,14 +58,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   bool _use24hFormat = false;
   bool _swipeSurahNavigation = true;
   String _preAdhanAlertMode = 'vibrate'; // vibrate vs voice
+  int _preAdhanDuration = 10; // minutes before adhan
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
+  String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _themePreset = widget.storage.getString('theme_preset', defaultValue: 'dark');
+    _bottomNavbarStyle = widget.storage.getString('bottom_navbar_style', defaultValue: 'solid');
     _quranFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
     _reciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
     
@@ -70,6 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     _continuousPlay = widget.storage.getBool('setting_continuous_play', defaultValue: true);
     _hideContinuousBorders = widget.storage.getBool('setting_hide_continuous_borders', defaultValue: false);
     _autoBookmark = widget.storage.getBool('setting_auto_bookmark', defaultValue: true);
+    _immersiveReader = widget.storage.getBool('setting_immersive_reader', defaultValue: false);
 
     _keepScreenAwake = widget.storage.getBool('keep_screen_awake', defaultValue: false);
     _focusLockDuration = widget.storage.getInt('focus_lock_duration', defaultValue: 0);
@@ -83,14 +91,25 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     _use24hFormat = widget.storage.getBool('use_24h_format', defaultValue: false);
     _swipeSurahNavigation = widget.storage.getBool('swipe_surah_navigation', defaultValue: true);
     _preAdhanAlertMode = widget.storage.getString('pre_adhan_alert_mode', defaultValue: 'vibrate');
+    _preAdhanDuration = widget.storage.getInt('pre_adhan_duration', defaultValue: 10);
     _adhanAlertMode = widget.storage.getString('adhan_alert_mode', defaultValue: 'real_reciter');
     _adhanReciter = widget.storage.getString('adhan_reciter', defaultValue: 'mishary');
+    _athanStopGesture = widget.storage.getString('athan_stop_gesture', defaultValue: 'both');
 
     _checkPermissions();
+    final purchaseUpdated = InAppPurchase.instance.purchaseStream;
+    _purchaseSubscription = purchaseUpdated.listen((purchaseDetailsList) {
+      _listenToPurchaseUpdated(purchaseDetailsList);
+    }, onDone: () {
+      _purchaseSubscription?.cancel();
+    }, onError: (error) {
+      // handle error here
+    });
   }
 
   @override
   void dispose() {
+    _purchaseSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -98,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkPermissions();
+      Future.delayed(const Duration(milliseconds: 400), _checkPermissions);
     }
   }
 
@@ -171,12 +190,23 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     await widget.storage.setBool('swipe_surah_navigation', val);
   }
 
+  Future<void> _changePreAdhanDuration(int? val) async {
+    if (val != null) {
+      setState(() {
+        _preAdhanDuration = val;
+      });
+      await widget.storage.setInt('pre_adhan_duration', val);
+      await _rescheduleAlarms();
+    }
+  }
+
   Future<void> _changePreAdhanAlertMode(String? val) async {
     if (val != null) {
       setState(() {
         _preAdhanAlertMode = val;
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
+      await _rescheduleAlarms();
     }
   }
 
@@ -200,6 +230,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     }
   }
 
+  Future<void> _changeAthanStopGesture(String? val) async {
+    if (val != null) {
+      setState(() {
+        _athanStopGesture = val;
+      });
+      await widget.storage.setString('athan_stop_gesture', val);
+    }
+  }
+
   Future<void> _changeFocusLockType(String? val) async {
     if (val != null) {
       setState(() {
@@ -219,12 +258,136 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     } catch (_) {}
   }
 
+  void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+    for (var purchaseDetails in purchaseDetailsList) {
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        // Show pending dialog
+      } else if (purchaseDetails.status == PurchaseStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(TranslationService.isArabic ? "فشلت عملية الدعم، يرجى المحاولة مرة أخرى." : "Support donation failed. Please try again.")),
+        );
+      } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+                 purchaseDetails.status == PurchaseStatus.restored) {
+        // Complete donation!
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.green,
+            content: Text(
+              TranslationService.isArabic 
+                  ? "تقبل الله منكم! شكراً جزيلاً لدعمكم الكريم." 
+                  : "Thank you for your generous support!"
+            ),
+          ),
+        );
+      }
+      if (purchaseDetails.pendingCompletePurchase) {
+        InAppPurchase.instance.completePurchase(purchaseDetails);
+      }
+    }
+  }
+
+  Future<void> _supportProject(double amount) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final bool available = await InAppPurchase.instance.isAvailable();
+    if (!available) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(TranslationService.isArabic ? "متجر Google Play غير متوفر حالياً." : "Google Play Store is currently unavailable.")),
+      );
+      return;
+    }
+
+    // Dynamic product ID based on amount
+    final String productId = 'support_donation_${amount.toInt()}';
+    
+    final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails({productId});
+    if (response.notFoundIDs.contains(productId) || response.productDetails.isEmpty) {
+      // Fallback message if localized products are not configured in Play Console yet
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic 
+                ? "جاري إرسال طلب الدعم بقيمة \$$amount عبر Google Play..." 
+                : "Initiating support for \$$amount via Google Play..."
+          )
+        ),
+      );
+      // Simulate launch request or handle gracefully
+      return;
+    }
+
+    final ProductDetails productDetails = response.productDetails.first;
+    final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
+    
+    try {
+      await InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
+    } catch (_) {}
+  }
+
+  void _showDonateDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          TranslationService.isArabic ? "دعم وتطوير التطبيق" : "Support Project & Development",
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              TranslationService.isArabic 
+                  ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:" 
+                  : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE5C158),
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(double.infinity, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _supportProject(val);
+                  },
+                  child: Text(
+                    TranslationService.isArabic ? "دعم بقيمة \$$val دولار" : "Support \$$val USD",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _changeThemePreset(String? val) async {
     if (val != null) {
       setState(() {
         _themePreset = val;
       });
       await widget.storage.setString('theme_preset', val);
+      widget.onThemeChanged();
+    }
+  }
+
+  Future<void> _changeBottomNavbarStyle(String? val) async {
+    if (val != null) {
+      setState(() {
+        _bottomNavbarStyle = val;
+      });
+      await widget.storage.setString('bottom_navbar_style', val);
       widget.onThemeChanged();
     }
   }
@@ -318,6 +481,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     await widget.storage.setBool('setting_auto_bookmark', val);
   }
 
+  Future<void> _toggleImmersiveReader(bool val) async {
+    setState(() {
+      _immersiveReader = val;
+    });
+    await widget.storage.setBool('setting_immersive_reader', val);
+  }
+
   Future<void> _resetApp() async {
     unawaited(showDialog(
       context: context,
@@ -354,6 +524,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               await widget.storage.setBool('setting_continuous_play', true);
               await widget.storage.setBool('setting_hide_continuous_borders', false);
               await widget.storage.setBool('setting_auto_bookmark', true);
+              await widget.storage.setBool('setting_immersive_reader', false);
               await widget.storage.setBool('first_time_v2', true); // Reset onboarding too
 
               await widget.storage.setBool('alert_fajr', true);
@@ -370,6 +541,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               await widget.storage.setBool('use_24h_format', false);
               await widget.storage.setBool('swipe_surah_navigation', true);
               await widget.storage.setString('pre_adhan_alert_mode', 'vibrate');
+              await widget.storage.setInt('pre_adhan_duration', 10);
               await widget.storage.setString('adhan_alert_mode', 'real_reciter');
               await widget.storage.setString('adhan_reciter', 'mishary');
               
@@ -384,6 +556,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 _continuousPlay = true;
                 _hideContinuousBorders = false;
                 _autoBookmark = true;
+                _immersiveReader = false;
                 _keepScreenAwake = false;
                 _focusLockDuration = 0;
                 _focusAutoStart = false;
@@ -391,8 +564,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 _use24hFormat = false;
                 _swipeSurahNavigation = true;
                 _preAdhanAlertMode = 'vibrate';
+                _preAdhanDuration = 10;
                 _adhanAlertMode = 'real_reciter';
                 _adhanReciter = 'mishary';
+                _athanStopGesture = 'both';
               });
               navigator.pop();
               widget.onThemeChanged();
@@ -411,7 +586,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return Directionality(
+      textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
@@ -446,6 +623,21 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 'white_monet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "فاتح متكيف" : "Adaptive Light"))),
                     ],
                     onChanged: _changeThemePreset,
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                ListTile(
+                  title: Text(TranslationService.t('bottom_navbar_style_label')),
+                  subtitle: Text(TranslationService.t('bottom_navbar_style_sub')),
+                  trailing: DropdownButton<String>(
+                    value: _bottomNavbarStyle,
+                    underline: const SizedBox(),
+                    dropdownColor: theme.cardColor,
+                    items: [
+                      DropdownMenuItem(value: 'solid', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.t('bottom_navbar_solid')))),
+                      DropdownMenuItem(value: 'floating', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.t('bottom_navbar_floating')))),
+                    ],
+                    onChanged: _changeBottomNavbarStyle,
                   ),
                 ),
                 const Divider(height: 1, color: Colors.white10),
@@ -505,9 +697,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ],
                 onChanged: (lang) async {
                   if (lang != null) {
+                    final navigator = Navigator.of(context);
                     await widget.storage.setString('lang_code', lang);
                     TranslationService.setLanguage(lang);
-                    widget.onThemeChanged(); // Trigger root level rebuild for direction/translation
+                    
+                    // Root level rebuild & reload navigation stack to main dashboard page
+                    widget.onThemeChanged();
+                    if (mounted) {
+                      unawaited(navigator.pushNamedAndRemoveUntil('/', (route) => false));
+                    }
                   }
                 },
               ),
@@ -671,6 +869,30 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             child: Column(
               children: [
                 ListTile(
+                  title: Text(TranslationService.isArabic ? "وقت التنبيه قبل الأذان" : "Pre-Athan Alert Time"),
+                  subtitle: Text(TranslationService.isArabic 
+                      ? "اختر وقت التنبيه بالدقائق قبل الأذان" 
+                      : "Choose alert timing in minutes before Athan"),
+                  trailing: DropdownButton<int>(
+                    value: _preAdhanDuration,
+                    underline: const SizedBox(),
+                    dropdownColor: theme.cardColor,
+                    items: [0, 5, 10, 15, 20].map((mins) {
+                      return DropdownMenuItem<int>(
+                        value: mins,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(mins == 0 
+                              ? (TranslationService.isArabic ? "إيقاف" : "Off")
+                              : (TranslationService.isArabic ? "$mins دقائق" : "$mins Mins")),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: _changePreAdhanDuration,
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                ListTile(
                   title: Text(TranslationService.isArabic ? "نوع تنبيه ما قبل الأذان" : "Pre-Athan Alert Style"),
                   subtitle: Text(TranslationService.isArabic 
                       ? "تنبيه قبل الأذان بـ ١٠ دقائق" 
@@ -680,6 +902,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
+                      DropdownMenuItem(
+                        value: 'silent',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "صامت" : "Silent"),
+                        ),
+                      ),
                       DropdownMenuItem(
                         value: 'vibrate',
                         child: Align(
@@ -778,6 +1007,49 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       onChanged: _changeAdhanReciter,
                     ),
                   ),
+                  const Divider(height: 1, color: Colors.white10),
+                  ListTile(
+                    title: Text(TranslationService.isArabic ? "إيماءة إيقاف الأذان" : "Athan Stop Gesture"),
+                    subtitle: Text(TranslationService.isArabic 
+                        ? "إيقاف الأذان بالضغط على أزرار الصوت أو قلب الهاتف وجهه لأسفل" 
+                        : "Stop Athan by pressing volume buttons or flipping the phone face down"),
+                    trailing: DropdownButton<String>(
+                      value: _athanStopGesture,
+                      underline: const SizedBox(),
+                      dropdownColor: theme.cardColor,
+                      items: [
+                        DropdownMenuItem(
+                          value: 'both',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "أزرار الصوت وقلب الهاتف" : "Volume keys & Flip"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'volume_only',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "أزرار الصوت فقط" : "Volume keys only"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'flip_only',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "قلب الهاتف فقط" : "Flip phone only"),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'none',
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(TranslationService.isArabic ? "لا توقف" : "Don't stop"),
+                          ),
+                        ),
+                      ],
+                      onChanged: _changeAthanStopGesture,
+                    ),
+                  ),
                 ],
                 const Divider(height: 1, color: Colors.white10),
                 SwitchListTile(
@@ -819,10 +1091,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
-                      const DropdownMenuItem(value: 'ar.alafasy', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("مشاري العفاسي"))),
-                      const DropdownMenuItem(value: 'ar.abdurrahmaansudais', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("عبد الرحمن السديس"))),
-                      const DropdownMenuItem(value: 'ar.mahermuaiqly', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("ماهر المعيقلي"))),
-                      const DropdownMenuItem(value: 'ar.saadalghamidi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("سعد الغامدي"))),
+                      DropdownMenuItem(value: 'ar.alafasy', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "مشاري العفاسي" : "Mishary Alafasy"))),
+                      DropdownMenuItem(value: 'ar.abdurrahmaansudais', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "عبد الرحمن السديس" : "Abdurrahman As-Sudais"))),
+                      DropdownMenuItem(value: 'ar.mahermuaiqly', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "ماهر المعيقلي" : "Maher Al-Muaiqly"))),
+                      DropdownMenuItem(value: 'ar.saadalghamidi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "سعد الغامدي" : "Saad Al-Ghamdi"))),
                     ],
                     onChanged: _changeReciter,
                   ),
@@ -854,6 +1126,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   activeThumbColor: const Color(0xFFE5C158),
                   value: _autoBookmark,
                   onChanged: _toggleAutoBookmark,
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                SwitchListTile(
+                  title: Text(TranslationService.isArabic ? "وضع القارئ الغامر" : "Immersive Reader Mode"),
+                  subtitle: Text(TranslationService.isArabic
+                      ? "إخفاء أشرطة النظام (شريط الحالة والتنقل) أثناء قراءة القرآن لتقليل التشتيت"
+                      : "Hide system bars (status and navigation) while reading Quran to reduce distraction"),
+                  activeThumbColor: const Color(0xFFE5C158),
+                  value: _immersiveReader,
+                  onChanged: _toggleImmersiveReader,
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
@@ -1014,6 +1296,27 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ),
           const SizedBox(height: 20),
 
+          // Donation Support Section
+          _buildSectionHeader(TranslationService.isArabic ? "الدعم والمساهمة" : "Support & Contribution"),
+          Card(
+            color: theme.cardColor,
+            child: ListTile(
+              leading: const Icon(Icons.volunteer_activism, color: Color(0xFFE5C158)),
+              title: Text(
+                TranslationService.isArabic ? "دعم تطبيق آية" : "Support Aya App", 
+                style: const TextStyle(fontWeight: FontWeight.bold)
+              ),
+              subtitle: Text(
+                TranslationService.isArabic 
+                    ? "ساهم في دعم استضافة التطبيق وتطويره بدون إعلانات صدقة جارية" 
+                    : "Support server costs and development, ad-free continuous charity"
+              ),
+              trailing: Icon(TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios, size: 14, color: const Color(0xFFE5C158)),
+              onTap: _showDonateDialog,
+            ),
+          ),
+          const SizedBox(height: 20),
+
           // Reset Section
           _buildSectionHeader(TranslationService.t('system_management')),
           Card(
@@ -1055,7 +1358,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildSectionHeader(String title) {
