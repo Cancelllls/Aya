@@ -1173,6 +1173,27 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                                 child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Madinah Haram"),
                               ),
                             ),
+                            DropdownMenuItem(
+                              value: 'ali_ahmad',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "علي أحمد ملا" : "Ali Ahmad Mulla"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'turkey',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "النمط التركي" : "Turkish Style"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'egypt',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "النمط المصري" : "Egyptian Style"),
+                              ),
+                            ),
                           ],
                           onChanged: _changeAdhanReciter,
                         ),

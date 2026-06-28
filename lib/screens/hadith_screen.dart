@@ -35,10 +35,14 @@ const List<HadithBook> hadithBooks = [
 
 class HadithScreen extends StatefulWidget {
   final StorageService storage;
+  final String? initialBookId;
+  final int? initialHadithNumber;
 
   const HadithScreen({
     super.key,
     required this.storage,
+    this.initialBookId,
+    this.initialHadithNumber,
   });
 
   @override
@@ -64,7 +68,19 @@ class _HadithScreenState extends State<HadithScreen> {
   void initState() {
     super.initState();
     _displayLang = TranslationService.isArabic ? 'ara' : 'eng';
-    _loadSelectedBookData();
+    // If opened from a bookmark, switch to that book
+    if (widget.initialBookId != null) {
+      final found = hadithBooks.where((b) => b.id == widget.initialBookId).toList();
+      if (found.isNotEmpty) _selectedBook = found.first;
+    }
+    _loadSelectedBookData().then((_) {
+      // After loading, jump to the specific hadith number if provided
+      if (widget.initialHadithNumber != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _jumpToHadithByNumber(widget.initialHadithNumber!);
+        });
+      }
+    });
   }
 
   @override
@@ -231,7 +247,10 @@ class _HadithScreenState extends State<HadithScreen> {
   void _jumpToHadith() {
     final num = int.tryParse(_jumpController.text.trim());
     if (num == null) return;
-    
+    _jumpToHadithByNumber(num);
+  }
+
+  void _jumpToHadithByNumber(int num) {
     final idx = _hadithList.indexWhere((element) => element['number'] == num);
     if (idx != -1) {
       setState(() {
@@ -239,19 +258,37 @@ class _HadithScreenState extends State<HadithScreen> {
         _jumpController.clear();
       });
       Future.delayed(const Duration(milliseconds: 200), () {
-        _scrollController.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0.0);
+        }
       });
-    } else {
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(TranslationService.isArabic ? "الرقم غير موجود في هذا الكتاب" : "Number not found in this book"),
         ),
       );
     }
+  }
+
+  /// Build a precise 8-word search query from the Arabic hadith text,
+  /// skipping narrator-chain prefix words like حدثنا / أخبرنا / عن / قال.
+  String _buildHadithQuery(String text) {
+    // Common isnad/narrator opener words
+    const narratorPrefixes = {
+      'حدثنا', 'حدثني', 'أخبرنا', 'أخبرني', 'أنبأنا', 'أنبأني',
+      'روى', 'رواه', 'عن', 'قال', 'قالت', 'رضي', 'الله', 'عنه',
+      'عنها', 'عنهم', 'صلى', 'وسلم', 'النبي', 'رسول', 'ابن',
+    };
+    final words = text.split(RegExp(r'\s+'));
+    // Skip leading narrator words (up to first 6)
+    int start = 0;
+    while (start < words.length && start < 6 && narratorPrefixes.contains(words[start].replaceAll(RegExp(r'[،,.:؟]'), ''))) {
+      start++;
+    }
+    // Take up to 8 words from the matn
+    final taken = words.skip(start).take(8).join(' ');
+    return taken.isNotEmpty ? taken : words.take(8).join(' ');
   }
 
   void _showHadithOptions(Map<String, dynamic> h) {
@@ -278,19 +315,16 @@ class _HadithScreenState extends State<HadithScreen> {
                 subtitle: Text(TranslationService.isArabic ? "البحث عن شرح وتخريج الحديث في موقع الدرر السنية" : "Search for explanation on Sunnah.com"),
                 onTap: () async {
                   Navigator.pop(context);
-                  final isAr = TranslationService.isArabic;
                   final text = h['arabic'].toString();
-                  // Skip the first 8 words (usually Isnad) and take the next 8 words for a better search
-                  final splitText = text.split(' ');
-                  final words = splitText.length > 8 
-                      ? splitText.skip(8).take(12).join(' ') 
-                      : splitText.take(8).join(' ');
+                  // Build a focused search query: skip narrator prefix words
+                  // (حدثنا/أخبرنا etc.) then take the next 8 meaningful words
+                  final queryWords = _buildHadithQuery(text);
 
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => HadithExplanationScreen(
-                        query: words,
+                        query: queryWords,
                       ),
                     ),
                   );
@@ -305,7 +339,9 @@ class _HadithScreenState extends State<HadithScreen> {
                   final messenger = ScaffoldMessenger.of(this.context);
                   final List<String> current = widget.storage.getStringList('hadith_bookmarks') ?? [];
                   final data = jsonEncode({
+                    'bookId': _selectedBook.id,
                     'book': _selectedBook.nameEn,
+                    'bookAr': _selectedBook.nameAr,
                     'number': h['number'],
                     'text': _displayLang == 'ara' ? h['arabic'] : h['english']
                   });

@@ -4,6 +4,7 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/api_service.dart';
 import 'surah_reader_screen.dart';
+import 'hadith_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
   final StorageService storage;
@@ -80,6 +81,23 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     } catch (_) {}
   }
 
+  void _navigateToHadithBookmark(Map<String, dynamic> b) {
+    final bookId = b['bookId']?.toString() ?? '';
+    final number = b['number'];
+    final hadithNum = number is int ? number : int.tryParse(number.toString());
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HadithScreen(
+          storage: widget.storage,
+          initialBookId: bookId.isNotEmpty ? bookId : null,
+          initialHadithNumber: hadithNum,
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuranList(ThemeData theme) {
     if (_quranBookmarks.isEmpty) {
       return Center(child: Text(TranslationService.isArabic ? "لا توجد علامات مرجعية" : "No Quran bookmarks", style: TextStyle(color: theme.textTheme.bodyMedium?.color)));
@@ -138,34 +156,53 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           color: theme.cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.primaryColor.withOpacity(0.2))),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "$book - ${TranslationService.isArabic ? 'حديث' : 'Hadith'} $number",
-                      style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryColor, fontSize: 13),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                      onPressed: () => _removeHadithBookmark(b),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  text,
-                  style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 15),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _navigateToHadithBookmark(b),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          TranslationService.isArabic
+                              ? '${b['bookAr'] ?? book} · ${TranslationService.isArabic ? 'حديث' : 'Hadith'} $number'
+                              : '$book · Hadith $number',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryColor, fontSize: 13),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                        onPressed: () => _removeHadithBookmark(b),
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    text,
+                    style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 15),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.open_in_new, size: 12, color: theme.primaryColor.withOpacity(0.6)),
+                      const SizedBox(width: 4),
+                      Text(
+                        TranslationService.isArabic ? 'اضغط للانتقال للحديث' : 'Tap to go to hadith',
+                        style: TextStyle(fontSize: 11, color: theme.primaryColor.withOpacity(0.6)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

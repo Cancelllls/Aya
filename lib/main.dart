@@ -346,7 +346,6 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   DateTime? _lastPressedAt;
   StreamSubscription<String?>? _notificationSubscription;
   Map<String, dynamic> _lastBookmark = {};
-  final Map<int, Widget> _builtScreens = {};
 
   @override
   void initState() {
@@ -823,11 +822,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                       return FadeTransition(opacity: animation, child: child);
                     },
                     child: KeyedSubtree(
-                      key: ValueKey<int>(_currentTab),
-                      child: (() {
-                        _builtScreens[_currentTab] ??= screens[_currentTab];
-                        return _builtScreens[_currentTab]!;
-                      })(),
+                      key: ValueKey<String>('$_currentTab-$_azkarInitialTab-$_prayerInitialTab'),
+                      child: screens[_currentTab],
                     ),
                   ),
                 ),

@@ -139,6 +139,15 @@ void backgroundAdhanCallback(int id) async {
           case 'madinah':
             url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
             break;
+          case 'ali_ahmad':
+            url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+            break;
+          case 'turkey':
+            url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+            break;
+          case 'egypt':
+            url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
+            break;
           default:
             url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
         }
@@ -155,6 +164,15 @@ void backgroundAdhanCallback(int id) async {
             break;
           case 'madinah':
             url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+            break;
+          case 'ali_ahmad':
+            url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+            break;
+          case 'turkey':
+            url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+            break;
+          case 'egypt':
+            url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
             break;
           default:
             url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
@@ -225,7 +243,7 @@ class NotificationService {
   }
 
   static Future<void> downloadAllAthanFiles() async {
-    final reciters = ['mishary', 'abdul_basit', 'makkah', 'madinah'];
+    final reciters = ['mishary', 'abdul_basit', 'makkah', 'madinah', 'ali_ahmad', 'turkey', 'egypt'];
     final client = http.Client();
     try {
       final dir = await getApplicationDocumentsDirectory();
@@ -257,6 +275,15 @@ class NotificationService {
               case 'madinah':
                 url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
                 break;
+              case 'ali_ahmad':
+                url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+                break;
+              case 'turkey':
+                url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+                break;
+              case 'egypt':
+                url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
+                break;
             }
           } else {
             switch (reciter) {
@@ -271,6 +298,15 @@ class NotificationService {
                 break;
               case 'madinah':
                 url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+                break;
+              case 'ali_ahmad':
+                url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+                break;
+              case 'turkey':
+                url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+                break;
+              case 'egypt':
+                url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
                 break;
             }
           }

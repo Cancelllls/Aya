@@ -312,14 +312,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
         targetOffset = (index * averageHeight);
       }
 
-      _scrollController.animateTo(
-        targetOffset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _scrollController.jumpTo(targetOffset);
 
       // Wait for layout to finish, then align perfectly
-      Future.delayed(Duration(milliseconds: 100 + (attempt * 100)), () {
+      Future.delayed(Duration(milliseconds: 50 + (attempt * 50)), () {
         if (!mounted) return;
         final key = _readingMode == 'continuous' 
             ? _pageKeys[(ayahNum - 1) ~/ 5]
@@ -328,11 +324,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
         if (key != null && key.currentContext != null) {
           Scrollable.ensureVisible(
             key.currentContext!,
-            duration: const Duration(milliseconds: 250),
+            duration: Duration.zero,
             curve: Curves.easeOutCubic,
-            alignment: 0.1, // Near the top, but slightly down
+            alignment: 0.0, // Exact top
           );
-        } else if (attempt < 5) {
+        } else if (attempt < 8) {
           // If the element isn't rendered yet, retry with a slightly longer delay
           performScroll(attempt + 1);
         }

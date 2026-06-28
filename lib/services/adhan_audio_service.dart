@@ -12,20 +12,32 @@ class AdhanAudioService {
 
   static const Map<String, Map<String, String>> reciterUrls = {
     'mishary': {
-      'fajr': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
-      'standard': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      'fajr': 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan1.mp3',
     },
     'abdul_basit': {
-      'fajr': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
-      'standard': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      'fajr': 'https://www.islamcan.com/adhan/audio/azan3.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan3.mp3',
     },
     'makkah': {
-      'fajr': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
-      'standard': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      'fajr': 'https://www.islamcan.com/adhan/audio/azan2.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan20.mp3',
     },
     'madinah': {
-      'fajr': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
-      'standard': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      'fajr': 'https://www.islamcan.com/adhan/audio/azan19.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan19.mp3',
+    },
+    'ali_ahmad': {
+      'fajr': 'https://www.islamcan.com/adhan/audio/azan4.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan4.mp3',
+    },
+    'turkey': {
+      'fajr': 'https://www.islamcan.com/adhan/audio/azan6.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan6.mp3',
+    },
+    'egypt': {
+      'fajr': 'https://www.islamcan.com/adhan/audio/azan7.mp3',
+      'standard': 'https://www.islamcan.com/adhan/audio/azan7.mp3',
     },
   };
 
