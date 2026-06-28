@@ -286,10 +286,9 @@ class ApiService {
   static Future<List<Ayah>> fetchSurahDetails(int surahNumber, {String tafsirEdition = 'ar.muyassar'}) async {
     List<Ayah>? ayahs;
 
-    // 1. Offline first: Try to get from local cache
+    // 1. Offline first: Try to get from local cache for specific Tafsir edition
     try {
-      final cached = await _getCachedString('cached_surah_${surahNumber}_details_$tafsirEdition') 
-          ?? await _getCachedString('cached_surah_${surahNumber}_details');
+      final cached = await _getCachedString('cached_surah_${surahNumber}_details_$tafsirEdition');
       if (cached != null) {
         final data = await compute(_parseJson, cached) as Map<String, dynamic>;
         final editions = data['data'] as List<dynamic>;

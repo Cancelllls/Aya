@@ -70,6 +70,14 @@ class StorageService {
     return prefs.getString(key) ?? defaultValue;
   }
 
+  List<String>? getStringList(String key) {
+    return prefs.getStringList(key);
+  }
+
+  Future<bool> setStringList(String key, List<String> value) async {
+    return await prefs.setStringList(key, value);
+  }
+
   Future<bool> setBool(String key, bool value) async {
     return await prefs.setBool(key, value);
   }

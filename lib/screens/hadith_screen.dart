@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -57,6 +58,7 @@ class _HadithScreenState extends State<HadithScreen> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _jumpController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ class _HadithScreenState extends State<HadithScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _jumpController.dispose();
     _scrollController.dispose();
@@ -289,6 +292,28 @@ class _HadithScreenState extends State<HadithScreen> {
                   );
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.bookmark, color: Color(0xFFE5C158)),
+                title: Text(TranslationService.isArabic ? "حفظ كعلامة مرجعية" : "Add to Bookmarks"),
+                subtitle: Text(TranslationService.isArabic ? "حفظ في المفضلة للأحاديث" : "Save to Hadith favorites"),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final messenger = ScaffoldMessenger.of(this.context);
+                  final List<String> current = widget.storage.getStringList('hadith_bookmarks') ?? [];
+                  final data = jsonEncode({
+                    'book': _selectedBook.nameEn,
+                    'number': h['number'],
+                    'text': _displayLang == 'ara' ? h['arabic'] : h['english']
+                  });
+                  if (!current.contains(data)) {
+                    current.add(data);
+                    await widget.storage.setStringList('hadith_bookmarks', current);
+                    if (mounted) {
+                      messenger.showSnackBar(SnackBar(content: Text(TranslationService.isArabic ? "تم الحفظ بنجاح" : "Saved successfully!")));
+                    }
+                  }
+                },
+              ),
               const SizedBox(height: 12),
             ],
           ),
@@ -363,6 +388,27 @@ class _HadithScreenState extends State<HadithScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: () {
+                          final newLang = _displayLang == 'ara' ? 'eng' : 'ara';
+                          setState(() {
+                            _displayLang = newLang;
+                            _currentPage = 1;
+                          });
+                          _loadSelectedBookData();
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: theme.primaryColor.withOpacity(0.12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero,
+                        ),
+                        child: Text(
+                          'En | ع',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.primaryColor),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       if (!_isOffline)
                         IconButton(
                           icon: Icon(Icons.download_for_offline, color: theme.primaryColor),
@@ -374,29 +420,6 @@ class _HadithScreenState extends State<HadithScreen> {
                           message: TranslationService.isArabic ? 'متاح للقراءة بدون إنترنت' : 'Available offline',
                           child: const Icon(Icons.check_circle, color: Colors.green),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ToggleButtons(
-                    borderRadius: BorderRadius.circular(8),
-                    fillColor: theme.primaryColor.withOpacity(0.12),
-                    selectedColor: theme.primaryColor,
-                    color: theme.textTheme.bodyMedium?.color,
-                    constraints: const BoxConstraints(minHeight: 36, minWidth: 80),
-                    isSelected: [_displayLang == 'ara', _displayLang == 'eng'],
-                    onPressed: (index) {
-                      final newLang = index == 0 ? 'ara' : 'eng';
-                      if (_displayLang != newLang) {
-                        setState(() {
-                          _displayLang = newLang;
-                          _currentPage = 1;
-                        });
-                        _loadSelectedBookData();
-                      }
-                    },
-                    children: const [
-                      Text('عربي', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Text('English', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ],
@@ -419,8 +442,13 @@ class _HadithScreenState extends State<HadithScreen> {
                         prefixIcon: Icon(Icons.search, size: 18, color: theme.textTheme.bodyMedium?.color),
                       ),
                       onChanged: (q) {
-                        setState(() {
-                          _currentPage = 1;
+                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                        _debounce = Timer(const Duration(milliseconds: 500), () {
+                          if (mounted) {
+                            setState(() {
+                              _currentPage = 1;
+                            });
+                          }
                         });
                       },
                     ),
@@ -541,7 +569,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 12),
-                                        if (h['arabic'].toString().isNotEmpty && TranslationService.isArabic)
+                                        if (h['arabic'].toString().isNotEmpty && _displayLang == 'ara')
                                           Text(
                                             h['arabic'],
                                             style: GoogleFonts.amiri(
@@ -553,7 +581,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                             textAlign: TextAlign.start,
                                             textDirection: TextDirection.rtl,
                                           ),
-                                          if (h['english'].toString().isNotEmpty && !TranslationService.isArabic)
+                                          if (h['english'].toString().isNotEmpty && _displayLang == 'eng')
                                             Text(
                                               h['english'],
                                               style: TextStyle(

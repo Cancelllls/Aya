@@ -300,16 +300,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
       if (!mounted) return;
       if (!_scrollController.hasClients) return;
 
-      final maxScroll = _scrollController.position.maxScrollExtent;
+      // maxScroll removed
       double targetOffset;
 
       if (_readingMode == 'continuous') {
         final pageIndex = (ayahNum - 1) ~/ 5;
-        targetOffset = (pageIndex * 420.0 * _fontSizeMultiplier).clamp(0.0, maxScroll);
+        targetOffset = (pageIndex * 420.0 * _fontSizeMultiplier);
       } else {
         final index = ayahNum - 1;
         final double averageHeight = (_readingMode == 'translation' ? 260.0 : 130.0) * _fontSizeMultiplier;
-        targetOffset = (index * averageHeight).clamp(0.0, maxScroll);
+        targetOffset = (index * averageHeight);
       }
 
       _scrollController.animateTo(
@@ -380,8 +380,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.bookmark_outline, color: Color(0xFFE5C158)),
-                title: Text(TranslationService.t('bookmark_verse')),
+                leading: Icon(_isBookmarked && _bookmarkedAyahNumber == ayah.numberInSurah ? Icons.bookmark : Icons.bookmark_outline, color: const Color(0xFFE5C158)),
+                title: Text(_isBookmarked && _bookmarkedAyahNumber == ayah.numberInSurah 
+                   ? (TranslationService.isArabic ? "إزالة العلامة" : "Remove Bookmark") 
+                   : TranslationService.t('bookmark_verse')),
                 onTap: () {
                   Navigator.pop(context);
                   _bookmarkAyah(ayah.numberInSurah);
@@ -735,41 +737,32 @@ color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold),
                                   ),
-                                  icon: (playState.isLoading &&
-                                          playState.surahNum ==
-                                              _currentSurah.number &&
-                                          playState.ayahNum == 0)
-                                      ? const SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.black),
-                                        )
-                                      : const Icon(Icons.play_arrow, size: 16),
-                                  label: Text((playState.isLoading &&
-                                          playState.surahNum ==
-                                              _currentSurah.number &&
-                                          playState.ayahNum == 0)
-                                      ? (TranslationService.isArabic
-                                          ? 'تحميل...'
-                                          : 'Loading...')
-                                      : TranslationService.t('play')),
+                                  icon: (playState.isLoading && playState.surahNum == _currentSurah.number && playState.ayahNum == 0)
+                                      ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                                      : (playState.isPlaying && playState.surahNum == _currentSurah.number)
+                                          ? const Icon(Icons.pause, size: 16)
+                                          : const Icon(Icons.play_arrow, size: 16),
+                                  label: Text((playState.isLoading && playState.surahNum == _currentSurah.number && playState.ayahNum == 0)
+                                      ? (TranslationService.isArabic ? 'تحميل...' : 'Loading...')
+                                      : (playState.isPlaying && playState.surahNum == _currentSurah.number)
+                                          ? (TranslationService.isArabic ? 'إيقاف' : 'Pause')
+                                          : TranslationService.t('play')),
                                   onPressed: () {
-                                    AudioManager.instance.playSurah(
-                                        _currentSurah.number,
-                                        _currentSurah.englishName,
-                                        _ayahList);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          TranslationService.isArabic
-                                              ? 'جاري تشغيل سورة ${_currentSurah.name}...'
-                                              : 'Streaming Surah ${_currentSurah.englishName}...',
+                                    if (playState.isPlaying && playState.surahNum == _currentSurah.number) {
+                                      AudioManager.instance.togglePlayPause();
+                                    } else {
+                                      AudioManager.instance.playSurah(_currentSurah.number, _currentSurah.englishName, _ayahList);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            TranslationService.isArabic
+                                                ? 'جاري تشغيل سورة ${_currentSurah.name}...'
+                                                : 'Streaming Surah ${_currentSurah.englishName}...',
+                                          ),
+                                          duration: const Duration(seconds: 2),
                                         ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   },
                                 )
                               ],

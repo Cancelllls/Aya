@@ -67,17 +67,15 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       
       String infoText = '';
       if (i < infoDivs.length) {
-        // Build a readable info string
-        final spans = infoDivs[i].querySelectorAll('.info-subtitle');
-        for (var span in spans) {
-          final title = span.text.trim();
-          final nextNode = span.nextElementSibling;
-          final value = nextNode?.text.trim() ?? '';
-          infoText += "$title $value\n";
-        }
-        if (infoText.isEmpty) {
-          infoText = infoDivs[i].text.replaceAll(RegExp(r'\\s+'), ' ').trim();
-        }
+        String rawText = infoDivs[i].text.replaceAll(RegExp(r'\s+'), ' ').trim();
+        // Insert newlines before known labels to make it readable
+        rawText = rawText.replaceAll('الراوي:', '\nالراوي:');
+        rawText = rawText.replaceAll('المحدث:', '\nالمحدث:');
+        rawText = rawText.replaceAll('المصدر:', '\nالمصدر:');
+        rawText = rawText.replaceAll('الصفحة أو الرقم:', '\nالصفحة أو الرقم:');
+        rawText = rawText.replaceAll('خلاصة حكم المحدث:', '\nخلاصة حكم المحدث:');
+        rawText = rawText.replaceAll('التخريج:', '\nالتخريج:');
+        infoText = rawText.trim();
       }
       
       if (hText.isNotEmpty) {

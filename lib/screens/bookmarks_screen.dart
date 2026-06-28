@@ -96,7 +96,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
                         ),
                         subtitle: Text(
-                          TranslationService.isArabic ? "الآية \$aNum" : "Ayah \$aNum",
+                          TranslationService.isArabic ? "الآية $aNum" : "Ayah $aNum",
                           style: TextStyle(color: theme.textTheme.bodyMedium?.color),
                         ),
                         trailing: IconButton(
