@@ -14,4 +14,12 @@
     
     <string name="widget_tasbih_label">آية - مسبحة الأذكار</string>
     <string name="widget_tasbih_description">عداد تسبيح سريع للأذكار اليومية باللمس.</string>
+    <string name="widget_hijri_label">آية - التاريخ الهجري</string>
+    <string name="widget_hijri_description">يعرض التاريخ الهجري لليوم.</string>
+    
+    <string name="widget_next_prayer_label">آية - الصلاة القادمة</string>
+    <string name="widget_next_prayer_description">يعرض الوقت المتبقي للصلاة القادمة.</string>
+    
+    <string name="widget_asma_label">آية - أسماء الله الحسنى</string>
+    <string name="widget_asma_description">يعرض اسماً من أسماء الله الحسنى يومياً.</string>
 </resources>

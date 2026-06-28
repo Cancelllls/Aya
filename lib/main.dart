@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,12 +15,14 @@ import 'screens/settings_screen.dart';
 import 'screens/surah_reader_screen.dart';
 import 'screens/quran_download_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/bookmarks_screen.dart';
 import 'services/api_service.dart';
 import 'services/audio_manager.dart';
 import 'theme/app_colors.dart';
 import 'widgets/islamic_logo_painter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'models/prayer_models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -102,6 +105,40 @@ class _AyaAppState extends State<AyaApp> {
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB45309), width: 2)),
             filled: true,
             fillColor: const Color(0xFFF8FAFC),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        );
+      case 'sepia':
+        return ThemeData(
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: const Color(0xFFF4ECD8),
+          primaryColor: const Color(0xFF8C5A2B),
+          cardColor: const Color(0xFFFDF6E3),
+          chipTheme: const ChipThemeData(backgroundColor: Color(0xFFEBE0C5)),
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(color: Color(0xFF4A3B2C), fontWeight: FontWeight.w500),
+            bodyMedium: TextStyle(color: Color(0xFF7A6451)),
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFFF4ECD8),
+            foregroundColor: Color(0xFF8C5A2B),
+            elevation: 0,
+            iconTheme: IconThemeData(color: Color(0xFF8C5A2B)),
+          ),
+          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+            backgroundColor: Color(0xFFFDF6E3),
+            selectedItemColor: Color(0xFF8C5A2B),
+            unselectedItemColor: Color(0xFFB09D8A),
+            elevation: 8,
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFFFDF6E3)),
+          dividerColor: const Color(0xFFEBE0C5),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFD3C5A8))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFD3C5A8))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8C5A2B), width: 2)),
+            filled: true,
+            fillColor: const Color(0xFFFDF6E3),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         );
@@ -595,7 +632,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             ),
           ),
         );
-        _loadLastBookmark();
+        await _loadLastBookmark();
       }
     } catch (_) {}
   }
@@ -627,7 +664,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             ),
           ),
         );
-        _loadLastBookmark();
+        await _loadLastBookmark();
       }
     } catch (e) {
       if (mounted) {
@@ -741,6 +778,18 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                   );
                 },
               ),
+            IconButton(
+              icon: Icon(Icons.bookmarks, color: theme.appBarTheme.iconTheme?.color ?? const Color(0xFFE5C158)),
+              tooltip: TranslationService.isArabic ? 'العلامات المرجعية' : 'Bookmarks',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookmarksScreen(storage: widget.storage),
+                  ),
+                );
+              },
+            ),
             IconButton(
               icon: Icon(Icons.settings, color: theme.appBarTheme.iconTheme?.color ?? const Color(0xFFE5C158)),
               onPressed: () {

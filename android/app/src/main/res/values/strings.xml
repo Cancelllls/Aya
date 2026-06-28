@@ -14,4 +14,12 @@
     
     <string name="widget_tasbih_label">Aya - Tasbih Counter</string>
     <string name="widget_tasbih_description">A quick tap counter widget for daily remembrance.</string>
+    <string name="widget_hijri_label">Aya - Hijri Date</string>
+    <string name="widget_hijri_description">Displays the current Islamic Hijri date.</string>
+    
+    <string name="widget_next_prayer_label">Aya - Next Prayer</string>
+    <string name="widget_next_prayer_description">Countdown to the next prayer time.</string>
+    
+    <string name="widget_asma_label">Aya - Asma ul Husna</string>
+    <string name="widget_asma_description">Displays one of the 99 Names of Allah.</string>
 </resources>

@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
@@ -48,50 +50,77 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Noor Widget Provider -->
-        <receiver android:name=".NoorWidgetProvider" android:exported="true" android:label="@string/widget_prayer_times_label">
+        <!-- Aya Widget Provider -->
+        <receiver android:name=".AyaWidgetProvider" android:exported="true" android:label="@string/widget_prayer_times_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/noor_widget_info" />
+                android:resource="@xml/aya_widget_info" />
         </receiver>
-        <!-- Noor Verse Widget Provider -->
-        <receiver android:name=".NoorVerseWidgetProvider" android:exported="true" android:label="@string/widget_verse_label">
+        <!-- Aya Verse Widget Provider -->
+        <receiver android:name=".AyaVerseWidgetProvider" android:exported="true" android:label="@string/widget_verse_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/noor_verse_widget_info" />
+                android:resource="@xml/aya_verse_widget_info" />
         </receiver>
-        <!-- Noor Dhikr Widget Provider -->
-        <receiver android:name=".NoorDhikrWidgetProvider" android:exported="true" android:label="@string/widget_dhikr_label">
+        <!-- Aya Dhikr Widget Provider -->
+        <receiver android:name=".AyaDhikrWidgetProvider" android:exported="true" android:label="@string/widget_dhikr_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/noor_dhikr_widget_info" />
+                android:resource="@xml/aya_dhikr_widget_info" />
         </receiver>
-        <!-- Noor Hadith Widget Provider -->
-        <receiver android:name=".NoorHadithWidgetProvider" android:exported="true" android:label="@string/widget_hadith_label">
+        <!-- Aya Hadith Widget Provider -->
+        <receiver android:name=".AyaHadithWidgetProvider" android:exported="true" android:label="@string/widget_hadith_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/noor_hadith_widget_info" />
+                android:resource="@xml/aya_hadith_widget_info" />
         </receiver>
-        <!-- Noor Tasbih Widget Provider -->
-        <receiver android:name=".NoorTasbihWidgetProvider" android:exported="true" android:label="@string/widget_tasbih_label">
+        <!-- Aya Tasbih Widget Provider -->
+        <receiver android:name=".AyaTasbihWidgetProvider" android:exported="true" android:label="@string/widget_tasbih_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/noor_tasbih_widget_info" />
+                android:resource="@xml/aya_tasbih_widget_info" />
+        </receiver>
+        <!-- Aya Hijri Widget Provider -->
+        <receiver android:name=".AyaHijriWidgetProvider" android:exported="true" android:label="@string/widget_hijri_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/aya_hijri_widget_info" />
+        </receiver>
+        <!-- Aya Next Prayer Widget Provider -->
+        <receiver android:name=".AyaNextPrayerWidgetProvider" android:exported="true" android:label="@string/widget_next_prayer_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/aya_next_prayer_widget_info" />
+        </receiver>
+        <!-- Aya Asma ul Husna Widget Provider -->
+        <receiver android:name=".AyaAsmaulHusnaWidgetProvider" android:exported="true" android:label="@string/widget_asma_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/aya_asma_widget_info" />
         </receiver>
         <!-- Flutter Local Notifications Receivers -->
         <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" />
@@ -114,7 +143,7 @@
         <receiver
             android:name="dev.fluttercommunity.plus.androidalarmmanager.RebootBroadcastReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

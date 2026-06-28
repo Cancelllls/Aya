@@ -1,3 +1,19 @@
+class TafsirEdition {
+  final String identifier;
+  final String name;
+
+  const TafsirEdition(this.identifier, this.name);
+}
+
+const List<TafsirEdition> availableTafsirs = [
+  TafsirEdition('ar.muyassar', 'التفسير الميسر (المجمع)'),
+  TafsirEdition('ar.jalalayn', 'تفسير الجلالين'),
+  TafsirEdition('ar.qurtubi', 'تفسير القرطبي'),
+  TafsirEdition('ar.miqbas', 'تنوير المقباس من تفسير بن عباس'),
+  TafsirEdition('ar.waseet', 'التفسير الوسيط'),
+  TafsirEdition('ar.baghawi', 'تفسير البغوي'),
+];
+
 class Surah {
   final int number;
   final String name;

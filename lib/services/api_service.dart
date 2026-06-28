@@ -263,10 +263,14 @@ class ApiService {
     throw Exception('Failed to fetch Surah list. No internet and no cached data.');
   }
 
-  static Future<void> _injectTafsirIfCached(int surahNumber, List<Ayah> ayahs) async {
+  static Future<void> _injectTafsirIfCached(int surahNumber, List<Ayah> ayahs, String tafsirEdition) async {
     try {
       final storage = await StorageService.getInstance();
-      final tafsirRaw = storage.getString('cached_tafsir_$surahNumber');
+      var tafsirRaw = storage.getString('cached_tafsir_${tafsirEdition}_$surahNumber');
+      if (tafsirRaw.isEmpty && tafsirEdition == 'ar.muyassar') {
+        // Fallback for old cache key
+        tafsirRaw = storage.getString('cached_tafsir_$surahNumber');
+      }
       if (tafsirRaw.isNotEmpty) {
         final decoded = jsonDecode(tafsirRaw);
         final tafsirAyahs = decoded['data']['ayahs'] as List<dynamic>;
@@ -279,12 +283,13 @@ class ApiService {
     } catch (_) {}
   }
 
-  static Future<List<Ayah>> fetchSurahDetails(int surahNumber) async {
+  static Future<List<Ayah>> fetchSurahDetails(int surahNumber, {String tafsirEdition = 'ar.muyassar'}) async {
     List<Ayah>? ayahs;
 
     // 1. Offline first: Try to get from local cache
     try {
-      final cached = await _getCachedString('cached_surah_${surahNumber}_details');
+      final cached = await _getCachedString('cached_surah_${surahNumber}_details_$tafsirEdition') 
+          ?? await _getCachedString('cached_surah_${surahNumber}_details');
       if (cached != null) {
         final data = await compute(_parseJson, cached) as Map<String, dynamic>;
         final editions = data['data'] as List<dynamic>;
@@ -315,16 +320,16 @@ class ApiService {
     }
 
     if (ayahs != null) {
-      await _injectTafsirIfCached(surahNumber, ayahs);
+      await _injectTafsirIfCached(surahNumber, ayahs, tafsirEdition);
       return ayahs;
     }
 
     // 2. Online fallback: Fetch from AlQuran Cloud
     try {
-      final response = await _client.get(Uri.parse('$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,ar.muyassar')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,$tafsirEdition')).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final body = response.body;
-        await _cacheString('cached_surah_${surahNumber}_details', body);
+        await _cacheString('cached_surah_${surahNumber}_details_$tafsirEdition', body);
         final data = await compute(_parseJson, body) as Map<String, dynamic>;
         final editions = data['data'] as List<dynamic>;
         final arabic = editions[0]['ayahs'] as List<dynamic>;
@@ -362,7 +367,7 @@ class ApiService {
     }
 
     if (ayahs != null) {
-      await _injectTafsirIfCached(surahNumber, ayahs);
+      await _injectTafsirIfCached(surahNumber, ayahs, tafsirEdition);
       return ayahs;
     }
 

@@ -9,6 +9,7 @@ import '../models/prayer_models.dart';
 import 'quran_download_screen.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../services/adhan_audio_service.dart';
+import 'about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final StorageService storage;
@@ -32,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-scheherazade';
   String _reciter = 'ar.alafasy';
+  String _tafsirEdition = 'ar.muyassar';
   
   // Add calculation settings
   int _calcMethod = 2;
@@ -75,6 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     _bottomNavbarStyle = widget.storage.getString('bottom_navbar_style', defaultValue: 'solid');
     _quranFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
     _reciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    _tafsirEdition = widget.storage.getString('default_tafsir', defaultValue: 'ar.muyassar');
     
     _calcMethod = widget.storage.getInt('calc_method', defaultValue: 2);
     _asrMethod = widget.storage.getInt('asr_method', defaultValue: 0);
@@ -211,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
       if (val == 'voice' || val == 'vibrate_and_voice') {
-        _autoDownloadPreAdhanVoice();
+        await _autoDownloadPreAdhanVoice();
       }
       await _rescheduleAlarms();
     }
@@ -224,7 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       });
       await widget.storage.setString('adhan_alert_mode', val);
       if (val == 'real_reciter' || val == 'vibrate_and_voice') {
-        _autoDownloadReciterAudio(_adhanReciter);
+        await _autoDownloadReciterAudio(_adhanReciter);
       }
       await _rescheduleAlarms();
     }
@@ -236,7 +239,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _adhanReciter = val;
       });
       await widget.storage.setString('adhan_reciter', val);
-      _autoDownloadReciterAudio(val);
+      await _autoDownloadReciterAudio(val);
       await _rescheduleAlarms();
     }
   }
@@ -489,6 +492,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     }
   }
 
+  Future<void> _changeTafsirEdition(String? val) async {
+    if (val != null) {
+      setState(() {
+        _tafsirEdition = val;
+      });
+      await widget.storage.setString('default_tafsir', val);
+      widget.onThemeChanged();
+    }
+  }
+
   Future<void> _rescheduleAlarms() async {
     try {
       final loc = widget.storage.getLocation();
@@ -593,6 +606,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               await widget.storage.setString('theme_preset', 'dark');
               await widget.storage.setString('quran_font', 'font-scheherazade');
               await widget.storage.setString('default_reciter', 'ar.alafasy');
+              await widget.storage.setString('default_tafsir', 'ar.muyassar');
               await widget.storage.setString('lang_code', 'ar');
               await widget.storage.setString('quran_bookmarks', '[]');
               await widget.storage.setString('custom_dhikrs', '[]');
@@ -628,6 +642,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 _themePreset = 'dark';
                 _quranFont = 'font-scheherazade';
                 _reciter = 'ar.alafasy';
+                _tafsirEdition = 'ar.muyassar';
                 _calcMethod = 2;
                 _asrMethod = 0;
                 _continuousPlay = true;
@@ -663,9 +678,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Directionality(
-      textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
+    return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
@@ -694,6 +707,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     dropdownColor: theme.cardColor,
                     items: [
                       DropdownMenuItem(value: 'light', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "فاتح" : "Light"))),
+                      DropdownMenuItem(value: 'sepia', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "بني (قراءة)" : "Sepia/Parchment"))),
                       DropdownMenuItem(value: 'dark', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "داكن" : "Dark"))),
                       DropdownMenuItem(value: 'black', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "أسود OLED" : "OLED Black"))),
                       DropdownMenuItem(value: 'dark_monet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "داكن متكيف" : "Adaptive Dark"))),
@@ -730,6 +744,25 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 'font-amiri', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "الخط الأميري" : "Amiri Font"))),
                     ],
                     onChanged: _changeFont,
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                ListTile(
+                  title: Text(TranslationService.isArabic ? "تفسير القرآن" : "Quran Tafsir"),
+                  subtitle: Text(TranslationService.isArabic ? "اختر كتاب التفسير المفضل" : "Choose preferred Tafsir book"),
+                  trailing: DropdownButton<String>(
+                    value: _tafsirEdition,
+                    underline: const SizedBox(),
+                    dropdownColor: theme.cardColor,
+                    items: const [
+                      DropdownMenuItem(value: 'ar.muyassar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("التفسير الميسر (المجمع)"))),
+                      DropdownMenuItem(value: 'ar.jalalayn', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("تفسير الجلالين"))),
+                      DropdownMenuItem(value: 'ar.qurtubi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("تفسير القرطبي"))),
+                      DropdownMenuItem(value: 'ar.miqbas', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("تنوير المقباس (ابن عباس)"))),
+                      DropdownMenuItem(value: 'ar.waseet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("التفسير الوسيط (الطنطاوي)"))),
+                      DropdownMenuItem(value: 'ar.baghawi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("تفسير البغوي"))),
+                    ],
+                    onChanged: _changeTafsirEdition,
                   ),
                 ),
                 const Divider(height: 1, color: Colors.white10),
@@ -1458,6 +1491,20 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               onTap: _showDonateDialog,
             ),
           ),
+          Card(
+            color: theme.cardColor,
+            child: ListTile(
+              leading: const Icon(Icons.info_outline, color: Color(0xFFE5C158)),
+              title: Text(TranslationService.isArabic ? "حول التطبيق" : "About Aya", style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Icon(TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios, size: 14, color: const Color(0xFFE5C158)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutScreen()),
+                );
+              },
+            ),
+          ),
           const SizedBox(height: 20),
 
           // Reset Section
@@ -1501,7 +1548,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ),
         ],
       ),
-    ));
+    );
   }
 
   Widget _buildDownloadStatusIcon(String reciterId) {

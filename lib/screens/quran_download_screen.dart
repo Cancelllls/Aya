@@ -27,12 +27,14 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   bool _isLoadingList = true;
   double _totalSpaceMB = 0.0;
   late String _reciter;
-  Map<String, bool> _hadithDownloadedStates = {};
+  late String _tafsirEdition;
+  Map<String, Map<String, bool>> _hadithDownloadedStates = {};
 
   @override
   void initState() {
     super.initState();
     _reciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    _tafsirEdition = widget.storage.getString('default_tafsir', defaultValue: 'ar.muyassar');
     _loadSurahList();
     _checkHadithStates();
     QuranDownloadService.instance.initStates(_reciter);
@@ -52,9 +54,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   }
 
   Future<void> _checkHadithStates() async {
-    final Map<String, bool> states = {};
+    final Map<String, Map<String, bool>> states = {};
     for (final book in hadithBooks) {
-      states[book.id] = await _isHadithBookDownloaded(book.id);
+      states[book.id] = await _getHadithBookDownloadState(book.id);
     }
     if (mounted) {
       setState(() {
@@ -63,25 +65,26 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     }
   }
 
-  Future<bool> _isHadithBookDownloaded(String bookId) async {
+  Future<Map<String, bool>> _getHadithBookDownloadState(String bookId) async {
     final dir = await getApplicationDocumentsDirectory();
     final pathAr = '${dir.path}/hadiths/ara_$bookId.json';
     final pathEn = '${dir.path}/hadiths/eng_$bookId.json';
-    return await File(pathAr).exists() && await File(pathEn).exists();
+    return {
+      'ara': await File(pathAr).exists(),
+      'eng': await File(pathEn).exists(),
+    };
   }
 
-  Future<void> _deleteHadithBook(String bookId) async {
+  Future<void> _deleteHadithBook(String bookId, String lang) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final fileAr = File('${dir.path}/hadiths/ara_$bookId.json');
-      final fileEn = File('${dir.path}/hadiths/eng_$bookId.json');
-      if (await fileAr.exists()) await fileAr.delete();
-      if (await fileEn.exists()) await fileEn.delete();
+      final file = File('${dir.path}/hadiths/${lang}_$bookId.json');
+      if (await file.exists()) await file.delete();
       await _checkHadithStates();
     } catch (_) {}
   }
 
-  Future<void> _downloadHadithBook(String bookId) async {
+  Future<void> _downloadHadithBook(String bookId, String lang) async {
     try {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -90,25 +93,20 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
         ),
       );
 
-      final urlAr = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/ara-$bookId.min.json';
-      final urlEn = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-$bookId.min.json';
+      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$lang-$bookId.min.json';
+      final res = await http.get(Uri.parse(url));
 
-      final resAr = await http.get(Uri.parse(urlAr));
-      final resEn = await http.get(Uri.parse(urlEn));
-
-      if (resAr.statusCode == 200 && resEn.statusCode == 200) {
+      if (res.statusCode == 200) {
         final dir = await getApplicationDocumentsDirectory();
-        final pathAr = '${dir.path}/hadiths/ara_$bookId.json';
-        final pathEn = '${dir.path}/hadiths/eng_$bookId.json';
+        final path = '${dir.path}/hadiths/${lang}_$bookId.json';
 
-        await File(pathAr).parent.create(recursive: true);
-        await File(pathAr).writeAsString(resAr.body);
-        await File(pathEn).writeAsString(resEn.body);
+        await File(path).parent.create(recursive: true);
+        await File(path).writeAsString(res.body);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(TranslationService.isArabic ? "تم تحميل الكتاب بنجاح!" : "Book downloaded successfully!"),
+            content: Text(TranslationService.isArabic ? "تم التحميل بنجاح!" : "Downloaded successfully!"),
             backgroundColor: const Color(0xFFE5C158),
           ),
         );
@@ -120,7 +118,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(TranslationService.isArabic ? "فشل تحميل الكتاب. حاول مجدداً." : "Download failed. Try again."),
+          content: Text(TranslationService.isArabic ? "فشل التحميل. حاول مجدداً." : "Download failed. Try again."),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -215,7 +213,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     final isDownloadingText = QuranDownloadService.instance.isDownloadingText;
     final textDownloadProgress = QuranDownloadService.instance.textDownloadProgress;
 
-    final tafsirCount = QuranDownloadService.instance.getDownloadedTafsirCount(widget.storage);
+    final tafsirCount = QuranDownloadService.instance.getDownloadedTafsirCount(widget.storage, _tafsirEdition);
     final tafsirProgress = tafsirCount / 114.0;
     final isDownloadingTafsir = QuranDownloadService.instance.isDownloadingTafsir;
     final tafsirDownloadProgress = QuranDownloadService.instance.tafsirDownloadProgress;
@@ -401,8 +399,8 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                     children: [
                                       Text(
                                         TranslationService.isArabic
-                                            ? "التفسير الميسر (للقراءة أوفلاين)"
-                                            : "Tafsir Muyassar (For Offline Reading)",
+                                            ? "التفسير (للقراءة أوفلاين)"
+                                            : "Tafsir (For Offline Reading)",
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFE5C158)),
                                       ),
                                       const SizedBox(height: 4),
@@ -462,7 +460,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                         TranslationService.isArabic ? "تحميل التفسير" : "Download Tafsir Only",
                                         style: const TextStyle(color: Color(0xFFE5C158), fontSize: 11, fontWeight: FontWeight.bold),
                                       ),
-                                      onPressed: () => QuranDownloadService.instance.downloadAllTafsir(widget.storage),
+                                      onPressed: () => QuranDownloadService.instance.downloadAllTafsir(widget.storage, _tafsirEdition),
                                     )
                                   else
                                     Text(
@@ -500,7 +498,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                                                 onPressed: () async {
                                                   Navigator.pop(context);
-                                                  await QuranDownloadService.instance.deleteAllTafsir(widget.storage);
+                                                  await QuranDownloadService.instance.deleteAllTafsir(widget.storage, _tafsirEdition);
                                                 },
                                                 child: Text(TranslationService.isArabic ? "حذف" : "Delete"),
                                               ),
@@ -636,7 +634,62 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
               itemCount: hadithBooks.length,
               itemBuilder: (context, index) {
                 final book = hadithBooks[index];
-                final isDownloaded = _hadithDownloadedStates[book.id] ?? false;
+                final states = _hadithDownloadedStates[book.id] ?? {'ara': false, 'eng': false};
+                
+                Widget buildLangRow(String lang, String title) {
+                   final isDownloaded = states[lang] == true;
+                   return Row(
+                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                     children: [
+                       Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: theme.textTheme.bodyMedium?.color)),
+                       isDownloaded
+                           ? Row(
+                               children: [
+                                 Text(TranslationService.isArabic ? "أوفلاين" : "Offline", style: const TextStyle(color: Colors.green, fontSize: 11)),
+                                 IconButton(
+                                   icon: const Icon(Icons.delete, color: Colors.redAccent, size: 18),
+                                   onPressed: () {
+                                     showDialog(
+                                       context: context,
+                                       builder: (context) => AlertDialog(
+                                         backgroundColor: theme.cardColor,
+                                         title: Text(
+                                           TranslationService.isArabic ? "حذف كتاب الحديث؟" : "Delete Hadith Book?",
+                                           style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                                         ),
+                                         content: Text(
+                                           TranslationService.isArabic
+                                               ? "هل أنت متأكد من حذف هذا الكتاب المخزن أوفلاين؟"
+                                               : "Are you sure you want to delete this cached offline book?",
+                                         ),
+                                         actions: [
+                                           TextButton(
+                                             onPressed: () => Navigator.pop(context),
+                                             child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+                                           ),
+                                           ElevatedButton(
+                                             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                             onPressed: () {
+                                               Navigator.pop(context);
+                                               _deleteHadithBook(book.id, lang);
+                                             },
+                                             child: Text(TranslationService.isArabic ? "حذف" : "Delete"),
+                                           ),
+                                         ],
+                                       ),
+                                     );
+                                   },
+                                 ),
+                               ],
+                             )
+                           : IconButton(
+                               icon: const Icon(Icons.cloud_download, color: Color(0xFFE5C158), size: 18),
+                               onPressed: () => _downloadHadithBook(book.id, lang),
+                             ),
+                     ],
+                   );
+                }
+
                 return Card(
                   color: theme.cardColor,
                   margin: const EdgeInsets.only(bottom: 12),
@@ -644,72 +697,26 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(color: const Color(0xFFE5C158).withOpacity(0.12)),
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    title: Text(
-                      TranslationService.isArabic ? book.nameAr : book.nameEn,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          TranslationService.isArabic ? book.nameAr : book.nameEn,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          "${book.totalHadiths} ${TranslationService.isArabic ? 'حديث شريف' : 'Hadiths'}",
+                          style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(height: 1),
+                        buildLangRow('ara', 'عربي (Arabic)'),
+                        const Divider(height: 1),
+                        buildLangRow('eng', 'English'),
+                      ],
                     ),
-                    subtitle: Text(
-                      "${book.totalHadiths} ${TranslationService.isArabic ? 'حديث شريف' : 'Hadiths'}",
-                      style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
-                    ),
-                    trailing: isDownloaded
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  TranslationService.isArabic ? "جاهز أوفلاين" : "Offline Ready",
-                                  style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      backgroundColor: theme.cardColor,
-                                      title: Text(
-                                        TranslationService.isArabic ? "حذف كتاب الحديث؟" : "Delete Hadith Book?",
-                                        style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                                      ),
-                                      content: Text(
-                                        TranslationService.isArabic
-                                            ? "هل أنت متأكد من حذف هذا الكتاب المخزن أوفلاين؟"
-                                            : "Are you sure you want to delete this cached offline book?",
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context),
-                                          child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
-                                        ),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            _deleteHadithBook(book.id);
-                                          },
-                                          child: Text(TranslationService.isArabic ? "حذف" : "Delete"),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.cloud_download, color: Color(0xFFE5C158)),
-                            onPressed: () => _downloadHadithBook(book.id),
-                          ),
                   ),
                 );
               },

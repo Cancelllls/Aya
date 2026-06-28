@@ -158,7 +158,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
               ),
               const SizedBox(height: 12),
               Text(
-                TranslationService.isArabic ? 'تفسير الميسر:' : 'Tafseer Al-Muyassar:',
+                TranslationService.isArabic ? 'التفسير:' : 'Tafseer:',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -217,7 +217,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   Future<void> _loadAyahs() async {
     setState(() => _isLoading = true);
     try {
-      final list = await ApiService.fetchSurahDetails(_currentSurah.number);
+      final tafsirEdition = widget.storage.getString('default_tafsir', defaultValue: 'ar.muyassar');
+      final list = await ApiService.fetchSurahDetails(_currentSurah.number, tafsirEdition: tafsirEdition);
       setState(() {
         _ayahList = list;
         _isLoading = false;
@@ -239,6 +240,22 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   }
 
   void _bookmarkAyah(int ayahNum) async {
+    if (_isBookmarked && _bookmarkedAyahNumber == ayahNum) {
+      await widget.storage.removeBookmark(_currentSurah.number, ayahNumber: ayahNum);
+      if (!mounted) return;
+      setState(() {
+        _isBookmarked = false;
+        _bookmarkedAyahNumber = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${TranslationService.isArabic ? 'تم إزالة العلامة من الآية' : 'Removed Bookmark from Ayah'} $ayahNum'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+      return;
+    }
+
     await widget.storage.addBookmark(_currentSurah.number, _currentSurah.englishName, ayahNum);
     if (!mounted) return;
     setState(() {

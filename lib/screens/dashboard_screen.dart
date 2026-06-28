@@ -314,6 +314,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await setStringIfChanged('widget_hadith_text', _hadithPresets[hadithIdx]['text']!);
     await setStringIfChanged('widget_hadith_ref', _hadithPresets[hadithIdx]['ref']!);
 
+    // Hijri date
+    final hijriDateString = "${_prayerData!.hijriDate} ${_prayerData!.hijriMonth} ${_prayerData!.hijriYear}";
+    await setStringIfChanged('widget_hijri_date', hijriDateString);
+
+    // Asma ul Husna
+    final asmaPresets = [
+      {'arabic': 'الرَّحْمَنُ', 'english': 'Ar-Rahman', 'meaning': 'The Beneficent'},
+      {'arabic': 'الرَّحِيمُ', 'english': 'Ar-Raheem', 'meaning': 'The Merciful'},
+      {'arabic': 'الْمَلِكُ', 'english': 'Al-Malik', 'meaning': 'The King / Sovereign'},
+      {'arabic': 'الْقُدُّوسُ', 'english': 'Al-Quddus', 'meaning': 'The Most Holy'},
+      {'arabic': 'السَّلَامُ', 'english': 'As-Salam', 'meaning': 'The Source of Peace'},
+      {'arabic': 'الْمُؤْمِنُ', 'english': 'Al-Mu\'min', 'meaning': 'The Infuser of Faith'},
+      {'arabic': 'الْمُهَيْمِنُ', 'english': 'Al-Muhaymin', 'meaning': 'The Guardian'},
+      {'arabic': 'الْعَزِيزُ', 'english': 'Al-Aziz', 'meaning': 'The Mighty'},
+      {'arabic': 'الْجَبَّارُ', 'english': 'Al-Jabbar', 'meaning': 'The Compeller'},
+      {'arabic': 'الْمُتَكَبِّرُ', 'english': 'Al-Mutakabbir', 'meaning': 'The Majestic'},
+      {'arabic': 'الْخَالِقُ', 'english': 'Al-Khaliq', 'meaning': 'The Creator'},
+      {'arabic': 'الْبَارِئُ', 'english': 'Al-Bari\'', 'meaning': 'The Evolver'},
+      {'arabic': 'الْمُصَوِّرُ', 'english': 'Al-Musawwir', 'meaning': 'The Fashioner'},
+      {'arabic': 'الْغَفَّارُ', 'english': 'Al-Ghaffar', 'meaning': 'The Great Forgiver'},
+      {'arabic': 'الْوَهَّابُ', 'english': 'Al-Wahhab', 'meaning': 'The Supreme Bestower'},
+      {'arabic': 'الرَّزَّاقُ', 'english': 'Ar-Razzaq', 'meaning': 'The Provider'},
+      {'arabic': 'الْفَتَّاحُ', 'english': 'Al-Fattah', 'meaning': 'The Supreme Solver'},
+      {'arabic': 'الْعَلِيمُ', 'english': 'Al-Alim', 'meaning': 'The All-Knowing'},
+      {'arabic': 'الْحَكِيمُ', 'english': 'Al-Hakim', 'meaning': 'The Perfectly Wise'},
+      {'arabic': 'الْوَدُودُ', 'english': 'Al-Wadud', 'meaning': 'The Loving One'},
+    ];
+    final asmaIdx = dayOfYear % asmaPresets.length;
+    await setStringIfChanged('widget_asma_arabic', asmaPresets[asmaIdx]['arabic']!);
+    await setStringIfChanged('widget_asma_english', asmaPresets[asmaIdx]['english']!);
+    await setStringIfChanged('widget_asma_meaning', asmaPresets[asmaIdx]['meaning']!);
+
+
     final nextDisplay = _formatWidgetNextDisplay(_nextPrayerCountdown);
     final lastDisplay = prefs.getString('widget_widget_next_display');
     if (nextDisplay != lastDisplay) {

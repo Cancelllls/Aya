@@ -174,7 +174,7 @@ class StorageService {
   }
 
   Future<void> removeBookmark(int surahNumber, {int? ayahNumber}) async {
-    await _db!.removeBookmark(surahNumber, ayahNumber: ayahNumber);
+    await _db!.removeBookmark(surahNumber, ayah: ayahNumber);
   }
 
   // Custom Dhikr list

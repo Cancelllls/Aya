@@ -234,54 +234,84 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                 "updateWidget" -> {
                     try {
                         // 1. Update Prayer Widget
-                        val intent1 = Intent(context, NoorWidgetProvider::class.java).apply {
+                        val intent1 = Intent(context, AyaWidgetProvider::class.java).apply {
                             action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         }
                         val ids1 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, NoorWidgetProvider::class.java)
+                            ComponentName(context, AyaWidgetProvider::class.java)
                         )
                         intent1.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids1)
                         context.sendBroadcast(intent1)
 
                         // 2. Update Verse Widget
-                        val intent2 = Intent(context, NoorVerseWidgetProvider::class.java).apply {
+                        val intent2 = Intent(context, AyaVerseWidgetProvider::class.java).apply {
                             action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         }
                         val ids2 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, NoorVerseWidgetProvider::class.java)
+                            ComponentName(context, AyaVerseWidgetProvider::class.java)
                         )
                         intent2.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids2)
                         context.sendBroadcast(intent2)
 
                         // 3. Update Dhikr Widget
-                        val intent3 = Intent(context, NoorDhikrWidgetProvider::class.java).apply {
+                        val intent3 = Intent(context, AyaDhikrWidgetProvider::class.java).apply {
                             action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         }
                         val ids3 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, NoorDhikrWidgetProvider::class.java)
+                            ComponentName(context, AyaDhikrWidgetProvider::class.java)
                         )
                         intent3.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids3)
                         context.sendBroadcast(intent3)
 
                         // 4. Update Hadith Widget
-                        val intent4 = Intent(context, NoorHadithWidgetProvider::class.java).apply {
+                        val intent4 = Intent(context, AyaHadithWidgetProvider::class.java).apply {
                             action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         }
                         val ids4 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, NoorHadithWidgetProvider::class.java)
+                            ComponentName(context, AyaHadithWidgetProvider::class.java)
                         )
                         intent4.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids4)
                         context.sendBroadcast(intent4)
 
                         // 5. Update Tasbih Widget
-                        val intent5 = Intent(context, NoorTasbihWidgetProvider::class.java).apply {
+                        val intent5 = Intent(context, AyaTasbihWidgetProvider::class.java).apply {
                             action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         }
                         val ids5 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, NoorTasbihWidgetProvider::class.java)
+                            ComponentName(context, AyaTasbihWidgetProvider::class.java)
                         )
                         intent5.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids5)
                         context.sendBroadcast(intent5)
+
+                        // 6. Update Hijri Widget
+                        val intent6 = Intent(context, AyaHijriWidgetProvider::class.java).apply {
+                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        }
+                        val ids6 = AppWidgetManager.getInstance(context).getAppWidgetIds(
+                            ComponentName(context, AyaHijriWidgetProvider::class.java)
+                        )
+                        intent6.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids6)
+                        context.sendBroadcast(intent6)
+
+                        // 7. Update Next Prayer Widget
+                        val intent7 = Intent(context, AyaNextPrayerWidgetProvider::class.java).apply {
+                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        }
+                        val ids7 = AppWidgetManager.getInstance(context).getAppWidgetIds(
+                            ComponentName(context, AyaNextPrayerWidgetProvider::class.java)
+                        )
+                        intent7.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids7)
+                        context.sendBroadcast(intent7)
+
+                        // 8. Update Asma ul Husna Widget
+                        val intent8 = Intent(context, AyaAsmaulHusnaWidgetProvider::class.java).apply {
+                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        }
+                        val ids8 = AppWidgetManager.getInstance(context).getAppWidgetIds(
+                            ComponentName(context, AyaAsmaulHusnaWidgetProvider::class.java)
+                        )
+                        intent8.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids8)
+                        context.sendBroadcast(intent8)
 
                         result.success(true)
                     } catch (e: Exception) {
