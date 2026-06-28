@@ -208,10 +208,16 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                 "vibrate" -> {
                     val patternList = call.argument<List<Int>>("pattern")
                     val pattern = patternList?.map { it.toLong() }?.toLongArray() ?: longArrayOf(0, 500, 300, 500)
+                    val amplitudesList = call.argument<List<Int>>("amplitudes")
+                    val amplitudes = amplitudesList?.map { it }?.toIntArray()
                     val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                     if (vibrator.hasVibrator()) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                            if (amplitudes != null && amplitudes.size == pattern.size) {
+                                vibrator.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
+                            } else {
+                                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                            }
                         } else {
                             @Suppress("DEPRECATION")
                             vibrator.vibrate(pattern, -1)

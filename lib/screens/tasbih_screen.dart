@@ -31,6 +31,13 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    _presets = [
+      {'name': 'SubhanAllah', 'arabic': 'سُبْحَانَ ٱللَّٰهِ', 'translation': 'Glory be to Allah', 'target': 33},
+      {'name': 'Alhamdulillah', 'arabic': 'ٱلْحَمْدُ لِلَّٰهِ', 'translation': 'Praise be to Allah', 'target': 33},
+      {'name': 'Allahu Akbar', 'arabic': 'ٱللَّٰهُ أَكْبَرُ', 'translation': 'Allah is the Greatest', 'target': 34},
+      {'name': 'Astaghfirullah', 'arabic': 'أَسْتَغْفِرُ ٱللَّٰهَ', 'translation': 'I seek forgiveness from Allah', 'target': 100},
+      {'name': 'La ilaha illallah', 'arabic': 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ', 'translation': 'There is no god but Allah', 'target': 100},
+    ];
     _bounceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 70),
@@ -38,7 +45,6 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
       CurvedAnimation(parent: _bounceController, curve: Curves.easeOutCubic),
     );
-    _loadPresets();
     
     // Restore active dhikr and count
     final activeName = widget.storage.getString('active_dhikr_name', defaultValue: 'SubhanAllah');
@@ -50,6 +56,7 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
     _count = widget.storage.getInt('tasbih_count_$_currentDhikrName', defaultValue: 0);
 
     _updateWidgetData();
+    _loadPresets();
   }
 
   @override
@@ -59,7 +66,7 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _loadPresets() {
+  void _loadPresets() async {
     final List<Map<String, dynamic>> standard = [
       {'name': 'SubhanAllah', 'arabic': 'سُبْحَانَ ٱللَّٰهِ', 'translation': 'Glory be to Allah', 'target': 33},
       {'name': 'Alhamdulillah', 'arabic': 'ٱلْحَمْدُ لِلَّٰهِ', 'translation': 'Praise be to Allah', 'target': 33},
@@ -68,10 +75,20 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
       {'name': 'La ilaha illallah', 'arabic': 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ', 'translation': 'There is no god but Allah', 'target': 100},
     ];
 
-    final custom = widget.storage.getCustomDhikrs();
-    setState(() {
-      _presets = [...standard, ...custom];
-    });
+    final custom = await widget.storage.getCustomDhikrs();
+    if (mounted) {
+      setState(() {
+        _presets = [...standard, ...custom];
+        // Re-align selection if it matches one of the newly loaded custom presets
+        final activeName = widget.storage.getString('active_dhikr_name', defaultValue: 'SubhanAllah');
+        final activeItem = _presets.firstWhere((p) => p['name'] == activeName, orElse: () => _presets[0]);
+        _currentDhikrName = activeItem['name'];
+        _arabicText = activeItem['arabic'] ?? '';
+        _translationText = activeItem['translation'] ?? '';
+        _target = activeItem['target'] ?? 33;
+        _count = widget.storage.getInt('tasbih_count_$_currentDhikrName', defaultValue: 0);
+      });
+    }
   }
 
   void _selectDhikr(Map<String, dynamic> item) {

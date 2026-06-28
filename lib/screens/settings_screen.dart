@@ -8,6 +8,7 @@ import '../services/notification_service.dart';
 import '../models/prayer_models.dart';
 import 'quran_download_screen.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import '../services/adhan_audio_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final StorageService storage;
@@ -62,11 +63,14 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
+  bool _isPreviewPlaying = false;
+  bool _isPreAdhanPreviewPlaying = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AdhanAudioService.instance.init();
     _themePreset = widget.storage.getString('theme_preset', defaultValue: 'dark');
     _bottomNavbarStyle = widget.storage.getString('bottom_navbar_style', defaultValue: 'solid');
     _quranFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
@@ -206,6 +210,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _preAdhanAlertMode = val;
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
+      if (val == 'voice' || val == 'vibrate_and_voice') {
+        _autoDownloadPreAdhanVoice();
+      }
       await _rescheduleAlarms();
     }
   }
@@ -216,6 +223,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _adhanAlertMode = val;
       });
       await widget.storage.setString('adhan_alert_mode', val);
+      if (val == 'real_reciter' || val == 'vibrate_and_voice') {
+        _autoDownloadReciterAudio(_adhanReciter);
+      }
       await _rescheduleAlarms();
     }
   }
@@ -226,7 +236,74 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         _adhanReciter = val;
       });
       await widget.storage.setString('adhan_reciter', val);
+      _autoDownloadReciterAudio(val);
       await _rescheduleAlarms();
+    }
+  }
+
+  Future<void> _autoDownloadReciterAudio(String reciterId) async {
+    final isDownloaded = await AdhanAudioService.instance.isReciterDownloaded(reciterId);
+    if (!isDownloaded) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(width: 12),
+                Text(TranslationService.isArabic 
+                    ? 'جاري تنزيل صوت المؤذن...' 
+                    : 'Downloading reciter audio...'),
+              ],
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      final success = await AdhanAudioService.instance.downloadReciterAudio(reciterId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? (TranslationService.isArabic ? 'تم تنزيل صوت المؤذن ✓' : 'Reciter audio downloaded ✓')
+                : (TranslationService.isArabic ? 'فشل التنزيل، سيتم التنزيل عند الأذان' : 'Download failed, will retry at athan time')),
+            backgroundColor: success ? Colors.green : Colors.orangeAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _autoDownloadPreAdhanVoice() async {
+    final isDownloaded = await AdhanAudioService.instance.isPreAdhanDownloaded();
+    if (!isDownloaded) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(width: 12),
+                Text(TranslationService.isArabic 
+                    ? 'جاري تنزيل التنبيه الصوتي...' 
+                    : 'Downloading pre-adhan voice alert...'),
+              ],
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      final success = await AdhanAudioService.instance.downloadPreAdhanVoice();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? (TranslationService.isArabic ? 'تم تنزيل التنبيه الصوتي ✓' : 'Pre-adhan voice alert downloaded ✓')
+                : (TranslationService.isArabic ? 'فشل التنزيل، سيتم التنزيل عند التنبيه' : 'Download failed, will retry at alert time')),
+            backgroundColor: success ? Colors.green : Colors.orangeAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -893,10 +970,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
-                  title: Text(TranslationService.isArabic ? "نوع تنبيه ما قبل الأذان" : "Pre-Athan Alert Style"),
-                  subtitle: Text(TranslationService.isArabic 
-                      ? "تنبيه قبل الأذان بـ ١٠ دقائق" 
-                      : "Alert 10 minutes before the Athan"),
+                  title: Text(TranslationService.isArabic ? "نمط تنبيه قبل الأذان" : "Pre-Athan Alert Style"),
                   trailing: DropdownButton<String>(
                     value: _preAdhanAlertMode,
                     underline: const SizedBox(),
@@ -923,10 +997,49 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                           child: Text(TranslationService.isArabic ? "تنبيه صوتي" : "Voice Announcement"),
                         ),
                       ),
+                      DropdownMenuItem(
+                        value: 'vibrate_and_voice',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "اهتزاز + تنبيه صوتي" : "Vibrate + Voice"),
+                        ),
+                      ),
                     ],
                     onChanged: _changePreAdhanAlertMode,
                   ),
                 ),
+                if (_preAdhanAlertMode == 'voice' || _preAdhanAlertMode == 'vibrate_and_voice') ...[
+                  const Divider(height: 1, color: Colors.white10),
+                  ListTile(
+                    title: Text(TranslationService.isArabic ? "معاينة التنبيه الصوتي" : "Voice Alert Preview"),
+                    subtitle: Text(TranslationService.isArabic 
+                        ? "تشغيل معاينة لصوت التنبيه" 
+                        : "Play a preview of the voice alert"),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildDownloadStatusIcon('pre_adhan'),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(_isPreAdhanPreviewPlaying ? Icons.stop : Icons.play_arrow),
+                          onPressed: () async {
+                            if (_isPreAdhanPreviewPlaying) {
+                              await AdhanAudioService.instance.stopPreview();
+                              setState(() => _isPreAdhanPreviewPlaying = false);
+                            } else {
+                              setState(() => _isPreAdhanPreviewPlaying = true);
+                              final lang = TranslationService.currentLanguage;
+                              await AdhanAudioService.instance.playPreAdhanPreview(lang);
+                              Future.delayed(const Duration(seconds: 8), () {
+                                if (mounted) setState(() => _isPreAdhanPreviewPlaying = false);
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.isArabic ? "نوع تنبيه الأذان" : "Athan Alert Style"),
@@ -959,52 +1072,82 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                           child: Text(TranslationService.isArabic ? "أذان بصوت المؤذن" : "Real Reciter Adhan"),
                         ),
                       ),
+                      DropdownMenuItem(
+                        value: 'vibrate_and_voice',
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(TranslationService.isArabic ? "اهتزاز + صوت المؤذن" : "Vibrate + Reciter Voice"),
+                        ),
+                      ),
                     ],
                     onChanged: _changeAdhanAlertMode,
                   ),
                 ),
-                if (_adhanAlertMode == 'real_reciter') ...[
+                if (_adhanAlertMode == 'real_reciter' || _adhanAlertMode == 'vibrate_and_voice') ...[
                   const Divider(height: 1, color: Colors.white10),
                   ListTile(
                     title: Text(TranslationService.isArabic ? "المؤذن" : "Athan Reciter"),
                     subtitle: Text(TranslationService.isArabic 
                         ? "اختر صوت المؤذن للأذان" 
                         : "Select voice for the Athan"),
-                    trailing: DropdownButton<String>(
-                      value: _adhanReciter,
-                      underline: const SizedBox(),
-                      dropdownColor: theme.cardColor,
-                      items: [
-                        DropdownMenuItem(
-                          value: 'mishary',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "مشاري العفاسي" : "Mishary Alafasy"),
-                          ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildDownloadStatusIcon(_adhanReciter),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(_isPreviewPlaying ? Icons.stop : Icons.play_arrow),
+                          onPressed: () async {
+                            if (_isPreviewPlaying) {
+                              await AdhanAudioService.instance.stopPreview();
+                              setState(() => _isPreviewPlaying = false);
+                            } else {
+                              setState(() => _isPreviewPlaying = true);
+                              await AdhanAudioService.instance.playPreview(_adhanReciter);
+                              Future.delayed(const Duration(seconds: 8), () {
+                                if (mounted) setState(() => _isPreviewPlaying = false);
+                              });
+                            }
+                          },
                         ),
-                        DropdownMenuItem(
-                          value: 'abdul_basit',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "عبد الباسط عبد الصمد" : "Abdul Basit"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'makkah',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "أذان الحرم المكي" : "Makkah Haram"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'madinah',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Madinah Haram"),
-                          ),
+                        const SizedBox(width: 8),
+                        DropdownButton<String>(
+                          value: _adhanReciter,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'mishary',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "مشاري العفاسي" : "Mishary Alafasy"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'abdul_basit',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "عبد الباسط عبد الصمد" : "Abdul Basit"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'makkah',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "أذان الحرم المكي" : "Makkah Haram"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'madinah',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Madinah Haram"),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeAdhanReciter,
                         ),
                       ],
-                      onChanged: _changeAdhanReciter,
                     ),
                   ),
                   const Divider(height: 1, color: Colors.white10),
@@ -1359,6 +1502,30 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         ],
       ),
     ));
+  }
+
+  Widget _buildDownloadStatusIcon(String reciterId) {
+    return ValueListenableBuilder<Map<String, DownloadStatus>>(
+      valueListenable: AdhanAudioService.instance.downloadStates,
+      builder: (context, states, child) {
+        final status = states[reciterId] ?? DownloadStatus.notDownloaded;
+        switch (status) {
+          case DownloadStatus.downloaded:
+            return const Icon(Icons.check_circle, color: Colors.green, size: 16);
+          case DownloadStatus.downloading:
+            return const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE5C158)),
+              ),
+            );
+          case DownloadStatus.notDownloaded:
+            return const Icon(Icons.cloud_download, color: Colors.orangeAccent, size: 16);
+        }
+      },
+    );
   }
 
   Widget _buildSectionHeader(String title) {

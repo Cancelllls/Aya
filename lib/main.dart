@@ -247,7 +247,14 @@ class _AyaAppState extends State<AyaApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeData = _getThemeData(_activeTheme);
+    final themeData = _getThemeData(_activeTheme).copyWith(
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+    );
     return MaterialApp(
       title: 'Aya - Islamic App',
       debugShowCheckedModeBanner: false,
@@ -290,7 +297,7 @@ class MainScaffold extends StatefulWidget {
   State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderStateMixin {
+class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   int _currentTab = 0;
   int _azkarInitialTab = 0;
   int _prayerInitialTab = 0;
@@ -301,10 +308,14 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   late AnimationController _pulseController;
   DateTime? _lastPressedAt;
   StreamSubscription<String?>? _notificationSubscription;
+  Map<String, dynamic> _lastBookmark = {};
+  final Map<int, Widget> _builtScreens = {};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadLastBookmark();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -420,11 +431,63 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _focusTimer?.cancel();
     _autoLockTimer?.cancel();
     _pulseController.dispose();
     _notificationSubscription?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAlarmPermissionChange();
+      _loadLastBookmark();
+    }
+  }
+
+  Future<void> _checkAlarmPermissionChange() async {
+    final wasJustGranted = widget.storage.getBool('alarm_permission_just_granted', defaultValue: false);
+    if (wasJustGranted) {
+      await widget.storage.setBool('alarm_permission_just_granted', false);
+      await _rescheduleAllAlarms();
+    }
+  }
+
+  Future<void> _rescheduleAllAlarms() async {
+    try {
+      final loc = widget.storage.getLocation();
+      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final school = widget.storage.getInt('asr_method', defaultValue: 0);
+
+      final PrayerTimeData data;
+      if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
+        data = await ApiService.fetchPrayerTimesByCity(
+          city: loc['city'] ?? 'Cairo',
+          country: loc['country'] ?? 'Egypt',
+          method: method,
+          school: school,
+        );
+      } else {
+        data = await ApiService.fetchPrayerTimes(
+          latitude: loc['latitude'],
+          longitude: loc['longitude'],
+          method: method,
+          school: school,
+        );
+      }
+      await NotificationService().schedulePrayerAlarms(data, widget.storage);
+    } catch (_) {}
+  }
+
+  Future<void> _loadLastBookmark() async {
+    final bookmarks = await widget.storage.getBookmarks();
+    if (mounted) {
+      setState(() {
+        _lastBookmark = bookmarks.isNotEmpty ? bookmarks.first : {};
+      });
+    }
   }
 
   void _checkAutoStartFocusLock() {
@@ -522,7 +585,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       final surahs = await ApiService.fetchSurahList();
       final surah = surahs.firstWhere((s) => s.number == surahNum);
       if (mounted) {
-        unawaited(Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => SurahReaderScreen(
@@ -531,18 +594,14 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
               initialAyahNumber: ayahNum,
             ),
           ),
-        ));
+        );
+        _loadLastBookmark();
       }
     } catch (_) {}
   }
 
-  Map<String, dynamic> _getLastBookmark() {
-    final bookmarks = widget.storage.getBookmarks();
-    return bookmarks.isNotEmpty ? bookmarks.first : {};
-  }
-
   void _navigateToBookmark() async {
-    final lastBookmark = _getLastBookmark();
+    final lastBookmark = _lastBookmark;
     if (lastBookmark.isEmpty) return;
 
     final surahNum = lastBookmark['surahNumber'] as int;
@@ -558,7 +617,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       final surah = surahs.firstWhere((s) => s.number == surahNum);
 
       if (mounted) {
-        unawaited(Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => SurahReaderScreen(
@@ -567,7 +626,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
               initialAyahNumber: ayahNum,
             ),
           ),
-        ));
+        );
+        _loadLastBookmark();
       }
     } catch (e) {
       if (mounted) {
@@ -603,7 +663,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             }
           });
         },
-        lastBookmark: _getLastBookmark(),
+        lastBookmark: _lastBookmark,
         onContinueReading: _navigateToBookmark,
         onStartFocusLock: (mins) => startFocusLock(mins),
       ),
@@ -706,9 +766,20 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
               children: [
                 Padding(
                   padding: EdgeInsets.only(bottom: hasPlayer ? 80.0 : 0.0),
-                  child: IndexedStack(
-                    index: _currentTab,
-                    children: screens,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    switchInCurve: Curves.easeInOut,
+                    switchOutCurve: Curves.easeInOut,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey<int>(_currentTab),
+                      child: (() {
+                        _builtScreens[_currentTab] ??= screens[_currentTab];
+                        return _builtScreens[_currentTab]!;
+                      })(),
+                    ),
                   ),
                 ),
                 if (hasPlayer)

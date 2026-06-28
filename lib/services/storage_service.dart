@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'database_service.dart';
 
 class StorageService {
   static StorageService? _instance;
   static SharedPreferences? _prefs;
+  static DatabaseService? _db;
 
   StorageService._();
 
@@ -18,8 +20,45 @@ class StorageService {
     if (_instance == null) {
       _instance = StorageService._();
       _prefs = await SharedPreferences.getInstance();
+      _db = await DatabaseService.getInstance();
+      await _migrateIfNeeded();
     }
     return _instance!;
+  }
+
+  static Future<void> _migrateIfNeeded() async {
+    final migrated = _prefs!.getBool('db_migrated_v1') ?? false;
+    if (!migrated) {
+      final bookmarksJson = _prefs!.getString('quran_bookmarks');
+      if (bookmarksJson != null) {
+        try {
+          final bookmarks = jsonDecode(bookmarksJson) as List;
+          for (final b in bookmarks) {
+            await _db!.addBookmark(
+              b['surahNumber'] ?? b['surah_number'] ?? 1,
+              b['surahName'] ?? b['surah_name'] ?? '',
+              b['ayahNumber'] ?? b['ayah_number'] ?? 1,
+            );
+          }
+        } catch (_) {}
+      }
+      final dhikrsJson = _prefs!.getString('custom_dhikrs');
+      if (dhikrsJson != null) {
+        try {
+          final dhikrs = jsonDecode(dhikrsJson) as List;
+          for (final d in dhikrs) {
+            await _db!.addCustomDhikr(
+              id: d['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+              name: d['name'] ?? '',
+              arabic: d['arabic'] ?? '',
+              translation: d['translation'] ?? '',
+              target: d['target'] ?? 33,
+            );
+          }
+        } catch (_) {}
+      }
+      await _prefs!.setBool('db_migrated_v1', true);
+    }
   }
 
   // General set/get
@@ -121,79 +160,49 @@ class StorageService {
   }
 
   // Bookmarks
-  List<Map<String, dynamic>> getBookmarks() {
-    final raw = getString('quran_bookmarks');
-    if (raw.isEmpty) return [];
-    try {
-      final List<dynamic> decoded = jsonDecode(raw);
-      return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-    } catch (e) {
-      return [];
-    }
+  Future<List<Map<String, dynamic>>> getBookmarks() async {
+    final list = await _db!.getBookmarks();
+    return list.map((b) => {
+      'surahNumber': b['surah_number'],
+      'surahName': b['surah_name'],
+      'ayahNumber': b['ayah_number'],
+    }).toList();
   }
 
   Future<void> addBookmark(int surahNumber, String surahName, int ayahNumber) async {
-    final bookmarks = getBookmarks();
-    final item = {
-      'surahNumber': surahNumber,
-      'surahName': surahName,
-      'ayahNumber': ayahNumber,
-      'timestamp': DateTime.now().millisecondsSinceEpoch
-    };
-    
-    // Remove duplication for the same Surah and Ayah
-    bookmarks.removeWhere((element) =>
-        element['surahNumber'] == surahNumber && element['ayahNumber'] == ayahNumber);
-    bookmarks.insert(0, item);
-    
-    // Cap at 10 bookmarks
-    if (bookmarks.length > 10) {
-      bookmarks.removeLast();
-    }
-    
-    await setString('quran_bookmarks', jsonEncode(bookmarks));
+    await _db!.addBookmark(surahNumber, surahName, ayahNumber);
   }
 
   Future<void> removeBookmark(int surahNumber, {int? ayahNumber}) async {
-    final bookmarks = getBookmarks();
-    if (ayahNumber != null) {
-      bookmarks.removeWhere((element) =>
-          element['surahNumber'] == surahNumber && element['ayahNumber'] == ayahNumber);
-    } else {
-      bookmarks.removeWhere((element) => element['surahNumber'] == surahNumber);
-    }
-    await setString('quran_bookmarks', jsonEncode(bookmarks));
+    await _db!.removeBookmark(surahNumber, ayahNumber: ayahNumber);
   }
 
   // Custom Dhikr list
-  List<Map<String, dynamic>> getCustomDhikrs() {
-    final raw = getString('custom_dhikrs');
-    if (raw.isEmpty) return [];
-    try {
-      final List<dynamic> decoded = jsonDecode(raw);
-      return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-    } catch (e) {
-      return [];
-    }
+  Future<List<Map<String, dynamic>>> getCustomDhikrs() async {
+    final list = await _db!.getCustomDhikrs();
+    return list.map((d) => {
+      'id': d['id'],
+      'name': d['name'],
+      'arabic': d['arabic'],
+      'translation': d['translation'],
+      'target': d['target'],
+      'currentCount': d['current_count'],
+    }).toList();
   }
 
   Future<void> addCustomDhikr(String name, String arabic, String translation, int target) async {
-    final items = getCustomDhikrs();
-    final item = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'name': name,
-      'arabic': arabic,
-      'translation': translation,
-      'target': target
-    };
-    items.add(item);
-    await setString('custom_dhikrs', jsonEncode(items));
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    await _db!.addCustomDhikr(
+      id: id,
+      name: name,
+      arabic: arabic,
+      translation: translation,
+      target: target,
+    );
   }
 
   Future<void> deleteCustomDhikr(String id) async {
-    final items = getCustomDhikrs();
-    items.removeWhere((element) => element['id'] == id);
-    await setString('custom_dhikrs', jsonEncode(items));
+    await _db!.deleteCustomDhikr(id);
   }
 
   Future<bool> remove(String key) async {

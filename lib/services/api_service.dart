@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart' show compute;
 
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
@@ -10,6 +11,8 @@ import 'storage_service.dart';
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
 class ApiService {
+  static final http.Client _client = http.Client();
+
   // Base URLs
   static const String _quranBaseUrl = 'https://api.alquran.cloud/v1';
 
@@ -68,6 +71,10 @@ class ApiService {
     return null;
   }
 
+  static dynamic _parseJson(String body) {
+    return jsonDecode(body);
+  }
+
   static Future<PrayerTimeData> _fetchPrayerTimesHelper({
     required String cacheKey,
     required String aladhanPath,
@@ -76,10 +83,11 @@ class ApiService {
   }) async {
     // 1. Primary: AlAdhan
     try {
-      final response = await http.get(Uri.https('api.aladhan.com', aladhanPath, aladhanQuery))
+      final response = await _client.get(Uri.https('api.aladhan.com', aladhanPath, aladhanQuery))
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
-        final data = PrayerTimeData.fromJson(jsonDecode(response.body)['data']);
+        final decoded = await compute(_parseJson, response.body) as Map<String, dynamic>;
+        final data = PrayerTimeData.fromJson(decoded['data']);
         await cachePrayerTimes(cacheKey, data);
         await cachePrayerTimes('cached_latest_prayer_times', data);
         return data;
@@ -92,12 +100,12 @@ class ApiService {
       print('Error fetching from AlAdhan API: $e');
     }
 
-    // 2. Fallback: pray.zone
+    // 2. Fallback 2: pray.zone
     try {
-      final resp = await http.get(prayZoneUri).timeout(const Duration(seconds: 5));
+      final resp = await _client.get(prayZoneUri).timeout(const Duration(seconds: 5));
       if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        final timings = data['results']['datetime'][0]['times'] as Map<String, dynamic>;
+        final decoded = await compute(_parseJson, resp.body) as Map<String, dynamic>;
+        final timings = decoded['results']['datetime'][0]['times'] as Map<String, dynamic>;
         final prayerData = PrayerTimeData.fromPrayZone(timings);
         await cachePrayerTimes(cacheKey, prayerData);
         await cachePrayerTimes('cached_latest_prayer_times', prayerData);
@@ -211,11 +219,12 @@ class ApiService {
   static Future<List<Surah>> fetchSurahList() async {
     // Primary: AlQuran Cloud
     try {
-      final response = await http.get(Uri.parse('$_quranBaseUrl/surah')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('$_quranBaseUrl/surah')).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final body = response.body;
         await _cacheString('cached_surah_list', body);
-        return (jsonDecode(body)['data'] as List)
+        final decoded = await compute(_parseJson, body) as Map<String, dynamic>;
+        return (decoded['data'] as List)
             .map((e) => Surah.fromJson(e as Map<String, dynamic>))
             .toList();
       }
@@ -223,12 +232,12 @@ class ApiService {
 
     // Fallback: Quran.com API (v4)
     try {
-      final fallback = await http.get(Uri.https('api.quran.com', '/api/v4/chapters')).timeout(const Duration(seconds: 5));
+      final fallback = await _client.get(Uri.https('api.quran.com', '/api/v4/chapters')).timeout(const Duration(seconds: 5));
       if (fallback.statusCode == 200) {
         final body = fallback.body;
         await _cacheString('cached_surah_list_qurancom', body);
-        final data = jsonDecode(body) as Map<String, dynamic>;
-        return (data['chapters'] as List)
+        final decoded = await compute(_parseJson, body) as Map<String, dynamic>;
+        return (decoded['chapters'] as List)
             .map((e) => Surah.fromQuranCom(e as Map<String, dynamic>))
             .toList();
       }
@@ -237,15 +246,16 @@ class ApiService {
     // Fallback to local cache
     final cached = await _getCachedString('cached_surah_list');
     if (cached != null) {
-      return (jsonDecode(cached)['data'] as List)
+      final decoded = await compute(_parseJson, cached) as Map<String, dynamic>;
+      return (decoded['data'] as List)
           .map((e) => Surah.fromJson(e as Map<String, dynamic>))
           .toList();
     }
 
     final cachedQC = await _getCachedString('cached_surah_list_qurancom');
     if (cachedQC != null) {
-      final data = jsonDecode(cachedQC) as Map<String, dynamic>;
-      return (data['chapters'] as List)
+      final decoded = await compute(_parseJson, cachedQC) as Map<String, dynamic>;
+      return (decoded['chapters'] as List)
           .map((e) => Surah.fromQuranCom(e as Map<String, dynamic>))
           .toList();
     }
@@ -276,7 +286,7 @@ class ApiService {
     try {
       final cached = await _getCachedString('cached_surah_${surahNumber}_details');
       if (cached != null) {
-        final data = jsonDecode(cached) as Map<String, dynamic>;
+        final data = await compute(_parseJson, cached) as Map<String, dynamic>;
         final editions = data['data'] as List<dynamic>;
         final arabic = editions[0]['ayahs'] as List<dynamic>;
         final english = editions[1]['ayahs'] as List<dynamic>;
@@ -297,7 +307,7 @@ class ApiService {
       try {
         final cachedQC = await _getCachedString('cached_surah_${surahNumber}_details_qurancom');
         if (cachedQC != null) {
-          final data = jsonDecode(cachedQC) as Map<String, dynamic>;
+          final data = await compute(_parseJson, cachedQC) as Map<String, dynamic>;
           final verses = data['verses'] as List<dynamic>;
           ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
         }
@@ -311,11 +321,11 @@ class ApiService {
 
     // 2. Online fallback: Fetch from AlQuran Cloud
     try {
-      final response = await http.get(Uri.parse('$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,ar.muyassar')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,ar.muyassar')).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final body = response.body;
         await _cacheString('cached_surah_${surahNumber}_details', body);
-        final data = jsonDecode(body) as Map<String, dynamic>;
+        final data = await compute(_parseJson, body) as Map<String, dynamic>;
         final editions = data['data'] as List<dynamic>;
         final arabic = editions[0]['ayahs'] as List<dynamic>;
         final english = editions[1]['ayahs'] as List<dynamic>;
@@ -340,11 +350,11 @@ class ApiService {
           'fields': 'text_uthmani',
           'per_page': '500',
         });
-        final response = await http.get(uri).timeout(const Duration(seconds: 5));
+        final response = await _client.get(uri).timeout(const Duration(seconds: 5));
         if (response.statusCode == 200) {
           final body = response.body;
           await _cacheString('cached_surah_${surahNumber}_details_qurancom', body);
-          final data = jsonDecode(body) as Map<String, dynamic>;
+          final data = await compute(_parseJson, body) as Map<String, dynamic>;
           final verses = data['verses'] as List<dynamic>;
           ayahs = verses.map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>)).toList();
         }
@@ -368,7 +378,7 @@ class ApiService {
         'format': 'json',
         'accept-language': 'en',
       });
-      final response = await http.get(uri, headers: {
+      final response = await _client.get(uri, headers: {
         'User-Agent': 'AyaApp/1.0',
       });
       if (response.statusCode == 200) {
@@ -424,7 +434,7 @@ class ApiService {
 
   static Future<Map<String, String>> fetchLocationByIP() async {
     try {
-      final response = await http.get(Uri.parse('https://ipapi.co/json')).timeout(const Duration(seconds: 5));
+      final response = await _client.get(Uri.parse('https://ipapi.co/json')).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final city = data['city'] as String? ?? 'Cairo';
@@ -468,9 +478,9 @@ class ApiService {
         'month': month.toString(),
         'year': year.toString(),
       });
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response = await _client.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
+        final decoded = await compute(_parseJson, response.body) as Map<String, dynamic>;
         return decoded['data'] as List<dynamic>;
       }
     } catch (_) {}
@@ -494,9 +504,9 @@ class ApiService {
         'month': month.toString(),
         'year': year.toString(),
       });
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response = await _client.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
+        final decoded = await compute(_parseJson, response.body) as Map<String, dynamic>;
         return decoded['data'] as List<dynamic>;
       }
     } catch (_) {}

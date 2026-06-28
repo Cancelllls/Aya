@@ -200,16 +200,18 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
     }
   }
 
-  void _checkBookmarkStatus() {
-    final bookmarks = widget.storage.getBookmarks();
+  void _checkBookmarkStatus() async {
+    final bookmarks = await widget.storage.getBookmarks();
     final b = bookmarks.firstWhere(
       (element) => element['surahNumber'] == _currentSurah.number,
       orElse: () => {},
     );
-    setState(() {
-      _isBookmarked = b.isNotEmpty;
-      _bookmarkedAyahNumber = b.isNotEmpty ? b['ayahNumber'] as int? : null;
-    });
+    if (mounted) {
+      setState(() {
+        _isBookmarked = b.isNotEmpty;
+        _bookmarkedAyahNumber = b.isNotEmpty ? b['ayahNumber'] as int? : null;
+      });
+    }
   }
 
   Future<void> _loadAyahs() async {
