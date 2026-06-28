@@ -1160,38 +1160,45 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'makkah',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "أذان الحرم المكي" : "Makkah Haram"),
-                              ),
-                            ),
-                            DropdownMenuItem(
                               value: 'madinah',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Madinah Haram"),
+                                child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Al Haram Al Madani"),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'ali_ahmad',
+                              value: 'kazabri',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "علي أحمد ملا" : "Ali Ahmad Mulla"),
+                                child: Text(TranslationService.isArabic ? "عمر القزابري" : "Omar Al Kazabri"),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'turkey',
+                              value: 'riad',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "النمط التركي" : "Turkish Style"),
+                                child: Text(TranslationService.isArabic ? "رياض الجزائري" : "Riad Al Djazairi"),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'egypt',
+                              value: 'manssour',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "النمط المصري" : "Egyptian Style"),
+                                child: Text(TranslationService.isArabic ? "منصور الزهراني" : "Manssour El Zahrani"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'nakshabandi',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "سيد النقشبندي" : "Sayed Al Nakshabandi"),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'maghriby',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(TranslationService.isArabic ? "نور الدين المغربي" : "Nurdin Al Maghriby"),
                               ),
                             ),
                           ],

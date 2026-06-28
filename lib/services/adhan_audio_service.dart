@@ -10,34 +10,40 @@ class AdhanAudioService {
   AdhanAudioService._();
   static final AdhanAudioService instance = AdhanAudioService._();
 
+  static const String _fpBase = 'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
+
   static const Map<String, Map<String, String>> reciterUrls = {
     'mishary': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan1.mp3',
+      'fajr': '$_fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3',
+      'standard': '$_fpBase/adhan_meshary_al_fasy_kuwait.mp3',
     },
     'abdul_basit': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/azan3.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan3.mp3',
-    },
-    'makkah': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/azan2.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan20.mp3',
+      'fajr': '$_fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3',
+      'standard': '$_fpBase/adhan_abdelbasset_abdessamad_egypte.mp3',
     },
     'madinah': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/azan19.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan19.mp3',
+      'fajr': '$_fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3',
+      'standard': '$_fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3', // Using same for standard
     },
-    'ali_ahmad': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/azan4.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan4.mp3',
+    'kazabri': {
+      'fajr': '$_fpBase/adhan_omar_al_kazabri_morocco.mp3',
+      'standard': '$_fpBase/adhan_omar_al_kazabri_morocco.mp3',
     },
-    'turkey': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/azan6.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan6.mp3',
+    'riad': {
+      'fajr': '$_fpBase/adhan_riad_al_djazairi_algeria.mp3',
+      'standard': '$_fpBase/adhan_riad_al_djazairi_algeria.mp3',
     },
-    'egypt': {
-      'fajr': 'https://www.islamcan.com/adhan/audio/azan7.mp3',
-      'standard': 'https://www.islamcan.com/adhan/audio/azan7.mp3',
+    'manssour': {
+      'fajr': '$_fpBase/adhan_manssour_el_zahrani.mp3',
+      'standard': '$_fpBase/adhan_manssour_el_zahrani.mp3',
+    },
+    'nakshabandi': {
+      'fajr': '$_fpBase/adhan_sayed_al_nakshabandi_egypte.mp3',
+      'standard': '$_fpBase/adhan_sayed_al_nakshabandi_egypte.mp3',
+    },
+    'maghriby': {
+      'fajr': '$_fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3',
+      'standard': '$_fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3',
     },
   };
 

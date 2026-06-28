@@ -21,7 +21,6 @@ class DashboardScreen extends StatefulWidget {
     super.key,
     required this.storage,
     required this.onTabChange,
-    required this.lastBookmark,
     required this.onContinueReading,
     required this.onStartFocusLock,
   });

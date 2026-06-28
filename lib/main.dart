@@ -345,7 +345,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   late AnimationController _pulseController;
   DateTime? _lastPressedAt;
   StreamSubscription<String?>? _notificationSubscription;
-  Map<String, dynamic> _lastBookmark = {};
+
 
   @override
   void initState() {
@@ -518,12 +518,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   }
 
   Future<void> _loadLastBookmark() async {
-    final bookmarks = await widget.storage.getBookmarks();
-    if (mounted) {
-      setState(() {
-        _lastBookmark = bookmarks.isNotEmpty ? bookmarks.first : {};
-      });
-    }
+    // Only used for initial load or debug if needed, no longer strictly necessary 
+    // to maintain _lastBookmark state as DashboardScreen fetches it directly.
   }
 
   void _checkAutoStartFocusLock() {
@@ -637,9 +633,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   }
 
   void _navigateToBookmark() async {
-    final lastBookmark = _lastBookmark;
-    if (lastBookmark.isEmpty) return;
+    final bookmarks = await widget.storage.getBookmarks();
+    if (bookmarks.isEmpty) return;
 
+    final lastBookmark = bookmarks.first;
     final surahNum = lastBookmark['surahNumber'] as int;
     final ayahNum = lastBookmark['ayahNumber'] as int;
 
@@ -699,7 +696,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             }
           });
         },
-        lastBookmark: _lastBookmark,
+
         onContinueReading: _navigateToBookmark,
         onStartFocusLock: (mins) => startFocusLock(mins),
       ),

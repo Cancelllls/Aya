@@ -296,47 +296,66 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   }
 
   void _scrollToAyah(int ayahNum) {
-    void performScroll(int attempt) {
-      if (!mounted) return;
-      if (!_scrollController.hasClients) return;
-
-      // maxScroll removed
-      double targetOffset;
-
-      if (_readingMode == 'continuous') {
-        final pageIndex = (ayahNum - 1) ~/ 5;
-        targetOffset = (pageIndex * 200.0 * _fontSizeMultiplier);
-      } else {
-        final index = ayahNum - 1;
-        final double averageHeight = (_readingMode == 'translation' ? 220.0 : 120.0) * _fontSizeMultiplier;
-        targetOffset = (index * averageHeight);
-      }
-
-      _scrollController.jumpTo(targetOffset);
-
-      // Wait for layout to finish, then align perfectly
-      Future.delayed(Duration(milliseconds: 50 + (attempt * 50)), () {
-        if (!mounted) return;
-        final key = _readingMode == 'continuous' 
-            ? _pageKeys[(ayahNum - 1) ~/ 5]
-            : _ayahKeys[ayahNum];
-            
-        if (key != null && key.currentContext != null) {
-          Scrollable.ensureVisible(
-            key.currentContext!,
-            duration: Duration.zero,
-            curve: Curves.easeOutCubic,
-            alignment: 0.0, // Exact top
-          );
-        } else if (attempt < 8) {
-          // If the element isn't rendered yet, retry with a slightly longer delay
-          performScroll(attempt + 1);
+    if (!mounted) return;
+    
+    void performSearch(int attempt, double currentGuess) {
+      if (!mounted || !_scrollController.hasClients) return;
+      
+      final key = _readingMode == 'continuous' 
+          ? _pageKeys[(ayahNum - 1) ~/ 5]
+          : _ayahKeys[ayahNum];
+          
+      if (key != null && key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: Duration.zero,
+          alignment: 0.0,
+        );
+      } else if (attempt < 20) {
+        int maxRendered = -1;
+        int minRendered = 99999;
+        
+        final keysToCheck = _readingMode == 'continuous' ? _pageKeys : _ayahKeys;
+        for (final k in keysToCheck.keys) {
+          if (keysToCheck[k]?.currentContext != null) {
+            if (k > maxRendered) maxRendered = k;
+            if (k < minRendered) minRendered = k;
+          }
         }
-      });
+        
+        final targetIndex = _readingMode == 'continuous' ? ((ayahNum - 1) ~/ 5) : ayahNum;
+        
+        if (maxRendered != -1 && targetIndex > maxRendered) {
+          currentGuess += 800;
+          if (currentGuess > _scrollController.position.maxScrollExtent) {
+            currentGuess = _scrollController.position.maxScrollExtent;
+          }
+          _scrollController.jumpTo(currentGuess);
+        } else if (minRendered != 99999 && targetIndex < minRendered) {
+          currentGuess -= 800;
+          if (currentGuess < 0) currentGuess = 0;
+          _scrollController.jumpTo(currentGuess);
+        } else {
+          currentGuess += 500;
+          _scrollController.jumpTo(currentGuess);
+        }
+        
+        Future.delayed(const Duration(milliseconds: 50), () => performSearch(attempt + 1, currentGuess));
+      }
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      performScroll(0);
+      if (!_scrollController.hasClients) return;
+      
+      double initialGuess = 0;
+      if (_readingMode == 'continuous') {
+        initialGuess = ((ayahNum - 1) ~/ 5) * 400.0 * _fontSizeMultiplier;
+      } else {
+        initialGuess = (ayahNum - 1) * (_readingMode == 'translation' ? 400.0 : 200.0) * _fontSizeMultiplier;
+      }
+      
+      _scrollController.jumpTo(initialGuess);
+      Future.delayed(const Duration(milliseconds: 50), () => performSearch(0, initialGuess));
     });
   }
 

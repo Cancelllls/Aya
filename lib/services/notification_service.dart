@@ -125,57 +125,65 @@ void backgroundAdhanCallback(int id) async {
       final isFajr = prayerIndex == 1;
       
       String url = '';
+      const String fpBase = 'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
+
       if (isFajr) {
         switch (reciter) {
           case 'mishary':
-            url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
+            url = '$fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3';
             break;
           case 'abdul_basit':
-            url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
-            break;
-          case 'makkah':
-            url = 'https://www.islamcan.com/adhan/audio/azan2.mp3';
+            url = '$fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3';
             break;
           case 'madinah':
-            url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+            url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
             break;
-          case 'ali_ahmad':
-            url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+          case 'kazabri':
+            url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
             break;
-          case 'turkey':
-            url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+          case 'riad':
+            url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
             break;
-          case 'egypt':
-            url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
+          case 'manssour':
+            url = '$fpBase/adhan_manssour_el_zahrani.mp3';
+            break;
+          case 'nakshabandi':
+            url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
+            break;
+          case 'maghriby':
+            url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
             break;
           default:
-            url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
+            url = '$fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3';
         }
       } else {
         switch (reciter) {
           case 'mishary':
-            url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
+            url = '$fpBase/adhan_meshary_al_fasy_kuwait.mp3';
             break;
           case 'abdul_basit':
-            url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
-            break;
-          case 'makkah':
-            url = 'https://www.islamcan.com/adhan/audio/azan20.mp3';
+            url = '$fpBase/adhan_abdelbasset_abdessamad_egypte.mp3';
             break;
           case 'madinah':
-            url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+            url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
             break;
-          case 'ali_ahmad':
-            url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+          case 'kazabri':
+            url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
             break;
-          case 'turkey':
-            url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+          case 'riad':
+            url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
             break;
-          case 'egypt':
-            url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
+          case 'manssour':
+            url = '$fpBase/adhan_manssour_el_zahrani.mp3';
+            break;
+          case 'nakshabandi':
+            url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
+            break;
+          case 'maghriby':
+            url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
             break;
           default:
-            url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
+            url = '$fpBase/adhan_meshary_al_fasy_kuwait.mp3';
         }
       }
       
@@ -243,7 +251,7 @@ class NotificationService {
   }
 
   static Future<void> downloadAllAthanFiles() async {
-    final reciters = ['mishary', 'abdul_basit', 'makkah', 'madinah', 'ali_ahmad', 'turkey', 'egypt'];
+    final reciters = ['mishary', 'abdul_basit', 'madinah', 'kazabri', 'riad', 'manssour', 'nakshabandi', 'maghriby'];
     final client = http.Client();
     try {
       final dir = await getApplicationDocumentsDirectory();
@@ -261,52 +269,59 @@ class NotificationService {
           }
 
           String url = '';
+          const String fpBase = 'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
           if (isFajr) {
             switch (reciter) {
               case 'mishary':
-                url = 'https://www.islamcan.com/adhan/audio/fajr-azan-mishary.mp3';
+                url = '$fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3';
                 break;
               case 'abdul_basit':
-                url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
-                break;
-              case 'makkah':
-                url = 'https://www.islamcan.com/adhan/audio/azan2.mp3';
+                url = '$fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3';
                 break;
               case 'madinah':
-                url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+                url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
                 break;
-              case 'ali_ahmad':
-                url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+              case 'kazabri':
+                url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
                 break;
-              case 'turkey':
-                url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+              case 'riad':
+                url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
                 break;
-              case 'egypt':
-                url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
+              case 'manssour':
+                url = '$fpBase/adhan_manssour_el_zahrani.mp3';
+                break;
+              case 'nakshabandi':
+                url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
+                break;
+              case 'maghriby':
+                url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
                 break;
             }
           } else {
             switch (reciter) {
               case 'mishary':
-                url = 'https://www.islamcan.com/adhan/audio/azan1.mp3';
+                url = '$fpBase/adhan_meshary_al_fasy_kuwait.mp3';
                 break;
               case 'abdul_basit':
-                url = 'https://www.islamcan.com/adhan/audio/azan3.mp3';
-                break;
-              case 'makkah':
-                url = 'https://www.islamcan.com/adhan/audio/azan20.mp3';
+                url = '$fpBase/adhan_abdelbasset_abdessamad_egypte.mp3';
                 break;
               case 'madinah':
-                url = 'https://www.islamcan.com/adhan/audio/azan19.mp3';
+                url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
                 break;
-              case 'ali_ahmad':
-                url = 'https://www.islamcan.com/adhan/audio/azan4.mp3';
+              case 'kazabri':
+                url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
                 break;
-              case 'turkey':
-                url = 'https://www.islamcan.com/adhan/audio/azan6.mp3';
+              case 'riad':
+                url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
                 break;
-              case 'egypt':
-                url = 'https://www.islamcan.com/adhan/audio/azan7.mp3';
+              case 'manssour':
+                url = '$fpBase/adhan_manssour_el_zahrani.mp3';
+                break;
+              case 'nakshabandi':
+                url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
+                break;
+              case 'maghriby':
+                url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
                 break;
             }
           }
