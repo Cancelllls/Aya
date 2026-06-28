@@ -13,7 +13,6 @@ import 'tasbih_screen.dart';
 class DashboardScreen extends StatefulWidget {
   final StorageService storage;
   final Function(int, {int? subTab}) onTabChange;
-  final Map<String, dynamic> lastBookmark;
   final VoidCallback onContinueReading;
   final Function(int) onStartFocusLock;
 
@@ -582,27 +581,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Quick Actions Grid/List
             Column(
               children: [
-                _buildQuickCard(
-                  context: context,
-                  icon: Icons.bookmark_outline,
-                  title: TranslationService.t('continue_reading'),
-                  subtitle: widget.lastBookmark.isEmpty 
-                      ? TranslationService.t('no_active_bookmark') 
-                      : "${TranslationService.isArabic ? 'سورة' : 'Surah'} ${widget.lastBookmark['surahName']} : ${TranslationService.isArabic ? 'الآية' : 'Ayah'} ${widget.lastBookmark['ayahNumber']}",
-                  onTap: () {
-                    if (widget.lastBookmark.isNotEmpty) {
-                      widget.onContinueReading();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(TranslationService.isArabic
-                              ? "لا توجد علامة مرجعية بعد. ابدأ القراءة أولاً."
-                              : "No bookmark saved yet. Start reading first."),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  },
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: widget.storage.getBookmarks(),
+                  builder: (context, snapshot) {
+                    final bookmarks = snapshot.data ?? [];
+                    final lastBookmark = bookmarks.isNotEmpty ? bookmarks.first : <String, dynamic>{};
+                    
+                    return _buildQuickCard(
+                      context: context,
+                      icon: Icons.bookmark_outline,
+                      title: TranslationService.t('continue_reading'),
+                      subtitle: lastBookmark.isEmpty 
+                          ? TranslationService.t('no_active_bookmark') 
+                          : "${TranslationService.isArabic ? 'سورة' : 'Surah'} ${lastBookmark['surahName']} : ${TranslationService.isArabic ? 'الآية' : 'Ayah'} ${lastBookmark['ayahNumber']}",
+                      onTap: () {
+                        if (lastBookmark.isNotEmpty) {
+                          widget.onContinueReading();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(TranslationService.isArabic
+                                  ? "لا توجد علامة مرجعية بعد. ابدأ القراءة أولاً."
+                                  : "No bookmark saved yet. Start reading first."),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  }
                 ),
                 const SizedBox(height: 12),
                 GridView.count(

@@ -299,7 +299,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
     if (!mounted) return;
     
     void performSearch(int attempt, double currentGuess) {
-      if (!mounted || !_scrollController.hasClients) return;
+      if (!mounted) return;
+      
+      if (!_scrollController.hasClients) {
+        if (attempt < 20) {
+          Future.delayed(const Duration(milliseconds: 100), () => performSearch(attempt + 1, currentGuess));
+        }
+        return;
+      }
       
       final key = _readingMode == 'continuous' 
           ? _pageKeys[(ayahNum - 1) ~/ 5]
@@ -344,8 +351,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
       }
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
+    void startSearch(int attempt) {
+      if (!mounted) return;
+      if (!_scrollController.hasClients) {
+        if (attempt < 20) {
+          Future.delayed(const Duration(milliseconds: 100), () => startSearch(attempt + 1));
+        }
+        return;
+      }
       
       double initialGuess = 0;
       if (_readingMode == 'continuous') {
@@ -356,7 +369,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
       
       _scrollController.jumpTo(initialGuess);
       Future.delayed(const Duration(milliseconds: 50), () => performSearch(0, initialGuess));
-    });
+    }
+
+    startSearch(0);
   }
 
   void _changeFontSize(double delta) {

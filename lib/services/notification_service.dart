@@ -86,7 +86,7 @@ void backgroundPreAdhanCallback(int id) async {
       final isAr = TranslationService.currentLanguage == 'ar';
       final lang = isAr ? 'ar' : 'en';
       final dir = await getApplicationDocumentsDirectory();
-      final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_$lang.mp3';
+      final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
       final localFile = File(localPath);
       final player = AudioPlayer();
       if (await localFile.exists()) {

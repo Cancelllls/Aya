@@ -50,8 +50,8 @@ class AdhanAudioService {
   // Pre-Adhan voice files
   static const Map<String, Map<String, String>> preAdhanVoiceUrls = {
     'standard': {
-      'ar': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
-      'en': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      'ar': '$_fpBase/prayer_reminder_call.mp3',
+      'en': '$_fpBase/prayer_reminder_call.mp3',
     }
   };
 
@@ -85,7 +85,7 @@ class AdhanAudioService {
   Future<bool> _preAdhanFileExists(String lang) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/pre_adhan_audio/pre_adhan_$lang.mp3');
+      final file = File('${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3');
       return await file.exists();
     } catch (_) {
       return false;
@@ -154,7 +154,7 @@ class AdhanAudioService {
   Future<bool> _downloadPreAdhanFile(String url, String lang) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/pre_adhan_audio/pre_adhan_$lang.mp3');
+      final file = File('${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3');
       if (!await file.parent.exists()) {
         await file.parent.create(recursive: true);
       }
@@ -200,7 +200,7 @@ class AdhanAudioService {
     _previewPlayer = AudioPlayer();
 
     final dir = await getApplicationDocumentsDirectory();
-    final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_$lang.mp3';
+    final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
     final localFile = File(localPath);
     if (await localFile.exists()) {
       await _previewPlayer!.play(DeviceFileSource(localPath));
@@ -232,6 +232,6 @@ class AdhanAudioService {
 
   Future<String> getPreAdhanLocalPath(String lang) async {
     final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/pre_adhan_audio/pre_adhan_$lang.mp3';
+    return '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
   }
 }
