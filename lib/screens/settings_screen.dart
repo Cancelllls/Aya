@@ -1051,8 +1051,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildDownloadStatusIcon('pre_adhan'),
-                        const SizedBox(width: 8),
                         IconButton(
                           icon: Icon(_isPreAdhanPreviewPlaying ? Icons.stop : Icons.play_arrow),
                           onPressed: () async {
@@ -1126,8 +1124,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildDownloadStatusIcon(_adhanReciter),
-                        const SizedBox(width: 8),
                         IconButton(
                           icon: Icon(_isPreviewPlaying ? Icons.stop : Icons.play_arrow),
                           onPressed: () async {

@@ -279,9 +279,13 @@ class _HadithScreenState extends State<HadithScreen> {
                 onTap: () async {
                   Navigator.pop(context);
                   final isAr = TranslationService.isArabic;
-                  final text = isAr ? h['arabic'].toString() : h['english'].toString();
-                  // Take the first ~8 words for an accurate search
-                  final words = text.split(' ').take(8).join(' ');
+                  final text = h['arabic'].toString();
+                  // Skip the first 8 words (usually Isnad) and take the next 8 words for a better search
+                  final splitText = text.split(' ');
+                  final words = splitText.length > 8 
+                      ? splitText.skip(8).take(12).join(' ') 
+                      : splitText.take(8).join(' ');
+
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -538,32 +542,38 @@ class _HadithScreenState extends State<HadithScreen> {
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            if (h['grades'] != null && (h['grades'] as List).isNotEmpty)
+                                            if ((h['grades'] != null && (h['grades'] as List).isNotEmpty) || _selectedBook.id == 'bukhari' || _selectedBook.id == 'muslim')
                                               Expanded(
                                                 child: Wrap(
                                                   alignment: WrapAlignment.end,
                                                   spacing: 4,
                                                   runSpacing: 4,
-                                                  children: (h['grades'] as List).map<Widget>((g) {
-                                                    final gradeStr = g['grade']?.toString() ?? '';
-                                                    final isSahih = gradeStr.toLowerCase().contains('sahih') || gradeStr.contains('صحيح');
-                                                    final isDaif = gradeStr.toLowerCase().contains('daif') || gradeStr.contains('ضعيف');
-                                                    final color = isSahih ? Colors.green : (isDaif ? Colors.redAccent : const Color(0xFFE5C158));
-                                                    
-                                                    return Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                      decoration: BoxDecoration(
-                                                        color: color.withOpacity(0.1),
-                                                        border: Border.all(color: color.withOpacity(0.5)),
-                                                        borderRadius: BorderRadius.circular(4),
-                                                      ),
-                                                      child: Text(
-                                                        gradeStr,
-                                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
-                                                        textAlign: TextAlign.center,
-                                                      ),
-                                                    );
-                                                  }).toList(),
+                                                  children: () {
+                                                    final grades = List<dynamic>.from(h['grades'] ?? []);
+                                                    if (grades.isEmpty && (_selectedBook.id == 'bukhari' || _selectedBook.id == 'muslim')) {
+                                                      grades.add({'grade': TranslationService.isArabic ? 'صحيح' : 'Sahih'});
+                                                    }
+                                                    return grades.map<Widget>((g) {
+                                                      final gradeStr = g['grade']?.toString() ?? '';
+                                                      final isSahih = gradeStr.toLowerCase().contains('sahih') || gradeStr.contains('صحيح');
+                                                      final isDaif = gradeStr.toLowerCase().contains('daif') || gradeStr.contains('ضعيف');
+                                                      final color = isSahih ? Colors.green : (isDaif ? Colors.redAccent : const Color(0xFFE5C158));
+                                                      
+                                                      return Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: color.withOpacity(0.1),
+                                                          border: Border.all(color: color.withOpacity(0.5)),
+                                                          borderRadius: BorderRadius.circular(4),
+                                                        ),
+                                                        child: Text(
+                                                          gradeStr,
+                                                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+                                                          textAlign: TextAlign.center,
+                                                        ),
+                                                      );
+                                                    }).toList();
+                                                  }(),
                                                 ),
                                               ),
                                           ],

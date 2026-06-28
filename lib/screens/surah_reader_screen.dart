@@ -305,10 +305,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
 
       if (_readingMode == 'continuous') {
         final pageIndex = (ayahNum - 1) ~/ 5;
-        targetOffset = (pageIndex * 420.0 * _fontSizeMultiplier);
+        targetOffset = (pageIndex * 200.0 * _fontSizeMultiplier);
       } else {
         final index = ayahNum - 1;
-        final double averageHeight = (_readingMode == 'translation' ? 260.0 : 130.0) * _fontSizeMultiplier;
+        final double averageHeight = (_readingMode == 'translation' ? 220.0 : 120.0) * _fontSizeMultiplier;
         targetOffset = (index * averageHeight);
       }
 
@@ -319,7 +319,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
       );
 
       // Wait for layout to finish, then align perfectly
-      Future.delayed(Duration(milliseconds: 50 + (attempt * 40)), () {
+      Future.delayed(Duration(milliseconds: 100 + (attempt * 100)), () {
         if (!mounted) return;
         final key = _readingMode == 'continuous' 
             ? _pageKeys[(ayahNum - 1) ~/ 5]
@@ -330,8 +330,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
             key.currentContext!,
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
+            alignment: 0.1, // Near the top, but slightly down
           );
-        } else if (attempt < 3) {
+        } else if (attempt < 5) {
           // If the element isn't rendered yet, retry with a slightly longer delay
           performScroll(attempt + 1);
         }

@@ -46,7 +46,7 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   void didUpdateWidget(covariant AzkarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialTabIndex != widget.initialTabIndex || _tabController.index != widget.initialTabIndex) {
-      _tabController.index = widget.initialTabIndex;
+      _tabController.animateTo(widget.initialTabIndex);
     }
   }
 
