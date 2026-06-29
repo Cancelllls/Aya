@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -54,6 +55,7 @@ class _HadithScreenState extends State<HadithScreen> {
   HadithBook _selectedBook = hadithBooks[0];
   List<dynamic> _hadithList = [];
   bool _isLoading = false;
+  int? _highlightedHadithNumber;
   bool _isOffline = false;
   String _error = '';
   int _currentPage = 1;
@@ -257,10 +259,18 @@ class _HadithScreenState extends State<HadithScreen> {
       setState(() {
         _currentPage = (idx / _pageSize).floor() + 1;
         _jumpController.clear();
+        _highlightedHadithNumber = num;
       });
       Future.delayed(const Duration(milliseconds: 200), () {
         if (_scrollController.hasClients) {
           _scrollController.jumpTo(0.0);
+        }
+      });
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted) {
+          setState(() {
+            _highlightedHadithNumber = null;
+          });
         }
       });
     } else if (mounted) {
@@ -324,16 +334,13 @@ class _HadithScreenState extends State<HadithScreen> {
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.menu_book, color: Color(0xFFE5C158)),
-                title: Text(TranslationService.isArabic ? "قراءة الشرح (إنترنت)" : "Read Explanation (Online)"),
-                subtitle: Text(TranslationService.isArabic ? "البحث عن شرح وتخريج الحديث في موقع الدرر السنية" : "Search for explanation on Sunnah.com"),
+                leading: const Icon(Icons.fact_check, color: Color(0xFFE5C158)),
+                title: Text(TranslationService.isArabic ? "تخريج الحديث (إنترنت)" : "Hadith Grading (Online)"),
+                subtitle: Text(TranslationService.isArabic ? "البحث عن تخريج الحديث وحكمه في موقع الدرر السنية" : "Search for authenticity grading on Dorar.net"),
                 onTap: () async {
                   Navigator.pop(context);
                   final text = h['arabic'].toString();
-                  // Build a focused search query: skip narrator prefix words
-                  // (حدثنا/أخبرنا etc.) then take the next 8 meaningful words
                   final queryWords = _buildHadithQuery(text);
-
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -346,12 +353,27 @@ class _HadithScreenState extends State<HadithScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.bookmark, color: Color(0xFFE5C158)),
-                title: Text(TranslationService.isArabic ? "حفظ كعلامة مرجعية" : "Add to Bookmarks"),
-                subtitle: Text(TranslationService.isArabic ? "حفظ في المفضلة للأحاديث" : "Save to Hadith favorites"),
+                leading: const Icon(Icons.menu_book, color: Color(0xFFE5C158)),
+                title: Text(TranslationService.isArabic ? "قراءة الشرح (إنترنت)" : "Read Explanation (Online)"),
+                subtitle: Text(TranslationService.isArabic ? "البحث عن شروحات الحديث في الموسوعة الحديثية" : "Search for scholarly explanations on Dorar.net"),
                 onTap: () async {
                   Navigator.pop(context);
-                  final messenger = ScaffoldMessenger.of(this.context);
+                  final text = h['arabic'].toString();
+                  final queryWords = _buildHadithQuery(text);
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HadithExplanationScreen(
+                        query: queryWords,
+                        displayLang: _displayLang,
+                        isSharh: true,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              StatefulBuilder(
+                builder: (context, setModalState) {
                   final List<String> current = widget.storage.getStringList('hadith_bookmarks') ?? [];
                   final data = jsonEncode({
                     'bookId': _selectedBook.id,
@@ -360,13 +382,31 @@ class _HadithScreenState extends State<HadithScreen> {
                     'number': h['number'],
                     'text': _displayLang == 'ara' ? h['arabic'] : h['english']
                   });
-                  if (!current.contains(data)) {
-                    current.add(data);
-                    await widget.storage.setStringList('hadith_bookmarks', current);
-                    if (mounted) {
-                      messenger.showSnackBar(SnackBar(content: Text(TranslationService.isArabic ? "تم الحفظ بنجاح" : "Saved successfully!")));
-                    }
-                  }
+                  final isSaved = current.contains(data);
+
+                  return ListTile(
+                    leading: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: const Color(0xFFE5C158)),
+                    title: Text(isSaved 
+                        ? (TranslationService.isArabic ? "إزالة العلامة المرجعية" : "Remove Bookmark")
+                        : (TranslationService.isArabic ? "حفظ كعلامة مرجعية" : "Add to Bookmarks")),
+                    subtitle: Text(TranslationService.isArabic ? "المفضلة للأحاديث" : "Hadith favorites"),
+                    onTap: () async {
+                      if (isSaved) {
+                        current.remove(data);
+                      } else {
+                        current.add(data);
+                      }
+                      await widget.storage.setStringList('hadith_bookmarks', current);
+                      setModalState(() {});
+                      final messenger = ScaffoldMessenger.of(this.context);
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(isSaved 
+                            ? (TranslationService.isArabic ? "تم الإزالة بنجاح" : "Removed successfully") 
+                            : (TranslationService.isArabic ? "تم الحفظ بنجاح" : "Saved successfully!")),
+                        duration: const Duration(seconds: 1),
+                      ));
+                    },
+                  );
                 },
               ),
               const SizedBox(height: 12),
@@ -580,17 +620,28 @@ class _HadithScreenState extends State<HadithScreen> {
                               controller: _scrollController,
                               padding: const EdgeInsets.all(12),
                               itemCount: pageHadiths.length,
-                              itemBuilder: (context, index) {
-                                final h = pageHadiths[index];
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  color: theme.cardColor.withOpacity(0.7),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
-                                  ),
-                                  child: ClipRRect(
+                                  itemBuilder: (context, index) {
+                                    final h = pageHadiths[index];
+                                    final isHighlighted = _highlightedHadithNumber == h['number'];
+                                    return AnimatedContainer(
+                                      duration: const Duration(milliseconds: 500),
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(
+                                        color: isHighlighted ? const Color(0xFFE5C158).withOpacity(0.15) : theme.cardColor.withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isHighlighted ? const Color(0xFFE5C158) : Colors.white.withOpacity(0.1),
+                                          width: isHighlighted ? 2.0 : 1.0,
+                                        ),
+                                      ),
+                                      child: Card(
+                                        margin: EdgeInsets.zero,
+                                        color: Colors.transparent,
+                                        elevation: isHighlighted ? 8 : 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
                                     child: BackdropFilter(
                                       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -687,7 +738,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                       ),
                                     ),
                                   ),
-                                )));
+                                  ))));
                               },
                             ),
             ),

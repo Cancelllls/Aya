@@ -7,8 +7,9 @@ import '../services/translation_service.dart';
 class HadithExplanationScreen extends StatefulWidget {
   final String query;
   final String displayLang;
+  final bool isSharh;
 
-  const HadithExplanationScreen({super.key, required this.query, required this.displayLang});
+  const HadithExplanationScreen({super.key, required this.query, required this.displayLang, this.isSharh = false});
 
   @override
   State<HadithExplanationScreen> createState() => _HadithExplanationScreenState();
@@ -28,7 +29,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
   Future<void> _fetchExplanation() async {
     try {
       final encodedQuery = Uri.encodeComponent(widget.query);
-      final url = 'https://dorar.net/dorar_api.json?skey=$encodedQuery';
+      final url = 'https://dorar.net/dorar_api.json?skey=$encodedQuery${widget.isSharh ? '&st=p2' : ''}';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -120,7 +121,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(TranslationService.isArabic ? "شرح وتخريج الحديث" : "Hadith Explanation & Grading", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(widget.isSharh 
+            ? (TranslationService.isArabic ? "شرح الحديث" : "Hadith Explanation")
+            : (TranslationService.isArabic ? "تخريج الحديث" : "Hadith Grading"), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         backgroundColor: theme.appBarTheme.backgroundColor,
       ),
       body: _isLoading

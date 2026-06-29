@@ -338,6 +338,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   int _currentTab = 0;
   int _azkarInitialTab = 0;
   int _prayerInitialTab = 0;
+  int? _hadithInitialNumber;
+  String? _hadithInitialBookId;
   Timer? _focusTimer;
   Timer? _autoLockTimer;
   int _focusTimeRemaining = 0;
@@ -705,6 +707,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       ),
       HadithScreen(
         storage: widget.storage,
+        initialHadithNumber: _hadithInitialNumber,
+        initialBookId: _hadithInitialBookId,
       ),
       PrayerTimesScreen(
         storage: widget.storage,
@@ -777,13 +781,25 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             IconButton(
               icon: Icon(Icons.bookmarks, color: theme.appBarTheme.iconTheme?.color ?? const Color(0xFFE5C158)),
               tooltip: TranslationService.isArabic ? 'العلامات المرجعية' : 'Bookmarks',
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => BookmarksScreen(storage: widget.storage),
                   ),
                 );
+                
+                if (result != null && result is Map) {
+                  if (result['tab'] != null) {
+                    setState(() {
+                      _currentTab = result['tab'];
+                      if (result['tab'] == 2) {
+                        _hadithInitialNumber = result['hadithNumber'];
+                        _hadithInitialBookId = result['bookId'];
+                      }
+                    });
+                  }
+                }
               },
             ),
             IconButton(
@@ -819,7 +835,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                       return FadeTransition(opacity: animation, child: child);
                     },
                     child: KeyedSubtree(
-                      key: ValueKey<String>('$_currentTab-$_azkarInitialTab-$_prayerInitialTab'),
+                      key: ValueKey<String>('$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId'),
                       child: screens[_currentTab],
                     ),
                   ),

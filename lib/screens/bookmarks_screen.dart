@@ -4,7 +4,6 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/api_service.dart';
 import 'surah_reader_screen.dart';
-import 'hadith_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
   final StorageService storage;
@@ -86,16 +85,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final number = b['number'];
     final hadithNum = number is int ? number : int.tryParse(number.toString());
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HadithScreen(
-          storage: widget.storage,
-          initialBookId: bookId.isNotEmpty ? bookId : null,
-          initialHadithNumber: hadithNum,
-        ),
-      ),
-    );
+    Navigator.pop(context, {
+      'tab': 2,
+      'bookId': bookId.isNotEmpty ? bookId : null,
+      'hadithNumber': hadithNum,
+    });
   }
 
   Widget _buildQuranList(ThemeData theme) {
