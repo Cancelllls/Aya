@@ -87,7 +87,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     // Build map for quick lookup
     _trackerData.clear();
     for (var item in yearlyList) {
-      _trackerData[item['date'] as String] = item;
+      _trackerData[item['date'] as String] = Map<String, dynamic>.from(item);
     }
 
     _calculateStats('yearly', yearStart, yearEnd, yearlyList);
@@ -157,7 +157,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     int currentStatus,
   ) async {
     final db = await DatabaseService.getInstance();
-    int nextStatus = currentStatus == 1 ? 0 : 1;
+    int nextStatus = currentStatus > 0 ? 0 : 1;
     final dateStr = _formatDate(date);
 
     // ponytail: Optimistic UI update, no heavy DB reload

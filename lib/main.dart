@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
@@ -27,7 +29,10 @@ import 'models/prayer_models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DorarHadithFlutter.ensureInitialized();
+  final dbDir = await getDatabasesPath();
+  await DorarHadithFlutter.ensureInitialized(
+    databaseDirectory: Directory(dbDir),
+  );
 
   // Initialize Android Alarm Manager
   await AndroidAlarmManager.initialize();
