@@ -55,6 +55,8 @@ dependencies:
   translator: ^1.0.4+1
   dorar_hadith: ^0.5.0
   dorar_hadith_flutter: ^0.5.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlite3: ^3.3.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

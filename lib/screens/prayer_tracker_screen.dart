@@ -14,13 +14,27 @@ class PrayerTrackerScreen extends StatefulWidget {
 class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
-  DateTime _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+  DateTime _selectedMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
+  DateTime _selectedDate = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
   Map<String, Map<String, dynamic>> _trackerData = {};
   bool _isLoading = true;
 
   final List<String> _prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-  final List<String> _prayersAr = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
+  final List<String> _prayersAr = [
+    'الفجر',
+    'الظهر',
+    'العصر',
+    'المغرب',
+    'العشاء',
+  ];
   final List<String> _prayersEn = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
   Map<String, Map<String, int>> _stats = {
@@ -32,7 +46,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
@@ -41,8 +55,15 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   }
 
   List<DateTime> _getDaysInMonth() {
-    final int daysInMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
-    return List.generate(daysInMonth, (i) => DateTime(_selectedMonth.year, _selectedMonth.month, i + 1));
+    final int daysInMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+      0,
+    ).day;
+    return List.generate(
+      daysInMonth,
+      (i) => DateTime(_selectedMonth.year, _selectedMonth.month, i + 1),
+    );
   }
 
   Future<void> _loadData({bool showLoading = true}) async {
@@ -54,7 +75,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     final yearEnd = DateTime(now.year, 12, 31);
     final monthStart = DateTime(now.year, now.month, 1);
     final monthEnd = DateTime(now.year, now.month + 1, 0);
-    
+
     final currentWeekStart = now.subtract(Duration(days: now.weekday - 1));
     final currentWeekEnd = currentWeekStart.add(const Duration(days: 6));
 
@@ -127,30 +148,26 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     missed = total - prayed;
     if (missed < 0) missed = 0;
 
-    _stats[period] = {
-      'prayed': prayed,
-      'missed': missed,
-      'total': total,
-    };
+    _stats[period] = {'prayed': prayed, 'missed': missed, 'total': total};
   }
 
-  Future<void> _togglePrayerForDate(DateTime date, String prayer, int currentStatus) async {
+  Future<void> _togglePrayerForDate(
+    DateTime date,
+    String prayer,
+    int currentStatus,
+  ) async {
     final db = await DatabaseService.getInstance();
     int nextStatus = currentStatus == 1 ? 0 : 1;
     final dateStr = _formatDate(date);
-    
+
     // ponytail: Optimistic UI update, no heavy DB reload
     setState(() {
       if (_trackerData[dateStr] == null) _trackerData[dateStr] = {};
       _trackerData[dateStr]![prayer] = nextStatus;
     });
 
-    await db.updatePrayerTracker(
-      dateStr,
-      prayer,
-      nextStatus,
-    );
-    
+    await db.updatePrayerTracker(dateStr, prayer, nextStatus);
+
     // Silently reload stats in background
     _loadData(showLoading: false);
   }
@@ -159,7 +176,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   Widget build(BuildContext context) {
     final isAr = TranslationService.isArabic;
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -171,23 +188,28 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         backgroundColor: Colors.transparent,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: theme.textTheme.bodyLarge?.color,
+          indicatorColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
           indicatorWeight: 2,
-          labelColor: theme.textTheme.bodyLarge?.color,
-          unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+          labelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+          unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(
+            0.5,
+          ),
           tabs: [
-            Tab(text: isAr ? 'التقويم' : 'Calendar'),
+            Tab(text: isAr ? 'التقويم' : 'Monthly'),
+            Tab(text: isAr ? 'السنة' : 'Yearly'),
             Tab(text: isAr ? 'إحصائيات' : 'Statistics'),
           ],
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.grey),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.grey))
           : TabBarView(
               controller: _tabController,
-              children: [_buildCalendarView(isAr, theme), _buildStatsView(isAr, theme)],
+              children: [
+                _buildCalendarView(isAr, theme),
+                _buildYearlyView(isAr, theme),
+                _buildStatsView(isAr, theme),
+              ],
             ),
     );
   }
@@ -195,8 +217,11 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   Widget _buildCalendarView(bool isAr, ThemeData theme) {
     final days = _getDaysInMonth();
     final firstDayWeekday = days.first.weekday;
-    final monthStr = DateFormat('MMMM yyyy', isAr ? 'ar' : 'en').format(_selectedMonth);
-    
+    final monthStr = DateFormat(
+      'MMMM yyyy',
+      isAr ? 'ar' : 'en',
+    ).format(_selectedMonth);
+
     return Column(
       children: [
         // Month Header
@@ -206,48 +231,74 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.chevron_left, color: theme.textTheme.bodyLarge?.color),
+                icon: Icon(
+                  Icons.chevron_left,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
                 onPressed: () {
-                  setState(() => _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1));
+                  setState(
+                    () => _selectedMonth = DateTime(
+                      _selectedMonth.year,
+                      _selectedMonth.month - 1,
+                      1,
+                    ),
+                  );
                 },
               ),
               Text(
                 monthStr.toUpperCase(),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 1.0),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                ),
               ),
               IconButton(
-                icon: Icon(Icons.chevron_right, color: theme.textTheme.bodyLarge?.color),
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
                 onPressed: () {
-                  setState(() => _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1));
+                  setState(
+                    () => _selectedMonth = DateTime(
+                      _selectedMonth.year,
+                      _selectedMonth.month + 1,
+                      1,
+                    ),
+                  );
                 },
               ),
             ],
           ),
         ),
-        
+
         // Weekdays Header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => 
-              SizedBox(
-                width: 30,
-                child: Text(
-                  d,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                .map(
+                  (d) => SizedBox(
+                    width: 30,
+                    child: Text(
+                      d,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.4,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              )
-            ).toList(),
+                )
+                .toList(),
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Calendar Grid
         Expanded(
           flex: 4,
@@ -263,53 +314,57 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               if (index < firstDayWeekday - 1) {
                 return const SizedBox.shrink();
               }
-              
+
               final date = days[index - (firstDayWeekday - 1)];
               final dateStr = _formatDate(date);
               final dayData = _trackerData[dateStr] ?? {};
-              
-              int prayedCount = 0;
+
+              List<bool> prayersDone = [];
               for (var p in _prayers) {
-                if ((dayData[p] as int? ?? 0) > 0) prayedCount++;
+                prayersDone.add((dayData[p] as int? ?? 0) > 0);
               }
-              
+
               final isSelected = _formatDate(_selectedDate) == dateStr;
               final isToday = _formatDate(DateTime.now()) == dateStr;
-              
-              Color circleColor = Colors.transparent;
-              Color borderColor = theme.dividerColor.withOpacity(0.2);
-              
-              if (prayedCount == 5) {
-                circleColor = const Color(0xFFE5C158).withOpacity(0.2);
-                borderColor = const Color(0xFFE5C158);
-              } else if (prayedCount > 0) {
-                circleColor = theme.primaryColor.withOpacity(0.1);
-                borderColor = theme.primaryColor.withOpacity(0.5);
-              }
-              
+
+              Color completeColor = const Color(0xFFE5C158);
+              Color incompleteColor = theme.dividerColor.withOpacity(0.1);
+
               return GestureDetector(
                 onTap: () {
                   setState(() => _selectedDate = date);
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? theme.textTheme.bodyLarge?.color : circleColor,
-                    border: Border.all(
-                      color: isSelected ? Colors.transparent : borderColor,
-                      width: isToday && !isSelected ? 2.0 : 1.0,
-                    ),
+                child: CustomPaint(
+                  painter: PrayerPiePainter(
+                    prayers: prayersDone,
+                    completeColor: completeColor,
+                    incompleteColor: incompleteColor,
+                    backgroundColor: theme.scaffoldBackgroundColor,
                   ),
-                  child: Center(
-                    child: Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected 
-                            ? theme.scaffoldBackgroundColor 
-                            : theme.textTheme.bodyLarge?.color,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(
+                              color:
+                                  theme.textTheme.bodyLarge?.color ??
+                                  Colors.white,
+                              width: 2.0,
+                            )
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isSelected || isToday
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: isToday && !isSelected
+                              ? theme.primaryColor
+                              : theme.textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
                   ),
@@ -318,22 +373,32 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             },
           ),
         ),
-        
+
         // Selected Day Details
         Divider(color: theme.dividerColor.withOpacity(0.1), height: 1),
         Expanded(
           flex: 6,
           child: SingleChildScrollView(
-            child: _buildPlannerDayBlock(_selectedDate, _trackerData[_formatDate(_selectedDate)] ?? {}, isAr, theme),
+            child: _buildPlannerDayBlock(
+              _selectedDate,
+              _trackerData[_formatDate(_selectedDate)] ?? {},
+              isAr,
+              theme,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPlannerDayBlock(DateTime date, Map<String, dynamic> data, bool isAr, ThemeData theme) {
+  Widget _buildPlannerDayBlock(
+    DateTime date,
+    Map<String, dynamic> data,
+    bool isAr,
+    ThemeData theme,
+  ) {
     final isToday = _formatDate(date) == _formatDate(DateTime.now());
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       child: Column(
@@ -342,20 +407,28 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           Row(
             children: [
               Text(
-                DateFormat('EEEE, d MMMM', isAr ? 'ar' : 'en').format(date).toUpperCase(),
+                DateFormat(
+                  'EEEE, d MMMM',
+                  isAr ? 'ar' : 'en',
+                ).format(date).toUpperCase(),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   letterSpacing: 1.2,
-                  color: isToday ? theme.textTheme.bodyLarge?.color : theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  color: isToday
+                      ? theme.textTheme.bodyLarge?.color
+                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                 ),
               ),
               if (isToday) ...[
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -367,7 +440,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                     ),
                   ),
                 ),
-              ]
+              ],
             ],
           ),
           const SizedBox(height: 24),
@@ -376,16 +449,30 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             final pKey = e.value;
             final pName = isAr ? _prayersAr[idx] : _prayersEn[idx];
             final status = data[pKey] as int? ?? 0;
-            return _buildPlannerChecklist(date, pKey, pName, status, isAr, theme);
+            return _buildPlannerChecklist(
+              date,
+              pKey,
+              pName,
+              status,
+              isAr,
+              theme,
+            );
           }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildPlannerChecklist(DateTime date, String prayerKey, String prayerName, int status, bool isAr, ThemeData theme) {
+  Widget _buildPlannerChecklist(
+    DateTime date,
+    String prayerKey,
+    String prayerName,
+    int status,
+    bool isAr,
+    ThemeData theme,
+  ) {
     final bool isCompleted = status > 0;
-    
+
     return InkWell(
       onTap: () => _togglePrayerForDate(date, prayerKey, status),
       splashColor: Colors.transparent,
@@ -397,8 +484,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             Icon(
               isCompleted ? Icons.check : Icons.circle_outlined,
               size: 20,
-              color: isCompleted 
-                  ? theme.textTheme.bodyLarge?.color?.withOpacity(0.7) 
+              color: isCompleted
+                  ? theme.textTheme.bodyLarge?.color?.withOpacity(0.7)
                   : theme.textTheme.bodyMedium?.color?.withOpacity(0.2),
             ),
             const SizedBox(width: 16),
@@ -407,12 +494,13 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 prayerName,
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: isCompleted ? FontWeight.normal : FontWeight.w500,
-                  color: isCompleted 
-                      ? theme.textTheme.bodyMedium?.color?.withOpacity(0.4) 
-                      : theme.textTheme.bodyLarge?.color,
-                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                  decorationColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                  fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+                  color: isCompleted
+                      ? theme.textTheme.bodyLarge?.color
+                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                  decoration: null,
+                  decorationColor: theme.textTheme.bodyMedium?.color
+                      ?.withOpacity(0.4),
                 ),
               ),
             ),
@@ -426,16 +514,36 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        _buildMinimalistStatCard('weekly', isAr ? 'هذا الأسبوع' : 'This Week', isAr, theme),
+        _buildMinimalistStatCard(
+          'weekly',
+          isAr ? 'هذا الأسبوع' : 'This Week',
+          isAr,
+          theme,
+        ),
         const SizedBox(height: 32),
-        _buildMinimalistStatCard('monthly', isAr ? 'هذا الشهر' : 'This Month', isAr, theme),
+        _buildMinimalistStatCard(
+          'monthly',
+          isAr ? 'هذا الشهر' : 'This Month',
+          isAr,
+          theme,
+        ),
         const SizedBox(height: 32),
-        _buildMinimalistStatCard('yearly', isAr ? 'هذا العام' : 'This Year', isAr, theme),
+        _buildMinimalistStatCard(
+          'yearly',
+          isAr ? 'هذا العام' : 'This Year',
+          isAr,
+          theme,
+        ),
       ],
     );
   }
 
-  Widget _buildMinimalistStatCard(String period, String title, bool isAr, ThemeData theme) {
+  Widget _buildMinimalistStatCard(
+    String period,
+    String title,
+    bool isAr,
+    ThemeData theme,
+  ) {
     final data = _stats[period]!;
     final total = data['total']!;
     if (total == 0) return const SizedBox.shrink();
@@ -454,7 +562,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             Text(
               title.toUpperCase(),
               style: TextStyle(
-                fontSize: 14, 
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5,
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
@@ -463,9 +571,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             Text(
               "${(prayedPct * 100).toInt()}%",
               style: TextStyle(
-                fontSize: 24, 
+                fontSize: 24,
                 fontWeight: FontWeight.w300,
-                color: theme.textTheme.bodyLarge?.color,
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
               ),
             ),
           ],
@@ -475,7 +583,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: prayedPct,
-            backgroundColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.1),
+            backgroundColor: theme.textTheme.bodyMedium?.color?.withOpacity(
+              0.1,
+            ),
             valueColor: AlwaysStoppedAnimation<Color>(
               theme.textTheme.bodyLarge?.color ?? Colors.black,
             ),
@@ -503,12 +613,12 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: theme.textTheme.bodyLarge?.color,
+            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          label.toUpperCase(), 
+          label.toUpperCase(),
           style: TextStyle(
             color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
             fontSize: 10,
@@ -518,5 +628,52 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         ),
       ],
     );
+  }
+}
+
+class PrayerPiePainter extends CustomPainter {
+  final List<bool> prayers;
+  final Color completeColor;
+  final Color incompleteColor;
+  final Color backgroundColor;
+
+  PrayerPiePainter({
+    required this.prayers,
+    required this.completeColor,
+    required this.incompleteColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double sweepAngle = 2 * 3.141592653589793 / 5;
+    final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    for (int i = 0; i < 5; i++) {
+      final Paint paint = Paint()
+        ..color = prayers[i] ? completeColor : incompleteColor
+        ..style = PaintingStyle.fill;
+
+      final double startAngle = -3.141592653589793 / 2 + (i * sweepAngle);
+      canvas.drawArc(rect, startAngle, sweepAngle, true, paint);
+
+      final Paint separatorPaint = Paint()
+        ..color = backgroundColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      canvas.drawArc(rect, startAngle, sweepAngle, true, separatorPaint);
+    }
+
+    // Inner hole for donut chart
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.width / 2 * 0.75,
+      Paint()..color = backgroundColor,
+    );
+  }
+
+  @override
+  bool shouldRepaint(PrayerPiePainter oldDelegate) {
+    return true;
   }
 }
