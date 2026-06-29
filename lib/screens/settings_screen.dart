@@ -759,20 +759,35 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.isArabic ? "تفسير القرآن" : "Quran Tafsir"),
-                  subtitle: Text(TranslationService.isArabic ? "اختر كتاب التفسير المفضل" : "Choose preferred Tafsir book"),
-                  trailing: DropdownButton<String>(
-                    value: _tafsirEdition,
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(TranslationService.isArabic ? "اختر كتاب التفسير المفضل" : "Choose preferred Tafsir book"),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: DropdownButton<String>(
+                    isExpanded: true,
+                                          value: _tafsirEdition,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
-                      DropdownMenuItem(value: 'ar.muyassar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الميسر (المجمع)" : "Al-Muyassar (Assembly)"))),
-                      DropdownMenuItem(value: 'ar.jalalayn', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير الجلالين" : "Tafsir Al-Jalalayn"))),
-                      DropdownMenuItem(value: 'ar.qurtubi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير القرطبي" : "Tafsir Al-Qurtubi"))),
-                      DropdownMenuItem(value: 'ar.miqbas', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تنوير المقباس (ابن عباس)" : "Tanwir al-Miqbas (Ibn Abbas)"))),
-                      DropdownMenuItem(value: 'ar.waseet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الوسيط (الطنطاوي)" : "Al-Waseet (Tantawi)"))),
-                      DropdownMenuItem(value: 'ar.baghawi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير البغوي" : "Tafsir Al-Baghawi"))),
+                      DropdownMenuItem(                                          value: 'ar.muyassar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الميسر (المجمع)" : "Al-Muyassar (Assembly)"))),
+                      DropdownMenuItem(                                          value: 'ar.jalalayn', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير الجلالين" : "Tafsir Al-Jalalayn"))),
+                      DropdownMenuItem(                                          value: 'ar.qurtubi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير القرطبي" : "Tafsir Al-Qurtubi"))),
+                      DropdownMenuItem(                                          value: 'ar.miqbas', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تنوير المقباس (ابن عباس)" : "Tanwir al-Miqbas (Ibn Abbas)"))),
+                      DropdownMenuItem(                                          value: 'ar.waseet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الوسيط (الطنطاوي)" : "Al-Waseet (Tantawi)"))),
+                      DropdownMenuItem(                                          value: 'ar.baghawi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير البغوي" : "Tafsir Al-Baghawi"))),
                     ],
                     onChanged: _changeTafsirEdition,
+                  ),
+                      ),
+                    ],
                   ),
                 ),
                 const Divider(height: 1, color: Colors.white10),
@@ -1012,16 +1027,29 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               children: [
                 ListTile(
                   title: Text(TranslationService.isArabic ? "وقت التنبيه قبل الأذان" : "Pre-Athan Alert Time"),
-                  subtitle: Text(TranslationService.isArabic 
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(TranslationService.isArabic 
                       ? "اختر وقت التنبيه بالدقائق قبل الأذان" 
                       : "Choose alert timing in minutes before Athan"),
-                  trailing: DropdownButton<int>(
-                    value: _preAdhanDuration,
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: DropdownButton<int>(
+                    isExpanded: true,
+                                          value: _preAdhanDuration,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [0, 5, 10, 15, 20].map((mins) {
                       return DropdownMenuItem<int>(
-                        value: mins,
+                        
+                                          value: mins,
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(mins == 0 
@@ -1031,6 +1059,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       );
                     }).toList(),
                     onChanged: _changePreAdhanDuration,
+                  ),
+                      ),
+                    ],
                   ),
                 ),
                 const Divider(height: 1, color: Colors.white10),
@@ -1106,37 +1137,53 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.isArabic ? "نوع تنبيه الأذان" : "Athan Alert Style"),
-                  subtitle: Text(TranslationService.isArabic 
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(TranslationService.isArabic 
                       ? "التنبيه عند دخول وقت الصلاة" 
                       : "Alert when prayer time starts"),
-                  trailing: DropdownButton<String>(
-                    value: _adhanAlertMode,
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: DropdownButton<String>(
+                    isExpanded: true,
+                                          value: _adhanAlertMode,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
                       DropdownMenuItem(
-                        value: 'silent',
+                        
+                                          value: 'silent',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "صامت" : "Silent"),
                         ),
                       ),
                       DropdownMenuItem(
-                        value: 'vibrate',
+                        
+                                          value: 'vibrate',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "اهتزاز" : "Vibrate"),
                         ),
                       ),
                       DropdownMenuItem(
-                        value: 'real_reciter',
+                        
+                                          value: 'real_reciter',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "أذان بصوت المؤذن" : "Real Reciter Adhan"),
                         ),
                       ),
                       DropdownMenuItem(
-                        value: 'vibrate_and_voice',
+                        
+                                          value: 'vibrate_and_voice',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "اهتزاز + صوت المؤذن" : "Vibrate + Reciter Voice"),
@@ -1144,6 +1191,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       ),
                     ],
                     onChanged: _changeAdhanAlertMode,
+                  ),
+                      ),
+                    ],
                   ),
                 ),
                 if (_adhanAlertMode == 'real_reciter' || _adhanAlertMode == 'vibrate_and_voice') ...[

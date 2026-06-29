@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
+import 'package:translator/translator.dart';
 import '../services/translation_service.dart';
-
 class HadithExplanationScreen extends StatefulWidget {
   final String query;
 
@@ -35,6 +35,31 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         final htmlString = decoded['ahadith']['result'] ?? '';
         
         final parsed = _parseDorarHtml(htmlString);
+        
+        if (!TranslationService.isArabic && parsed.isNotEmpty) {
+          try {
+            final translator = GoogleTranslator();
+            final List<Map<String, String>> translatedParsed = [];
+            for (var item in parsed) {
+              final tText = await translator.translate(item['text'] ?? '', from: 'ar', to: 'en');
+              final tInfo = await translator.translate(item['info'] ?? '', from: 'ar', to: 'en');
+              translatedParsed.add({
+                'text': tText.text,
+                'info': tInfo.text,
+              });
+            }
+            if (mounted) {
+              setState(() {
+                _parsedExplanations = translatedParsed;
+                _isLoading = false;
+              });
+            }
+            return;
+          } catch (e) {
+            // Fallback to Arabic if translation fails
+          }
+        }
+
         if (mounted) {
           setState(() {
             _parsedExplanations = parsed;
@@ -126,7 +151,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                                     color: theme.textTheme.bodyLarge?.color,
                                   ),
                                   textAlign: TextAlign.start,
-                                  textDirection: TextDirection.rtl,
+                                  textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
                                 ),
                                 const SizedBox(height: 12),
                                 Container(
@@ -143,7 +168,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                                       color: theme.textTheme.bodyMedium?.color,
                                     ),
                                     textAlign: TextAlign.start,
-                                    textDirection: TextDirection.rtl,
+                                    textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
                                   ),
                                 ),
                               ],
