@@ -243,6 +243,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       await widget.storage.setString('adhan_reciter', val);
       await _autoDownloadReciterAudio(val);
       await _rescheduleAlarms();
+      
+      // Auto-play the newly selected reciter
+      await AdhanAudioService.instance.stopPreview();
+      await AdhanAudioService.instance.playPreview(val);
     }
   }
 
@@ -1154,29 +1158,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     subtitle: Text(TranslationService.isArabic 
                         ? "اختر صوت المؤذن للأذان" 
                         : "Select voice for the Athan"),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(_isPreviewPlaying ? Icons.stop : Icons.play_arrow),
-                          onPressed: () async {
-                            if (_isPreviewPlaying) {
-                              await AdhanAudioService.instance.stopPreview();
-                              setState(() => _isPreviewPlaying = false);
-                            } else {
-                              setState(() => _isPreviewPlaying = true);
-                              await AdhanAudioService.instance.playPreview(_adhanReciter);
-                              Future.delayed(const Duration(seconds: 8), () {
-                                if (mounted) setState(() => _isPreviewPlaying = false);
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        DropdownButton<String>(
-                          value: _adhanReciter,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
+                    trailing: SizedBox(
+                      width: 160,
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _adhanReciter,
+                        underline: const SizedBox(),
+                        dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
                               value: 'mishary',
@@ -1237,7 +1225,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                           ],
                           onChanged: _changeAdhanReciter,
                         ),
-                      ],
                     ),
                   ),
                   const Divider(height: 1, color: Colors.white10),
