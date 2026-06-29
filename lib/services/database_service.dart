@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 1;
+  static const int _version = 2;
 
   DatabaseService._();
 
@@ -103,6 +103,22 @@ class DatabaseService {
     await db.execute(
       'CREATE INDEX idx_monthly_date ON monthly_prayer_cache(year, month)',
     );
+
+    // Prayer Tracker
+    await db.execute('''
+      CREATE TABLE prayer_tracker (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT UNIQUE NOT NULL,
+        fajr INTEGER DEFAULT 0,
+        dhuhr INTEGER DEFAULT 0,
+        asr INTEGER DEFAULT 0,
+        maghrib INTEGER DEFAULT 0,
+        isha INTEGER DEFAULT 0
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_prayer_tracker_date ON prayer_tracker(date)',
+    );
   }
 
   static Future<void> _onUpgrade(
@@ -110,7 +126,22 @@ class DatabaseService {
     int oldVersion,
     int newVersion,
   ) async {
-    // Handle upgrades here if version changes
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE prayer_tracker (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT UNIQUE NOT NULL,
+          fajr INTEGER DEFAULT 0,
+          dhuhr INTEGER DEFAULT 0,
+          asr INTEGER DEFAULT 0,
+          maghrib INTEGER DEFAULT 0,
+          isha INTEGER DEFAULT 0
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX idx_prayer_tracker_date ON prayer_tracker(date)',
+      );
+    }
   }
 
   // ── Prayer Times Cache ──────────────────────────────────────
@@ -274,5 +305,56 @@ class DatabaseService {
       'local_path': path,
       'downloaded_at': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // ── Prayer Tracker ────────────────────────────────────────
+  Future<Map<String, dynamic>> getPrayerTracker(String date) async {
+    final db = _database!;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'prayer_tracker',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return {
+      'date': date,
+      'fajr': 0,
+      'dhuhr': 0,
+      'asr': 0,
+      'maghrib': 0,
+      'isha': 0,
+    };
+  }
+
+  Future<void> updatePrayerTracker(
+    String date,
+    String prayer,
+    int status,
+  ) async {
+    final db = _database!;
+    final current = await getPrayerTracker(date);
+    final map = Map<String, dynamic>.from(current);
+    map[prayer] = status;
+
+    await db.insert(
+      'prayer_tracker',
+      map,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getPrayerTrackerRange(
+    String startDate,
+    String endDate,
+  ) async {
+    final db = _database!;
+    return await db.query(
+      'prayer_tracker',
+      where: 'date >= ? AND date <= ?',
+      whereArgs: [startDate, endDate],
+      orderBy: 'date ASC',
+    );
   }
 }

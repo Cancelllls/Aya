@@ -9,6 +9,7 @@ import '../services/notification_service.dart';
 import '../services/quran_verses.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
+import 'prayer_tracker_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final StorageService storage;
@@ -873,9 +874,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _buildGridServiceCard(
                       theme: theme,
-                      icon: Icons.table_chart,
-                      title: TranslationService.t('prayer_calendar'),
-                      onTap: () => widget.onTabChange(2, subTab: 1),
+                      icon: Icons.calendar_month,
+                      title: TranslationService.t('hijri_calendar'),
+                      onTap: () => widget.onTabChange(2, subTab: 2),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.track_changes,
+                      title: TranslationService.isArabic
+                          ? 'متتبع الصلاة'
+                          : 'Prayer Tracker',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrayerTrackerScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
