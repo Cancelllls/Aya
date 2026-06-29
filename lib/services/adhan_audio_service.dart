@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
@@ -180,12 +180,22 @@ class AdhanAudioService {
 
   Future<void> playPreAdhanPreview(String lang) async {
     await stopPreview();
-    const platform = MethodChannel('com.quran.aya/system');
-    final isAr = lang == 'ar';
-    await platform.invokeMethod('speak', {
-      'text': isAr ? 'أقرب معاد الصلاة' : 'Prayer time is approaching',
-      'lang': lang
-    });
+    _previewPlayer = AudioPlayer();
+
+    final dir = await getApplicationDocumentsDirectory();
+    final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
+    final localFile = File(localPath);
+    if (await localFile.exists()) {
+      await _previewPlayer!.play(DeviceFileSource(localPath));
+    } else {
+      final urls = preAdhanVoiceUrls['standard'];
+      if (urls != null) {
+        final url = urls[lang];
+        if (url != null) {
+          await _previewPlayer!.play(UrlSource(url));
+        }
+      }
+    }
   }
 
   Future<void> stopPreview() async {

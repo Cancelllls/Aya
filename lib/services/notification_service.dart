@@ -85,10 +85,22 @@ void backgroundPreAdhanCallback(int id) async {
     
     if (alertMode == 'voice' || alertMode == 'vibrate_and_voice') {
       final isAr = TranslationService.currentLanguage == 'ar';
-      await platform.invokeMethod('speak', {
-        'text': isAr ? 'أقرب معاد الصلاة' : 'Prayer time is approaching',
-        'lang': TranslationService.currentLanguage
-      });
+      final lang = isAr ? 'ar' : 'en';
+      final dir = await getApplicationDocumentsDirectory();
+      final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
+      final localFile = File(localPath);
+      final player = AudioPlayer();
+      if (await localFile.exists()) {
+        await player.play(DeviceFileSource(localPath));
+      } else {
+        final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
+        if (urls != null) {
+          final url = urls[lang];
+          if (url != null) {
+            await player.play(UrlSource(url));
+          }
+        }
+      }
     }
   } catch (e) {
     // ignore: avoid_print
