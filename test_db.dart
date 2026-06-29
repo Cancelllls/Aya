@@ -1,22 +1,25 @@
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'dart:io';
+import 'package:sqlite3/sqlite3.dart';
 
-void main() async {
-  sqfliteFfiInit();
-  var factory = databaseFactoryFfi;
-  var db = await factory.openDatabase(inMemoryDatabasePath);
-  await db.execute('''
-      CREATE TABLE prayer_tracker (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT UNIQUE NOT NULL,
-        fajr INTEGER DEFAULT 0
-      )
+void main() {
+  final db = sqlite3.openInMemory();
+  db.execute('''
+        CREATE TABLE prayer_tracker (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT UNIQUE NOT NULL,
+          fajr INTEGER DEFAULT 0,
+          dhuhr INTEGER DEFAULT 0,
+          asr INTEGER DEFAULT 0,
+          maghrib INTEGER DEFAULT 0,
+          isha INTEGER DEFAULT 0
+        )
   ''');
+
+  // simulate insert
+  db.execute("INSERT INTO prayer_tracker (date, fajr) VALUES ('2023-01-01', 1)");
   
-  try {
-    await db.insert('prayer_tracker', {'date': '2023-01-01', 'Fajr': 1});
-    print("Insert success");
-  } catch(e) {
-    print("Insert failed: $e");
-  }
+  // simulate update
+  db.execute("UPDATE prayer_tracker SET dhuhr = 1 WHERE date = '2023-01-01'");
+
+  final result = db.select("SELECT * FROM prayer_tracker");
+  print(result);
 }

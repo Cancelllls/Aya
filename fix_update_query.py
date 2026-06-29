@@ -1,3 +1,5 @@
+import re
+
 with open('lib/services/database_service.dart', 'r') as f:
     content = f.read()
 
@@ -8,9 +10,9 @@ old_code = """  Future<void> updatePrayerTracker(
   ) async {
     final maps = await _database!.query('prayer_tracker', where: 'date = ?', whereArgs: [date]);
     if (maps.isEmpty) {
-      await _database!.execute('INSERT INTO prayer_tracker (date, $prayer) VALUES (?, ?)', [date, status]);
+      await _database!.insert('prayer_tracker', {'date': date, prayer: status});
     } else {
-      await _database!.execute('UPDATE prayer_tracker SET $prayer = ? WHERE date = ?', [status, date]);
+      await _database!.update('prayer_tracker', {prayer: status}, where: 'date = ?', whereArgs: [date]);
     }
   }"""
 
@@ -19,27 +21,12 @@ new_code = """  Future<void> updatePrayerTracker(
     String prayer,
     int status,
   ) async {
-    final db = _database!;
-    final maps = await db.query('prayer_tracker', where: 'date = ?', whereArgs: [date]);
-    
-    Map<String, dynamic> row;
+    final maps = await _database!.query('prayer_tracker', where: 'date = ?', whereArgs: [date]);
     if (maps.isEmpty) {
-      row = {
-        'date': date,
-        'fajr': 0,
-        'dhuhr': 0,
-        'asr': 0,
-        'maghrib': 0,
-        'isha': 0,
-      };
+      await _database!.execute('INSERT INTO prayer_tracker (date, $prayer) VALUES (?, ?)', [date, status]);
     } else {
-      row = Map<String, dynamic>.from(maps.first);
+      await _database!.execute('UPDATE prayer_tracker SET $prayer = ? WHERE date = ?', [status, date]);
     }
-    
-    row[prayer] = status;
-    row.remove('id');
-    
-    await db.insert('prayer_tracker', row, conflictAlgorithm: ConflictAlgorithm.replace);
   }"""
 
 if old_code in content:

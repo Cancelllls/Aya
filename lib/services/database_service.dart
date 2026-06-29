@@ -333,12 +333,27 @@ class DatabaseService {
     String prayer,
     int status,
   ) async {
-    final maps = await _database!.query('prayer_tracker', where: 'date = ?', whereArgs: [date]);
+    final db = _database!;
+    final maps = await db.query('prayer_tracker', where: 'date = ?', whereArgs: [date]);
+    
+    Map<String, dynamic> row;
     if (maps.isEmpty) {
-      await _database!.insert('prayer_tracker', {'date': date, prayer: status});
+      row = {
+        'date': date,
+        'fajr': 0,
+        'dhuhr': 0,
+        'asr': 0,
+        'maghrib': 0,
+        'isha': 0,
+      };
     } else {
-      await _database!.update('prayer_tracker', {prayer: status}, where: 'date = ?', whereArgs: [date]);
+      row = Map<String, dynamic>.from(maps.first);
     }
+    
+    row[prayer] = status;
+    row.remove('id');
+    
+    await db.insert('prayer_tracker', row, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Map<String, dynamic>>> getPrayerTrackerRange(
