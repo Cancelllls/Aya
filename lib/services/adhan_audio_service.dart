@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
@@ -12,39 +13,21 @@ class AdhanAudioService {
 
   static const String _fpBase = 'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
 
-  static const Map<String, Map<String, String>> reciterUrls = {
-    'mishary': {
-      'fajr': '$_fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3',
-      'standard': '$_fpBase/adhan_meshary_al_fasy_kuwait.mp3',
-    },
-    'abdul_basit': {
-      'fajr': '$_fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3',
-      'standard': '$_fpBase/adhan_abdelbasset_abdessamad_egypte.mp3',
-    },
-    'madinah': {
-      'fajr': '$_fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3',
-      'standard': '$_fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3', // Using same for standard
-    },
-    'kazabri': {
-      'fajr': '$_fpBase/adhan_omar_al_kazabri_morocco.mp3',
-      'standard': '$_fpBase/adhan_omar_al_kazabri_morocco.mp3',
-    },
-    'riad': {
-      'fajr': '$_fpBase/adhan_riad_al_djazairi_algeria.mp3',
-      'standard': '$_fpBase/adhan_riad_al_djazairi_algeria.mp3',
-    },
-    'manssour': {
-      'fajr': '$_fpBase/adhan_manssour_el_zahrani.mp3',
-      'standard': '$_fpBase/adhan_manssour_el_zahrani.mp3',
-    },
-    'nakshabandi': {
-      'fajr': '$_fpBase/adhan_sayed_al_nakshabandi_egypte.mp3',
-      'standard': '$_fpBase/adhan_sayed_al_nakshabandi_egypte.mp3',
-    },
-    'maghriby': {
-      'fajr': '$_fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3',
-      'standard': '$_fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3',
-    },
+  static const Map<String, String> fajrReciterUrls = {
+    'mishary': '$_fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3',
+    'abdul_basit': '$_fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3',
+    'madinah': '$_fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3',
+    'nurdin': '$_fpBase/adhan_fajr_nurdin_al_haddiwi_fajr_morocco.mp3',
+  };
+
+  static const Map<String, String> standardReciterUrls = {
+    'mishary': '$_fpBase/adhan_meshary_al_fasy_kuwait.mp3',
+    'abdul_basit': '$_fpBase/adhan_abdelbasset_abdessamad_egypte.mp3',
+    'manssour': '$_fpBase/adhan_manssour_el_zahrani.mp3',
+    'maghriby': '$_fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3',
+    'kazabri': '$_fpBase/adhan_omar_al_kazabri_morocco.mp3',
+    'riad': '$_fpBase/adhan_riad_al_djazairi_algeria.mp3',
+    'nakshabandi': '$_fpBase/adhan_sayed_al_nakshabandi_egypte.mp3',
   };
 
   // Pre-Adhan voice files
@@ -60,10 +43,13 @@ class AdhanAudioService {
 
   Future<void> init() async {
     final Map<String, DownloadStatus> states = {};
-    for (final reciterId in reciterUrls.keys) {
+    for (final reciterId in fajrReciterUrls.keys) {
       final hasFajr = await _fileExists(reciterId, true);
+      states['fajr_$reciterId'] = hasFajr ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
+    }
+    for (final reciterId in standardReciterUrls.keys) {
       final hasStandard = await _fileExists(reciterId, false);
-      states[reciterId] = (hasFajr && hasStandard) ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
+      states['standard_$reciterId'] = hasStandard ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
     }
     final hasPreAr = await _preAdhanFileExists('ar');
     final hasPreEn = await _preAdhanFileExists('en');
@@ -92,24 +78,24 @@ class AdhanAudioService {
     }
   }
 
-  Future<bool> downloadReciterAudio(String reciterId) async {
-    _updateState(reciterId, DownloadStatus.downloading);
-    final urls = reciterUrls[reciterId];
-    if (urls == null) {
-      _updateState(reciterId, DownloadStatus.notDownloaded);
+  Future<bool> downloadReciterAudio(String reciterId, {bool isFajr = false}) async {
+    final stateKey = isFajr ? 'fajr_$reciterId' : 'standard_$reciterId';
+    _updateState(stateKey, DownloadStatus.downloading);
+    final url = isFajr ? fajrReciterUrls[reciterId] : standardReciterUrls[reciterId];
+    if (url == null) {
+      _updateState(stateKey, DownloadStatus.notDownloaded);
       return false;
     }
 
     try {
-      final fajrSuccess = await _downloadFile(urls['fajr']!, reciterId, true);
-      final standardSuccess = await _downloadFile(urls['standard']!, reciterId, false);
-      if (fajrSuccess && standardSuccess) {
-        _updateState(reciterId, DownloadStatus.downloaded);
+      final success = await _downloadFile(url, reciterId, isFajr);
+      if (success) {
+        _updateState(stateKey, DownloadStatus.downloaded);
         return true;
       }
     } catch (_) {}
 
-    _updateState(reciterId, DownloadStatus.notDownloaded);
+    _updateState(stateKey, DownloadStatus.notDownloaded);
     return false;
   }
 
@@ -167,8 +153,8 @@ class AdhanAudioService {
     return false;
   }
 
-  Future<bool> isReciterDownloaded(String reciterId) async {
-    return (await _fileExists(reciterId, true)) && (await _fileExists(reciterId, false));
+  Future<bool> isReciterDownloaded(String reciterId, {bool isFajr = false}) async {
+    return await _fileExists(reciterId, isFajr);
   }
 
   Future<bool> isPreAdhanDownloaded() async {
@@ -185,34 +171,21 @@ class AdhanAudioService {
     if (await localFile.exists()) {
       await _previewPlayer!.play(DeviceFileSource(localPath));
     } else {
-      final urls = reciterUrls[reciterId];
-      if (urls != null) {
-        final url = isFajr ? urls['fajr'] : urls['standard'];
-        if (url != null) {
-          await _previewPlayer!.play(UrlSource(url));
-        }
+      final url = isFajr ? fajrReciterUrls[reciterId] : standardReciterUrls[reciterId];
+      if (url != null) {
+        await _previewPlayer!.play(UrlSource(url));
       }
     }
   }
 
   Future<void> playPreAdhanPreview(String lang) async {
     await stopPreview();
-    _previewPlayer = AudioPlayer();
-
-    final dir = await getApplicationDocumentsDirectory();
-    final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
-    final localFile = File(localPath);
-    if (await localFile.exists()) {
-      await _previewPlayer!.play(DeviceFileSource(localPath));
-    } else {
-      final urls = preAdhanVoiceUrls['standard'];
-      if (urls != null) {
-        final url = urls[lang];
-        if (url != null) {
-          await _previewPlayer!.play(UrlSource(url));
-        }
-      }
-    }
+    const platform = MethodChannel('com.quran.aya/system');
+    final isAr = lang == 'ar';
+    await platform.invokeMethod('speak', {
+      'text': isAr ? 'أقرب معاد الصلاة' : 'Prayer time is approaching',
+      'lang': lang
+    });
   }
 
   Future<void> stopPreview() async {

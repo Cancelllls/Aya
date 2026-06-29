@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 import '../models/quran_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
@@ -47,7 +48,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> with SingleTicker
   bool _isAutoScrollPaused = false;
   bool _hideContinuousBorders = false;
 
-  final ScrollController _scrollController = ScrollController();
+  final AutoScrollController _scrollController = AutoScrollController();
   final Map<int, GlobalKey> _ayahKeys = {};
   final Map<int, GlobalKey> _pageKeys = {};
   final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};

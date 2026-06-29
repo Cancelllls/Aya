@@ -18,6 +18,7 @@ import 'storage_service.dart';
 import 'api_service.dart';
 import 'translation_service.dart';
 import 'quran_verses.dart';
+import 'adhan_audio_service.dart';
 
 @pragma('vm:entry-point')
 void backgroundPrayerTimesUpdateCallback() async {
@@ -84,19 +85,10 @@ void backgroundPreAdhanCallback(int id) async {
     
     if (alertMode == 'voice' || alertMode == 'vibrate_and_voice') {
       final isAr = TranslationService.currentLanguage == 'ar';
-      final lang = isAr ? 'ar' : 'en';
-      final dir = await getApplicationDocumentsDirectory();
-      final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
-      final localFile = File(localPath);
-      final player = AudioPlayer();
-      if (await localFile.exists()) {
-        await player.play(DeviceFileSource(localPath));
-      } else {
-        await platform.invokeMethod('speak', {
-          'text': isAr ? 'اقترب موعد الأذان' : 'Adhan is approaching',
-          'lang': TranslationService.currentLanguage
-        });
-      }
+      await platform.invokeMethod('speak', {
+        'text': isAr ? 'أقرب معاد الصلاة' : 'Prayer time is approaching',
+        'lang': TranslationService.currentLanguage
+      });
     }
   } catch (e) {
     // ignore: avoid_print
@@ -120,71 +112,18 @@ void backgroundAdhanCallback(int id) async {
     }
     
     if (adhanMode == 'real_reciter' || adhanMode == 'vibrate_and_voice') {
-      final reciter = storage.getString('adhan_reciter', defaultValue: 'mishary');
       final prayerIndex = (id - 4000) % 10;
       final isFajr = prayerIndex == 1;
       
+      final reciterSetting = isFajr ? 'fajr_adhan_reciter' : 'adhan_reciter';
+      final reciter = storage.getString(reciterSetting, defaultValue: isFajr ? 'mishary' : 'mishary');
+      
       String url = '';
-      const String fpBase = 'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
 
       if (isFajr) {
-        switch (reciter) {
-          case 'mishary':
-            url = '$fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3';
-            break;
-          case 'abdul_basit':
-            url = '$fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3';
-            break;
-          case 'madinah':
-            url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
-            break;
-          case 'kazabri':
-            url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
-            break;
-          case 'riad':
-            url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
-            break;
-          case 'manssour':
-            url = '$fpBase/adhan_manssour_el_zahrani.mp3';
-            break;
-          case 'nakshabandi':
-            url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
-            break;
-          case 'maghriby':
-            url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
-            break;
-          default:
-            url = '$fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3';
-        }
+        url = AdhanAudioService.fajrReciterUrls[reciter] ?? AdhanAudioService.fajrReciterUrls['mishary']!;
       } else {
-        switch (reciter) {
-          case 'mishary':
-            url = '$fpBase/adhan_meshary_al_fasy_kuwait.mp3';
-            break;
-          case 'abdul_basit':
-            url = '$fpBase/adhan_abdelbasset_abdessamad_egypte.mp3';
-            break;
-          case 'madinah':
-            url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
-            break;
-          case 'kazabri':
-            url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
-            break;
-          case 'riad':
-            url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
-            break;
-          case 'manssour':
-            url = '$fpBase/adhan_manssour_el_zahrani.mp3';
-            break;
-          case 'nakshabandi':
-            url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
-            break;
-          case 'maghriby':
-            url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
-            break;
-          default:
-            url = '$fpBase/adhan_meshary_al_fasy_kuwait.mp3';
-        }
+        url = AdhanAudioService.standardReciterUrls[reciter] ?? AdhanAudioService.standardReciterUrls['mishary']!;
       }
       
       final player = AudioPlayer();

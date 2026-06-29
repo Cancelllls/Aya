@@ -660,7 +660,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             ),
           ),
         );
-        await _loadLastBookmark();
+        setState(() {}); // Refresh bookmark after returning
       }
     } catch (e) {
       if (mounted) {

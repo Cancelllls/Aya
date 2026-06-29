@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -379,7 +380,20 @@ class _HadithScreenState extends State<HadithScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: theme.cardColor,
+                gradient: LinearGradient(
+                  colors: Theme.of(context).brightness == Brightness.dark 
+                    ? [const Color(0xFF042F1A), const Color(0xFF02170D)]
+                    : [const Color(0xFF0D9488), const Color(0xFF115E59)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  )
+                ],
                 border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
               ),
               child: Column(
@@ -389,10 +403,10 @@ class _HadithScreenState extends State<HadithScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: theme.primaryColor.withOpacity(0.12),
+                          color: Colors.white.withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.import_contacts, color: theme.primaryColor, size: 20),
+                        child: Icon(Icons.import_contacts, color: const Color(0xFFE5C158), size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -401,7 +415,18 @@ class _HadithScreenState extends State<HadithScreen> {
                             dropdownColor: theme.cardColor,
                             value: _selectedBook,
                             isExpanded: true,
-                            icon: Icon(Icons.keyboard_arrow_down, color: theme.primaryColor),
+                            selectedItemBuilder: (BuildContext context) {
+                              return hadithBooks.map((b) {
+                                return Container(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic ? b.nameAr : b.nameEn,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE5C158), fontSize: 15),
+                                  ),
+                                );
+                              }).toList();
+                            },
+                            icon: Icon(Icons.keyboard_arrow_down, color: const Color(0xFFE5C158)),
                             items: hadithBooks.map((b) {
                               return DropdownMenuItem<HadithBook>(
                                 value: b,
@@ -445,13 +470,13 @@ class _HadithScreenState extends State<HadithScreen> {
                         ),
                         child: Text(
                           'En | ع',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.primaryColor),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFE5C158)),
                         ),
                       ),
                       const SizedBox(width: 8),
                       if (!_isOffline)
                         IconButton(
-                          icon: Icon(Icons.download_for_offline, color: theme.primaryColor),
+                          icon: const Icon(Icons.download_for_offline, color: Color(0xFFE5C158)),
                           tooltip: TranslationService.isArabic ? "تحميل لـ $_displayLang" : "Download $_displayLang",
                           onPressed: _downloadEntireBook,
                         )
@@ -545,12 +570,17 @@ class _HadithScreenState extends State<HadithScreen> {
                                 final h = pageHadiths[index];
                                 return Card(
                                   margin: const EdgeInsets.only(bottom: 12),
-                                  color: theme.cardColor,
+                                  color: theme.cardColor.withOpacity(0.7),
+                                  elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
-                                    side: BorderSide(color: theme.primaryColor.withOpacity(0.15)),
+                                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
                                   ),
-                                  child: InkWell(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                      child: InkWell(
                                     borderRadius: BorderRadius.circular(16),
                                     onTap: () => _showHadithOptions(h),
                                     child: Padding(
@@ -565,7 +595,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: theme.primaryColor.withOpacity(0.12),
+                                                color: Colors.white.withOpacity(0.15),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Text(
@@ -643,7 +673,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                       ),
                                     ),
                                   ),
-                                );
+                                )));
                               },
                             ),
             ),

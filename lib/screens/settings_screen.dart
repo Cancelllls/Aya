@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -695,8 +696,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           // Section Appearance
           _buildSectionHeader(TranslationService.t('appearance')),
           Card(
-            color: theme.cardColor,
-            child: Column(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
               children: [
                 ListTile(
                   title: Text(TranslationService.t('theme_preset_label')),
@@ -786,6 +796,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   onChanged: _toggleSwipeSurahNavigation,
                 ),
               ],
+            )
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -826,8 +838,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           // Section Calculations
           _buildSectionHeader(TranslationService.t('calc_settings')),
           Card(
-            color: theme.cardColor,
-            child: Column(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
               children: [
                 ListTile(
                   title: Text(TranslationService.t('calc_method')),
@@ -968,6 +989,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   ),
                 ),
               ],
+            )
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -975,8 +998,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           // Section Notifications & Alerts
           _buildSectionHeader(TranslationService.isArabic ? "الإشعارات والتنبيهات" : "Notifications & Alerts"),
           Card(
-            color: theme.cardColor,
-            child: Column(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
               children: [
                 ListTile(
                   title: Text(TranslationService.isArabic ? "وقت التنبيه قبل الأذان" : "Pre-Athan Alert Time"),
@@ -1273,6 +1305,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   onChanged: (val) => _toggleDailyReminder('todays_verse_reminder', val, (v) => _todaysVerseReminder = v),
                 ),
               ],
+            )
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -1280,8 +1314,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           // Section Audio & Quran
           _buildSectionHeader(TranslationService.t('recitations')),
           Card(
-            color: theme.cardColor,
-            child: Column(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
               children: [
                 ListTile(
                   title: Text(TranslationService.t('qari')),
@@ -1353,6 +1396,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   },
                 ),
               ],
+            )
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -1360,8 +1405,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           // Section Permissions
           _buildSectionHeader(TranslationService.t('system_settings_permissions')),
           Card(
-            color: theme.cardColor,
-            child: Column(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
               children: [
                 SwitchListTile(
                   title: Text(TranslationService.t('wake_lock')),
@@ -1425,6 +1479,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   onTap: _batteryIgnored ? null : _requestBatteryOptimization,
                 ),
               ],
+            )
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -1432,8 +1488,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           // Section Focus Lock
           _buildSectionHeader(TranslationService.t('focus_prayer_lock')),
           Card(
-            color: theme.cardColor,
-            child: Column(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
               children: [
                 ListTile(
                   title: Text(TranslationService.t('focus_timer')),
@@ -1492,6 +1557,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   ),
                 ],
               ],
+            )
+              ),
             ),
           ),
           const SizedBox(height: 20),
