@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -129,6 +130,8 @@ class _HadithScreenState extends State<HadithScreen> {
           list.add({
             'number': h['hadithnumber'] ?? (i + 1),
             'arabic': _displayLang == 'ara' ? text : '',
+            'searchArText': _displayLang == 'ara' ? _normalizeArabic(text.toString()).toLowerCase() : '',
+            'searchEnText': _displayLang == 'eng' ? text.toString().toLowerCase() : '',
             'english': _displayLang == 'eng' ? text : '',
             'grades': h['grades'] ?? [],
           });
@@ -159,6 +162,8 @@ class _HadithScreenState extends State<HadithScreen> {
           return {
             'number': h['hadithnumber'] ?? 0,
             'arabic': _displayLang == 'ara' ? (h['text'] ?? '') : '',
+            'searchArText': _displayLang == 'ara' ? _normalizeArabic((h['text'] ?? '').toString()).toLowerCase() : '',
+            'searchEnText': _displayLang == 'eng' ? (h['text'] ?? '').toString().toLowerCase() : '',
             'english': _displayLang == 'eng' ? (h['text'] ?? '') : '',
             'grades': h['grades'] ?? [],
           };
@@ -241,8 +246,8 @@ class _HadithScreenState extends State<HadithScreen> {
 
     return _hadithList.where((h) {
       final numStr = h['number'].toString();
-      final arText = _normalizeArabic(h['arabic'].toString()).toLowerCase();
-      final enText = h['english'].toString().toLowerCase();
+      final arText = h['searchArText'];
+      final enText = h['searchEnText'];
       return numStr == query || arText.contains(normQuery) || enText.contains(query);
     }).toList();
   }
@@ -360,16 +365,11 @@ class _HadithScreenState extends State<HadithScreen> {
                   Navigator.pop(context);
                   final text = h['arabic'].toString();
                   final queryWords = _buildHadithQuery(text);
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HadithExplanationScreen(
-                        query: queryWords,
-                        displayLang: _displayLang,
-                        isSharh: true,
-                      ),
-                    ),
-                  );
+                  final encoded = Uri.encodeComponent(queryWords);
+                  final url = Uri.parse('https://dorar.net/hadith/search?q=$encoded&st=p2');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
                 },
               ),
               StatefulBuilder(
