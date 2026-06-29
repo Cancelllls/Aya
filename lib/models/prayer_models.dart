@@ -78,7 +78,9 @@ class PrayerTimeData {
       sunset: timings['Sunset'] as String? ?? '',
       imsak: timings['Imsak'] as String? ?? '',
       gregorianDate: date['readable'] as String? ?? '',
-      hijriDate: "${hijri['day'] ?? ''} ${hijriMonthMap['en'] ?? ''} ${hijri['year'] ?? ''}".trim(),
+      hijriDate:
+          "${hijri['day'] ?? ''} ${hijriMonthMap['en'] ?? ''} ${hijri['year'] ?? ''}"
+              .trim(),
       hijriMonth: hijriMonthMap['en'] as String? ?? '',
       hijriYear: hijri['year'] as String? ?? '',
     );

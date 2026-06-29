@@ -24,7 +24,8 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final PageController _pageController = PageController();
   late AnimationController _logoController;
   int _currentPage = 0;
@@ -66,7 +67,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
   Future<void> _initSdkAndPermissions() async {
     try {
-      final sdk = await _platform.invokeMethod<int>('getAndroidSdkVersion') ?? 24;
+      final sdk =
+          await _platform.invokeMethod<int>('getAndroidSdkVersion') ?? 24;
       _androidSdkVersion = sdk;
     } catch (_) {
       _androidSdkVersion = 24;
@@ -76,17 +78,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
   Future<void> _checkAllPermissions() async {
     final gpsPerm = await Geolocator.checkPermission();
-    final locOk = gpsPerm == LocationPermission.always ||
+    final locOk =
+        gpsPerm == LocationPermission.always ||
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
     final notifOk = await NotificationService().checkPermissions();
     bool batteryOk = true;
     try {
-      batteryOk = await _platform.invokeMethod<bool>('checkBatteryOptimization') ?? true;
+      batteryOk =
+          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
+          true;
     } catch (_) {}
     bool exactAlarmOk = true;
     try {
-      exactAlarmOk = await _platform.invokeMethod<bool>('checkExactAlarmPermission') ?? true;
+      exactAlarmOk =
+          await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
+          true;
     } catch (_) {}
     if (mounted) {
       setState(() {
@@ -139,14 +146,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   void _onProceedClick() {
     final bgRequired = _androidSdkVersion >= 29;
     final alarmRequired = _androidSdkVersion >= 31;
-    final allGood = _locationGranted &&
+    final allGood =
+        _locationGranted &&
         (!bgRequired || _bgLocationGranted) &&
-        _notifGranted && _batteryIgnored &&
+        _notifGranted &&
+        _batteryIgnored &&
         (!alarmRequired || _exactAlarmGranted);
     if (allGood) {
-        _finishOnboarding();
-        return;
-      }
+      _finishOnboarding();
+      return;
+    }
 
     final cardColor = Theme.of(context).cardColor;
     showDialog(
@@ -159,7 +168,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
             const SizedBox(width: 8),
             Text(
-              TranslationService.isArabic ? "صلاحيات غير مكتملة" : "Permissions Incomplete",
+              TranslationService.isArabic
+                  ? "صلاحيات غير مكتملة"
+                  : "Permissions Incomplete",
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -174,7 +185,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: Text(
-              TranslationService.isArabic ? "الرجوع وتفعيلها" : "Go Back & Enable",
+              TranslationService.isArabic
+                  ? "الرجوع وتفعيلها"
+                  : "Go Back & Enable",
               style: TextStyle(color: Theme.of(context).primaryColor),
             ),
           ),
@@ -182,14 +195,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () {
               Navigator.pop(dialogCtx);
               _finishOnboarding();
             },
             child: Text(
-              TranslationService.isArabic ? "متابعة على أي حال" : "Proceed Anyway",
+              TranslationService.isArabic
+                  ? "متابعة على أي حال"
+                  : "Proceed Anyway",
             ),
           ),
         ],
@@ -209,7 +226,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFFAF9F5),
+      backgroundColor: isDark
+          ? const Color(0xFF07090E)
+          : const Color(0xFFFAF9F5),
       body: SafeArea(
         child: Stack(
           children: [
@@ -253,7 +272,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                     TranslationService.setLanguage(newLang);
                     widget.onThemeChanged();
                   },
-                  icon: const Icon(Icons.language, size: 16, color: Color(0xFFE5C158)),
+                  icon: const Icon(
+                    Icons.language,
+                    size: 16,
+                    color: Color(0xFFE5C158),
+                  ),
                   label: Text(
                     TranslationService.isArabic ? 'English' : 'العربية',
                     style: const TextStyle(
@@ -263,7 +286,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                     ),
                   ),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -294,10 +320,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE5C158).withOpacity(0.06 + 0.04 * sin(_logoController.value * 2 * pi)),
+                      color: const Color(0xFFE5C158).withOpacity(
+                        0.06 + 0.04 * sin(_logoController.value * 2 * pi),
+                      ),
                       blurRadius: 30,
                       spreadRadius: 2,
-                    )
+                    ),
                   ],
                 ),
                 child: CustomPaint(
@@ -423,16 +451,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             children: [
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
-                style: TextStyle(color: isDark ? Colors.white38 : Colors.black45, fontSize: 13, height: 1.4),
+                style: TextStyle(
+                  color: isDark ? Colors.white38 : Colors.black45,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -450,7 +485,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
           ),
           const SizedBox(height: 16),
           Text(
-            TranslationService.isArabic ? "صلاحيات النظام المطلوبة" : "Required System Permissions",
+            TranslationService.isArabic
+                ? "صلاحيات النظام المطلوبة"
+                : "Required System Permissions",
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -477,7 +514,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
               children: [
                 _buildPermissionItem(
                   icon: Icons.location_on,
-                  title: TranslationService.isArabic ? "إذن الموقع الجغرافي" : "Location Permission",
+                  title: TranslationService.isArabic
+                      ? "إذن الموقع الجغرافي"
+                      : "Location Permission",
                   description: TranslationService.isArabic
                       ? "لحساب مواقيت الصلاة بدقة بناءً على موقعك."
                       : "Used to calculate prayer times accurately based on your location.",
@@ -489,7 +528,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   const SizedBox(height: 10),
                   _buildPermissionItem(
                     icon: Icons.location_searching,
-                    title: TranslationService.isArabic ? "السماح دائماً بالموقع" : "Always Allow Location",
+                    title: TranslationService.isArabic
+                        ? "السماح دائماً بالموقع"
+                        : "Always Allow Location",
                     description: TranslationService.isArabic
                         ? "لحساب مواقيت الصلاة في الخلفية حتى عند إغلاق التطبيق."
                         : "Needed to calculate prayer times in background when app is closed.",
@@ -504,7 +545,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 const SizedBox(height: 10),
                 _buildPermissionItem(
                   icon: Icons.notifications_active,
-                  title: TranslationService.isArabic ? "إذن الإشعارات" : "Notification Alerts",
+                  title: TranslationService.isArabic
+                      ? "إذن الإشعارات"
+                      : "Notification Alerts",
                   description: TranslationService.isArabic
                       ? "لإرسال تنبيهات الأذان والأذكار في مواقيتها."
                       : "Used to send sound and voice alerts on prayer times.",
@@ -516,7 +559,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   const SizedBox(height: 10),
                   _buildPermissionItem(
                     icon: Icons.access_alarm,
-                    title: TranslationService.isArabic ? "التنبيهات والتذكيرات" : "Alarms & Reminders",
+                    title: TranslationService.isArabic
+                        ? "التنبيهات والتذكيرات"
+                        : "Alarms & Reminders",
                     description: TranslationService.isArabic
                         ? "يسمح بجدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
                         : "Allows scheduling precise Athan alarms even in Doze mode.",
@@ -527,7 +572,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 const SizedBox(height: 10),
                 _buildPermissionItem(
                   icon: Icons.battery_saver,
-                  title: TranslationService.isArabic ? "تجاهل تحسين البطارية" : "Ignore Battery Optimization",
+                  title: TranslationService.isArabic
+                      ? "تجاهل تحسين البطارية"
+                      : "Ignore Battery Optimization",
                   description: TranslationService.isArabic
                       ? "لمنع نظام الأندرويد من إيقاف تنبيهات الأذان بالخلفية."
                       : "Prevents Android from putting Athan alarms to sleep in background.",
@@ -584,19 +631,26 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                     textAlign: TextAlign.start,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    requiresPrior && priorLabel != null ? priorLabel : description,
+                    requiresPrior && priorLabel != null
+                        ? priorLabel
+                        : description,
                     style: TextStyle(
                       color: requiresPrior
                           ? Colors.orangeAccent
                           : (isDark ? Colors.white54 : Colors.black54),
                       fontSize: 11,
                       height: 1.3,
-                      fontStyle: requiresPrior ? FontStyle.italic : FontStyle.normal,
+                      fontStyle: requiresPrior
+                          ? FontStyle.italic
+                          : FontStyle.normal,
                     ),
                     textAlign: TextAlign.start,
                   ),
@@ -637,8 +691,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 width: _currentPage == index ? 24 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: _currentPage == index 
-                      ? const Color(0xFFE5C158) 
+                  color: _currentPage == index
+                      ? const Color(0xFFE5C158)
                       : const Color(0xFFE5C158).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -652,7 +706,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
               backgroundColor: const Color(0xFFE5C158),
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               textStyle: const TextStyle(fontWeight: FontWeight.bold),
             ),
             onPressed: () {
@@ -665,9 +721,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 _onProceedClick();
               }
             },
-            child: Text(_currentPage == 2 
-                ? TranslationService.t('welcome_start_now') 
-                : TranslationService.t('welcome_next')),
+            child: Text(
+              _currentPage == 2
+                  ? TranslationService.t('welcome_start_now')
+                  : TranslationService.t('welcome_next'),
+            ),
           ),
         ],
       ),

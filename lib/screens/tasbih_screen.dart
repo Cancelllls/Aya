@@ -7,16 +7,14 @@ import '../services/translation_service.dart';
 class TasbihScreen extends StatefulWidget {
   final StorageService storage;
 
-  const TasbihScreen({
-    super.key,
-    required this.storage,
-  });
+  const TasbihScreen({super.key, required this.storage});
 
   @override
   State<TasbihScreen> createState() => _TasbihScreenState();
 }
 
-class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderStateMixin {
+class _TasbihScreenState extends State<TasbihScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _bounceController;
   late Animation<double> _scaleAnimation;
   int _count = 0;
@@ -32,11 +30,36 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _presets = [
-      {'name': 'SubhanAllah', 'arabic': 'سُبْحَانَ ٱللَّٰهِ', 'translation': 'Glory be to Allah', 'target': 33},
-      {'name': 'Alhamdulillah', 'arabic': 'ٱلْحَمْدُ لِلَّٰهِ', 'translation': 'Praise be to Allah', 'target': 33},
-      {'name': 'Allahu Akbar', 'arabic': 'ٱللَّٰهُ أَكْبَرُ', 'translation': 'Allah is the Greatest', 'target': 34},
-      {'name': 'Astaghfirullah', 'arabic': 'أَسْتَغْفِرُ ٱللَّٰهَ', 'translation': 'I seek forgiveness from Allah', 'target': 100},
-      {'name': 'La ilaha illallah', 'arabic': 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ', 'translation': 'There is no god but Allah', 'target': 100},
+      {
+        'name': 'SubhanAllah',
+        'arabic': 'سُبْحَانَ ٱللَّٰهِ',
+        'translation': 'Glory be to Allah',
+        'target': 33,
+      },
+      {
+        'name': 'Alhamdulillah',
+        'arabic': 'ٱلْحَمْدُ لِلَّٰهِ',
+        'translation': 'Praise be to Allah',
+        'target': 33,
+      },
+      {
+        'name': 'Allahu Akbar',
+        'arabic': 'ٱللَّٰهُ أَكْبَرُ',
+        'translation': 'Allah is the Greatest',
+        'target': 34,
+      },
+      {
+        'name': 'Astaghfirullah',
+        'arabic': 'أَسْتَغْفِرُ ٱللَّٰهَ',
+        'translation': 'I seek forgiveness from Allah',
+        'target': 100,
+      },
+      {
+        'name': 'La ilaha illallah',
+        'arabic': 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ',
+        'translation': 'There is no god but Allah',
+        'target': 100,
+      },
     ];
     _bounceController = AnimationController(
       vsync: this,
@@ -45,15 +68,24 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
       CurvedAnimation(parent: _bounceController, curve: Curves.easeOutCubic),
     );
-    
+
     // Restore active dhikr and count
-    final activeName = widget.storage.getString('active_dhikr_name', defaultValue: 'SubhanAllah');
-    final activeItem = _presets.firstWhere((p) => p['name'] == activeName, orElse: () => _presets[0]);
+    final activeName = widget.storage.getString(
+      'active_dhikr_name',
+      defaultValue: 'SubhanAllah',
+    );
+    final activeItem = _presets.firstWhere(
+      (p) => p['name'] == activeName,
+      orElse: () => _presets[0],
+    );
     _currentDhikrName = activeItem['name'];
     _arabicText = activeItem['arabic'] ?? '';
     _translationText = activeItem['translation'] ?? '';
     _target = activeItem['target'] ?? 33;
-    _count = widget.storage.getInt('tasbih_count_$_currentDhikrName', defaultValue: 0);
+    _count = widget.storage.getInt(
+      'tasbih_count_$_currentDhikrName',
+      defaultValue: 0,
+    );
 
     _updateWidgetData();
     _loadPresets();
@@ -68,11 +100,36 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
 
   void _loadPresets() async {
     final List<Map<String, dynamic>> standard = [
-      {'name': 'SubhanAllah', 'arabic': 'سُبْحَانَ ٱللَّٰهِ', 'translation': 'Glory be to Allah', 'target': 33},
-      {'name': 'Alhamdulillah', 'arabic': 'ٱلْحَمْدُ لِلَّٰهِ', 'translation': 'Praise be to Allah', 'target': 33},
-      {'name': 'Allahu Akbar', 'arabic': 'ٱللَّٰهُ أَكْبَرُ', 'translation': 'Allah is the Greatest', 'target': 34},
-      {'name': 'Astaghfirullah', 'arabic': 'أَسْتَغْفِرُ ٱللَّٰهَ', 'translation': 'I seek forgiveness from Allah', 'target': 100},
-      {'name': 'La ilaha illallah', 'arabic': 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ', 'translation': 'There is no god but Allah', 'target': 100},
+      {
+        'name': 'SubhanAllah',
+        'arabic': 'سُبْحَانَ ٱللَّٰهِ',
+        'translation': 'Glory be to Allah',
+        'target': 33,
+      },
+      {
+        'name': 'Alhamdulillah',
+        'arabic': 'ٱلْحَمْدُ لِلَّٰهِ',
+        'translation': 'Praise be to Allah',
+        'target': 33,
+      },
+      {
+        'name': 'Allahu Akbar',
+        'arabic': 'ٱللَّٰهُ أَكْبَرُ',
+        'translation': 'Allah is the Greatest',
+        'target': 34,
+      },
+      {
+        'name': 'Astaghfirullah',
+        'arabic': 'أَسْتَغْفِرُ ٱللَّٰهَ',
+        'translation': 'I seek forgiveness from Allah',
+        'target': 100,
+      },
+      {
+        'name': 'La ilaha illallah',
+        'arabic': 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ',
+        'translation': 'There is no god but Allah',
+        'target': 100,
+      },
     ];
 
     final custom = await widget.storage.getCustomDhikrs();
@@ -80,13 +137,22 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
       setState(() {
         _presets = [...standard, ...custom];
         // Re-align selection if it matches one of the newly loaded custom presets
-        final activeName = widget.storage.getString('active_dhikr_name', defaultValue: 'SubhanAllah');
-        final activeItem = _presets.firstWhere((p) => p['name'] == activeName, orElse: () => _presets[0]);
+        final activeName = widget.storage.getString(
+          'active_dhikr_name',
+          defaultValue: 'SubhanAllah',
+        );
+        final activeItem = _presets.firstWhere(
+          (p) => p['name'] == activeName,
+          orElse: () => _presets[0],
+        );
         _currentDhikrName = activeItem['name'];
         _arabicText = activeItem['arabic'] ?? '';
         _translationText = activeItem['translation'] ?? '';
         _target = activeItem['target'] ?? 33;
-        _count = widget.storage.getInt('tasbih_count_$_currentDhikrName', defaultValue: 0);
+        _count = widget.storage.getInt(
+          'tasbih_count_$_currentDhikrName',
+          defaultValue: 0,
+        );
       });
     }
   }
@@ -101,7 +167,10 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
       _arabicText = item['arabic'] ?? '';
       _translationText = item['translation'] ?? '';
       _target = item['target'] ?? 33;
-      _count = widget.storage.getInt('tasbih_count_$_currentDhikrName', defaultValue: 0);
+      _count = widget.storage.getInt(
+        'tasbih_count_$_currentDhikrName',
+        defaultValue: 0,
+      );
     });
 
     widget.storage.setString('active_dhikr_name', _currentDhikrName);
@@ -120,7 +189,9 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   }
 
   void _increment() {
-    _bounceController.forward(from: 0.0).then((_) => _bounceController.reverse());
+    _bounceController
+        .forward(from: 0.0)
+        .then((_) => _bounceController.reverse());
     setState(() {
       _count++;
     });
@@ -135,40 +206,50 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   }
 
   void _reset() {
-    unawaited(showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        title: Text(
-          TranslationService.isArabic ? "إعادة تعيين العداد؟" : "Reset Counter?",
-          style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          TranslationService.isArabic 
-              ? "هل أنت متأكد من رغبتك في تصفير عداد الذكر الحالي؟" 
-              : "Are you sure you want to reset the counter for this Dhikr?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+    unawaited(
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          title: Text(
+            TranslationService.isArabic
+                ? "إعادة تعيين العداد؟"
+                : "Reset Counter?",
+            style: const TextStyle(
+              color: Color(0xFFE5C158),
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              setState(() {
-                _count = 0;
-              });
-              HapticFeedback.heavyImpact();
-              widget.storage.setInt('tasbih_count_$_currentDhikrName', 0);
-              _updateWidgetData();
-            },
-            child: Text(TranslationService.isArabic ? "تصفير" : "Reset"),
+          content: Text(
+            TranslationService.isArabic
+                ? "هل أنت متأكد من رغبتك في تصفير عداد الذكر الحالي؟"
+                : "Are you sure you want to reset the counter for this Dhikr?",
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                TranslationService.t('cancel'),
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                setState(() {
+                  _count = 0;
+                });
+                HapticFeedback.heavyImpact();
+                widget.storage.setInt('tasbih_count_$_currentDhikrName', 0);
+                _updateWidgetData();
+              },
+              child: Text(TranslationService.isArabic ? "تصفير" : "Reset"),
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Future<void> _updateWidgetData() async {
@@ -184,7 +265,11 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   void _showTargetReachedNotification() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(TranslationService.isArabic ? 'تم الوصول للهدف $_target لـ $_currentDhikrName!' : 'Target of $_target reached for $_currentDhikrName!'),
+        content: Text(
+          TranslationService.isArabic
+              ? 'تم الوصول للهدف $_target لـ $_currentDhikrName!'
+              : 'Target of $_target reached for $_currentDhikrName!',
+        ),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 2),
       ),
@@ -203,31 +288,47 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
         final theme = Theme.of(context);
         return AlertDialog(
           backgroundColor: theme.cardColor,
-          title: Text(TranslationService.t('add_custom_dhikr'), style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold)),
+          title: Text(
+            TranslationService.t('add_custom_dhikr'),
+            style: const TextStyle(
+              color: Color(0xFFE5C158),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(labelText: TranslationService.t('dhikr_name')),
+                  decoration: InputDecoration(
+                    labelText: TranslationService.t('dhikr_name'),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: arabicController,
                   textDirection: TextDirection.rtl,
-                  decoration: InputDecoration(labelText: TranslationService.t('arabic_script')),
+                  decoration: InputDecoration(
+                    labelText: TranslationService.t('arabic_script'),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: translationController,
-                  decoration: InputDecoration(labelText: TranslationService.isArabic ? 'الترجمة (اختياري)' : 'Translation (Optional)'),
+                  decoration: InputDecoration(
+                    labelText: TranslationService.isArabic
+                        ? 'الترجمة (اختياري)'
+                        : 'Translation (Optional)',
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: targetController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: TranslationService.t('target_count')),
+                  decoration: InputDecoration(
+                    labelText: TranslationService.t('target_count'),
+                  ),
                 ),
               ],
             ),
@@ -235,10 +336,16 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+              child: Text(
+                TranslationService.t('cancel'),
+                style: const TextStyle(color: Colors.white70),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158), foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE5C158),
+                foregroundColor: Colors.black,
+              ),
               onPressed: () async {
                 final name = nameController.text.trim();
                 final targetVal = int.tryParse(targetController.text) ?? 100;
@@ -279,176 +386,194 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-        // Adapt layout for mobile sizes
-        final isCompact = constraints.maxHeight < 550;
+          // Adapt layout for mobile sizes
+          final isCompact = constraints.maxHeight < 550;
 
-        return SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Preset List (Horizontal selection)
-                SizedBox(
-                  height: 48,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: _presets.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == _presets.length) {
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Preset List (Horizontal selection)
+                  SizedBox(
+                    height: 48,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _presets.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == _presets.length) {
+                          return Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 8.0),
+                            child: ActionChip(
+                              avatar: const Icon(
+                                Icons.add,
+                                size: 16,
+                                color: Color(0xFFE5C158),
+                              ),
+                              label: Text(TranslationService.t('custom')),
+                              backgroundColor: theme.cardColor,
+                              onPressed: _showAddCustomDhikrDialog,
+                            ),
+                          );
+                        }
+
+                        final preset = _presets[index];
+                        final isSelected = preset['name'] == _currentDhikrName;
+
                         return Padding(
                           padding: const EdgeInsetsDirectional.only(end: 8.0),
-                          child: ActionChip(
-                            avatar: const Icon(Icons.add, size: 16, color: Color(0xFFE5C158)),
-                            label: Text(TranslationService.t('custom')),
-                            backgroundColor: theme.cardColor,
-                            onPressed: _showAddCustomDhikrDialog,
+                          child: ChoiceChip(
+                            selectedColor: const Color(
+                              0xFFE5C158,
+                            ).withOpacity(0.2),
+                            disabledColor: theme.cardColor,
+                            label: Text(
+                              preset['name'],
+                              style: TextStyle(
+                                color: isSelected
+                                    ? const Color(0xFFE5C158)
+                                    : theme.textTheme.bodyMedium?.color,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            selected: isSelected,
+                            onSelected: (val) {
+                              if (val) _selectDhikr(preset);
+                            },
                           ),
                         );
-                      }
-                      
-                      final preset = _presets[index];
-                      final isSelected = preset['name'] == _currentDhikrName;
-                      
-                      return Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 8.0),
-                        child: ChoiceChip(
-                          selectedColor: const Color(0xFFE5C158).withOpacity(0.2),
-                          disabledColor: theme.cardColor,
-                          label: Text(
-                            preset['name'],
-                            style: TextStyle(
-                              color: isSelected ? const Color(0xFFE5C158) : theme.textTheme.bodyMedium?.color,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          selected: isSelected,
-                          onSelected: (val) {
-                            if (val) _selectDhikr(preset);
-                          },
-                        ),
-                      );
-                    },
+                      },
+                    ),
                   ),
-                ),
-                SizedBox(height: isCompact ? 16 : 40),
+                  SizedBox(height: isCompact ? 16 : 40),
 
-                // Active Dhikr Texts
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  height: 90,
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _arabicText,
-                        style: const TextStyle(
-                          fontFamily: 'Amiri',
-                          fontSize: 26,
-                          color: Color(0xFFE5C158),
-                          fontWeight: FontWeight.bold,
+                  // Active Dhikr Texts
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 90,
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _arabicText,
+                          style: const TextStyle(
+                            fontFamily: 'Amiri',
+                            fontSize: 26,
+                            color: Color(0xFFE5C158),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _translationText,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        const SizedBox(height: 6),
+                        Text(
+                          _translationText,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withOpacity(0.6),
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: isCompact ? 16 : 40),
+                  SizedBox(height: isCompact ? 16 : 40),
 
-                // Big Click Area
-                GestureDetector(
-                  onTap: _increment,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Center(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Progress Circle Ring
-                          SizedBox(
-                            width: 250,
-                            height: 250,
-                            child: CircularProgressIndicator(
-                              value: progressPercent,
-                              strokeWidth: 8,
-                              backgroundColor: Colors.white.withOpacity(0.04),
-                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE5C158)),
-                            ),
-                          ),
-                          // Inner Click Button
-                          Container(
-                            width: 220,
-                            height: 220,
-                            decoration: BoxDecoration(
-                              color: theme.cardColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
-                                )
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _count.toString(),
-                                  style: const TextStyle(
-                                    fontSize: 64,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                  // Big Click Area
+                  GestureDetector(
+                    onTap: _increment,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Center(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Progress Circle Ring
+                            SizedBox(
+                              width: 250,
+                              height: 250,
+                              child: CircularProgressIndicator(
+                                value: progressPercent,
+                                strokeWidth: 8,
+                                backgroundColor: Colors.white.withOpacity(0.04),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFE5C158),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "Target: $_target",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                            // Inner Click Button
+                            Container(
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    _count.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 64,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "Target: $_target",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: theme.textTheme.bodyMedium?.color
+                                          ?.withOpacity(0.4),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(height: isCompact ? 16 : 40),
+                  SizedBox(height: isCompact ? 16 : 40),
 
-                // Reset Action Button
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white24),
-                    foregroundColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  // Reset Action Button
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.white24),
+                      foregroundColor: theme.textTheme.bodyMedium?.color
+                          ?.withOpacity(0.7),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: Text(TranslationService.t('reset_count')),
+                    onPressed: _reset,
                   ),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(TranslationService.t('reset_count')),
-                  onPressed: _reset,
-                ),
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 }

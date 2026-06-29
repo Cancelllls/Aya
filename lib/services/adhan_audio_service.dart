@@ -11,7 +11,8 @@ class AdhanAudioService {
   AdhanAudioService._();
   static final AdhanAudioService instance = AdhanAudioService._();
 
-  static const String _fpBase = 'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
+  static const String _fpBase =
+      'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
 
   static const Map<String, String> fajrReciterUrls = {
     'mishary': '$_fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3',
@@ -35,25 +36,32 @@ class AdhanAudioService {
     'standard': {
       'ar': '$_fpBase/prayer_reminder_call.mp3',
       'en': '$_fpBase/prayer_reminder_call.mp3',
-    }
+    },
   };
 
-  final ValueNotifier<Map<String, DownloadStatus>> downloadStates = ValueNotifier({});
+  final ValueNotifier<Map<String, DownloadStatus>> downloadStates =
+      ValueNotifier({});
   AudioPlayer? _previewPlayer;
 
   Future<void> init() async {
     final Map<String, DownloadStatus> states = {};
     for (final reciterId in fajrReciterUrls.keys) {
       final hasFajr = await _fileExists(reciterId, true);
-      states['fajr_$reciterId'] = hasFajr ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
+      states['fajr_$reciterId'] = hasFajr
+          ? DownloadStatus.downloaded
+          : DownloadStatus.notDownloaded;
     }
     for (final reciterId in standardReciterUrls.keys) {
       final hasStandard = await _fileExists(reciterId, false);
-      states['standard_$reciterId'] = hasStandard ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
+      states['standard_$reciterId'] = hasStandard
+          ? DownloadStatus.downloaded
+          : DownloadStatus.notDownloaded;
     }
     final hasPreAr = await _preAdhanFileExists('ar');
     final hasPreEn = await _preAdhanFileExists('en');
-    states['pre_adhan'] = (hasPreAr && hasPreEn) ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
+    states['pre_adhan'] = (hasPreAr && hasPreEn)
+        ? DownloadStatus.downloaded
+        : DownloadStatus.notDownloaded;
 
     downloadStates.value = states;
   }
@@ -61,7 +69,9 @@ class AdhanAudioService {
   Future<bool> _fileExists(String reciterId, bool isFajr) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/adhan_audio/${reciterId}_${isFajr ? 'fajr' : 'standard'}.mp3');
+      final file = File(
+        '${dir.path}/adhan_audio/${reciterId}_${isFajr ? 'fajr' : 'standard'}.mp3',
+      );
       return await file.exists();
     } catch (_) {
       return false;
@@ -78,10 +88,15 @@ class AdhanAudioService {
     }
   }
 
-  Future<bool> downloadReciterAudio(String reciterId, {bool isFajr = false}) async {
+  Future<bool> downloadReciterAudio(
+    String reciterId, {
+    bool isFajr = false,
+  }) async {
     final stateKey = isFajr ? 'fajr_$reciterId' : 'standard_$reciterId';
     _updateState(stateKey, DownloadStatus.downloading);
-    final url = isFajr ? fajrReciterUrls[reciterId] : standardReciterUrls[reciterId];
+    final url = isFajr
+        ? fajrReciterUrls[reciterId]
+        : standardReciterUrls[reciterId];
     if (url == null) {
       _updateState(stateKey, DownloadStatus.notDownloaded);
       return false;
@@ -124,7 +139,9 @@ class AdhanAudioService {
   Future<bool> _downloadFile(String url, String reciterId, bool isFajr) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/adhan_audio/${reciterId}_${isFajr ? 'fajr' : 'standard'}.mp3');
+      final file = File(
+        '${dir.path}/adhan_audio/${reciterId}_${isFajr ? 'fajr' : 'standard'}.mp3',
+      );
       if (!await file.parent.exists()) {
         await file.parent.create(recursive: true);
       }
@@ -153,25 +170,32 @@ class AdhanAudioService {
     return false;
   }
 
-  Future<bool> isReciterDownloaded(String reciterId, {bool isFajr = false}) async {
+  Future<bool> isReciterDownloaded(
+    String reciterId, {
+    bool isFajr = false,
+  }) async {
     return await _fileExists(reciterId, isFajr);
   }
 
   Future<bool> isPreAdhanDownloaded() async {
-    return (await _preAdhanFileExists('ar')) && (await _preAdhanFileExists('en'));
+    return (await _preAdhanFileExists('ar')) &&
+        (await _preAdhanFileExists('en'));
   }
 
   Future<void> playPreview(String reciterId, {bool isFajr = false}) async {
     await stopPreview();
     _previewPlayer = AudioPlayer();
-    
+
     final dir = await getApplicationDocumentsDirectory();
-    final localPath = '${dir.path}/adhan_audio/${reciterId}_${isFajr ? 'fajr' : 'standard'}.mp3';
+    final localPath =
+        '${dir.path}/adhan_audio/${reciterId}_${isFajr ? 'fajr' : 'standard'}.mp3';
     final localFile = File(localPath);
     if (await localFile.exists()) {
       await _previewPlayer!.play(DeviceFileSource(localPath));
     } else {
-      final url = isFajr ? fajrReciterUrls[reciterId] : standardReciterUrls[reciterId];
+      final url = isFajr
+          ? fajrReciterUrls[reciterId]
+          : standardReciterUrls[reciterId];
       if (url != null) {
         await _previewPlayer!.play(UrlSource(url));
       }

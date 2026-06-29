@@ -25,7 +25,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   PrayerTimeData? _prayerData;
   bool _isLoading = true;
   int _calcMethod = 2; // ISNA
-  int _asrMethod = 0;  // Standard (Shafi'i)
+  int _asrMethod = 0; // Standard (Shafi'i)
   int _selectedSubTab = 0;
   List<dynamic>? _monthlyData;
 
@@ -49,7 +49,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     setState(() => _isLoading = true);
     try {
       final loc = widget.storage.getLocation();
-      
+
       PrayerTimeData data;
       if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
         data = await ApiService.fetchPrayerTimesByCity(
@@ -99,7 +99,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text(TranslationService.isArabic ? 'خطأ في تحميل مواقيت الصلاة: $e' : 'Error loading prayer times: $e')),
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? 'خطأ في تحميل مواقيت الصلاة: $e'
+                : 'Error loading prayer times: $e',
+          ),
+        ),
       );
     }
   }
@@ -164,7 +170,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   List<Map<String, dynamic>> _getHijriEventsForMonth() {
     if (_monthlyData == null) return [];
     final List<Map<String, dynamic>> events = [];
-    
+
     for (final day in _monthlyData!) {
       final hijri = day['date']['hijri'];
       final hDay = int.tryParse(hijri['day'].toString()) ?? 0;
@@ -220,7 +226,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   void _showReminderDialog(Map<String, dynamic> event) {
     final theme = Theme.of(context);
     final isArabic = TranslationService.isArabic;
-    
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -228,7 +234,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           isArabic ? "ضبط تذكير بالحدث" : "Set Event Reminder",
-          style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Color(0xFFE5C158),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -240,46 +249,81 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              isArabic 
+              isArabic
                   ? "اختر متى تود تلقي إشعار التذكير لهذا الحدث الإسلامي:"
                   : "Choose when you would like to receive a notification alert for this Islamic event:",
-              style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+              style: TextStyle(
+                fontSize: 13,
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+              ),
             ),
             const SizedBox(height: 16),
-            _buildReminderOption(dialogCtx, event, 0, isArabic ? "في نفس اليوم" : "On the day"),
-            _buildReminderOption(dialogCtx, event, -1, isArabic ? "قبل بيوم واحد" : "1 day before"),
-            _buildReminderOption(dialogCtx, event, -3, isArabic ? "قبل ٣ أيام" : "3 days before"),
-            _buildReminderOption(dialogCtx, event, -5, isArabic ? "قبل ٥ أيام" : "5 days before"),
-            _buildReminderOption(dialogCtx, event, 1, isArabic ? "بعد بيوم واحد" : "1 day after"),
+            _buildReminderOption(
+              dialogCtx,
+              event,
+              0,
+              isArabic ? "في نفس اليوم" : "On the day",
+            ),
+            _buildReminderOption(
+              dialogCtx,
+              event,
+              -1,
+              isArabic ? "قبل بيوم واحد" : "1 day before",
+            ),
+            _buildReminderOption(
+              dialogCtx,
+              event,
+              -3,
+              isArabic ? "قبل ٣ أيام" : "3 days before",
+            ),
+            _buildReminderOption(
+              dialogCtx,
+              event,
+              -5,
+              isArabic ? "قبل ٥ أيام" : "5 days before",
+            ),
+            _buildReminderOption(
+              dialogCtx,
+              event,
+              1,
+              isArabic ? "بعد بيوم واحد" : "1 day after",
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildReminderOption(BuildContext dialogCtx, Map<String, dynamic> event, int offsetDays, String label) {
+  Widget _buildReminderOption(
+    BuildContext dialogCtx,
+    Map<String, dynamic> event,
+    int offsetDays,
+    String label,
+  ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(label, style: const TextStyle(fontSize: 14)),
       trailing: const Icon(Icons.alarm_add, color: Color(0xFFE5C158), size: 20),
       onTap: () async {
         Navigator.pop(dialogCtx);
-        
+
         final parts = event['gregDate'].split('-');
         final day = int.parse(parts[0]);
         final month = int.parse(parts[1]);
         final year = int.parse(parts[2]);
-        
+
         var notifyDate = DateTime(year, month, day, 9, 0); // Remind at 9:00 AM
         if (offsetDays != 0) {
           notifyDate = notifyDate.add(Duration(days: offsetDays));
         }
 
         final id = event['key'].hashCode + offsetDays;
-        
+
         final isArabic = TranslationService.isArabic;
-        final notificationTitle = isArabic ? "تذكير بحدث إسلامي" : "Islamic Event Reminder";
-        final notificationBody = isArabic 
+        final notificationTitle = isArabic
+            ? "تذكير بحدث إسلامي"
+            : "Islamic Event Reminder";
+        final notificationBody = isArabic
             ? "يقترب حدث: ${event['title']} (${event['hijriDate']})"
             : "Approaching event: ${event['title']} (${event['hijriDate']})";
 
@@ -294,8 +338,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                isArabic 
-                    ? "تم ضبط التذكير بنجاح!" 
+                isArabic
+                    ? "تم ضبط التذكير بنجاح!"
                     : "Reminder configured successfully!",
               ),
               backgroundColor: const Color(0xFF10B981),
@@ -309,7 +353,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   @override
   void didUpdateWidget(covariant PrayerTimesScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialSubTab != widget.initialSubTab || _selectedSubTab != widget.initialSubTab) {
+    if (oldWidget.initialSubTab != widget.initialSubTab ||
+        _selectedSubTab != widget.initialSubTab) {
       setState(() {
         _selectedSubTab = widget.initialSubTab;
       });
@@ -332,50 +377,77 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw Exception(TranslationService.isArabic ? 'خدمات الموقع معطلة.' : 'Location services are disabled.');
+        throw Exception(
+          TranslationService.isArabic
+              ? 'خدمات الموقع معطلة.'
+              : 'Location services are disabled.',
+        );
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          throw Exception(TranslationService.isArabic ? 'تم رفض إذن الوصول للموقع.' : 'Location permissions are denied.');
+          throw Exception(
+            TranslationService.isArabic
+                ? 'تم رفض إذن الوصول للموقع.'
+                : 'Location permissions are denied.',
+          );
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        throw Exception(TranslationService.isArabic ? 'تم رفض إذن الموقع بشكل دائم.' : 'Location permissions are permanently denied.');
+        throw Exception(
+          TranslationService.isArabic
+              ? 'تم رفض إذن الموقع بشكل دائم.'
+              : 'Location permissions are permanently denied.',
+        );
       }
 
       if (!mounted) return;
       if (isAndroid && permission == LocationPermission.whileInUse) {
-        final bool proceed = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogCtx) => AlertDialog(
-            backgroundColor: cardColor,
-            title: Text(
-              TranslationService.isArabic ? "مطلوب إذن الموقع دائماً" : "Location Permission 'Always' Required",
-              style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              TranslationService.isArabic
-                  ? "يتطلب التطبيق إذن الموقع 'سماح طوال الوقت' لتحديث مواقيت الصلاة تلقائياً في الخلفية بدون فتح التطبيق. يرجى الضغط على زر المتابعة لتغيير الإذن من إعدادات الهاتف إلى 'السماح طوال الوقت'."
-                  : "The app requires the location permission set to 'Allow all the time' to update prayer times automatically in the background. Please click continue to change it to 'Allow all the time' in your settings.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogCtx, false),
-                child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+        final bool proceed =
+            await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (dialogCtx) => AlertDialog(
+                backgroundColor: cardColor,
+                title: Text(
+                  TranslationService.isArabic
+                      ? "مطلوب إذن الموقع دائماً"
+                      : "Location Permission 'Always' Required",
+                  style: const TextStyle(
+                    color: Color(0xFFE5C158),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  TranslationService.isArabic
+                      ? "يتطلب التطبيق إذن الموقع 'سماح طوال الوقت' لتحديث مواقيت الصلاة تلقائياً في الخلفية بدون فتح التطبيق. يرجى الضغط على زر المتابعة لتغيير الإذن من إعدادات الهاتف إلى 'السماح طوال الوقت'."
+                      : "The app requires the location permission set to 'Allow all the time' to update prayer times automatically in the background. Please click continue to change it to 'Allow all the time' in your settings.",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx, false),
+                    child: Text(
+                      TranslationService.t('cancel'),
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE5C158),
+                    ),
+                    onPressed: () => Navigator.pop(dialogCtx, true),
+                    child: Text(
+                      TranslationService.isArabic ? "متابعة" : "Continue",
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158)),
-                onPressed: () => Navigator.pop(dialogCtx, true),
-                child: Text(TranslationService.isArabic ? "متابعة" : "Continue", style: const TextStyle(color: Colors.black)),
-              ),
-            ],
-          ),
-        ) ?? false;
+            ) ??
+            false;
 
         if (proceed) {
           await Geolocator.openAppSettings();
@@ -386,9 +458,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       }
 
       if (isAndroid && permission != LocationPermission.always) {
-        throw Exception(TranslationService.isArabic 
-            ? "يرجى منح إذن الموقع 'السماح طوال الوقت' للاستمرار." 
-            : "Please grant 'Allow all the time' location permission to proceed.");
+        throw Exception(
+          TranslationService.isArabic
+              ? "يرجى منح إذن الموقع 'السماح طوال الوقت' للاستمرار."
+              : "Please grant 'Allow all the time' location permission to proceed.",
+        );
       }
 
       Position? position = await ApiService.getBestLocation();
@@ -401,7 +475,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         lat = position.latitude;
         lon = position.longitude;
         final address = await ApiService.reverseGeocode(lat, lon);
-        city = address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location');
+        city =
+            address['city'] ??
+            (TranslationService.isArabic ? 'موقعي' : 'My Location');
         country = address['country'] ?? 'GPS';
       } else {
         final ipLoc = await ApiService.fetchLocationByIP();
@@ -417,14 +493,26 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(TranslationService.isArabic ? 'تم تحديث الموقع إلى $city، $country!' : 'Location updated to $city, $country!')),
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? 'تم تحديث الموقع إلى $city، $country!'
+                  : 'Location updated to $city, $country!',
+            ),
+          ),
         );
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(TranslationService.isArabic ? 'خطأ في تحديد الموقع (GPS): $e' : 'GPS Error: $e')),
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? 'خطأ في تحديد الموقع (GPS): $e'
+                  : 'GPS Error: $e',
+            ),
+          ),
         );
       }
     }
@@ -445,7 +533,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         final theme = Theme.of(context);
         return AlertDialog(
           backgroundColor: theme.cardColor,
-          title: Text(TranslationService.t('set_manual_loc'), style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold)),
+          title: Text(
+            TranslationService.t('set_manual_loc'),
+            style: const TextStyle(
+              color: Color(0xFFE5C158),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -453,7 +547,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 controller: cityController,
                 decoration: InputDecoration(
                   labelText: TranslationService.t('city_name'),
-                  hintText: TranslationService.isArabic ? 'مثال: القاهرة' : 'e.g. London',
+                  hintText: TranslationService.isArabic
+                      ? 'مثال: القاهرة'
+                      : 'e.g. London',
                 ),
               ),
               const SizedBox(height: 12),
@@ -461,7 +557,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 controller: countryController,
                 decoration: InputDecoration(
                   labelText: TranslationService.t('country_name'),
-                  hintText: TranslationService.isArabic ? 'مثال: مصر' : 'e.g. United Kingdom',
+                  hintText: TranslationService.isArabic
+                      ? 'مثال: مصر'
+                      : 'e.g. United Kingdom',
                 ),
               ),
             ],
@@ -469,19 +567,31 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+              child: Text(
+                TranslationService.t('cancel'),
+                style: const TextStyle(color: Colors.white70),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158), foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE5C158),
+                foregroundColor: Colors.black,
+              ),
               onPressed: () async {
                 final city = cityController.text.trim();
                 final country = countryController.text.trim();
                 if (city.isNotEmpty && country.isNotEmpty) {
                   final navigator = Navigator.of(context);
                   // Save coordinates as fallback or mock
-                  // For manual inputs, we set fallback coordinates to Cairo or London coordinates, 
+                  // For manual inputs, we set fallback coordinates to Cairo or London coordinates,
                   // but the API timingsByCity handles the city name directly
-                  await widget.storage.setLocation(city, country, 30.0444, 31.2357, 'manual');
+                  await widget.storage.setLocation(
+                    city,
+                    country,
+                    30.0444,
+                    31.2357,
+                    'manual',
+                  );
                   navigator.pop();
                   unawaited(_loadPrayerTimes());
                 }
@@ -536,136 +646,218 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       onRefresh: _loadPrayerTimes,
       color: const Color(0xFFE5C158),
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Location Settings Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                border: Border.all(color: Colors.white12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Color(0xFFE5C158)),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Location Settings",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.titleMedium?.color,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "${TranslationService.t('current_location')}: ${loc['city']}, ${loc['country']}",
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "${TranslationService.isArabic ? 'الطريقة: الإحداثيات' : 'Method: Lat/Lng'} (${loc['latitude']?.toStringAsFixed(4) ?? '--'}, ${loc['longitude']?.toStringAsFixed(4) ?? '--'})",
-                    style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE5C158),
-                            foregroundColor: Colors.black,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Location Settings Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  border: Border.all(color: Colors.white12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Color(0xFFE5C158)),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Location Settings",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.titleMedium?.color,
                           ),
-                          icon: const Icon(Icons.my_location, size: 18),
-                          label: Text(TranslationService.t('use_gps')),
-                          onPressed: _updateLocationWithGPS,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "${TranslationService.t('current_location')}: ${loc['city']}, ${loc['country']}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "${TranslationService.isArabic ? 'الطريقة: الإحداثيات' : 'Method: Lat/Lng'} (${loc['latitude']?.toStringAsFixed(4) ?? '--'}, ${loc['longitude']?.toStringAsFixed(4) ?? '--'})",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.5,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE5C158)),
-                            foregroundColor: const Color(0xFFE5C158),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE5C158),
+                              foregroundColor: Colors.black,
+                            ),
+                            icon: const Icon(Icons.my_location, size: 18),
+                            label: Text(TranslationService.t('use_gps')),
+                            onPressed: _updateLocationWithGPS,
                           ),
-                          icon: const Icon(Icons.keyboard, size: 18),
-                          label: Text(TranslationService.t('set_manually')),
-                          onPressed: _showManualLocationDialog,
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFE5C158)),
+                              foregroundColor: const Color(0xFFE5C158),
+                            ),
+                            icon: const Icon(Icons.keyboard, size: 18),
+                            label: Text(TranslationService.t('set_manually')),
+                            onPressed: _showManualLocationDialog,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Segmented sub-tab bar
+              Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  children: [
+                    _buildSubTabButton(
+                      0,
+                      TranslationService.isArabic ? 'اليوم' : 'Today',
+                      theme,
+                    ),
+                    _buildSubTabButton(
+                      1,
+                      TranslationService.isArabic
+                          ? 'جدول الصلوات'
+                          : 'Prayer Calendar',
+                      theme,
+                    ),
+                    _buildSubTabButton(
+                      2,
+                      TranslationService.isArabic
+                          ? 'التقويم الهجري'
+                          : 'Hijri Calendar',
+                      theme,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              if (_selectedSubTab == 0) ...[
+                // Today
+                Text(
+                  TranslationService.t('daily_schedule'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFE5C158),
+                        ),
+                      )
+                    : _prayerData == null
+                    ? Center(
+                        child: Text(
+                          TranslationService.isArabic
+                              ? "لم يتم تحميل مواقيت الصلاة بعد."
+                              : "No schedule details loaded.",
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          _buildScheduleRow(
+                            theme,
+                            "Fajr",
+                            _prayerData!.fajr,
+                            Icons.cloud_queue,
+                          ),
+                          _buildScheduleRow(
+                            theme,
+                            "Sunrise",
+                            _prayerData!.sunrise,
+                            Icons.wb_sunny_outlined,
+                          ),
+                          _buildScheduleRow(
+                            theme,
+                            "Dhuhr",
+                            _prayerData!.dhuhr,
+                            Icons.wb_sunny,
+                          ),
+                          _buildScheduleRow(
+                            theme,
+                            "Asr",
+                            _prayerData!.asr,
+                            Icons.wb_twilight,
+                          ),
+                          _buildScheduleRow(
+                            theme,
+                            "Sunset",
+                            _prayerData!.sunset,
+                            Icons.wb_twilight,
+                          ),
+                          _buildScheduleRow(
+                            theme,
+                            "Maghrib",
+                            _prayerData!.maghrib,
+                            Icons.wb_cloudy_outlined,
+                          ),
+                          _buildScheduleRow(
+                            theme,
+                            "Isha",
+                            _prayerData!.isha,
+                            Icons.nights_stay,
+                          ),
+                        ],
                       ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Segmented sub-tab bar
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Row(
-                children: [
-                  _buildSubTabButton(0, TranslationService.isArabic ? 'اليوم' : 'Today', theme),
-                  _buildSubTabButton(1, TranslationService.isArabic ? 'جدول الصلوات' : 'Prayer Calendar', theme),
-                  _buildSubTabButton(2, TranslationService.isArabic ? 'التقويم الهجري' : 'Hijri Calendar', theme),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            if (_selectedSubTab == 0) ...[
-              // Today
-              Text(
-                TranslationService.t('daily_schedule'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFE5C158)))
-                  : _prayerData == null
-                      ? Center(child: Text(TranslationService.isArabic ? "لم يتم تحميل مواقيت الصلاة بعد." : "No schedule details loaded."))
-                      : Column(
-                          children: [
-                            _buildScheduleRow(theme, "Fajr", _prayerData!.fajr, Icons.cloud_queue),
-                            _buildScheduleRow(theme, "Sunrise", _prayerData!.sunrise, Icons.wb_sunny_outlined),
-                            _buildScheduleRow(theme, "Dhuhr", _prayerData!.dhuhr, Icons.wb_sunny),
-                            _buildScheduleRow(theme, "Asr", _prayerData!.asr, Icons.wb_twilight),
-                            _buildScheduleRow(theme, "Sunset", _prayerData!.sunset, Icons.wb_twilight),
-                            _buildScheduleRow(theme, "Maghrib", _prayerData!.maghrib, Icons.wb_cloudy_outlined),
-                            _buildScheduleRow(theme, "Isha", _prayerData!.isha, Icons.nights_stay),
-                          ],
+              ] else if (_selectedSubTab == 1) ...[
+                // Calendar
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFE5C158),
                         ),
-            ] else if (_selectedSubTab == 1) ...[
-              // Calendar
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFE5C158)))
-                  : _buildPrayerCalendar(theme),
-            ] else ...[
-              // Hijri
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFE5C158)))
-                  : _buildHijriCalendar(theme),
+                      )
+                    : _buildPrayerCalendar(theme),
+              ] else ...[
+                // Hijri
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFE5C158),
+                        ),
+                      )
+                    : _buildHijriCalendar(theme),
+              ],
             ],
-          ],
+          ),
         ),
       ),
-     ),
     );
   }
 
@@ -689,7 +881,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: isSelected ? Colors.black : theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+              color: isSelected
+                  ? Colors.black
+                  : theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
             ),
           ),
         ),
@@ -700,22 +894,27 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   String _formatTime(String rawTime) {
     if (rawTime.isEmpty) return '--:--';
     final cleanTime = rawTime.split(' ')[0]; // Extract "HH:mm"
-    final use24h = widget.storage.getBool('use_24h_format', defaultValue: false);
+    final use24h = widget.storage.getBool(
+      'use_24h_format',
+      defaultValue: false,
+    );
     if (use24h) {
       return cleanTime;
     }
-    
+
     // Parse "HH:mm" to 12-hour format
     final parts = cleanTime.split(':');
     if (parts.length < 2) return cleanTime;
     final hour = int.tryParse(parts[0]);
     final minute = int.tryParse(parts[1]);
     if (hour == null || minute == null) return cleanTime;
-    
+
     final isPm = hour >= 12;
     final displayHour = hour % 12 == 0 ? 12 : hour % 12;
     final displayMinute = minute.toString().padLeft(2, '0');
-    final amPm = isPm ? (TranslationService.isArabic ? 'م' : 'PM') : (TranslationService.isArabic ? 'ص' : 'AM');
+    final amPm = isPm
+        ? (TranslationService.isArabic ? 'م' : 'PM')
+        : (TranslationService.isArabic ? 'ص' : 'AM');
     return '$displayHour:$displayMinute $amPm';
   }
 
@@ -724,7 +923,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Text(TranslationService.isArabic ? 'جاري تحميل جدول الصلوات...' : 'Loading prayer calendar...'),
+          child: Text(
+            TranslationService.isArabic
+                ? 'جاري تحميل جدول الصلوات...'
+                : 'Loading prayer calendar...',
+          ),
         ),
       );
     }
@@ -739,25 +942,72 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         scrollDirection: Axis.horizontal,
         child: DataTable(
           columnSpacing: 16,
-          headingRowColor: WidgetStateProperty.all(const Color(0xFFE5C158).withOpacity(0.1)),
+          headingRowColor: WidgetStateProperty.all(
+            const Color(0xFFE5C158).withOpacity(0.1),
+          ),
           columns: [
-            DataColumn(label: Text(TranslationService.isArabic ? 'اليوم' : 'Date', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.t('fajr'), style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.t('sunrise'), style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.t('dhuhr'), style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.t('asr'), style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.isArabic ? 'الغروب' : 'Sunset', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.t('maghrib'), style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(TranslationService.t('isha'), style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+              label: Text(
+                TranslationService.isArabic ? 'اليوم' : 'Date',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.t('fajr'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.t('sunrise'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.t('dhuhr'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.t('asr'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.isArabic ? 'الغروب' : 'Sunset',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.t('maghrib'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                TranslationService.t('isha'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
           rows: _monthlyData!.map<DataRow>((day) {
             final dateInfo = day['date']['gregorian'];
             final dateStr = dateInfo['day'] ?? '';
             final timings = day['timings'];
-            
+
             return DataRow(
               cells: [
-                DataCell(Text(dateStr, style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataCell(
+                  Text(
+                    dateStr,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
                 DataCell(Text(_formatTime(timings['Fajr']))),
                 DataCell(Text(_formatTime(timings['Sunrise']))),
                 DataCell(Text(_formatTime(timings['Dhuhr']))),
@@ -778,21 +1028,25 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Text(TranslationService.isArabic ? 'جاري تحميل التقويم الهجري...' : 'Loading Hijri calendar...'),
+          child: Text(
+            TranslationService.isArabic
+                ? 'جاري تحميل التقويم الهجري...'
+                : 'Loading Hijri calendar...',
+          ),
         ),
       );
     }
 
     final firstDay = _monthlyData!.first;
-    
+
     final gregMonthName = firstDay['date']['gregorian']['month']['en'] ?? '';
     final gregYear = firstDay['date']['gregorian']['year'] ?? '';
-    
-    final hijriMonthName = TranslationService.isArabic 
+
+    final hijriMonthName = TranslationService.isArabic
         ? (firstDay['date']['hijri']['month']['ar'] ?? '')
         : (firstDay['date']['hijri']['month']['en'] ?? '');
     final hijriYear = firstDay['date']['hijri']['year'] ?? '';
-    
+
     final firstDayDateStr = firstDay['date']['gregorian']['date'] as String;
     final parts = firstDayDateStr.split('-');
     final fYear = int.parse(parts[2]);
@@ -800,18 +1054,20 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final fDay = int.parse(parts[0]);
     final firstDayDateTime = DateTime(fYear, fMonth, fDay);
     final startWeekday = firstDayDateTime.weekday; // 1 = Mon, 7 = Sun
-    
+
     final daysOfWeekAr = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
     final daysOfWeekEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final weekdayHeaders = TranslationService.isArabic ? daysOfWeekAr : daysOfWeekEn;
+    final weekdayHeaders = TranslationService.isArabic
+        ? daysOfWeekAr
+        : daysOfWeekEn;
 
     final List<Widget> gridItems = [];
-    
+
     final paddingCellsCount = startWeekday - 1;
     for (int i = 0; i < paddingCellsCount; i++) {
       gridItems.add(const SizedBox.shrink());
     }
-    
+
     final now = DateTime.now();
     final todayDayStr = now.day.toString().padLeft(2, '0');
     final todayMonthStr = now.month.toString().padLeft(2, '0');
@@ -823,13 +1079,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       final hijriDay = day['date']['hijri']['day'] ?? '';
       final fullDate = day['date']['gregorian']['date'] as String;
       final isToday = fullDate == todayFormatted;
-      
+
       gridItems.add(
         Container(
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: isToday 
-                ? const Color(0xFFE5C158).withOpacity(0.15) 
+            color: isToday
+                ? const Color(0xFFE5C158).withOpacity(0.15)
                 : theme.cardColor.withOpacity(0.6),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
@@ -856,7 +1112,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isToday ? const Color(0xFFE5C158) : theme.textTheme.bodyLarge?.color,
+                    color: isToday
+                        ? const Color(0xFFE5C158)
+                        : theme.textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -882,18 +1140,28 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Color(0xFFE5C158)),
+                  icon: const Icon(
+                    Icons.chevron_left,
+                    color: Color(0xFFE5C158),
+                  ),
                   onPressed: _isCalendarLoading ? null : _prevCalendarMonth,
                 ),
                 Expanded(
                   child: Text(
                     "$gregMonthName $gregYear  /  $hijriMonthName $hijriYear",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE5C158)),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFFE5C158),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Color(0xFFE5C158)),
+                  icon: const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFFE5C158),
+                  ),
                   onPressed: _isCalendarLoading ? null : _nextCalendarMonth,
                 ),
               ],
@@ -922,7 +1190,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.6,
+                        ),
                       ),
                     ),
                   );
@@ -948,8 +1218,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: Text(
-                    TranslationService.isArabic ? "المناسبات الهجرية" : "Islamic Events",
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE5C158), fontSize: 14),
+                    TranslationService.isArabic
+                        ? "المناسبات الهجرية"
+                        : "Islamic Events",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE5C158),
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -957,16 +1233,32 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   children: events.map((event) {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(event['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      subtitle: Text("${event['hijriDate']} (${event['gregDate']})", style: const TextStyle(fontSize: 11, color: Colors.white38)),
+                      title: Text(
+                        event['title'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      subtitle: Text(
+                        "${event['hijriDate']} (${event['gregDate']})",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white38,
+                        ),
+                      ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.notifications_active_outlined, color: Color(0xFFE5C158), size: 20),
+                        icon: const Icon(
+                          Icons.notifications_active_outlined,
+                          color: Color(0xFFE5C158),
+                          size: 20,
+                        ),
                         onPressed: () => _showReminderDialog(event),
                       ),
                     );
                   }).toList(),
-                )
-              ]
+                ),
+              ],
             ],
           ],
         ),
@@ -974,7 +1266,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     );
   }
 
-  Widget _buildScheduleRow(ThemeData theme, String name, String time, IconData icon) {
+  Widget _buildScheduleRow(
+    ThemeData theme,
+    String name,
+    String time,
+    IconData icon,
+  ) {
     final cleanTime = _formatTime(time);
     final alertKey = 'alert_${name.toLowerCase()}';
     final alertOn = widget.storage.getBool(alertKey, defaultValue: true);
@@ -983,12 +1280,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final isSunriseOrSunset = name == 'Sunrise' || name == 'Sunset';
 
     return Card(
-      color: isNext ? const Color(0xFFE5C158).withOpacity(0.08) : theme.cardColor,
+      color: isNext
+          ? const Color(0xFFE5C158).withOpacity(0.08)
+          : theme.cardColor,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isNext ? const Color(0xFFE5C158).withOpacity(0.6) : Colors.transparent,
+          color: isNext
+              ? const Color(0xFFE5C158).withOpacity(0.6)
+              : Colors.transparent,
           width: isNext ? 1.8 : 0.0,
         ),
       ),
@@ -1013,7 +1314,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 children: [
                   Text(
                     displayName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),
@@ -1027,8 +1331,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 ? const SizedBox(width: 48)
                 : IconButton(
                     icon: Icon(
-                      alertOn ? Icons.notifications_active : Icons.notifications_off,
-                      color: alertOn ? const Color(0xFFE5C158) : theme.disabledColor,
+                      alertOn
+                          ? Icons.notifications_active
+                          : Icons.notifications_off,
+                      color: alertOn
+                          ? const Color(0xFFE5C158)
+                          : theme.disabledColor,
                       size: 20,
                     ),
                     onPressed: () async {
@@ -1037,9 +1345,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       setState(() {});
                       scaffoldMessenger.showSnackBar(
                         SnackBar(
-                          content: Text(alertOn 
-                              ? (TranslationService.isArabic ? 'تم كتم تنبيهات $displayName' : '$name notifications muted') 
-                              : (TranslationService.isArabic ? 'تم تفعيل تنبيهات $displayName' : '$name notifications activated')),
+                          content: Text(
+                            alertOn
+                                ? (TranslationService.isArabic
+                                      ? 'تم كتم تنبيهات $displayName'
+                                      : '$name notifications muted')
+                                : (TranslationService.isArabic
+                                      ? 'تم تفعيل تنبيهات $displayName'
+                                      : '$name notifications activated'),
+                          ),
                           duration: const Duration(seconds: 1),
                         ),
                       );

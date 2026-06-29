@@ -20,7 +20,8 @@ class TranslationService {
       'settings': 'Settings',
       'welcome': 'Assalamu Alaikum',
       'blessed_day': 'Have a blessed day',
-      'hardship_ease': '"Indeed, with hardship [will be] ease." - Surah Ash-Sharh [94:6]',
+      'hardship_ease':
+          '"Indeed, with hardship [will be] ease." - Surah Ash-Sharh [94:6]',
       'live_countdown': 'Live Countdown',
       'time_until': 'Time until',
       'sunrise': 'Sunrise',
@@ -139,7 +140,8 @@ class TranslationService {
       'wake_lock': 'Keep Screen Awake',
       'wake_lock_sub': 'Prevent screen sleep when reading the Quran',
       'focus_prayer_lock': 'Khushu Focus Lock',
-      'focus_prayer_lock_sub': 'Lock the app during prayer to prevent phone distraction',
+      'focus_prayer_lock_sub':
+          'Lock the app during prayer to prevent phone distraction',
       'start_focus': 'Start Prayer Focus',
       'focus_timer': 'Focus Duration',
       'focus_active': 'Prayer Focus Lock Active',
@@ -168,30 +170,41 @@ class TranslationService {
       'quran_downloads_sub': 'Download Surahs to listen offline',
       'welcome_app_name': 'AYA',
       'welcome_spiritual_companion': 'Your Spiritual & Worship Companion',
-      'welcome_intro_desc': 'Ultra-accurate prayer times, audio recitations, Qibla compass, and daily dhikr in a premium design supporting light and dark modes.',
+      'welcome_intro_desc':
+          'Ultra-accurate prayer times, audio recitations, Qibla compass, and daily dhikr in a premium design supporting light and dark modes.',
       'welcome_features_title': 'Premium App Features',
-      'welcome_features_sub': 'Everything you need for worship in one modern interface',
+      'welcome_features_sub':
+          'Everything you need for worship in one modern interface',
       'welcome_feat_prayer_title': 'Instant Prayer Times',
-      'welcome_feat_prayer_desc': 'Accurate calculation of prayer times in your area with a live countdown to the next prayer.',
+      'welcome_feat_prayer_desc':
+          'Accurate calculation of prayer times in your area with a live countdown to the next prayer.',
       'welcome_feat_quran_title': 'Quran Reader & Audio Player',
-      'welcome_feat_quran_desc': 'Read the Holy Quran with clarity, view translations, and play recitations from world-renowned Qaris.',
+      'welcome_feat_quran_desc':
+          'Read the Holy Quran with clarity, view translations, and play recitations from world-renowned Qaris.',
       'welcome_feat_qibla_title': 'Instant Qibla Compass',
-      'welcome_feat_qibla_desc': 'Find the direction of the Holy Kaaba instantly using your device\'s built-in compass sensor.',
+      'welcome_feat_qibla_desc':
+          'Find the direction of the Holy Kaaba instantly using your device\'s built-in compass sensor.',
       'welcome_feat_tasbih_title': 'Dhikr & Electronic Tasbih',
-      'welcome_feat_tasbih_desc': 'Smart tasbih counter and morning, evening, and sleep azkar to track your daily dhikr with ease.',
+      'welcome_feat_tasbih_desc':
+          'Smart tasbih counter and morning, evening, and sleep azkar to track your daily dhikr with ease.',
       'welcome_gps_title': 'GPS Location Setup',
-      'welcome_gps_desc': 'Aya App uses your GPS location to calculate extremely accurate prayer times and auto-detect your current city.',
+      'welcome_gps_desc':
+          'Aya App uses your GPS location to calculate extremely accurate prayer times and auto-detect your current city.',
       'welcome_gps_status_checking': 'Checking location services...',
-      'welcome_gps_status_disabled': 'Location services are disabled in settings.',
+      'welcome_gps_status_disabled':
+          'Location services are disabled in settings.',
       'welcome_gps_status_requesting': 'Requesting location permissions...',
       'welcome_gps_status_denied': 'Location permission denied.',
-      'welcome_gps_status_denied_forever': 'Location permission denied permanently. Please enable in settings.',
+      'welcome_gps_status_denied_forever':
+          'Location permission denied permanently. Please enable in settings.',
       'welcome_gps_status_fetching': 'Fetching GPS coordinates...',
       'welcome_gps_status_geocoding': 'Determining city and country...',
-      'welcome_gps_status_notifications': 'Requesting notification permissions...',
+      'welcome_gps_status_notifications':
+          'Requesting notification permissions...',
       'welcome_gps_status_success': 'Location set successfully: ',
       'welcome_gps_status_failed': 'Location setup failed: ',
-      'welcome_gps_manual_hint': '\n\nYou can adjust your location manually later.',
+      'welcome_gps_manual_hint':
+          '\n\nYou can adjust your location manually later.',
       'welcome_gps_btn': 'Enable Location & Get Coordinates',
       'welcome_next': 'Next',
       'welcome_start_now': 'Get Started',
@@ -367,24 +380,31 @@ class TranslationService {
       'quran_downloads_sub': 'تحميل سور القرآن للاستماع بدون إنترنت',
       'welcome_app_name': 'آيَة',
       'welcome_spiritual_companion': 'رفيقك الروحي والعبادي',
-      'welcome_intro_desc': 'أوقات صلاة دقيقة للغاية، وتلاوات صوتية عطرة، وتحديد اتجاه القبلة، والأذكار اليومية في تصميم فاخر يدعم الوضعين الداكن والفاتح.',
+      'welcome_intro_desc':
+          'أوقات صلاة دقيقة للغاية، وتلاوات صوتية عطرة، وتحديد اتجاه القبلة، والأذكار اليومية في تصميم فاخر يدعم الوضعين الداكن والفاتح.',
       'welcome_features_title': 'ميزات التطبيق الفاخرة',
       'welcome_features_sub': 'كل ما تحتاجه للعبادة في واجهة عصرية واحدة',
       'welcome_feat_prayer_title': 'مواقيت الصلاة الفورية',
-      'welcome_feat_prayer_desc': 'حساب دقيق لمواقيت الصلاة في منطقتك مع عرض الوقت المتبقي لأداء الصلاة القادمة.',
+      'welcome_feat_prayer_desc':
+          'حساب دقيق لمواقيت الصلاة في منطقتك مع عرض الوقت المتبقي لأداء الصلاة القادمة.',
       'welcome_feat_quran_title': 'قارئ ومستمع القرآن الكريم',
-      'welcome_feat_quran_desc': 'قراءة كتاب الله بوضوح وتفسيره مع إمكانية تشغيل التلاوات بأصوات أشهر القراء.',
+      'welcome_feat_quran_desc':
+          'قراءة كتاب الله بوضوح وتفسيره مع إمكانية تشغيل التلاوات بأصوات أشهر القراء.',
       'welcome_feat_qibla_title': 'محدد اتجاه القبلة الفوري',
-      'welcome_feat_qibla_desc': 'تحديد اتجاه الكعبة المشرفة فوراً باستخدام مستشعر البوصلة المدمج في جهازك.',
+      'welcome_feat_qibla_desc':
+          'تحديد اتجاه الكعبة المشرفة فوراً باستخدام مستشعر البوصلة المدمج في جهازك.',
       'welcome_feat_tasbih_title': 'الأذكار والمسبحة الإلكترونية',
-      'welcome_feat_tasbih_desc': 'عداد تسبيح ذكي وأذكار الصباح والمساء والنوم لتتبع وردك اليومي بسهولة.',
+      'welcome_feat_tasbih_desc':
+          'عداد تسبيح ذكي وأذكار الصباح والمساء والنوم لتتبع وردك اليومي بسهولة.',
       'welcome_gps_title': 'إعداد الموقع الجغرافي (GPS)',
-      'welcome_gps_desc': 'يستخدم تطبيق "آية" موقعك الجغرافي لتحديد إحداثياتك وحساب مواقيت الصلاة بدقة فائقة وعرض اسم مدينتك تلقائياً.',
+      'welcome_gps_desc':
+          'يستخدم تطبيق "آية" موقعك الجغرافي لتحديد إحداثياتك وحساب مواقيت الصلاة بدقة فائقة وعرض اسم مدينتك تلقائياً.',
       'welcome_gps_status_checking': 'جاري التحقق من خدمات الموقع...',
       'welcome_gps_status_disabled': 'خدمات الموقع معطلة في إعدادات الهاتف.',
       'welcome_gps_status_requesting': 'جاري طلب صلاحيات الموقع...',
       'welcome_gps_status_denied': 'تم رفض إذن الوصول للموقع.',
-      'welcome_gps_status_denied_forever': 'تم رفض صلاحيات الموقع بشكل دائم. يرجى تفعيلها من الإعدادات.',
+      'welcome_gps_status_denied_forever':
+          'تم رفض صلاحيات الموقع بشكل دائم. يرجى تفعيلها من الإعدادات.',
       'welcome_gps_status_fetching': 'جاري الحصول على إحداثيات الموقع (GPS)...',
       'welcome_gps_status_geocoding': 'جاري تحديد المدينة والدولة...',
       'welcome_gps_status_notifications': 'جاري طلب صلاحيات الإشعارات...',
@@ -406,7 +426,7 @@ class TranslationService {
       'names_of_allah': 'أسماء الله',
       'hijri_calendar': 'التقويم الهجري',
       'prayer_calendar': 'جدول الصلوات',
-    }
+    },
   };
 
   static String t(String key) {

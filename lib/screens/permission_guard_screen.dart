@@ -54,7 +54,8 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
 
   Future<void> _initSdkVersion() async {
     try {
-      final sdk = await _platform.invokeMethod<int>('getAndroidSdkVersion') ?? 24;
+      final sdk =
+          await _platform.invokeMethod<int>('getAndroidSdkVersion') ?? 24;
       _androidSdkVersion = sdk;
     } catch (_) {
       _androidSdkVersion = 24;
@@ -66,7 +67,8 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
     setState(() => _checking = true);
 
     final gpsPerm = await Geolocator.checkPermission();
-    final locOk = gpsPerm == LocationPermission.always ||
+    final locOk =
+        gpsPerm == LocationPermission.always ||
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
 
@@ -75,13 +77,15 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
     bool batteryOk = true;
     try {
       batteryOk =
-          await _platform.invokeMethod<bool>('checkBatteryOptimization') ?? true;
+          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
+          true;
     } catch (_) {}
 
     bool exactAlarmOk = true;
     try {
       exactAlarmOk =
-          await _platform.invokeMethod<bool>('checkExactAlarmPermission') ?? true;
+          await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
+          true;
     } catch (_) {}
 
     if (!mounted) return;
@@ -96,7 +100,8 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
 
     final bgRequired = _androidSdkVersion >= 29;
     final alarmRequired = _androidSdkVersion >= 31;
-    final allGood = locOk &&
+    final allGood =
+        locOk &&
         (!bgRequired || bgLocOk) &&
         notifOk &&
         batteryOk &&
@@ -145,7 +150,8 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
   void _onProceedClick() {
     final bgRequired = _androidSdkVersion >= 29;
     final alarmRequired = _androidSdkVersion >= 31;
-    final allGood = _locationGranted &&
+    final allGood =
+        _locationGranted &&
         (!bgRequired || _bgLocationGranted) &&
         _notifGranted &&
         _batteryIgnored &&
@@ -186,7 +192,9 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: Text(
-              TranslationService.isArabic ? "الرجوع وتفعيلها" : "Go Back & Enable",
+              TranslationService.isArabic
+                  ? "الرجوع وتفعيلها"
+                  : "Go Back & Enable",
               style: TextStyle(color: Theme.of(context).primaryColor),
             ),
           ),
@@ -194,14 +202,18 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () {
               Navigator.pop(dialogCtx);
               widget.onPassed();
             },
             child: Text(
-              TranslationService.isArabic ? "متابعة على أي حال" : "Proceed Anyway",
+              TranslationService.isArabic
+                  ? "متابعة على أي حال"
+                  : "Proceed Anyway",
             ),
           ),
         ],
@@ -230,7 +242,11 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                   shape: BoxShape.circle,
                   color: theme.primaryColor.withOpacity(0.1),
                 ),
-                child: Icon(Icons.security_rounded, color: theme.primaryColor, size: 64),
+                child: Icon(
+                  Icons.security_rounded,
+                  color: theme.primaryColor,
+                  size: 64,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -343,7 +359,10 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: theme.primaryColor))
+                              strokeWidth: 2,
+                              color: theme.primaryColor,
+                            ),
+                          )
                         : const Icon(Icons.refresh, size: 16),
                     label: Text(
                       TranslationService.isArabic ? "إعادة فحص" : "Re-Check",
@@ -355,14 +374,18 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                       backgroundColor: theme.primaryColor,
                       foregroundColor: isDark ? Colors.black : Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       textStyle: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     onPressed: _onProceedClick,
                     child: Text(
-                        TranslationService.isArabic ? "متابعة" : "Proceed"),
+                      TranslationService.isArabic ? "متابعة" : "Proceed",
+                    ),
                   ),
                 ],
               ),
@@ -416,20 +439,25 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                   Text(
                     title,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     textAlign: TextAlign.start,
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    requiresPrior && priorLabel != null ? priorLabel : description,
+                    requiresPrior && priorLabel != null
+                        ? priorLabel
+                        : description,
                     style: TextStyle(
                       color: requiresPrior
                           ? Colors.orangeAccent
                           : (isDark ? Colors.white54 : Colors.black54),
                       fontSize: 11,
                       height: 1.4,
-                      fontStyle:
-                          requiresPrior ? FontStyle.italic : FontStyle.normal,
+                      fontStyle: requiresPrior
+                          ? FontStyle.italic
+                          : FontStyle.normal,
                     ),
                     textAlign: TextAlign.start,
                   ),

@@ -51,7 +51,9 @@ class AudioManager {
 
   AudioPlayer get player => activePlayer;
 
-  final ValueNotifier<AudioPlayState> playState = ValueNotifier(AudioPlayState());
+  final ValueNotifier<AudioPlayState> playState = ValueNotifier(
+    AudioPlayState(),
+  );
 
   List<Ayah> _currentPlaylist = [];
   int _currentIndex = -1;
@@ -77,29 +79,28 @@ class AudioManager {
         ),
         iOS: AudioContextIOS(
           category: AVAudioSessionCategory.playback,
-          options: {
-            AVAudioSessionOptions.mixWithOthers,
-          },
+          options: {AVAudioSessionOptions.mixWithOthers},
         ),
       ),
     );
 
     p.onPlayerStateChanged.listen((state) {
       if (_isTransitioning) return;
-      
+
       if (p == activePlayer) {
         final isPlaying = state == PlayerState.playing;
         playState.value = AudioPlayState(
           surahNum: _surahNum,
-          ayahNum: _currentIndex >= 0 && _currentIndex < _currentPlaylist.length 
-              ? _currentPlaylist[_currentIndex].numberInSurah 
+          ayahNum: _currentIndex >= 0 && _currentIndex < _currentPlaylist.length
+              ? _currentPlaylist[_currentIndex].numberInSurah
               : 0,
           isPlaying: isPlaying,
           title: _surahName,
-          subtitle: _currentIndex >= 0 && _currentIndex < _currentPlaylist.length
-              ? (TranslationService.isArabic 
-                  ? "الآية ${_currentPlaylist[_currentIndex].numberInSurah}" 
-                  : "Ayah ${_currentPlaylist[_currentIndex].numberInSurah}")
+          subtitle:
+              _currentIndex >= 0 && _currentIndex < _currentPlaylist.length
+              ? (TranslationService.isArabic
+                    ? "الآية ${_currentPlaylist[_currentIndex].numberInSurah}"
+                    : "Ayah ${_currentPlaylist[_currentIndex].numberInSurah}")
               : "Full Surah Recitation",
           isLoading: false,
         );
@@ -114,13 +115,18 @@ class AudioManager {
 
     p.onPositionChanged.listen((pos) {
       if (p != activePlayer || _isTransitioning) return;
-      
+
       final dur = _currentDuration;
       if (dur != null && dur.inMilliseconds > 0) {
         final remaining = dur.inMilliseconds - pos.inMilliseconds;
         // Start crossfading 1.2s before the end of the ayah
-        if (remaining <= 1200 && remaining > 0 && _currentIndex < _currentPlaylist.length - 1) {
-          final continuous = _storage.getBool('setting_continuous_play', defaultValue: true);
+        if (remaining <= 1200 &&
+            remaining > 0 &&
+            _currentIndex < _currentPlaylist.length - 1) {
+          final continuous = _storage.getBool(
+            'setting_continuous_play',
+            defaultValue: true,
+          );
           if (continuous) {
             _playNextAyahWithCrossfade();
           }
@@ -158,9 +164,12 @@ class AudioManager {
   void _preloadNextAyah() async {
     final nextIndex = _currentIndex + 1;
     if (nextIndex < 0 || nextIndex >= _currentPlaylist.length) return;
-    
+
     final nextAyah = _currentPlaylist[nextIndex];
-    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
     final url = ApiService.buildAyahAudioUrl(nextAyah.number, reciter: reciter);
     final localPath = await _getLocalAyahPath(nextAyah.number, reciter);
     final localFile = File(localPath);
@@ -178,7 +187,12 @@ class AudioManager {
     } catch (_) {}
   }
 
-  void playAyah(int surahNum, String surahName, List<Ayah> ayahs, int index) async {
+  void playAyah(
+    int surahNum,
+    String surahName,
+    List<Ayah> ayahs,
+    int index,
+  ) async {
     _cancelCrossfade();
     _surahNum = surahNum;
     _surahName = surahName;
@@ -190,17 +204,22 @@ class AudioManager {
     _isTransitioning = false;
 
     final ayah = _currentPlaylist[_currentIndex];
-    
+
     playState.value = AudioPlayState(
       surahNum: surahNum,
       ayahNum: ayah.numberInSurah,
       isPlaying: false,
       title: surahName,
-      subtitle: TranslationService.isArabic ? "جاري تحميل التلاوة..." : "Loading recitation...",
+      subtitle: TranslationService.isArabic
+          ? "جاري تحميل التلاوة..."
+          : "Loading recitation...",
       isLoading: true,
     );
 
-    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
     final url = ApiService.buildAyahAudioUrl(ayah.number, reciter: reciter);
     final localPath = await _getLocalAyahPath(ayah.number, reciter);
     final localFile = File(localPath);
@@ -218,10 +237,10 @@ class AudioManager {
         await activePlayer.play(UrlSource(url));
         _cacheAyahBackground(url, localFile);
       }
-      
+
       _currentDuration = null;
       _preloadNextAyah();
-      
+
       playState.value = AudioPlayState(
         surahNum: _surahNum,
         ayahNum: ayah.numberInSurah,
@@ -233,7 +252,10 @@ class AudioManager {
         isLoading: false,
       );
 
-      final autoBookmark = _storage.getBool('setting_auto_bookmark', defaultValue: true);
+      final autoBookmark = _storage.getBool(
+        'setting_auto_bookmark',
+        defaultValue: true,
+      );
       if (autoBookmark) {
         await _storage.addBookmark(surahNum, surahName, ayah.numberInSurah);
       }
@@ -243,7 +265,9 @@ class AudioManager {
         ayahNum: ayah.numberInSurah,
         isPlaying: false,
         title: surahName,
-        subtitle: TranslationService.isArabic ? "فشل تشغيل الصوت: $e" : "Playback failed: $e",
+        subtitle: TranslationService.isArabic
+            ? "فشل تشغيل الصوت: $e"
+            : "Playback failed: $e",
         isLoading: false,
       );
     }
@@ -255,7 +279,10 @@ class AudioManager {
     _surahName = surahName;
     _isTransitioning = false;
 
-    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
     final localPath = await _getLocalSurahPath(surahNum, reciter);
     final localFile = File(localPath);
     final isOffline = await localFile.exists();
@@ -269,7 +296,9 @@ class AudioManager {
         ayahNum: 0,
         isPlaying: false,
         title: surahName,
-        subtitle: TranslationService.isArabic ? "جاري تحميل التلاوة..." : "Loading recitation...",
+        subtitle: TranslationService.isArabic
+            ? "جاري تحميل التلاوة..."
+            : "Loading recitation...",
         isLoading: true,
       );
 
@@ -296,7 +325,9 @@ class AudioManager {
           ayahNum: 0,
           isPlaying: false,
           title: surahName,
-          subtitle: TranslationService.isArabic ? "فشل تشغيل الصوت: $e" : "Playback failed: $e",
+          subtitle: TranslationService.isArabic
+              ? "فشل تشغيل الصوت: $e"
+              : "Playback failed: $e",
           isLoading: false,
         );
       }
@@ -308,8 +339,13 @@ class AudioManager {
 
   void _handlePlaybackComplete() {
     if (_isTransitioning) return;
-    final continuous = _storage.getBool('setting_continuous_play', defaultValue: true);
-    if (continuous && _currentIndex >= 0 && _currentIndex < _currentPlaylist.length - 1) {
+    final continuous = _storage.getBool(
+      'setting_continuous_play',
+      defaultValue: true,
+    );
+    if (continuous &&
+        _currentIndex >= 0 &&
+        _currentIndex < _currentPlaylist.length - 1) {
       _playNextAyahWithCrossfade();
     } else {
       stop();
@@ -317,12 +353,16 @@ class AudioManager {
   }
 
   void _playNextAyahWithCrossfade() async {
-    if (_currentIndex < 0 || _currentIndex >= _currentPlaylist.length - 1) return;
+    if (_currentIndex < 0 || _currentIndex >= _currentPlaylist.length - 1)
+      return;
     if (_isTransitioning) return;
 
     final nextIndex = _currentIndex + 1;
     final nextAyah = _currentPlaylist[nextIndex];
-    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
     final url = ApiService.buildAyahAudioUrl(nextAyah.number, reciter: reciter);
     final localPath = await _getLocalAyahPath(nextAyah.number, reciter);
     final localFile = File(localPath);
@@ -341,7 +381,10 @@ class AudioManager {
       isLoading: !isOffline,
     );
 
-    final autoBookmark = _storage.getBool('setting_auto_bookmark', defaultValue: true);
+    final autoBookmark = _storage.getBool(
+      'setting_auto_bookmark',
+      defaultValue: true,
+    );
     if (autoBookmark) {
       await _storage.addBookmark(_surahNum, _surahName, nextAyah.numberInSurah);
     }
@@ -379,7 +422,9 @@ class AudioManager {
 
       int step = 0;
       const steps = 10;
-      _crossfadeTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
+      _crossfadeTimer = Timer.periodic(const Duration(milliseconds: 50), (
+        timer,
+      ) async {
         if (!_isTransitioning) {
           timer.cancel();
           return;
@@ -387,7 +432,7 @@ class AudioManager {
         step++;
         final double nextVol = step / steps;
         final double currVol = 1.0 - nextVol;
-        
+
         try {
           await currentPlay.setVolume(currVol);
           await nextPlay.setVolume(nextVol);
@@ -415,13 +460,15 @@ class AudioManager {
       } catch (_) {}
       _usingPlayerA = !_usingPlayerA;
       _isTransitioning = false;
-      
+
       playState.value = AudioPlayState(
         surahNum: _surahNum,
         ayahNum: nextAyah.numberInSurah,
         isPlaying: false,
         title: _surahName,
-        subtitle: TranslationService.isArabic ? "فشل الانتقال الصوتي: $e" : "Audio transition failed: $e",
+        subtitle: TranslationService.isArabic
+            ? "فشل الانتقال الصوتي: $e"
+            : "Audio transition failed: $e",
         isLoading: false,
       );
     }
@@ -433,7 +480,8 @@ class AudioManager {
       if (_isTransitioning) {
         await inactivePlayer.pause();
       }
-    } else if (activePlayer.state == PlayerState.paused || activePlayer.state == PlayerState.completed) {
+    } else if (activePlayer.state == PlayerState.paused ||
+        activePlayer.state == PlayerState.completed) {
       await activePlayer.resume();
       if (_isTransitioning) {
         await inactivePlayer.resume();

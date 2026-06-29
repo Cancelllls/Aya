@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/translation_service.dart';
 
-
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
@@ -32,11 +31,7 @@ class AboutScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: theme.primaryColor.withOpacity(0.1),
               ),
-              child: Icon(
-                Icons.mosque,
-                size: 80,
-                color: theme.primaryColor,
-              ),
+              child: Icon(Icons.mosque, size: 80, color: theme.primaryColor),
             ),
             const SizedBox(height: 24),
             Text(
@@ -58,13 +53,15 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 32),
             Card(
               color: theme.cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
                     Text(
-                      isArabic 
+                      isArabic
                           ? "تم تطوير هذا التطبيق كصدقة جارية، ليرافقك في رحلتك الإيمانية مع القرآن الكريم والأذكار اليومية ومواقيت الصلاة."
                           : "This application is developed as a continuous charity (Sadaqah Jariyah), to accompany you on your spiritual journey with the Holy Quran, daily supplications, and prayer times.",
                       textAlign: TextAlign.center,
@@ -90,19 +87,30 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Card(
               color: theme.cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: theme.primaryColor.withOpacity(0.2),
                   child: Icon(Icons.person, color: theme.primaryColor),
                 ),
-                title: const Text("Created specially for you", style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(isArabic ? "صُنع بكل حب لخدمة الإسلام" : "Made with love to serve Islam"),
+                title: const Text(
+                  "Created specially for you",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  isArabic
+                      ? "صُنع بكل حب لخدمة الإسلام"
+                      : "Made with love to serve Islam",
+                ),
               ),
             ),
             const SizedBox(height: 40),
             Text(
-              isArabic ? "جميع الحقوق محفوظة © ٢٠٢٦" : "All rights reserved © 2026",
+              isArabic
+                  ? "جميع الحقوق محفوظة © ٢٠٢٦"
+                  : "All rights reserved © 2026",
               style: TextStyle(
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
                 fontSize: 14,

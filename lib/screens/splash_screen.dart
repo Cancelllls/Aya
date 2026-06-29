@@ -27,7 +27,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _textFadeAnimation;
@@ -63,16 +64,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
       // Check permissions
       final gpsPerm = await Geolocator.checkPermission();
-      final gpsOk = gpsPerm == LocationPermission.always || gpsPerm == LocationPermission.whileInUse;
+      final gpsOk =
+          gpsPerm == LocationPermission.always ||
+          gpsPerm == LocationPermission.whileInUse;
       final notifOk = await NotificationService().checkPermissions();
       bool batteryOk = true;
       try {
         const platform = MethodChannel('com.quran.aya/system');
-        batteryOk = await platform.invokeMethod<bool>('checkBatteryOptimization') ?? true;
+        batteryOk =
+            await platform.invokeMethod<bool>('checkBatteryOptimization') ??
+            true;
       } catch (_) {}
 
       final allGranted = gpsOk && notifOk && batteryOk;
-      final isFirstTime = widget.storage.getBool('first_time_v2', defaultValue: true);
+      final isFirstTime = widget.storage.getBool(
+        'first_time_v2',
+        defaultValue: true,
+      );
       if (isFirstTime && widget.storage.getString('lang_code').isEmpty) {
         // Auto-detect language
         final locale = Platform.localeName.toLowerCase();
@@ -107,15 +115,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     storage: widget.storage,
                     onThemeChanged: widget.onThemeChanged,
                   ),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 1.02, end: 1.0).animate(animation),
-                  child: child,
-                ),
-              );
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(
+                        begin: 1.02,
+                        end: 1.0,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
             transitionDuration: const Duration(milliseconds: 500),
           ),
         );
@@ -128,15 +140,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           navigateToDestination();
         } else {
           if (!mounted) return;
-          unawaited(Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PermissionGuardScreen(
-                storage: widget.storage,
-                onPassed: navigateToDestination,
+          unawaited(
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PermissionGuardScreen(
+                  storage: widget.storage,
+                  onPassed: navigateToDestination,
+                ),
               ),
             ),
-          ));
+          );
         }
       }
     });
@@ -153,7 +167,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final isDark = widget.storage.isDarkMode();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFFAF9F5),
+      backgroundColor: isDark
+          ? const Color(0xFF07090E)
+          : const Color(0xFFFAF9F5),
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,
@@ -171,10 +187,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE5C158).withOpacity(0.08 + 0.08 * sin(_controller.value * 2 * pi)),
+                          color: const Color(0xFFE5C158).withOpacity(
+                            0.08 + 0.08 * sin(_controller.value * 2 * pi),
+                          ),
                           blurRadius: 40,
                           spreadRadius: 10,
-                        )
+                        ),
                       ],
                     ),
                     child: CustomPaint(
@@ -186,7 +204,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 // Animated App Name and Subtitle
                 FadeTransition(
                   opacity: _textFadeAnimation,
@@ -203,8 +221,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        TranslationService.isArabic 
-                            ? "رفيقك الإسلامي اليومي" 
+                        TranslationService.isArabic
+                            ? "رفيقك الإسلامي اليومي"
                             : "YOUR DAILY ISLAMIC COMPANION",
                         style: GoogleFonts.inter(
                           fontSize: 10,
@@ -224,5 +242,3 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
-
-

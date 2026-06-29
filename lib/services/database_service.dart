@@ -94,12 +94,22 @@ class DatabaseService {
     ''');
 
     // Create indexes for fast lookups
-    await db.execute('CREATE INDEX idx_prayer_cache_key ON prayer_times_cache(cache_key)');
-    await db.execute('CREATE INDEX idx_bookmarks_surah ON bookmarks(surah_number)');
-    await db.execute('CREATE INDEX idx_monthly_date ON monthly_prayer_cache(year, month)');
+    await db.execute(
+      'CREATE INDEX idx_prayer_cache_key ON prayer_times_cache(cache_key)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_bookmarks_surah ON bookmarks(surah_number)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_monthly_date ON monthly_prayer_cache(year, month)',
+    );
   }
 
-  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  static Future<void> _onUpgrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
     // Handle upgrades here if version changes
   }
 
@@ -108,34 +118,30 @@ class DatabaseService {
     final db = _database!;
     final now = DateTime.now().millisecondsSinceEpoch;
     final expires = now + const Duration(hours: 12).inMilliseconds;
-    
-    await db.insert(
-      'prayer_times_cache',
-      {
-        'cache_key': key,
-        'fajr': data['Fajr'],
-        'sunrise': data['Sunrise'],
-        'dhuhr': data['Dhuhr'],
-        'asr': data['Asr'],
-        'maghrib': data['Maghrib'],
-        'isha': data['Isha'],
-        'sunset': data['Sunset'],
-        'imsak': data['Imsak'],
-        'gregorian_date': data['gregorian_date'],
-        'hijri_date': data['hijri_date'],
-        'hijri_month': data['hijri_month'],
-        'hijri_year': data['hijri_year'],
-        'cached_at': now,
-        'expires_at': expires,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+
+    await db.insert('prayer_times_cache', {
+      'cache_key': key,
+      'fajr': data['Fajr'],
+      'sunrise': data['Sunrise'],
+      'dhuhr': data['Dhuhr'],
+      'asr': data['Asr'],
+      'maghrib': data['Maghrib'],
+      'isha': data['Isha'],
+      'sunset': data['Sunset'],
+      'imsak': data['Imsak'],
+      'gregorian_date': data['gregorian_date'],
+      'hijri_date': data['hijri_date'],
+      'hijri_month': data['hijri_month'],
+      'hijri_year': data['hijri_year'],
+      'cached_at': now,
+      'expires_at': expires,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<Map<String, dynamic>?> getCachedPrayerTimes(String key) async {
     final db = _database!;
     final now = DateTime.now().millisecondsSinceEpoch;
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'prayer_times_cache',
       where: 'cache_key = ? AND expires_at > ?',
@@ -169,16 +175,12 @@ class DatabaseService {
 
   Future<void> addBookmark(int surah, String name, int ayah) async {
     final db = _database!;
-    await db.insert(
-      'bookmarks',
-      {
-        'surah_number': surah,
-        'surah_name': name,
-        'ayah_number': ayah,
-        'created_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert('bookmarks', {
+      'surah_number': surah,
+      'surah_name': name,
+      'ayah_number': ayah,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   Future<void> removeBookmark(int surah, {int? ayah}) async {
@@ -218,19 +220,15 @@ class DatabaseService {
     int currentCount = 0,
   }) async {
     final db = _database!;
-    await db.insert(
-      'custom_dhikrs',
-      {
-        'id': id,
-        'name': name,
-        'arabic': arabic,
-        'translation': translation,
-        'target': target,
-        'current_count': currentCount,
-        'created_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('custom_dhikrs', {
+      'id': id,
+      'name': name,
+      'arabic': arabic,
+      'translation': translation,
+      'target': target,
+      'current_count': currentCount,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateDhikrCount(String id, int count) async {
@@ -245,11 +243,7 @@ class DatabaseService {
 
   Future<void> deleteCustomDhikr(String id) async {
     final db = _database!;
-    await db.delete(
-      'custom_dhikrs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('custom_dhikrs', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> clearAllCustomDhikrs() async {
@@ -268,17 +262,17 @@ class DatabaseService {
     return maps.isNotEmpty;
   }
 
-  Future<void> markAudioDownloaded(String reciterId, String type, String path) async {
+  Future<void> markAudioDownloaded(
+    String reciterId,
+    String type,
+    String path,
+  ) async {
     final db = _database!;
-    await db.insert(
-      'audio_downloads',
-      {
-        'reciter_id': reciterId,
-        'audio_type': type,
-        'local_path': path,
-        'downloaded_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('audio_downloads', {
+      'reciter_id': reciterId,
+      'audio_type': type,
+      'local_path': path,
+      'downloaded_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

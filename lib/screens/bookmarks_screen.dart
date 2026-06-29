@@ -27,15 +27,19 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   Future<void> _loadBookmarks() async {
     final quran = await widget.storage.getBookmarks();
-    final List<String> hadithStrings = widget.storage.getStringList('hadith_bookmarks') ?? [];
-    
-    final hadith = hadithStrings.map((str) {
-      try {
-        return jsonDecode(str) as Map<String, dynamic>;
-      } catch (e) {
-        return <String, dynamic>{};
-      }
-    }).where((element) => element.isNotEmpty).toList();
+    final List<String> hadithStrings =
+        widget.storage.getStringList('hadith_bookmarks') ?? [];
+
+    final hadith = hadithStrings
+        .map((str) {
+          try {
+            return jsonDecode(str) as Map<String, dynamic>;
+          } catch (e) {
+            return <String, dynamic>{};
+          }
+        })
+        .where((element) => element.isNotEmpty)
+        .toList();
 
     if (mounted) {
       setState(() {
@@ -52,7 +56,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   void _removeHadithBookmark(Map<String, dynamic> b) async {
-    final List<String> current = widget.storage.getStringList('hadith_bookmarks') ?? [];
+    final List<String> current =
+        widget.storage.getStringList('hadith_bookmarks') ?? [];
     final data = jsonEncode(b);
     current.remove(data);
     await widget.storage.setStringList('hadith_bookmarks', current);
@@ -94,7 +99,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   Widget _buildQuranList(ThemeData theme) {
     if (_quranBookmarks.isEmpty) {
-      return Center(child: Text(TranslationService.isArabic ? "لا توجد علامات مرجعية" : "No Quran bookmarks", style: TextStyle(color: theme.textTheme.bodyMedium?.color)));
+      return Center(
+        child: Text(
+          TranslationService.isArabic
+              ? "لا توجد علامات مرجعية"
+              : "No Quran bookmarks",
+          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -104,11 +116,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         final sName = b['surahName'] ?? '';
         final sNum = b['surahNumber'] ?? 1;
         final aNum = b['ayahNumber'] ?? 1;
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           color: theme.cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.primaryColor.withOpacity(0.2))),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: theme.primaryColor.withOpacity(0.2)),
+          ),
           child: ListTile(
             onTap: () => _navigateToQuranBookmark(sNum, aNum),
             leading: CircleAvatar(
@@ -117,7 +132,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             ),
             title: Text(
               sName,
-              style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             subtitle: Text(
               TranslationService.isArabic ? "الآية $aNum" : "Ayah $aNum",
@@ -135,7 +153,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   Widget _buildHadithList(ThemeData theme) {
     if (_hadithBookmarks.isEmpty) {
-      return Center(child: Text(TranslationService.isArabic ? "لا توجد علامات مرجعية" : "No Hadith bookmarks", style: TextStyle(color: theme.textTheme.bodyMedium?.color)));
+      return Center(
+        child: Text(
+          TranslationService.isArabic
+              ? "لا توجد علامات مرجعية"
+              : "No Hadith bookmarks",
+          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -145,11 +170,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         final book = b['book'] ?? '';
         final number = b['number'] ?? 1;
         final text = b['text'] ?? '';
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           color: theme.cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: theme.primaryColor.withOpacity(0.2))),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: theme.primaryColor.withOpacity(0.2)),
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () => _navigateToHadithBookmark(b),
@@ -166,11 +194,19 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                           TranslationService.isArabic
                               ? '${b['bookAr'] ?? book} · ${TranslationService.isArabic ? 'حديث' : 'Hadith'} $number'
                               : '$book · Hadith $number',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryColor, fontSize: 13),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: theme.primaryColor,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
                         onPressed: () => _removeHadithBookmark(b),
                         constraints: const BoxConstraints(),
                         padding: EdgeInsets.zero,
@@ -180,18 +216,30 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   const SizedBox(height: 8),
                   Text(
                     text,
-                    style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 15),
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: 15,
+                    ),
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.open_in_new, size: 12, color: theme.primaryColor.withOpacity(0.6)),
+                      Icon(
+                        Icons.open_in_new,
+                        size: 12,
+                        color: theme.primaryColor.withOpacity(0.6),
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        TranslationService.isArabic ? 'اضغط للانتقال للحديث' : 'Tap to go to hadith',
-                        style: TextStyle(fontSize: 11, color: theme.primaryColor.withOpacity(0.6)),
+                        TranslationService.isArabic
+                            ? 'اضغط للانتقال للحديث'
+                            : 'Tap to go to hadith',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.primaryColor.withOpacity(0.6),
+                        ),
                       ),
                     ],
                   ),
@@ -211,29 +259,33 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(TranslationService.isArabic ? "العلامات المرجعية" : "Bookmarks", style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            TranslationService.isArabic ? "العلامات المرجعية" : "Bookmarks",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           backgroundColor: theme.appBarTheme.backgroundColor,
           elevation: 0,
           bottom: TabBar(
             indicatorColor: const Color(0xFFE5C158),
             labelColor: const Color(0xFFE5C158),
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+            unselectedLabelColor: theme.textTheme.bodyMedium?.color
+                ?.withOpacity(0.5),
             tabs: [
-              Tab(text: TranslationService.isArabic ? "القرآن الكريم" : "Quran"),
-              Tab(text: TranslationService.isArabic ? "الحديث الشريف" : "Hadith"),
+              Tab(
+                text: TranslationService.isArabic ? "القرآن الكريم" : "Quran",
+              ),
+              Tab(
+                text: TranslationService.isArabic ? "الحديث الشريف" : "Hadith",
+              ),
             ],
           ),
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
-                children: [
-                  _buildQuranList(theme),
-                  _buildHadithList(theme),
-                ],
+                children: [_buildQuranList(theme), _buildHadithList(theme)],
               ),
       ),
     );
   }
 }
-

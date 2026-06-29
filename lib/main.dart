@@ -16,6 +16,7 @@ import 'screens/surah_reader_screen.dart';
 import 'screens/quran_download_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/bookmarks_screen.dart';
+import 'package:dorar_hadith_flutter/dorar_hadith_flutter.dart';
 import 'services/api_service.dart';
 import 'services/audio_manager.dart';
 import 'theme/app_colors.dart';
@@ -26,13 +27,16 @@ import 'models/prayer_models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  await DorarHadithFlutter.ensureInitialized();
+
   // Initialize Android Alarm Manager
   await AndroidAlarmManager.initialize();
 
   final storage = await StorageService.getInstance();
-  TranslationService.setLanguage(storage.getString('lang_code', defaultValue: 'ar'));
-  
+  TranslationService.setLanguage(
+    storage.getString('lang_code', defaultValue: 'ar'),
+  );
+
   // Initialize Notification Service
   final notifications = NotificationService();
   await notifications.init();
@@ -59,14 +63,20 @@ class _AyaAppState extends State<AyaApp> {
   @override
   void initState() {
     super.initState();
-    _activeTheme = widget.storage.getString('theme_preset', defaultValue: 'dark');
+    _activeTheme = widget.storage.getString(
+      'theme_preset',
+      defaultValue: 'dark',
+    );
     _langCode = widget.storage.getString('lang_code', defaultValue: 'ar');
     TranslationService.setLanguage(_langCode);
   }
 
   void _updateTheme() {
     setState(() {
-      _activeTheme = widget.storage.getString('theme_preset', defaultValue: 'dark');
+      _activeTheme = widget.storage.getString(
+        'theme_preset',
+        defaultValue: 'dark',
+      );
       _langCode = widget.storage.getString('lang_code', defaultValue: 'ar');
       TranslationService.setLanguage(_langCode);
     });
@@ -82,7 +92,10 @@ class _AyaAppState extends State<AyaApp> {
           cardColor: Colors.white,
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFFF1F5F9)),
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w500),
+            bodyLarge: TextStyle(
+              color: Color(0xFF1E293B),
+              fontWeight: FontWeight.w500,
+            ),
             bodyMedium: TextStyle(color: Color(0xFF64748B)),
           ),
           appBarTheme: const AppBarTheme(
@@ -100,12 +113,24 @@ class _AyaAppState extends State<AyaApp> {
           dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           dividerColor: const Color(0xFFE2E8F0),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB45309), width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFB45309), width: 2),
+            ),
             filled: true,
             fillColor: const Color(0xFFF8FAFC),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
       case 'sepia':
@@ -116,7 +141,10 @@ class _AyaAppState extends State<AyaApp> {
           cardColor: const Color(0xFFFDF6E3),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFFEBE0C5)),
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFF4A3B2C), fontWeight: FontWeight.w500),
+            bodyLarge: TextStyle(
+              color: Color(0xFF4A3B2C),
+              fontWeight: FontWeight.w500,
+            ),
             bodyMedium: TextStyle(color: Color(0xFF7A6451)),
           ),
           appBarTheme: const AppBarTheme(
@@ -131,15 +159,29 @@ class _AyaAppState extends State<AyaApp> {
             unselectedItemColor: Color(0xFFB09D8A),
             elevation: 8,
           ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFFFDF6E3)),
+          dialogTheme: const DialogThemeData(
+            backgroundColor: Color(0xFFFDF6E3),
+          ),
           dividerColor: const Color(0xFFEBE0C5),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFD3C5A8))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFD3C5A8))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8C5A2B), width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFD3C5A8)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFD3C5A8)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF8C5A2B), width: 2),
+            ),
             filled: true,
             fillColor: const Color(0xFFFDF6E3),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
       case 'black':
@@ -150,7 +192,10 @@ class _AyaAppState extends State<AyaApp> {
           cardColor: const Color(0xFF0D0D0D),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFF262626)),
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.w500),
+            bodyLarge: TextStyle(
+              color: Color(0xFFF8FAFC),
+              fontWeight: FontWeight.w500,
+            ),
             bodyMedium: TextStyle(color: Color(0xFFA3A3A3)),
           ),
           appBarTheme: const AppBarTheme(
@@ -165,15 +210,29 @@ class _AyaAppState extends State<AyaApp> {
             unselectedItemColor: Color(0xFF525252),
             elevation: 8,
           ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1A1A1A)),
+          dialogTheme: const DialogThemeData(
+            backgroundColor: Color(0xFF1A1A1A),
+          ),
           dividerColor: const Color(0xFF262626),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF404040))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF404040))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF404040)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF404040)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.gold, width: 2),
+            ),
             filled: true,
             fillColor: const Color(0xFF0D0D0D),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
       case 'dark_monet':
@@ -184,7 +243,10 @@ class _AyaAppState extends State<AyaApp> {
           cardColor: const Color(0xFF161F1E),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFF233331)),
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFFF2F4F3), fontWeight: FontWeight.w500),
+            bodyLarge: TextStyle(
+              color: Color(0xFFF2F4F3),
+              fontWeight: FontWeight.w500,
+            ),
             bodyMedium: TextStyle(color: Color(0xFF869A96)),
           ),
           appBarTheme: const AppBarTheme(
@@ -199,15 +261,29 @@ class _AyaAppState extends State<AyaApp> {
             unselectedItemColor: Color(0xFF4C5D5A),
             elevation: 8,
           ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1D2927)),
+          dialogTheme: const DialogThemeData(
+            backgroundColor: Color(0xFF1D2927),
+          ),
           dividerColor: const Color(0xFF233331),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2D4341))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2D4341))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF14B8A6), width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2D4341)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2D4341)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF14B8A6), width: 2),
+            ),
             filled: true,
             fillColor: const Color(0xFF161F1E),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
       case 'white_monet':
@@ -218,7 +294,10 @@ class _AyaAppState extends State<AyaApp> {
           cardColor: Colors.white,
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFFE2E8F0)),
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFF1F2927), fontWeight: FontWeight.w500),
+            bodyLarge: TextStyle(
+              color: Color(0xFF1F2927),
+              fontWeight: FontWeight.w500,
+            ),
             bodyMedium: TextStyle(color: Color(0xFF5A7571)),
           ),
           appBarTheme: const AppBarTheme(
@@ -236,12 +315,24 @@ class _AyaAppState extends State<AyaApp> {
           dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           dividerColor: const Color(0xFFE2E8F0),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB2CFCA))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB2CFCA))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.teal, width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFB2CFCA)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFB2CFCA)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.teal, width: 2),
+            ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
       case 'dark':
@@ -253,7 +344,10 @@ class _AyaAppState extends State<AyaApp> {
           cardColor: const Color(0xFF111520),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFF1E293B)),
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Color(0xFFF8FAFC), fontWeight: FontWeight.w500),
+            bodyLarge: TextStyle(
+              color: Color(0xFFF8FAFC),
+              fontWeight: FontWeight.w500,
+            ),
             bodyMedium: TextStyle(color: Color(0xFF94A3B8)),
           ),
           appBarTheme: const AppBarTheme(
@@ -268,15 +362,29 @@ class _AyaAppState extends State<AyaApp> {
             unselectedItemColor: Color(0xFF475569),
             elevation: 8,
           ),
-          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF161C2C)),
+          dialogTheme: const DialogThemeData(
+            backgroundColor: Color(0xFF161C2C),
+          ),
           dividerColor: const Color(0xFF1E293B),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A3A55))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A3A55))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2A3A55)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2A3A55)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.gold, width: 2),
+            ),
             filled: true,
             fillColor: const Color(0xFF111520),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
     }
@@ -297,10 +405,7 @@ class _AyaAppState extends State<AyaApp> {
       debugShowCheckedModeBanner: false,
       theme: themeData,
       locale: Locale(TranslationService.currentLanguage),
-      supportedLocales: const [
-        Locale('ar'),
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('ar'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -308,14 +413,13 @@ class _AyaAppState extends State<AyaApp> {
       ],
       builder: (context, child) {
         return Directionality(
-          textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
+          textDirection: TranslationService.isArabic
+              ? TextDirection.rtl
+              : TextDirection.ltr,
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: SplashScreen(
-        storage: widget.storage,
-        onThemeChanged: _updateTheme,
-      ),
+      home: SplashScreen(storage: widget.storage, onThemeChanged: _updateTheme),
     );
   }
 }
@@ -334,7 +438,8 @@ class MainScaffold extends StatefulWidget {
   State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _MainScaffoldState extends State<MainScaffold>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   int _currentTab = 0;
   int _azkarInitialTab = 0;
   int _prayerInitialTab = 0;
@@ -347,7 +452,6 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   late AnimationController _pulseController;
   DateTime? _lastPressedAt;
   StreamSubscription<String?>? _notificationSubscription;
-
 
   @override
   void initState() {
@@ -367,7 +471,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
 
     const platform = MethodChannel('com.quran.aya/system');
     platform.setMethodCallHandler((call) async {
-      final gesture = widget.storage.getString('athan_stop_gesture', defaultValue: 'both');
+      final gesture = widget.storage.getString(
+        'athan_stop_gesture',
+        defaultValue: 'both',
+      );
       if (gesture == 'none') return;
       if (call.method == 'volumeKeyPressed') {
         if (gesture == 'both' || gesture == 'volume_only') {
@@ -380,39 +487,42 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       }
     });
 
-    _notificationSubscription = NotificationService.selectNotificationStream.stream.listen((payload) {
-      if (payload == null) return;
-      if (payload == 'prayer_times') {
-        setState(() {
-          _currentTab = 2; // Switch to Prayer Times tab
-        });
-      } else if (payload == 'azkar_morning') {
-        setState(() {
-          _azkarInitialTab = 0; // Morning sub-tab
-          _currentTab = 3; // Azkar tab
-        });
-      } else if (payload == 'azkar_evening') {
-        setState(() {
-          _azkarInitialTab = 1; // Evening sub-tab
-          _currentTab = 3; // Azkar tab
-        });
-      } else if (payload.startsWith('quran_verse')) {
-        // Switch to Quran tab
-        setState(() {
-          _currentTab = 1;
-        });
-        
-        // If payload contains specific surah:ayah (e.g. quran_verse:2:255)
-        final parts = payload.split(':');
-        if (parts.length >= 3) {
-          final surahNum = int.tryParse(parts[1]);
-          final ayahNum = int.tryParse(parts[2]);
-          if (surahNum != null && ayahNum != null) {
-            _navigateToSpecificVerse(surahNum, ayahNum);
+    _notificationSubscription = NotificationService
+        .selectNotificationStream
+        .stream
+        .listen((payload) {
+          if (payload == null) return;
+          if (payload == 'prayer_times') {
+            setState(() {
+              _currentTab = 2; // Switch to Prayer Times tab
+            });
+          } else if (payload == 'azkar_morning') {
+            setState(() {
+              _azkarInitialTab = 0; // Morning sub-tab
+              _currentTab = 3; // Azkar tab
+            });
+          } else if (payload == 'azkar_evening') {
+            setState(() {
+              _azkarInitialTab = 1; // Evening sub-tab
+              _currentTab = 3; // Azkar tab
+            });
+          } else if (payload.startsWith('quran_verse')) {
+            // Switch to Quran tab
+            setState(() {
+              _currentTab = 1;
+            });
+
+            // If payload contains specific surah:ayah (e.g. quran_verse:2:255)
+            final parts = payload.split(':');
+            if (parts.length >= 3) {
+              final surahNum = int.tryParse(parts[1]);
+              final ayahNum = int.tryParse(parts[2]);
+              if (surahNum != null && ayahNum != null) {
+                _navigateToSpecificVerse(surahNum, ayahNum);
+              }
+            }
           }
-        }
-      }
-    });
+        });
 
     _fetchLocationOnOpen();
   }
@@ -422,7 +532,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return;
       final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
         Position? position = await ApiService.getBestLocation();
         double lat;
         double lon;
@@ -433,7 +544,9 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
           lat = position.latitude;
           lon = position.longitude;
           final address = await ApiService.reverseGeocode(lat, lon);
-          city = address['city'] ?? (TranslationService.isArabic ? 'موقعي' : 'My Location');
+          city =
+              address['city'] ??
+              (TranslationService.isArabic ? 'موقعي' : 'My Location');
           country = address['country'] ?? 'GPS';
         } else {
           final ipLoc = await ApiService.fetchLocationByIP();
@@ -452,13 +565,19 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
           method: method,
           school: school,
         );
-        await NotificationService().schedulePrayerAlarms(prayerData, widget.storage);
+        await NotificationService().schedulePrayerAlarms(
+          prayerData,
+          widget.storage,
+        );
       }
     } catch (_) {}
   }
 
   Future<void> _applyWakeLockOnLaunch() async {
-    final keepAwake = widget.storage.getBool('keep_screen_awake', defaultValue: false);
+    final keepAwake = widget.storage.getBool(
+      'keep_screen_awake',
+      defaultValue: false,
+    );
     if (keepAwake) {
       try {
         const platform = MethodChannel('com.quran.aya/system');
@@ -486,7 +605,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   }
 
   Future<void> _checkAlarmPermissionChange() async {
-    final wasJustGranted = widget.storage.getBool('alarm_permission_just_granted', defaultValue: false);
+    final wasJustGranted = widget.storage.getBool(
+      'alarm_permission_just_granted',
+      defaultValue: false,
+    );
     if (wasJustGranted) {
       await widget.storage.setBool('alarm_permission_just_granted', false);
       await _rescheduleAllAlarms();
@@ -520,24 +642,39 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   }
 
   Future<void> _loadLastBookmark() async {
-    // Only used for initial load or debug if needed, no longer strictly necessary 
+    // Only used for initial load or debug if needed, no longer strictly necessary
     // to maintain _lastBookmark state as DashboardScreen fetches it directly.
   }
 
   void _checkAutoStartFocusLock() {
-    final autoStart = widget.storage.getBool('focus_auto_start', defaultValue: false);
-    final duration = widget.storage.getInt('focus_lock_duration', defaultValue: 0);
+    final autoStart = widget.storage.getBool(
+      'focus_auto_start',
+      defaultValue: false,
+    );
+    final duration = widget.storage.getInt(
+      'focus_lock_duration',
+      defaultValue: 0,
+    );
     if (!autoStart || duration <= 0 || _focusTimeRemaining > 0) return;
 
-    final nowStr = DateTime.now().toIso8601String().substring(11, 16); // "HH:mm"
-    
+    final nowStr = DateTime.now().toIso8601String().substring(
+      11,
+      16,
+    ); // "HH:mm"
+
     final fajr = widget.storage.getString('widget_prayer_fajr').split(' ')[0];
     final dhuhr = widget.storage.getString('widget_prayer_dhuhr').split(' ')[0];
     final asr = widget.storage.getString('widget_prayer_asr').split(' ')[0];
-    final maghrib = widget.storage.getString('widget_prayer_maghrib').split(' ')[0];
+    final maghrib = widget.storage
+        .getString('widget_prayer_maghrib')
+        .split(' ')[0];
     final isha = widget.storage.getString('widget_prayer_isha').split(' ')[0];
 
-    if (nowStr == fajr || nowStr == dhuhr || nowStr == asr || nowStr == maghrib || nowStr == isha) {
+    if (nowStr == fajr ||
+        nowStr == dhuhr ||
+        nowStr == asr ||
+        nowStr == maghrib ||
+        nowStr == isha) {
       startFocusLock(duration);
     }
   }
@@ -551,7 +688,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       _isFocusOverlayShowing = true;
     });
 
-    final lockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+    final lockType = widget.storage.getString(
+      'focus_lock_type',
+      defaultValue: 'app_only',
+    );
     if (lockType == 'whole_phone') {
       try {
         const platform = MethodChannel('com.quran.aya/system');
@@ -563,8 +703,11 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
       if (_focusTimeRemaining <= 1) {
         timer.cancel();
         _pulseController.stop();
-        
-        final lockTypeInner = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+
+        final lockTypeInner = widget.storage.getString(
+          'focus_lock_type',
+          defaultValue: 'app_only',
+        );
         if (lockTypeInner == 'whole_phone') {
           try {
             const platform = MethodChannel('com.quran.aya/system');
@@ -594,7 +737,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     _focusTimer?.cancel();
     _pulseController.stop();
 
-    final lockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+    final lockType = widget.storage.getString(
+      'focus_lock_type',
+      defaultValue: 'app_only',
+    );
     if (lockType == 'whole_phone') {
       try {
         const platform = MethodChannel('com.quran.aya/system');
@@ -608,7 +754,11 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(TranslationService.isArabic ? "تم تجاوز قفل التركيز" : "Focus Lock Bypassed"),
+        content: Text(
+          TranslationService.isArabic
+              ? "تم تجاوز قفل التركيز"
+              : "Focus Lock Bypassed",
+        ),
         backgroundColor: Colors.redAccent,
       ),
     );
@@ -667,7 +817,13 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(TranslationService.isArabic ? 'فشل تحميل الإشارة المرجعية: $e' : 'Failed to load bookmark: $e')),
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? 'فشل تحميل الإشارة المرجعية: $e'
+                  : 'Failed to load bookmark: $e',
+            ),
+          ),
         );
       }
     }
@@ -677,11 +833,11 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final isDark = widget.storage.isDarkMode();
     final theme = Theme.of(context);
-    
+
     // Screens list mapping
     final List<Widget> screens = [
       DashboardScreen(
-        storage: widget.storage, 
+        storage: widget.storage,
         onTabChange: (index, {subTab}) {
           int targetTab = index;
           if (index == 2) {
@@ -702,9 +858,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         onContinueReading: _navigateToBookmark,
         onStartFocusLock: (mins) => startFocusLock(mins),
       ),
-      QuranScreen(
-        storage: widget.storage, 
-      ),
+      QuranScreen(storage: widget.storage),
       HadithScreen(
         storage: widget.storage,
         initialHadithNumber: _hadithInitialNumber,
@@ -714,10 +868,7 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         storage: widget.storage,
         initialSubTab: _prayerInitialTab,
       ),
-      AzkarScreen(
-        storage: widget.storage,
-        initialTabIndex: _azkarInitialTab,
-      ),
+      AzkarScreen(storage: widget.storage, initialTabIndex: _azkarInitialTab),
     ];
 
     final List<String> tabTitles = [
@@ -739,14 +890,15 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
           return;
         }
         final now = DateTime.now();
-        if (_lastPressedAt == null || now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
+        if (_lastPressedAt == null ||
+            now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
           _lastPressedAt = now;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 TranslationService.isArabic
                     ? "اضغط مرتين للخروج من التطبيق"
-                    : "Press back again to exit"
+                    : "Press back again to exit",
               ),
               duration: const Duration(seconds: 2),
             ),
@@ -760,35 +912,55 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
         appBar: AppBar(
           title: Text(
             tabTitles[_currentTab],
-            style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.5, fontSize: 18),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
+              fontSize: 18,
+            ),
           ),
           backgroundColor: theme.appBarTheme.backgroundColor,
           elevation: 0,
           actions: [
             if (_currentTab == 1)
               IconButton(
-                icon: Icon(Icons.download_for_offline, color: theme.appBarTheme.iconTheme?.color ?? const Color(0xFFE5C158)),
-                tooltip: TranslationService.isArabic ? 'إدارة التحميلات' : 'Downloads',
+                icon: Icon(
+                  Icons.download_for_offline,
+                  color:
+                      theme.appBarTheme.iconTheme?.color ??
+                      const Color(0xFFE5C158),
+                ),
+                tooltip: TranslationService.isArabic
+                    ? 'إدارة التحميلات'
+                    : 'Downloads',
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => QuranDownloadScreen(storage: widget.storage),
+                      builder: (context) =>
+                          QuranDownloadScreen(storage: widget.storage),
                     ),
                   );
                 },
               ),
             IconButton(
-              icon: Icon(Icons.bookmarks, color: theme.appBarTheme.iconTheme?.color ?? const Color(0xFFE5C158)),
-              tooltip: TranslationService.isArabic ? 'العلامات المرجعية' : 'Bookmarks',
+              icon: Icon(
+                Icons.bookmarks,
+                color:
+                    theme.appBarTheme.iconTheme?.color ??
+                    const Color(0xFFE5C158),
+              ),
+              tooltip: TranslationService.isArabic
+                  ? 'العلامات المرجعية'
+                  : 'Bookmarks',
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BookmarksScreen(storage: widget.storage),
+                    builder: (context) =>
+                        BookmarksScreen(storage: widget.storage),
                   ),
                 );
-                
+
                 if (result != null && result is Map) {
                   if (result['tab'] != null) {
                     setState(() {
@@ -803,7 +975,12 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
               },
             ),
             IconButton(
-              icon: Icon(Icons.settings, color: theme.appBarTheme.iconTheme?.color ?? const Color(0xFFE5C158)),
+              icon: Icon(
+                Icons.settings,
+                color:
+                    theme.appBarTheme.iconTheme?.color ??
+                    const Color(0xFFE5C158),
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -835,7 +1012,9 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                       return FadeTransition(opacity: animation, child: child);
                     },
                     child: KeyedSubtree(
-                      key: ValueKey<String>('$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId'),
+                      key: ValueKey<String>(
+                        '$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId',
+                      ),
                       child: screens[_currentTab],
                     ),
                   ),
@@ -847,7 +1026,9 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                     bottom: 8,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF111520).withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                        color: isDark
+                            ? const Color(0xFF111520).withOpacity(0.9)
+                            : Colors.white.withOpacity(0.9),
                         border: Border.all(
                           color: const Color(0xFFE5C158).withOpacity(0.2),
                           width: 1.5,
@@ -858,11 +1039,14 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                             color: Colors.black.withOpacity(0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
-                          )
+                          ),
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 10.0,
+                        ),
                         child: Row(
                           children: [
                             Container(
@@ -870,13 +1054,20 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                               height: 40,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFE5C158), Color(0xFFB45309)],
+                                  colors: [
+                                    Color(0xFFE5C158),
+                                    Color(0xFFB45309),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.music_note, color: Colors.black, size: 20),
+                              child: const Icon(
+                                Icons.music_note,
+                                color: Colors.black,
+                                size: 20,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -886,7 +1077,10 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                                 children: [
                                   Text(
                                     audioState.title,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -894,7 +1088,8 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                                     audioState.subtitle,
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                                      color: theme.textTheme.bodyMedium?.color
+                                          ?.withOpacity(0.6),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -903,11 +1098,21 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                               ),
                             ),
                             IconButton(
-                              icon: Icon(audioState.isPlaying ? Icons.pause : Icons.play_arrow, color: const Color(0xFFE5C158)),
-                              onPressed: () => AudioManager.instance.togglePlayPause(),
+                              icon: Icon(
+                                audioState.isPlaying
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: const Color(0xFFE5C158),
+                              ),
+                              onPressed: () =>
+                                  AudioManager.instance.togglePlayPause(),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close, size: 18, color: Colors.white60),
+                              icon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.white60,
+                              ),
                               onPressed: () => AudioManager.instance.stop(),
                             ),
                           ],
@@ -916,130 +1121,151 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
                     ),
                   ),
 
-            // Focus Lock Screen Overlay
-            if (_isFocusOverlayShowing)
-              Positioned.fill(
-                child: PopScope(
-                  canPop: false,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF041A16), Color(0xFF000806)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                    ),
-                    ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Spacer(),
-                            // Pulsing Golden Vector Star
-                            ScaleTransition(
-                              scale: Tween<double>(begin: 0.92, end: 1.08).animate(
-                                CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutCubic),
-                              ),
-                              child: FadeTransition(
-                                opacity: Tween<double>(begin: 0.7, end: 1.0).animate(
-                                  CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutCubic),
-                                ),
-                                child: Container(
-                                  width: 140,
-                                  height: 140,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFE5C158).withOpacity(0.15),
-                                        blurRadius: 40,
-                                        spreadRadius: 2,
-                                      )
-                                    ],
-                                  ),
-                                  child: CustomPaint(
-                                    painter: IslamicLogoPainter(
-                                      animationValue: _pulseController.value,
-                                      color: const Color(0xFFE5C158),
+                // Focus Lock Screen Overlay
+                if (_isFocusOverlayShowing)
+                  Positioned.fill(
+                    child: PopScope(
+                      canPop: false,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF041A16), Color(0xFF000806)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                              vertical: 32.0,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Spacer(),
+                                // Pulsing Golden Vector Star
+                                ScaleTransition(
+                                  scale: Tween<double>(begin: 0.92, end: 1.08)
+                                      .animate(
+                                        CurvedAnimation(
+                                          parent: _pulseController,
+                                          curve: Curves.easeInOutCubic,
+                                        ),
+                                      ),
+                                  child: FadeTransition(
+                                    opacity: Tween<double>(begin: 0.7, end: 1.0)
+                                        .animate(
+                                          CurvedAnimation(
+                                            parent: _pulseController,
+                                            curve: Curves.easeInOutCubic,
+                                          ),
+                                        ),
+                                    child: Container(
+                                      width: 140,
+                                      height: 140,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFFE5C158,
+                                            ).withOpacity(0.15),
+                                            blurRadius: 40,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: CustomPaint(
+                                        painter: IslamicLogoPainter(
+                                          animationValue:
+                                              _pulseController.value,
+                                          color: const Color(0xFFE5C158),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 48),
-                            
-                            // Focus Title
-                            Text(
-                              TranslationService.t('focus_active'),
-                              style: const TextStyle(
-                                color: Color(0xFFE5C158),
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Large Timer Display
-                            Text(
-                              _formatFocusTime(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 56,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 2,
-                                fontFeatures: [FontFeature.tabularFigures()],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Quote / Warning text
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: Text(
-                                TranslationService.t('focus_warning'),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 15,
-                                  height: 1.6,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            
-                            const Spacer(),
-                            
-                            // Emergency Bypass trigger (Double Tap)
-                            GestureDetector(
-                              onDoubleTap: _bypassFocusLock,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  TranslationService.t('focus_bypass'),
+                                const SizedBox(height: 48),
+
+                                // Focus Title
+                                Text(
+                                  TranslationService.t('focus_active'),
                                   style: const TextStyle(
-                                    color: Colors.white24,
-                                    fontSize: 12,
-                                    decoration: TextDecoration.underline,
+                                    color: Color(0xFFE5C158),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Large Timer Display
+                                Text(
+                                  _formatFocusTime(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 56,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
                                   ),
                                 ),
-                              ),
+                                const SizedBox(height: 24),
+
+                                // Quote / Warning text
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0,
+                                  ),
+                                  child: Text(
+                                    TranslationService.t('focus_warning'),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 15,
+                                      height: 1.6,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+
+                                const Spacer(),
+
+                                // Emergency Bypass trigger (Double Tap)
+                                GestureDetector(
+                                  onDoubleTap: _bypassFocusLock,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text(
+                                      TranslationService.t('focus_bypass'),
+                                      style: const TextStyle(
+                                        color: Colors.white24,
+                                        fontSize: 12,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-          ],
-        );
-      },
-    ),
+              ],
+            );
+          },
+        ),
         bottomNavigationBar: () {
-          final bottomNavbarStyle = widget.storage.getString('bottom_navbar_style', defaultValue: 'solid');
+          final bottomNavbarStyle = widget.storage.getString(
+            'bottom_navbar_style',
+            defaultValue: 'solid',
+          );
           final bottomBarWidget = BottomNavigationBar(
             currentIndex: _currentTab,
             onTap: (index) {
@@ -1050,7 +1276,9 @@ class _MainScaffoldState extends State<MainScaffold> with SingleTickerProviderSt
             type: BottomNavigationBarType.fixed,
             selectedFontSize: 11,
             unselectedFontSize: 11,
-            backgroundColor: bottomNavbarStyle == 'floating' ? Colors.transparent : theme.bottomNavigationBarTheme.backgroundColor,
+            backgroundColor: bottomNavbarStyle == 'floating'
+                ? Colors.transparent
+                : theme.bottomNavigationBarTheme.backgroundColor,
             elevation: bottomNavbarStyle == 'floating' ? 0 : null,
             items: [
               BottomNavigationBarItem(

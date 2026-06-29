@@ -40,7 +40,7 @@ class QuranDownloadService extends ChangeNotifier {
 
   final Map<int, SurahDownloadState> _downloadStates = {};
   final Map<int, http.Client> _activeClients = {};
-  
+
   bool _isDownloadingAll = false;
   bool get isDownloadingAll => _isDownloadingAll;
 
@@ -56,7 +56,9 @@ class QuranDownloadService extends ChangeNotifier {
       final downloaded = await isSurahDownloaded(i, reciter);
       _downloadStates[i] = SurahDownloadState(
         surahNum: i,
-        status: downloaded ? DownloadStatus.downloaded : DownloadStatus.notDownloaded,
+        status: downloaded
+            ? DownloadStatus.downloaded
+            : DownloadStatus.notDownloaded,
         progress: downloaded ? 1.0 : 0.0,
       );
     }
@@ -147,7 +149,7 @@ class QuranDownloadService extends ChangeNotifier {
       final url = ApiService.buildSurahAudioUrl(surahNum, reciter: reciter);
       final localPath = await getLocalSurahPath(surahNum, reciter);
       final tempPath = '$localPath.tmp';
-      
+
       final tempFile = File(tempPath);
       await tempFile.parent.create(recursive: true);
 
@@ -159,25 +161,30 @@ class QuranDownloadService extends ChangeNotifier {
         int downloaded = 0;
         final sink = tempFile.openWrite();
 
-        await response.stream.listen(
-          (chunk) {
-            sink.add(chunk);
-            downloaded += chunk.length;
-            if (contentLength > 0) {
-              final double p = (downloaded / contentLength).clamp(0.0, 0.99);
-              _downloadStates[surahNum] = SurahDownloadState(
-                surahNum: surahNum,
-                status: DownloadStatus.downloading,
-                progress: p,
-              );
-              notifyListeners();
-            }
-          },
-          onError: (e) {
-            throw e;
-          },
-          cancelOnError: true,
-        ).asFuture();
+        await response.stream
+            .listen(
+              (chunk) {
+                sink.add(chunk);
+                downloaded += chunk.length;
+                if (contentLength > 0) {
+                  final double p = (downloaded / contentLength).clamp(
+                    0.0,
+                    0.99,
+                  );
+                  _downloadStates[surahNum] = SurahDownloadState(
+                    surahNum: surahNum,
+                    status: DownloadStatus.downloading,
+                    progress: p,
+                  );
+                  notifyListeners();
+                }
+              },
+              onError: (e) {
+                throw e;
+              },
+              cancelOnError: true,
+            )
+            .asFuture();
 
         await sink.flush();
         await sink.close();
@@ -243,7 +250,8 @@ class QuranDownloadService extends ChangeNotifier {
     for (int i = 1; i <= 114; i++) {
       if (!_isDownloadingAll) break;
       final state = getState(i);
-      if (state.status == DownloadStatus.notDownloaded || state.status == DownloadStatus.error) {
+      if (state.status == DownloadStatus.notDownloaded ||
+          state.status == DownloadStatus.error) {
         await downloadSurah(i, reciter);
       }
     }
@@ -322,7 +330,7 @@ class QuranDownloadService extends ChangeNotifier {
     for (int i = 1; i <= 114; i++) {
       var cached = storage.getString('cached_tafsir_${tafsirEdition}_$i');
       if (cached.isEmpty && tafsirEdition == 'ar.muyassar') {
-         cached = storage.getString('cached_tafsir_$i');
+        cached = storage.getString('cached_tafsir_$i');
       }
       if (cached.isNotEmpty) {
         count++;
@@ -331,7 +339,10 @@ class QuranDownloadService extends ChangeNotifier {
     return count;
   }
 
-  Future<void> downloadAllTafsir(StorageService storage, String tafsirEdition) async {
+  Future<void> downloadAllTafsir(
+    StorageService storage,
+    String tafsirEdition,
+  ) async {
     if (_isDownloadingTafsir) return;
     _isDownloadingTafsir = true;
     _tafsirDownloadProgress = 0.0;
@@ -342,14 +353,19 @@ class QuranDownloadService extends ChangeNotifier {
       if (!_isDownloadingTafsir) break;
       var cached = storage.getString('cached_tafsir_${tafsirEdition}_$i');
       if (cached.isEmpty && tafsirEdition == 'ar.muyassar') {
-         cached = storage.getString('cached_tafsir_$i');
+        cached = storage.getString('cached_tafsir_$i');
       }
       if (cached.isEmpty) {
         try {
           final url = 'https://api.alquran.cloud/v1/surah/$i/$tafsirEdition';
-          final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+          final response = await http
+              .get(Uri.parse(url))
+              .timeout(const Duration(seconds: 5));
           if (response.statusCode == 200) {
-            await storage.setString('cached_tafsir_${tafsirEdition}_$i', response.body);
+            await storage.setString(
+              'cached_tafsir_${tafsirEdition}_$i',
+              response.body,
+            );
           }
         } catch (_) {}
       }
@@ -367,7 +383,10 @@ class QuranDownloadService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> deleteAllTafsir(StorageService storage, String tafsirEdition) async {
+  Future<void> deleteAllTafsir(
+    StorageService storage,
+    String tafsirEdition,
+  ) async {
     _isDownloadingTafsir = false;
     for (int i = 1; i <= 114; i++) {
       await storage.remove('cached_tafsir_${tafsirEdition}_$i');

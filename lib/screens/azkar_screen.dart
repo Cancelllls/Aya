@@ -18,7 +18,8 @@ class AzkarScreen extends StatefulWidget {
   State<AzkarScreen> createState() => _AzkarScreenState();
 }
 
-class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStateMixin {
+class _AzkarScreenState extends State<AzkarScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final Map<String, int> _countsCache = {};
   bool _showTranslation = true;
@@ -27,10 +28,16 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _showTranslation = widget.storage.getBool('azkar_show_translation', defaultValue: !TranslationService.isArabic);
-    _showTransliteration = widget.storage.getBool('azkar_show_transliteration', defaultValue: !TranslationService.isArabic);
+    _showTranslation = widget.storage.getBool(
+      'azkar_show_translation',
+      defaultValue: !TranslationService.isArabic,
+    );
+    _showTransliteration = widget.storage.getBool(
+      'azkar_show_transliteration',
+      defaultValue: !TranslationService.isArabic,
+    );
     _tabController = TabController(
-      length: 5, 
+      length: 5,
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
@@ -45,7 +52,8 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   @override
   void didUpdateWidget(covariant AzkarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTabIndex != widget.initialTabIndex || _tabController.index != widget.initialTabIndex) {
+    if (oldWidget.initialTabIndex != widget.initialTabIndex ||
+        _tabController.index != widget.initialTabIndex) {
       _tabController.animateTo(widget.initialTabIndex);
     }
   }
@@ -59,16 +67,28 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
   void _initializeCounts() {
     // Set up standard counts for each item, loading from persistence if available
     for (var item in AzkarData.morning) {
-      _countsCache[item.id] = widget.storage.getInt('azkar_count_${item.id}', defaultValue: item.count);
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
     }
     for (var item in AzkarData.evening) {
-      _countsCache[item.id] = widget.storage.getInt('azkar_count_${item.id}', defaultValue: item.count);
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
     }
     for (var item in AzkarData.postPrayer) {
-      _countsCache[item.id] = widget.storage.getInt('azkar_count_${item.id}', defaultValue: item.count);
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
     }
     for (var item in AzkarData.daily) {
-      _countsCache[item.id] = widget.storage.getInt('azkar_count_${item.id}', defaultValue: item.count);
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
     }
   }
 
@@ -119,12 +139,17 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
         children: [
           // Language Option Chips
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Row(
               children: [
                 FilterChip(
                   label: Text(
-                    TranslationService.isArabic ? "إظهار الترجمة" : "Show Translation",
+                    TranslationService.isArabic
+                        ? "إظهار الترجمة"
+                        : "Show Translation",
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -145,11 +170,15 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                 const SizedBox(width: 8),
                 FilterChip(
                   label: Text(
-                    TranslationService.isArabic ? "النطق اللاتيني" : "Transliteration",
+                    TranslationService.isArabic
+                        ? "النطق اللاتيني"
+                        : "Transliteration",
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: _showTransliteration ? Colors.black : Colors.white70,
+                      color: _showTransliteration
+                          ? Colors.black
+                          : Colors.white70,
                     ),
                   ),
                   selected: _showTransliteration,
@@ -174,7 +203,8 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
               controller: _tabController,
               indicatorColor: const Color(0xFFE5C158),
               labelColor: const Color(0xFFE5C158),
-              unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              unselectedLabelColor: theme.textTheme.bodyMedium?.color
+                  ?.withOpacity(0.5),
               isScrollable: true,
               physics: const BouncingScrollPhysics(),
               tabs: [
@@ -191,7 +221,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 0
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                                  0.4,
+                                ),
                         ),
                       ),
                     ],
@@ -210,7 +242,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 1
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                                  0.4,
+                                ),
                         ),
                       ),
                     ],
@@ -229,7 +263,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 2
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                                  0.4,
+                                ),
                         ),
                       ),
                     ],
@@ -248,7 +284,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 3
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                                  0.4,
+                                ),
                         ),
                       ),
                     ],
@@ -258,7 +296,11 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(TranslationService.isArabic ? "أسماء الله" : "Allah's Names"),
+                      Text(
+                        TranslationService.isArabic
+                            ? "أسماء الله"
+                            : "Allah's Names",
+                      ),
                       const SizedBox(height: 2),
                       Text(
                         "99",
@@ -267,7 +309,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 4
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                                  0.4,
+                                ),
                         ),
                       ),
                     ],
@@ -276,7 +320,7 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
               ],
             ),
           ),
-          
+
           // Tab views
           Expanded(
             child: TabBarView(
@@ -307,16 +351,24 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
             children: [
               TextButton.icon(
                 onPressed: () => _resetAzkarTab(list),
-                icon: const Icon(Icons.restore, size: 16, color: Color(0xFFE5C158)),
+                icon: const Icon(
+                  Icons.restore,
+                  size: 16,
+                  color: Color(0xFFE5C158),
+                ),
                 label: Text(
                   TranslationService.t('reset_counts'),
-                  style: const TextStyle(color: Color(0xFFE5C158), fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Color(0xFFE5C158),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),
-        
+
         Expanded(
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
@@ -333,9 +385,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
-                    color: isDone 
-                      ? const Color(0xFF10B981).withOpacity(0.5) 
-                      : Colors.white.withOpacity(0.04),
+                    color: isDone
+                        ? const Color(0xFF10B981).withOpacity(0.5)
+                        : Colors.white.withOpacity(0.04),
                     width: isDone ? 1.5 : 1.0,
                   ),
                 ),
@@ -349,7 +401,10 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFE5C158).withOpacity(0.08),
                               borderRadius: BorderRadius.circular(4),
@@ -366,20 +421,37 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           // Interactive decrement counter
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDone ? const Color(0xFF10B981) : const Color(0xFFE5C158),
-                              foregroundColor: isDone ? Colors.white : Colors.black,
+                              backgroundColor: isDone
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFE5C158),
+                              foregroundColor: isDone
+                                  ? Colors.white
+                                  : Colors.black,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            icon: Icon(isDone ? Icons.check : Icons.fingerprint, size: 14),
+                            icon: Icon(
+                              isDone ? Icons.check : Icons.fingerprint,
+                              size: 14,
+                            ),
                             label: Text(
-                              isDone 
-                                  ? TranslationService.t('done') 
+                              isDone
+                                  ? TranslationService.t('done')
                                   : "$currentCount ${TranslationService.t('remaining')}",
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            onPressed: isDone ? null : () => _decrementCount(item.id, item.count),
+                            onPressed: isDone
+                                ? null
+                                : () => _decrementCount(item.id, item.count),
                           ),
                         ],
                       ),
@@ -399,18 +471,23 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if ((_showTransliteration && item.transliteration.isNotEmpty) || (_showTranslation && item.translation.isNotEmpty)) ...[
+                      if ((_showTransliteration &&
+                              item.transliteration.isNotEmpty) ||
+                          (_showTranslation &&
+                              item.translation.isNotEmpty)) ...[
                         const Divider(color: Colors.white10),
                         const SizedBox(height: 8),
                       ],
                       // Transliteration (Italicized)
-                      if (_showTransliteration && item.transliteration.isNotEmpty) ...[
+                      if (_showTransliteration &&
+                          item.transliteration.isNotEmpty) ...[
                         Text(
                           item.transliteration,
                           style: TextStyle(
                             fontSize: 13,
                             fontStyle: FontStyle.italic,
-                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withOpacity(0.6),
                             height: 1.4,
                           ),
                         ),
@@ -422,7 +499,8 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                           item.translation,
                           style: TextStyle(
                             fontSize: 13,
-                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withOpacity(0.8),
                             height: 1.4,
                           ),
                         ),
@@ -433,7 +511,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                         "${TranslationService.isArabic ? 'المصدر' : 'Source'}: ${item.reference}",
                         style: TextStyle(
                           fontSize: 10,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                            0.4,
+                          ),
                         ),
                       ),
                     ],
@@ -466,10 +546,7 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: Colors.white.withOpacity(0.04),
-              width: 1.0,
-            ),
+            side: BorderSide(color: Colors.white.withOpacity(0.04), width: 1.0),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
@@ -479,7 +556,10 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                 Align(
                   alignment: Alignment.topRight,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE5C158).withOpacity(0.08),
                       borderRadius: BorderRadius.circular(4),
@@ -513,7 +593,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                     style: TextStyle(
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.6,
+                      ),
                     ),
                   ),
                 if (_showTranslation) ...[
@@ -525,7 +607,9 @@ class _AzkarScreenState extends State<AzkarScreen> with SingleTickerProviderStat
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 10,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.8,
+                      ),
                     ),
                   ),
                 ],

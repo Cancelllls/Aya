@@ -9,10 +9,7 @@ import 'surah_reader_screen.dart';
 class QuranScreen extends StatefulWidget {
   final StorageService storage;
 
-  const QuranScreen({
-    super.key,
-    required this.storage,
-  });
+  const QuranScreen({super.key, required this.storage});
 
   @override
   State<QuranScreen> createState() => _QuranScreenState();
@@ -56,7 +53,13 @@ class _QuranScreenState extends State<QuranScreen> {
           _hasError = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(TranslationService.isArabic ? 'فشل تحميل قائمة السور: $e' : 'Failed to load Surah list: $e')),
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? 'فشل تحميل قائمة السور: $e'
+                  : 'Failed to load Surah list: $e',
+            ),
+          ),
         );
       }
     }
@@ -105,7 +108,11 @@ class _QuranScreenState extends State<QuranScreen> {
             style: const TextStyle(fontSize: 15),
             decoration: InputDecoration(
               hintText: TranslationService.t('search_placeholder'),
-              prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFFE5C158)),
+              prefixIcon: const Icon(
+                Icons.search,
+                size: 20,
+                color: Color(0xFFE5C158),
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 18),
@@ -117,10 +124,15 @@ class _QuranScreenState extends State<QuranScreen> {
                   : null,
               filled: true,
               fillColor: theme.cardColor,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 0,
+                horizontal: 16,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: const Color(0xFFE5C158).withOpacity(0.15)),
+                borderSide: BorderSide(
+                  color: const Color(0xFFE5C158).withOpacity(0.15),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -141,50 +153,70 @@ class _QuranScreenState extends State<QuranScreen> {
                   child: CircularProgressIndicator(color: Color(0xFFE5C158)),
                 )
               : _hasError
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                          const SizedBox(height: 12),
-                          Text(
-                            TranslationService.isArabic ? "فشل تحميل قائمة السور" : "Failed to load Surah list",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE5C158),
-                              foregroundColor: Colors.black,
-                            ),
-                            onPressed: _loadSurahs,
-                            child: Text(TranslationService.isArabic ? "إعادة المحاولة" : "Retry"),
-                          ),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
                       ),
-                    )
-                  : _filteredSurahList.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.search_off, size: 48, color: theme.disabledColor),
-                              const SizedBox(height: 12),
-                              Text(
-                                TranslationService.t('no_surah_match'),
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _filteredSurahList.length,
-                      itemBuilder: (context, index) {
-                        final surah = _filteredSurahList[index];
-                        return _buildSurahTile(surah, theme, isDark);
-                      },
-                    ),
+                      const SizedBox(height: 12),
+                      Text(
+                        TranslationService.isArabic
+                            ? "فشل تحميل قائمة السور"
+                            : "Failed to load Surah list",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5C158),
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: _loadSurahs,
+                        child: Text(
+                          TranslationService.isArabic
+                              ? "إعادة المحاولة"
+                              : "Retry",
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : _filteredSurahList.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 48,
+                        color: theme.disabledColor,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        TranslationService.t('no_surah_match'),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _filteredSurahList.length,
+                  itemBuilder: (context, index) {
+                    final surah = _filteredSurahList[index];
+                    return _buildSurahTile(surah, theme, isDark);
+                  },
+                ),
         ),
       ],
     );
@@ -197,7 +229,10 @@ class _QuranScreenState extends State<QuranScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: const Color(0xFFE5C158).withOpacity(0.12), width: 1),
+        side: BorderSide(
+          color: const Color(0xFFE5C158).withOpacity(0.12),
+          width: 1,
+        ),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -213,7 +248,10 @@ class _QuranScreenState extends State<QuranScreen> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.3), width: 1.5),
+                    border: Border.all(
+                      color: const Color(0xFFE5C158).withOpacity(0.3),
+                      width: 1.5,
+                    ),
                     color: const Color(0xFFE5C158).withOpacity(0.08),
                   ),
                 ),
@@ -222,7 +260,10 @@ class _QuranScreenState extends State<QuranScreen> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.3), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFFE5C158).withOpacity(0.3),
+                    width: 1.5,
+                  ),
                 ),
               ),
               Text(
@@ -238,10 +279,7 @@ class _QuranScreenState extends State<QuranScreen> {
         ),
         title: Text(
           surah.englishName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         subtitle: Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -287,10 +325,8 @@ class _QuranScreenState extends State<QuranScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SurahReaderScreen(
-                surah: surah,
-                storage: widget.storage,
-              ),
+              builder: (context) =>
+                  SurahReaderScreen(surah: surah, storage: widget.storage),
             ),
           );
         },

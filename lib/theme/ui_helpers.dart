@@ -13,7 +13,7 @@ class UiHelpers {
   static double responsiveScale(BuildContext context, {double base = 1.0}) {
     final width = MediaQuery.of(context).size.width;
     if (width < 360) return base * 0.85; // Scale down for tiny screens
-    if (width >= 600) return base * 1.2;  // Scale up for tablets
+    if (width >= 600) return base * 1.2; // Scale up for tablets
     return base;
   }
 

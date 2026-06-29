@@ -26,7 +26,8 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   static const _platform = MethodChannel('com.quran.aya/system');
 
   String _themePreset = 'dark';
@@ -35,7 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   String _quranFont = 'font-scheherazade';
   String _reciter = 'ar.alafasy';
   String _tafsirEdition = 'ar.muyassar';
-  
+
   // Add calculation settings
   int _calcMethod = 2;
   int _asrMethod = 0;
@@ -74,45 +75,118 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     AdhanAudioService.instance.init();
-    _themePreset = widget.storage.getString('theme_preset', defaultValue: 'dark');
-    _bottomNavbarStyle = widget.storage.getString('bottom_navbar_style', defaultValue: 'solid');
-    _quranFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
-    _reciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
-    _tafsirEdition = widget.storage.getString('default_tafsir', defaultValue: 'ar.muyassar');
-    
+    _themePreset = widget.storage.getString(
+      'theme_preset',
+      defaultValue: 'dark',
+    );
+    _bottomNavbarStyle = widget.storage.getString(
+      'bottom_navbar_style',
+      defaultValue: 'solid',
+    );
+    _quranFont = widget.storage.getString(
+      'quran_font',
+      defaultValue: 'font-scheherazade',
+    );
+    _reciter = widget.storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
+    _tafsirEdition = widget.storage.getString(
+      'default_tafsir',
+      defaultValue: 'ar.muyassar',
+    );
+
     _calcMethod = widget.storage.getInt('calc_method', defaultValue: 2);
     _asrMethod = widget.storage.getInt('asr_method', defaultValue: 0);
-    _continuousPlay = widget.storage.getBool('setting_continuous_play', defaultValue: true);
-    _hideContinuousBorders = widget.storage.getBool('setting_hide_continuous_borders', defaultValue: false);
-    _autoBookmark = widget.storage.getBool('setting_auto_bookmark', defaultValue: true);
-    _immersiveReader = widget.storage.getBool('setting_immersive_reader', defaultValue: false);
+    _continuousPlay = widget.storage.getBool(
+      'setting_continuous_play',
+      defaultValue: true,
+    );
+    _hideContinuousBorders = widget.storage.getBool(
+      'setting_hide_continuous_borders',
+      defaultValue: false,
+    );
+    _autoBookmark = widget.storage.getBool(
+      'setting_auto_bookmark',
+      defaultValue: true,
+    );
+    _immersiveReader = widget.storage.getBool(
+      'setting_immersive_reader',
+      defaultValue: false,
+    );
 
-    _keepScreenAwake = widget.storage.getBool('keep_screen_awake', defaultValue: false);
-    _focusLockDuration = widget.storage.getInt('focus_lock_duration', defaultValue: 0);
-    _focusAutoStart = widget.storage.getBool('focus_auto_start', defaultValue: false);
-    _focusLockType = widget.storage.getString('focus_lock_type', defaultValue: 'app_only');
+    _keepScreenAwake = widget.storage.getBool(
+      'keep_screen_awake',
+      defaultValue: false,
+    );
+    _focusLockDuration = widget.storage.getInt(
+      'focus_lock_duration',
+      defaultValue: 0,
+    );
+    _focusAutoStart = widget.storage.getBool(
+      'focus_auto_start',
+      defaultValue: false,
+    );
+    _focusLockType = widget.storage.getString(
+      'focus_lock_type',
+      defaultValue: 'app_only',
+    );
 
-    _morningAzkarReminder = widget.storage.getBool('morning_azkar_reminder', defaultValue: true);
-    _eveningAzkarReminder = widget.storage.getBool('evening_azkar_reminder', defaultValue: true);
-    _todaysVerseReminder = widget.storage.getBool('todays_verse_reminder', defaultValue: true);
+    _morningAzkarReminder = widget.storage.getBool(
+      'morning_azkar_reminder',
+      defaultValue: true,
+    );
+    _eveningAzkarReminder = widget.storage.getBool(
+      'evening_azkar_reminder',
+      defaultValue: true,
+    );
+    _todaysVerseReminder = widget.storage.getBool(
+      'todays_verse_reminder',
+      defaultValue: true,
+    );
 
-    _use24hFormat = widget.storage.getBool('use_24h_format', defaultValue: false);
-    _swipeSurahNavigation = widget.storage.getBool('swipe_surah_navigation', defaultValue: true);
-    _preAdhanAlertMode = widget.storage.getString('pre_adhan_alert_mode', defaultValue: 'vibrate');
-    _preAdhanDuration = widget.storage.getInt('pre_adhan_duration', defaultValue: 10);
-    _adhanAlertMode = widget.storage.getString('adhan_alert_mode', defaultValue: 'real_reciter');
-    _adhanReciter = widget.storage.getString('adhan_reciter', defaultValue: 'mishary');
-    _athanStopGesture = widget.storage.getString('athan_stop_gesture', defaultValue: 'both');
+    _use24hFormat = widget.storage.getBool(
+      'use_24h_format',
+      defaultValue: false,
+    );
+    _swipeSurahNavigation = widget.storage.getBool(
+      'swipe_surah_navigation',
+      defaultValue: true,
+    );
+    _preAdhanAlertMode = widget.storage.getString(
+      'pre_adhan_alert_mode',
+      defaultValue: 'vibrate',
+    );
+    _preAdhanDuration = widget.storage.getInt(
+      'pre_adhan_duration',
+      defaultValue: 10,
+    );
+    _adhanAlertMode = widget.storage.getString(
+      'adhan_alert_mode',
+      defaultValue: 'real_reciter',
+    );
+    _adhanReciter = widget.storage.getString(
+      'adhan_reciter',
+      defaultValue: 'mishary',
+    );
+    _athanStopGesture = widget.storage.getString(
+      'athan_stop_gesture',
+      defaultValue: 'both',
+    );
 
     _checkPermissions();
     final purchaseUpdated = InAppPurchase.instance.purchaseStream;
-    _purchaseSubscription = purchaseUpdated.listen((purchaseDetailsList) {
-      _listenToPurchaseUpdated(purchaseDetailsList);
-    }, onDone: () {
-      _purchaseSubscription?.cancel();
-    }, onError: (error) {
-      // handle error here
-    });
+    _purchaseSubscription = purchaseUpdated.listen(
+      (purchaseDetailsList) {
+        _listenToPurchaseUpdated(purchaseDetailsList);
+      },
+      onDone: () {
+        _purchaseSubscription?.cancel();
+      },
+      onError: (error) {
+        // handle error here
+      },
+    );
   }
 
   @override
@@ -132,11 +206,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   Future<void> _checkPermissions() async {
     try {
-      final alarm = await _platform.invokeMethod<bool>('checkExactAlarmPermission') ?? true;
-      final batteryOptimized = await _platform.invokeMethod<bool>('checkBatteryOptimization') ?? false;
+      final alarm =
+          await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
+          true;
+      final batteryOptimized =
+          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
+          false;
       setState(() {
         _exactAlarmPermitted = alarm;
-        _batteryIgnored = batteryOptimized; // true means ignored (disabled), false means optimized (not ignored)
+        _batteryIgnored =
+            batteryOptimized; // true means ignored (disabled), false means optimized (not ignored)
       });
     } catch (_) {}
   }
@@ -243,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       await widget.storage.setString('adhan_reciter', val);
       await _autoDownloadReciterAudio(val);
       await _rescheduleAlarms();
-      
+
       // Auto-play the newly selected reciter
       await AdhanAudioService.instance.stopPreview();
       await AdhanAudioService.instance.playPreview(val);
@@ -251,31 +330,47 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   Future<void> _autoDownloadReciterAudio(String reciterId) async {
-    final isDownloaded = await AdhanAudioService.instance.isReciterDownloaded(reciterId);
+    final isDownloaded = await AdhanAudioService.instance.isReciterDownloaded(
+      reciterId,
+    );
     if (!isDownloaded) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
                 const SizedBox(width: 12),
-                Text(TranslationService.isArabic 
-                    ? 'جاري تنزيل صوت المؤذن...' 
-                    : 'Downloading reciter audio...'),
+                Text(
+                  TranslationService.isArabic
+                      ? 'جاري تنزيل صوت المؤذن...'
+                      : 'Downloading reciter audio...',
+                ),
               ],
             ),
             duration: const Duration(seconds: 5),
           ),
         );
       }
-      final success = await AdhanAudioService.instance.downloadReciterAudio(reciterId);
+      final success = await AdhanAudioService.instance.downloadReciterAudio(
+        reciterId,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success
-                ? (TranslationService.isArabic ? 'تم تنزيل صوت المؤذن ✓' : 'Reciter audio downloaded ✓')
-                : (TranslationService.isArabic ? 'فشل التنزيل، سيتم التنزيل عند الأذان' : 'Download failed, will retry at athan time')),
+            content: Text(
+              success
+                  ? (TranslationService.isArabic
+                        ? 'تم تنزيل صوت المؤذن ✓'
+                        : 'Reciter audio downloaded ✓')
+                  : (TranslationService.isArabic
+                        ? 'فشل التنزيل، سيتم التنزيل عند الأذان'
+                        : 'Download failed, will retry at athan time'),
+            ),
             backgroundColor: success ? Colors.green : Colors.orangeAccent,
           ),
         );
@@ -284,18 +379,25 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   Future<void> _autoDownloadPreAdhanVoice() async {
-    final isDownloaded = await AdhanAudioService.instance.isPreAdhanDownloaded();
+    final isDownloaded = await AdhanAudioService.instance
+        .isPreAdhanDownloaded();
     if (!isDownloaded) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
                 const SizedBox(width: 12),
-                Text(TranslationService.isArabic 
-                    ? 'جاري تنزيل التنبيه الصوتي...' 
-                    : 'Downloading pre-adhan voice alert...'),
+                Text(
+                  TranslationService.isArabic
+                      ? 'جاري تنزيل التنبيه الصوتي...'
+                      : 'Downloading pre-adhan voice alert...',
+                ),
               ],
             ),
             duration: const Duration(seconds: 5),
@@ -306,9 +408,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success
-                ? (TranslationService.isArabic ? 'تم تنزيل التنبيه الصوتي ✓' : 'Pre-adhan voice alert downloaded ✓')
-                : (TranslationService.isArabic ? 'فشل التنزيل، سيتم التنزيل عند التنبيه' : 'Download failed, will retry at alert time')),
+            content: Text(
+              success
+                  ? (TranslationService.isArabic
+                        ? 'تم تنزيل التنبيه الصوتي ✓'
+                        : 'Pre-adhan voice alert downloaded ✓')
+                  : (TranslationService.isArabic
+                        ? 'فشل التنزيل، سيتم التنزيل عند التنبيه'
+                        : 'Download failed, will retry at alert time'),
+            ),
             backgroundColor: success ? Colors.green : Colors.orangeAccent,
           ),
         );
@@ -334,7 +442,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     }
   }
 
-  Future<void> _toggleDailyReminder(String key, bool val, Function(bool) updateState) async {
+  Future<void> _toggleDailyReminder(
+    String key,
+    bool val,
+    Function(bool) updateState,
+  ) async {
     await widget.storage.setBool(key, val);
     setState(() {
       updateState(val);
@@ -350,18 +462,24 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         // Show pending dialog
       } else if (purchaseDetails.status == PurchaseStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(TranslationService.isArabic ? "فشلت عملية الدعم، يرجى المحاولة مرة أخرى." : "Support donation failed. Please try again.")),
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? "فشلت عملية الدعم، يرجى المحاولة مرة أخرى."
+                  : "Support donation failed. Please try again.",
+            ),
+          ),
         );
       } else if (purchaseDetails.status == PurchaseStatus.purchased ||
-                 purchaseDetails.status == PurchaseStatus.restored) {
+          purchaseDetails.status == PurchaseStatus.restored) {
         // Complete donation!
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green,
             content: Text(
-              TranslationService.isArabic 
-                  ? "تقبل الله منكم! شكراً جزيلاً لدعمكم الكريم." 
-                  : "Thank you for your generous support!"
+              TranslationService.isArabic
+                  ? "تقبل الله منكم! شكراً جزيلاً لدعمكم الكريم."
+                  : "Thank you for your generous support!",
             ),
           ),
         );
@@ -377,24 +495,32 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     final bool available = await InAppPurchase.instance.isAvailable();
     if (!available) {
       messenger.showSnackBar(
-        SnackBar(content: Text(TranslationService.isArabic ? "متجر Google Play غير متوفر حالياً." : "Google Play Store is currently unavailable.")),
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? "متجر Google Play غير متوفر حالياً."
+                : "Google Play Store is currently unavailable.",
+          ),
+        ),
       );
       return;
     }
 
     // Dynamic product ID based on amount
     final String productId = 'support_donation_${amount.toInt()}';
-    
-    final ProductDetailsResponse response = await InAppPurchase.instance.queryProductDetails({productId});
-    if (response.notFoundIDs.contains(productId) || response.productDetails.isEmpty) {
+
+    final ProductDetailsResponse response = await InAppPurchase.instance
+        .queryProductDetails({productId});
+    if (response.notFoundIDs.contains(productId) ||
+        response.productDetails.isEmpty) {
       // Fallback message if localized products are not configured in Play Console yet
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            TranslationService.isArabic 
-                ? "جاري إرسال طلب الدعم بقيمة \$$amount عبر Google Play..." 
-                : "Initiating support for \$$amount via Google Play..."
-          )
+            TranslationService.isArabic
+                ? "جاري إرسال طلب الدعم بقيمة \$$amount عبر Google Play..."
+                : "Initiating support for \$$amount via Google Play...",
+          ),
         ),
       );
       // Simulate launch request or handle gracefully
@@ -402,8 +528,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     }
 
     final ProductDetails productDetails = response.productDetails.first;
-    final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
-    
+    final PurchaseParam purchaseParam = PurchaseParam(
+      productDetails: productDetails,
+    );
+
     try {
       await InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
     } catch (_) {}
@@ -416,7 +544,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          TranslationService.isArabic ? "دعم وتطوير التطبيق" : "Support Project & Development",
+          TranslationService.isArabic
+              ? "دعم وتطوير التطبيق"
+              : "Support Project & Development",
           textAlign: TextAlign.center,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -424,8 +554,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              TranslationService.isArabic 
-                  ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:" 
+              TranslationService.isArabic
+                  ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
                   : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, height: 1.4),
@@ -439,14 +569,18 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     backgroundColor: const Color(0xFFE5C158),
                     foregroundColor: Colors.black,
                     minimumSize: const Size(double.infinity, 44),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                     _supportProject(val);
                   },
                   child: Text(
-                    TranslationService.isArabic ? "دعم بقيمة \$$val دولار" : "Support \$$val USD",
+                    TranslationService.isArabic
+                        ? "دعم بقيمة \$$val دولار"
+                        : "Support \$$val USD",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -585,99 +719,128 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   Future<void> _resetApp() async {
-    unawaited(showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        title: Text(
-          "${TranslationService.t('reset_settings')}?", 
-          style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
-          textAlign: TextAlign.start,
-        ),
-        content: Text(
-          TranslationService.t('reset_settings_sub'),
-          textAlign: TextAlign.start,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(TranslationService.t('cancel'), style: const TextStyle(color: Colors.white70)),
+    unawaited(
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          title: Text(
+            "${TranslationService.t('reset_settings')}?",
+            style: const TextStyle(
+              color: Color(0xFFE5C158),
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.start,
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final navigator = Navigator.of(dialogContext);
-
-              await widget.storage.setString('theme_preset', 'dark');
-              await widget.storage.setString('quran_font', 'font-scheherazade');
-              await widget.storage.setString('default_reciter', 'ar.alafasy');
-              await widget.storage.setString('default_tafsir', 'ar.muyassar');
-              await widget.storage.setString('lang_code', 'ar');
-              await widget.storage.setString('quran_bookmarks', '[]');
-              await widget.storage.setString('custom_dhikrs', '[]');
-              await widget.storage.setInt('calc_method', 2);
-              await widget.storage.setInt('asr_method', 0);
-              await widget.storage.setBool('setting_continuous_play', true);
-              await widget.storage.setBool('setting_hide_continuous_borders', false);
-              await widget.storage.setBool('setting_auto_bookmark', true);
-              await widget.storage.setBool('setting_immersive_reader', false);
-              await widget.storage.setBool('first_time_v2', true); // Reset onboarding too
-
-              await widget.storage.setBool('alert_fajr', true);
-              await widget.storage.setBool('alert_dhuhr', true);
-              await widget.storage.setBool('alert_asr', true);
-              await widget.storage.setBool('alert_maghrib', true);
-              await widget.storage.setBool('alert_isha', true);
-
-              await widget.storage.setBool('keep_screen_awake', false);
-              await widget.storage.setInt('focus_lock_duration', 0);
-              await widget.storage.setBool('focus_auto_start', false);
-              await widget.storage.setString('focus_lock_type', 'app_only');
-
-              await widget.storage.setBool('use_24h_format', false);
-              await widget.storage.setBool('swipe_surah_navigation', true);
-              await widget.storage.setString('pre_adhan_alert_mode', 'vibrate');
-              await widget.storage.setInt('pre_adhan_duration', 10);
-              await widget.storage.setString('adhan_alert_mode', 'real_reciter');
-              await widget.storage.setString('adhan_reciter', 'mishary');
-              
-              TranslationService.setLanguage('ar');
-              
-              setState(() {
-                _themePreset = 'dark';
-                _quranFont = 'font-scheherazade';
-                _reciter = 'ar.alafasy';
-                _tafsirEdition = 'ar.muyassar';
-                _calcMethod = 2;
-                _asrMethod = 0;
-                _continuousPlay = true;
-                _hideContinuousBorders = false;
-                _autoBookmark = true;
-                _immersiveReader = false;
-                _keepScreenAwake = false;
-                _focusLockDuration = 0;
-                _focusAutoStart = false;
-                _focusLockType = 'app_only';
-                _use24hFormat = false;
-                _swipeSurahNavigation = true;
-                _preAdhanAlertMode = 'vibrate';
-                _preAdhanDuration = 10;
-                _adhanAlertMode = 'real_reciter';
-                _adhanReciter = 'mishary';
-                _athanStopGesture = 'both';
-              });
-              navigator.pop();
-              widget.onThemeChanged();
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text(TranslationService.isArabic ? 'تم إعادة تعيين التطبيق.' : 'Application reset.')),
-              );
-            },
-            child: Text(TranslationService.t('reset_settings')),
+          content: Text(
+            TranslationService.t('reset_settings_sub'),
+            textAlign: TextAlign.start,
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                TranslationService.t('cancel'),
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(dialogContext);
+
+                await widget.storage.setString('theme_preset', 'dark');
+                await widget.storage.setString(
+                  'quran_font',
+                  'font-scheherazade',
+                );
+                await widget.storage.setString('default_reciter', 'ar.alafasy');
+                await widget.storage.setString('default_tafsir', 'ar.muyassar');
+                await widget.storage.setString('lang_code', 'ar');
+                await widget.storage.setString('quran_bookmarks', '[]');
+                await widget.storage.setString('custom_dhikrs', '[]');
+                await widget.storage.setInt('calc_method', 2);
+                await widget.storage.setInt('asr_method', 0);
+                await widget.storage.setBool('setting_continuous_play', true);
+                await widget.storage.setBool(
+                  'setting_hide_continuous_borders',
+                  false,
+                );
+                await widget.storage.setBool('setting_auto_bookmark', true);
+                await widget.storage.setBool('setting_immersive_reader', false);
+                await widget.storage.setBool(
+                  'first_time_v2',
+                  true,
+                ); // Reset onboarding too
+
+                await widget.storage.setBool('alert_fajr', true);
+                await widget.storage.setBool('alert_dhuhr', true);
+                await widget.storage.setBool('alert_asr', true);
+                await widget.storage.setBool('alert_maghrib', true);
+                await widget.storage.setBool('alert_isha', true);
+
+                await widget.storage.setBool('keep_screen_awake', false);
+                await widget.storage.setInt('focus_lock_duration', 0);
+                await widget.storage.setBool('focus_auto_start', false);
+                await widget.storage.setString('focus_lock_type', 'app_only');
+
+                await widget.storage.setBool('use_24h_format', false);
+                await widget.storage.setBool('swipe_surah_navigation', true);
+                await widget.storage.setString(
+                  'pre_adhan_alert_mode',
+                  'vibrate',
+                );
+                await widget.storage.setInt('pre_adhan_duration', 10);
+                await widget.storage.setString(
+                  'adhan_alert_mode',
+                  'real_reciter',
+                );
+                await widget.storage.setString('adhan_reciter', 'mishary');
+
+                TranslationService.setLanguage('ar');
+
+                setState(() {
+                  _themePreset = 'dark';
+                  _quranFont = 'font-scheherazade';
+                  _reciter = 'ar.alafasy';
+                  _tafsirEdition = 'ar.muyassar';
+                  _calcMethod = 2;
+                  _asrMethod = 0;
+                  _continuousPlay = true;
+                  _hideContinuousBorders = false;
+                  _autoBookmark = true;
+                  _immersiveReader = false;
+                  _keepScreenAwake = false;
+                  _focusLockDuration = 0;
+                  _focusAutoStart = false;
+                  _focusLockType = 'app_only';
+                  _use24hFormat = false;
+                  _swipeSurahNavigation = true;
+                  _preAdhanAlertMode = 'vibrate';
+                  _preAdhanDuration = 10;
+                  _adhanAlertMode = 'real_reciter';
+                  _adhanReciter = 'mishary';
+                  _athanStopGesture = 'both';
+                });
+                navigator.pop();
+                widget.onThemeChanged();
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.isArabic
+                          ? 'تم إعادة تعيين التطبيق.'
+                          : 'Application reset.',
+                    ),
+                  ),
+                );
+              },
+              child: Text(TranslationService.t('reset_settings')),
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   @override
@@ -688,8 +851,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          TranslationService.t('settings'), 
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)
+          TranslationService.t('settings'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -712,96 +875,292 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
-              children: [
-                ListTile(
-                  title: Text(TranslationService.t('theme_preset_label')),
-                  subtitle: Text(TranslationService.t('theme_preset_sub')),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _themePreset,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(value: 'light', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "فاتح" : "Light"))),
-                      DropdownMenuItem(value: 'sepia', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "بني (قراءة)" : "Sepia/Parchment"))),
-                      DropdownMenuItem(value: 'dark', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "داكن" : "Dark"))),
-                      DropdownMenuItem(value: 'black', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "أسود OLED" : "OLED Black"))),
-                      DropdownMenuItem(value: 'dark_monet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "داكن متكيف" : "Adaptive Dark"))),
-                      DropdownMenuItem(value: 'white_monet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "فاتح متكيف" : "Adaptive Light"))),
-                    ],
-                    onChanged: _changeThemePreset,
-                  )),
+                  children: [
+                    ListTile(
+                      title: Text(TranslationService.t('theme_preset_label')),
+                      subtitle: Text(TranslationService.t('theme_preset_sub')),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _themePreset,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'light',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "فاتح"
+                                      : "Light",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'sepia',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "بني (قراءة)"
+                                      : "Sepia/Parchment",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'dark',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic ? "داكن" : "Dark",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'black',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "أسود OLED"
+                                      : "OLED Black",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'dark_monet',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "داكن متكيف"
+                                      : "Adaptive Dark",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'white_monet',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "فاتح متكيف"
+                                      : "Adaptive Light",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeThemePreset,
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(
+                        TranslationService.t('bottom_navbar_style_label'),
+                      ),
+                      subtitle: Text(
+                        TranslationService.t('bottom_navbar_style_sub'),
+                      ),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _bottomNavbarStyle,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'solid',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.t('bottom_navbar_solid'),
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'floating',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.t(
+                                    'bottom_navbar_floating',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeBottomNavbarStyle,
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(TranslationService.t('quran_font')),
+                      subtitle: Text(TranslationService.t('quran_font_sub')),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _quranFont,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'font-scheherazade',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "خط شهرزاد"
+                                      : "Scheherazade Font",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'font-amiri',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "الخط الأميري"
+                                      : "Amiri Font",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeFont,
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "تفسير القرآن"
+                            : "Quran Tafsir",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "اختر كتاب التفسير المفضل"
+                            : "Choose preferred Tafsir book",
+                      ),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _tafsirEdition,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'ar.muyassar',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "التفسير الميسر (المجمع)"
+                                      : "Al-Muyassar (Assembly)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.jalalayn',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "تفسير الجلالين"
+                                      : "Tafsir Al-Jalalayn",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.qurtubi',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "تفسير القرطبي"
+                                      : "Tafsir Al-Qurtubi",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.miqbas',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "تنوير المقباس (ابن عباس)"
+                                      : "Tanwir al-Miqbas (Ibn Abbas)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.waseet',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "التفسير الوسيط (الطنطاوي)"
+                                      : "Al-Waseet (Tantawi)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.baghawi',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "تفسير البغوي"
+                                      : "Tafsir Al-Baghawi",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeTafsirEdition,
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "تنسيق الوقت ٢٤ ساعة"
+                            : "24-Hour Time Format",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "عرض أوقات الصلاة بتنسيق ٢٤ ساعة بدلاً من ١٢ ساعة"
+                            : "Display prayer times in 24h format instead of 12h",
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _use24hFormat,
+                      onChanged: _toggleUse24hFormat,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "سحب الشاشة للانتقال بين السور"
+                            : "Swipe to Navigate Surahs",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "اسحب لليمين أو اليسار للانتقال إلى السورة التالية أو السابقة"
+                            : "Swipe left or right to read the previous or next Surah",
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _swipeSurahNavigation,
+                      onChanged: _toggleSwipeSurahNavigation,
+                    ),
+                  ],
                 ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.t('bottom_navbar_style_label')),
-                  subtitle: Text(TranslationService.t('bottom_navbar_style_sub')),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _bottomNavbarStyle,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(value: 'solid', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.t('bottom_navbar_solid')))),
-                      DropdownMenuItem(value: 'floating', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.t('bottom_navbar_floating')))),
-                    ],
-                    onChanged: _changeBottomNavbarStyle,
-                  )),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.t('quran_font')),
-                  subtitle: Text(TranslationService.t('quran_font_sub')),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _quranFont,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(value: 'font-scheherazade', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "خط شهرزاد" : "Scheherazade Font"))),
-                      DropdownMenuItem(value: 'font-amiri', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "الخط الأميري" : "Amiri Font"))),
-                    ],
-                    onChanged: _changeFont,
-                  )),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.isArabic ? "تفسير القرآن" : "Quran Tafsir"),
-                  subtitle: Text(TranslationService.isArabic ? "اختر كتاب التفسير المفضل" : "Choose preferred Tafsir book"),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _tafsirEdition,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(value: 'ar.muyassar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الميسر (المجمع)" : "Al-Muyassar (Assembly)"))),
-                      DropdownMenuItem(value: 'ar.jalalayn', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير الجلالين" : "Tafsir Al-Jalalayn"))),
-                      DropdownMenuItem(value: 'ar.qurtubi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير القرطبي" : "Tafsir Al-Qurtubi"))),
-                      DropdownMenuItem(value: 'ar.miqbas', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تنوير المقباس (ابن عباس)" : "Tanwir al-Miqbas (Ibn Abbas)"))),
-                      DropdownMenuItem(value: 'ar.waseet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الوسيط (الطنطاوي)" : "Al-Waseet (Tantawi)"))),
-                      DropdownMenuItem(value: 'ar.baghawi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير البغوي" : "Tafsir Al-Baghawi"))),
-                    ],
-                    onChanged: _changeTafsirEdition,
-                  )),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.isArabic ? "تنسيق الوقت ٢٤ ساعة" : "24-Hour Time Format"),
-                  subtitle: Text(TranslationService.isArabic 
-                      ? "عرض أوقات الصلاة بتنسيق ٢٤ ساعة بدلاً من ١٢ ساعة" 
-                      : "Display prayer times in 24h format instead of 12h"),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _use24hFormat,
-                  onChanged: _toggleUse24hFormat,
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.isArabic ? "سحب الشاشة للانتقال بين السور" : "Swipe to Navigate Surahs"),
-                  subtitle: Text(TranslationService.isArabic 
-                      ? "اسحب لليمين أو اليسار للانتقال إلى السورة التالية أو السابقة" 
-                      : "Swipe left or right to read the previous or next Surah"),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _swipeSurahNavigation,
-                  onChanged: _toggleSwipeSurahNavigation,
-                ),
-              ],
-            )
               ),
             ),
           ),
@@ -814,28 +1173,49 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             child: ListTile(
               title: Text(TranslationService.t('app_lang')),
               subtitle: Text(TranslationService.t('app_lang_sub')),
-              trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                value: TranslationService.currentLanguage,
-                underline: const SizedBox(),
-                dropdownColor: theme.cardColor,
-                items: [
-                  const DropdownMenuItem(value: 'ar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("العربية"))),
-                  const DropdownMenuItem(value: 'en', child: Align(alignment: AlignmentDirectional.centerStart, child: Text("English"))),
-                ],
-                onChanged: (lang) async {
-                  if (lang != null) {
-                    final navigator = Navigator.of(context);
-                    await widget.storage.setString('lang_code', lang);
-                    TranslationService.setLanguage(lang);
-                    
-                    // Root level rebuild & reload navigation stack to main dashboard page
-                    widget.onThemeChanged();
-                    if (mounted) {
-                      unawaited(navigator.pushNamedAndRemoveUntil('/', (route) => false));
+              trailing: SizedBox(
+                width: 160,
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: TranslationService.currentLanguage,
+                  underline: const SizedBox(),
+                  dropdownColor: theme.cardColor,
+                  items: [
+                    const DropdownMenuItem(
+                      value: 'ar',
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text("العربية"),
+                      ),
+                    ),
+                    const DropdownMenuItem(
+                      value: 'en',
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text("English"),
+                      ),
+                    ),
+                  ],
+                  onChanged: (lang) async {
+                    if (lang != null) {
+                      final navigator = Navigator.of(context);
+                      await widget.storage.setString('lang_code', lang);
+                      TranslationService.setLanguage(lang);
+
+                      // Root level rebuild & reload navigation stack to main dashboard page
+                      widget.onThemeChanged();
+                      if (mounted) {
+                        unawaited(
+                          navigator.pushNamedAndRemoveUntil(
+                            '/',
+                            (route) => false,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
-              )),
+                  },
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -854,154 +1234,196 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
-              children: [
-                ListTile(
-                  title: Text(TranslationService.t('calc_method')),
-                  subtitle: Text(TranslationService.t('calc_settings')),
-                  trailing: SizedBox(
-                    width: 160,
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      value: _calcMethod,
-                      underline: const SizedBox(),
-                      dropdownColor: theme.cardColor,
-                      items: [
-                        DropdownMenuItem(
-                          value: 1, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "جامعة العلوم الإسلامية بكراتشي" : "University of Islamic Sciences, Karachi"),
-                          ),
+                  children: [
+                    ListTile(
+                      title: Text(TranslationService.t('calc_method')),
+                      subtitle: Text(TranslationService.t('calc_settings')),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _calcMethod,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 1,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "جامعة العلوم الإسلامية بكراتشي"
+                                      : "University of Islamic Sciences, Karachi",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 2,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "الهيئة الإسلامية لأمريكا الشمالية (ISNA)"
+                                      : "Islamic Society of North America (ISNA)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 3,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "رابطة العالم الإسلامي"
+                                      : "Muslim World League (MWL)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 4,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "جامعة أم القرى (مكة)"
+                                      : "Umm Al-Qura University (Makkah)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 5,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "الهيئة المصرية العامة للمساحة"
+                                      : "Egyptian General Authority of Survey",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 10,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "وزارة الأوقاف والشؤون الإسلامية (قطر)"
+                                      : "Ministry of Awqaf (Qatar)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 11,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "المجلس الإسلامي السنغافوري (MUIS)"
+                                      : "Majlis Ugama Islam Singapura (MUIS)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 12,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "اتحاد المنظمات الإسلامية بفرنسا (UOIF)"
+                                      : "Union of Islamic Organisations of France (UOIF)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 13,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "تركيا (الشؤون الدينية)"
+                                      : "Turkey (Diyanet)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 14,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "الإدارة الدينية لمسلمي روسيا الاتحادية"
+                                      : "Spiritual Administration of Muslims of Russia",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 16,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "الهيئة العامة للشؤون الإسلامية والأوقاف (الإمارات)"
+                                      : "General Authority of Islamic Affairs & Endowments (UAE)",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeCalcMethod,
                         ),
-                        DropdownMenuItem(
-                          value: 2, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "الهيئة الإسلامية لأمريكا الشمالية (ISNA)" 
-                                : "Islamic Society of North America (ISNA)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 3, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "رابطة العالم الإسلامي" 
-                                : "Muslim World League (MWL)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 4, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "جامعة أم القرى (مكة)" 
-                                : "Umm Al-Qura University (Makkah)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 5, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "الهيئة المصرية العامة للمساحة" 
-                                : "Egyptian General Authority of Survey"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 10, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "وزارة الأوقاف والشؤون الإسلامية (قطر)" : "Ministry of Awqaf (Qatar)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 11, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "المجلس الإسلامي السنغافوري (MUIS)" : "Majlis Ugama Islam Singapura (MUIS)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 12, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "اتحاد المنظمات الإسلامية بفرنسا (UOIF)" : "Union of Islamic Organisations of France (UOIF)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 13, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "تركيا (الشؤون الدينية)" 
-                                : "Turkey (Diyanet)"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 14, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "الإدارة الدينية لمسلمي روسيا الاتحادية" : "Spiritual Administration of Muslims of Russia"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 16, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "الهيئة العامة للشؤون الإسلامية والأوقاف (الإمارات)" : "General Authority of Islamic Affairs & Endowments (UAE)"),
-                          ),
-                        ),
-                      ],
-                      onChanged: _changeCalcMethod,
+                      ),
                     ),
-                  ),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.t('asr_calc_label')),
-                  subtitle: Text(TranslationService.t('asr_calc_sub')),
-                  trailing: SizedBox(
-                    width: 160,
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      value: _asrMethod,
-                      underline: const SizedBox(),
-                      dropdownColor: theme.cardColor,
-                      items: [
-                        DropdownMenuItem(
-                          value: 0, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "الشافعي، المالكي، الحنبلي" 
-                                : "Standard (Shafi'i, Maliki, Hanbali)"),
-                          ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(TranslationService.t('asr_calc_label')),
+                      subtitle: Text(TranslationService.t('asr_calc_sub')),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _asrMethod,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 0,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "الشافعي، المالكي، الحنبلي"
+                                      : "Standard (Shafi'i, Maliki, Hanbali)",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 1,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "المذهب الحنفي"
+                                      : "Hanafi School",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeAsrMethod,
                         ),
-                        DropdownMenuItem(
-                          value: 1, 
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic 
-                                ? "المذهب الحنفي" 
-                                : "Hanafi School"),
-                          ),
-                        ),
-                      ],
-                      onChanged: _changeAsrMethod,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            )
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Section Notifications & Alerts
-          _buildSectionHeader(TranslationService.isArabic ? "الإشعارات والتنبيهات" : "Notifications & Alerts"),
+          _buildSectionHeader(
+            TranslationService.isArabic
+                ? "الإشعارات والتنبيهات"
+                : "Notifications & Alerts",
+          ),
           Card(
             color: theme.cardColor.withOpacity(0.7),
             elevation: 0,
@@ -1014,286 +1436,460 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
-              children: [
-                ListTile(
-                  title: Text(TranslationService.isArabic ? "وقت التنبيه قبل الأذان" : "Pre-Athan Alert Time"),
-                  subtitle: Text(TranslationService.isArabic 
-                      ? "اختر وقت التنبيه بالدقائق قبل الأذان" 
-                      : "Choose alert timing in minutes before Athan"),
-                  trailing: SizedBox(width: 160, child: DropdownButton<int>(isExpanded: true, 
-                    value: _preAdhanDuration,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [0, 5, 10, 15, 20].map((mins) {
-                      return DropdownMenuItem<int>(
-                        value: mins,
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(mins == 0 
-                              ? (TranslationService.isArabic ? "إيقاف" : "Off")
-                              : (TranslationService.isArabic ? "$mins دقائق" : "$mins Mins")),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: _changePreAdhanDuration,
-                  )),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.isArabic ? "نمط تنبيه قبل الأذان" : "Pre-Athan Alert Style"),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _preAdhanAlertMode,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(
-                        value: 'silent',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "صامت" : "Silent"),
+                  children: [
+                    ListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "وقت التنبيه قبل الأذان"
+                            : "Pre-Athan Alert Time",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "اختر وقت التنبيه بالدقائق قبل الأذان"
+                            : "Choose alert timing in minutes before Athan",
+                      ),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _preAdhanDuration,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [0, 5, 10, 15, 20].map((mins) {
+                            return DropdownMenuItem<int>(
+                              value: mins,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  mins == 0
+                                      ? (TranslationService.isArabic
+                                            ? "إيقاف"
+                                            : "Off")
+                                      : (TranslationService.isArabic
+                                            ? "$mins دقائق"
+                                            : "$mins Mins"),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: _changePreAdhanDuration,
                         ),
                       ),
-                      DropdownMenuItem(
-                        value: 'vibrate',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "اهتزاز فقط" : "Vibrate Only"),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'voice',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "تنبيه صوتي" : "Voice Announcement"),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'vibrate_and_voice',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "اهتزاز + تنبيه صوتي" : "Vibrate + Voice"),
-                        ),
-                      ),
-                    ],
-                    onChanged: _changePreAdhanAlertMode,
-                  )),
-                ),
-                if (_preAdhanAlertMode == 'voice' || _preAdhanAlertMode == 'vibrate_and_voice') ...[
-                  const Divider(height: 1, color: Colors.white10),
-                  ListTile(
-                    title: Text(TranslationService.isArabic ? "معاينة التنبيه الصوتي" : "Voice Alert Preview"),
-                    subtitle: Text(TranslationService.isArabic 
-                        ? "تشغيل معاينة لصوت التنبيه" 
-                        : "Play a preview of the voice alert"),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(_isPreAdhanPreviewPlaying ? Icons.stop : Icons.play_arrow),
-                          onPressed: () async {
-                            if (_isPreAdhanPreviewPlaying) {
-                              await AdhanAudioService.instance.stopPreview();
-                              setState(() => _isPreAdhanPreviewPlaying = false);
-                            } else {
-                              setState(() => _isPreAdhanPreviewPlaying = true);
-                              final lang = TranslationService.currentLanguage;
-                              await AdhanAudioService.instance.playPreAdhanPreview(lang);
-                              Future.delayed(const Duration(seconds: 8), () {
-                                if (mounted) setState(() => _isPreAdhanPreviewPlaying = false);
-                              });
-                            }
-                          },
-                        ),
-                      ],
                     ),
-                  ),
-                ],
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.isArabic ? "نوع تنبيه الأذان" : "Athan Alert Style"),
-                  subtitle: Text(TranslationService.isArabic 
-                      ? "التنبيه عند دخول وقت الصلاة" 
-                      : "Alert when prayer time starts"),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _adhanAlertMode,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(
-                        value: 'silent',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "صامت" : "Silent"),
-                        ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "نمط تنبيه قبل الأذان"
+                            : "Pre-Athan Alert Style",
                       ),
-                      DropdownMenuItem(
-                        value: 'vibrate',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "اهتزاز" : "Vibrate"),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'real_reciter',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "أذان بصوت المؤذن" : "Real Reciter Adhan"),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'vibrate_and_voice',
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(TranslationService.isArabic ? "اهتزاز + صوت المؤذن" : "Vibrate + Reciter Voice"),
-                        ),
-                      ),
-                    ],
-                    onChanged: _changeAdhanAlertMode,
-                  )),
-                ),
-                if (_adhanAlertMode == 'real_reciter' || _adhanAlertMode == 'vibrate_and_voice') ...[
-                  const Divider(height: 1, color: Colors.white10),
-                  ListTile(
-                    title: Text(TranslationService.isArabic ? "المؤذن" : "Athan Reciter"),
-                    subtitle: Text(TranslationService.isArabic 
-                        ? "اختر صوت المؤذن للأذان" 
-                        : "Select voice for the Athan"),
-                    trailing: SizedBox(
-                      width: 160,
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _adhanReciter,
-                        underline: const SizedBox(),
-                        dropdownColor: theme.cardColor,
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _preAdhanAlertMode,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
-                              value: 'mishary',
+                              value: 'silent',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "مشاري العفاسي" : "Mishary Alafasy"),
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "صامت"
+                                      : "Silent",
+                                ),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'abdul_basit',
+                              value: 'vibrate',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "عبد الباسط عبد الصمد" : "Abdul Basit"),
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "اهتزاز فقط"
+                                      : "Vibrate Only",
+                                ),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'madinah',
+                              value: 'voice',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "أذان الحرم المدني" : "Al Haram Al Madani"),
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "تنبيه صوتي"
+                                      : "Voice Announcement",
+                                ),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: 'kazabri',
+                              value: 'vibrate_and_voice',
                               child: Align(
                                 alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "عمر القزابري" : "Omar Al Kazabri"),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'riad',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "رياض الجزائري" : "Riad Al Djazairi"),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'manssour',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "منصور الزهراني" : "Manssour El Zahrani"),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'nakshabandi',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "سيد النقشبندي" : "Sayed Al Nakshabandi"),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'maghriby',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(TranslationService.isArabic ? "نور الدين المغربي" : "Nurdin Al Maghriby"),
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "اهتزاز + تنبيه صوتي"
+                                      : "Vibrate + Voice",
+                                ),
                               ),
                             ),
                           ],
-                          onChanged: _changeAdhanReciter,
+                          onChanged: _changePreAdhanAlertMode,
                         ),
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1, color: Colors.white10),
-                  ListTile(
-                    title: Text(TranslationService.isArabic ? "إيماءة إيقاف الأذان" : "Athan Stop Gesture"),
-                    subtitle: Text(TranslationService.isArabic 
-                        ? "إيقاف الأذان بالضغط على أزرار الصوت أو قلب الهاتف وجهه لأسفل" 
-                        : "Stop Athan by pressing volume buttons or flipping the phone face down"),
-                    trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                      value: _athanStopGesture,
-                      underline: const SizedBox(),
-                      dropdownColor: theme.cardColor,
-                      items: [
-                        DropdownMenuItem(
-                          value: 'both',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "أزرار الصوت وقلب الهاتف" : "Volume keys & Flip"),
+                    if (_preAdhanAlertMode == 'voice' ||
+                        _preAdhanAlertMode == 'vibrate_and_voice') ...[
+                      const Divider(height: 1, color: Colors.white10),
+                      ListTile(
+                        title: Text(
+                          TranslationService.isArabic
+                              ? "معاينة التنبيه الصوتي"
+                              : "Voice Alert Preview",
+                        ),
+                        subtitle: Text(
+                          TranslationService.isArabic
+                              ? "تشغيل معاينة لصوت التنبيه"
+                              : "Play a preview of the voice alert",
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _isPreAdhanPreviewPlaying
+                                    ? Icons.stop
+                                    : Icons.play_arrow,
+                              ),
+                              onPressed: () async {
+                                if (_isPreAdhanPreviewPlaying) {
+                                  await AdhanAudioService.instance
+                                      .stopPreview();
+                                  setState(
+                                    () => _isPreAdhanPreviewPlaying = false,
+                                  );
+                                } else {
+                                  setState(
+                                    () => _isPreAdhanPreviewPlaying = true,
+                                  );
+                                  final lang =
+                                      TranslationService.currentLanguage;
+                                  await AdhanAudioService.instance
+                                      .playPreAdhanPreview(lang);
+                                  Future.delayed(
+                                    const Duration(seconds: 8),
+                                    () {
+                                      if (mounted)
+                                        setState(
+                                          () =>
+                                              _isPreAdhanPreviewPlaying = false,
+                                        );
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "نوع تنبيه الأذان"
+                            : "Athan Alert Style",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "التنبيه عند دخول وقت الصلاة"
+                            : "Alert when prayer time starts",
+                      ),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _adhanAlertMode,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'silent',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "صامت"
+                                      : "Silent",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'vibrate',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "اهتزاز"
+                                      : "Vibrate",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'real_reciter',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "أذان بصوت المؤذن"
+                                      : "Real Reciter Adhan",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'vibrate_and_voice',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "اهتزاز + صوت المؤذن"
+                                      : "Vibrate + Reciter Voice",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeAdhanAlertMode,
+                        ),
+                      ),
+                    ),
+                    if (_adhanAlertMode == 'real_reciter' ||
+                        _adhanAlertMode == 'vibrate_and_voice') ...[
+                      const Divider(height: 1, color: Colors.white10),
+                      ListTile(
+                        title: Text(
+                          TranslationService.isArabic
+                              ? "المؤذن"
+                              : "Athan Reciter",
+                        ),
+                        subtitle: Text(
+                          TranslationService.isArabic
+                              ? "اختر صوت المؤذن للأذان"
+                              : "Select voice for the Athan",
+                        ),
+                        trailing: SizedBox(
+                          width: 160,
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _adhanReciter,
+                            underline: const SizedBox(),
+                            dropdownColor: theme.cardColor,
+                            items: [
+                              DropdownMenuItem(
+                                value: 'mishary',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "مشاري العفاسي"
+                                        : "Mishary Alafasy",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'abdul_basit',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "عبد الباسط عبد الصمد"
+                                        : "Abdul Basit",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'madinah',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "أذان الحرم المدني"
+                                        : "Al Haram Al Madani",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'kazabri',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "عمر القزابري"
+                                        : "Omar Al Kazabri",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'riad',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "رياض الجزائري"
+                                        : "Riad Al Djazairi",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'manssour',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "منصور الزهراني"
+                                        : "Manssour El Zahrani",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'nakshabandi',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "سيد النقشبندي"
+                                        : "Sayed Al Nakshabandi",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'maghriby',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "نور الدين المغربي"
+                                        : "Nurdin Al Maghriby",
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: _changeAdhanReciter,
                           ),
                         ),
-                        DropdownMenuItem(
-                          value: 'volume_only',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "أزرار الصوت فقط" : "Volume keys only"),
+                      ),
+                      const Divider(height: 1, color: Colors.white10),
+                      ListTile(
+                        title: Text(
+                          TranslationService.isArabic
+                              ? "إيماءة إيقاف الأذان"
+                              : "Athan Stop Gesture",
+                        ),
+                        subtitle: Text(
+                          TranslationService.isArabic
+                              ? "إيقاف الأذان بالضغط على أزرار الصوت أو قلب الهاتف وجهه لأسفل"
+                              : "Stop Athan by pressing volume buttons or flipping the phone face down",
+                        ),
+                        trailing: SizedBox(
+                          width: 160,
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _athanStopGesture,
+                            underline: const SizedBox(),
+                            dropdownColor: theme.cardColor,
+                            items: [
+                              DropdownMenuItem(
+                                value: 'both',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "أزرار الصوت وقلب الهاتف"
+                                        : "Volume keys & Flip",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'volume_only',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "أزرار الصوت فقط"
+                                        : "Volume keys only",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'flip_only',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "قلب الهاتف فقط"
+                                        : "Flip phone only",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'none',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "لا توقف"
+                                        : "Don't stop",
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: _changeAthanStopGesture,
                           ),
                         ),
-                        DropdownMenuItem(
-                          value: 'flip_only',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "قلب الهاتف فقط" : "Flip phone only"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'none',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "لا توقف" : "Don't stop"),
-                          ),
-                        ),
-                      ],
-                      onChanged: _changeAthanStopGesture,
-                    )),
-                  ),
-                ],
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('morning_azkar_reminder')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _morningAzkarReminder,
-                  onChanged: (val) => _toggleDailyReminder('morning_azkar_reminder', val, (v) => _morningAzkarReminder = v),
+                      ),
+                    ],
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.t('morning_azkar_reminder'),
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _morningAzkarReminder,
+                      onChanged: (val) => _toggleDailyReminder(
+                        'morning_azkar_reminder',
+                        val,
+                        (v) => _morningAzkarReminder = v,
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.t('evening_azkar_reminder'),
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _eveningAzkarReminder,
+                      onChanged: (val) => _toggleDailyReminder(
+                        'evening_azkar_reminder',
+                        val,
+                        (v) => _eveningAzkarReminder = v,
+                      ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.t('todays_verse_reminder'),
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _todaysVerseReminder,
+                      onChanged: (val) => _toggleDailyReminder(
+                        'todays_verse_reminder',
+                        val,
+                        (v) => _todaysVerseReminder = v,
+                      ),
+                    ),
+                  ],
                 ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('evening_azkar_reminder')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _eveningAzkarReminder,
-                  onChanged: (val) => _toggleDailyReminder('evening_azkar_reminder', val, (v) => _eveningAzkarReminder = v),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.t('todays_verse_reminder')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _todaysVerseReminder,
-                  onChanged: (val) => _toggleDailyReminder('todays_verse_reminder', val, (v) => _todaysVerseReminder = v),
-                ),
-              ],
-            )
               ),
             ),
           ),
@@ -1313,85 +1909,163 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
-              children: [
-                ListTile(
-                  title: Text(TranslationService.t('qari')),
-                  subtitle: Text(TranslationService.t('qari_sub')),
-                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                    value: _reciter,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(value: 'ar.alafasy', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "مشاري العفاسي" : "Mishary Alafasy"))),
-                      DropdownMenuItem(value: 'ar.abdurrahmaansudais', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "عبد الرحمن السديس" : "Abdurrahman As-Sudais"))),
-                      DropdownMenuItem(value: 'ar.mahermuaiqly', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "ماهر المعيقلي" : "Maher Al-Muaiqly"))),
-                      DropdownMenuItem(value: 'ar.saadalghamidi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "سعد الغامدي" : "Saad Al-Ghamdi"))),
-                    ],
-                    onChanged: _changeReciter,
-                  )),
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                 SwitchListTile(
-                  title: Text(TranslationService.t('continuous_rec_label')),
-                  subtitle: Text(TranslationService.t('continuous_rec_sub')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _continuousPlay,
-                  onChanged: _toggleContinuousPlay,
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.isArabic ? "إخفاء حدود القراءة المتواصلة" : "Hide Continuous Mode Borders"),
-                  subtitle: Text(TranslationService.isArabic 
-                      ? "إزالة الحواف والظلال لتصبح الصفحات متصلة تماماً" 
-                      : "Remove section borders and shadows for seamless reading"),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _hideContinuousBorders,
-                  onChanged: _toggleHideContinuousBorders,
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.isArabic ? "حفظ المرجعية تلقائياً" : "Auto-Bookmark on Play"),
-                  subtitle: Text(TranslationService.isArabic
-                      ? "حفظ الآية الحالية كعلامة مرجعية تلقائياً عند البدء بتشغيل التلاوة"
-                      : "Automatically save the current verse as bookmark when audio playback starts"),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _autoBookmark,
-                  onChanged: _toggleAutoBookmark,
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                SwitchListTile(
-                  title: Text(TranslationService.isArabic ? "وضع القارئ الغامر" : "Immersive Reader Mode"),
-                  subtitle: Text(TranslationService.isArabic
-                      ? "إخفاء أشرطة النظام (شريط الحالة والتنقل) أثناء قراءة القرآن لتقليل التشتيت"
-                      : "Hide system bars (status and navigation) while reading Quran to reduce distraction"),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _immersiveReader,
-                  onChanged: _toggleImmersiveReader,
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  leading: const Icon(Icons.download_for_offline, color: Color(0xFFE5C158)),
-                  title: Text(TranslationService.t('quran_downloads')),
-                  subtitle: Text(TranslationService.t('quran_downloads_sub')),
-                  trailing: Icon(TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios, size: 14, color: Colors.white30),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => QuranDownloadScreen(storage: widget.storage),
+                  children: [
+                    ListTile(
+                      title: Text(TranslationService.t('qari')),
+                      subtitle: Text(TranslationService.t('qari_sub')),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _reciter,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'ar.alafasy',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "مشاري العفاسي"
+                                      : "Mishary Alafasy",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.abdurrahmaansudais',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "عبد الرحمن السديس"
+                                      : "Abdurrahman As-Sudais",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.mahermuaiqly',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "ماهر المعيقلي"
+                                      : "Maher Al-Muaiqly",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ar.saadalghamidi',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "سعد الغامدي"
+                                      : "Saad Al-Ghamdi",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeReciter,
+                        ),
                       ),
-                    );
-                  },
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(TranslationService.t('continuous_rec_label')),
+                      subtitle: Text(
+                        TranslationService.t('continuous_rec_sub'),
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _continuousPlay,
+                      onChanged: _toggleContinuousPlay,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "إخفاء حدود القراءة المتواصلة"
+                            : "Hide Continuous Mode Borders",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "إزالة الحواف والظلال لتصبح الصفحات متصلة تماماً"
+                            : "Remove section borders and shadows for seamless reading",
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _hideContinuousBorders,
+                      onChanged: _toggleHideContinuousBorders,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "حفظ المرجعية تلقائياً"
+                            : "Auto-Bookmark on Play",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "حفظ الآية الحالية كعلامة مرجعية تلقائياً عند البدء بتشغيل التلاوة"
+                            : "Automatically save the current verse as bookmark when audio playback starts",
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _autoBookmark,
+                      onChanged: _toggleAutoBookmark,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    SwitchListTile(
+                      title: Text(
+                        TranslationService.isArabic
+                            ? "وضع القارئ الغامر"
+                            : "Immersive Reader Mode",
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? "إخفاء أشرطة النظام (شريط الحالة والتنقل) أثناء قراءة القرآن لتقليل التشتيت"
+                            : "Hide system bars (status and navigation) while reading Quran to reduce distraction",
+                      ),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _immersiveReader,
+                      onChanged: _toggleImmersiveReader,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.download_for_offline,
+                        color: Color(0xFFE5C158),
+                      ),
+                      title: Text(TranslationService.t('quran_downloads')),
+                      subtitle: Text(
+                        TranslationService.t('quran_downloads_sub'),
+                      ),
+                      trailing: Icon(
+                        TranslationService.isArabic
+                            ? Icons.arrow_back_ios
+                            : Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.white30,
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                QuranDownloadScreen(storage: widget.storage),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            )
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Section Permissions
-          _buildSectionHeader(TranslationService.t('system_settings_permissions')),
+          _buildSectionHeader(
+            TranslationService.t('system_settings_permissions'),
+          ),
           Card(
             color: theme.cardColor.withOpacity(0.7),
             elevation: 0,
@@ -1404,70 +2078,94 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
-              children: [
-                SwitchListTile(
-                  title: Text(TranslationService.t('wake_lock')),
-                  subtitle: Text(TranslationService.t('wake_lock_sub')),
-                  activeThumbColor: const Color(0xFFE5C158),
-                  value: _keepScreenAwake,
-                  onChanged: _toggleKeepScreenAwake,
+                  children: [
+                    SwitchListTile(
+                      title: Text(TranslationService.t('wake_lock')),
+                      subtitle: Text(TranslationService.t('wake_lock_sub')),
+                      activeThumbColor: const Color(0xFFE5C158),
+                      value: _keepScreenAwake,
+                      onChanged: _toggleKeepScreenAwake,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(TranslationService.t('exact_alarms')),
+                      subtitle: Text(TranslationService.t('exact_alarms_sub')),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _exactAlarmPermitted
+                                ? (TranslationService.isArabic
+                                      ? "مسموح"
+                                      : "Allowed")
+                                : (TranslationService.isArabic
+                                      ? "إعداد مطلوب"
+                                      : "Setup Required"),
+                            style: TextStyle(
+                              color: _exactAlarmPermitted
+                                  ? Colors.green
+                                  : const Color(0xFFE5C158),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            TranslationService.isArabic
+                                ? Icons.arrow_back_ios
+                                : Icons.arrow_forward_ios,
+                            size: 12,
+                            color: _exactAlarmPermitted
+                                ? Colors.white30
+                                : const Color(0xFFE5C158),
+                          ),
+                        ],
+                      ),
+                      onTap: _exactAlarmPermitted ? null : _requestExactAlarm,
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    ListTile(
+                      title: Text(TranslationService.t('battery_optimization')),
+                      subtitle: Text(
+                        TranslationService.t('battery_optimization_sub'),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _batteryIgnored
+                                ? (TranslationService.isArabic
+                                      ? "متجاهل"
+                                      : "Ignored")
+                                : (TranslationService.isArabic
+                                      ? "إعداد مطلوب"
+                                      : "Setup Required"),
+                            style: TextStyle(
+                              color: _batteryIgnored
+                                  ? Colors.green
+                                  : const Color(0xFFE5C158),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            TranslationService.isArabic
+                                ? Icons.arrow_back_ios
+                                : Icons.arrow_forward_ios,
+                            size: 12,
+                            color: _batteryIgnored
+                                ? Colors.white30
+                                : const Color(0xFFE5C158),
+                          ),
+                        ],
+                      ),
+                      onTap: _batteryIgnored
+                          ? null
+                          : _requestBatteryOptimization,
+                    ),
+                  ],
                 ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.t('exact_alarms')),
-                  subtitle: Text(TranslationService.t('exact_alarms_sub')),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _exactAlarmPermitted 
-                            ? (TranslationService.isArabic ? "مسموح" : "Allowed") 
-                            : (TranslationService.isArabic ? "إعداد مطلوب" : "Setup Required"),
-                        style: TextStyle(
-                          color: _exactAlarmPermitted ? Colors.green : const Color(0xFFE5C158),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios,
-                        size: 12,
-                        color: _exactAlarmPermitted ? Colors.white30 : const Color(0xFFE5C158),
-                      ),
-                    ],
-                  ),
-                  onTap: _exactAlarmPermitted ? null : _requestExactAlarm,
-                ),
-                const Divider(height: 1, color: Colors.white10),
-                ListTile(
-                  title: Text(TranslationService.t('battery_optimization')),
-                  subtitle: Text(TranslationService.t('battery_optimization_sub')),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _batteryIgnored 
-                            ? (TranslationService.isArabic ? "متجاهل" : "Ignored") 
-                            : (TranslationService.isArabic ? "إعداد مطلوب" : "Setup Required"),
-                        style: TextStyle(
-                          color: _batteryIgnored ? Colors.green : const Color(0xFFE5C158),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios,
-                        size: 12,
-                        color: _batteryIgnored ? Colors.white30 : const Color(0xFFE5C158),
-                      ),
-                    ],
-                  ),
-                  onTap: _batteryIgnored ? null : _requestBatteryOptimization,
-                ),
-              ],
-            )
               ),
             ),
           ),
@@ -1487,86 +2185,183 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
-              children: [
-                ListTile(
-                  title: Text(TranslationService.t('focus_timer')),
-                  subtitle: Text(TranslationService.t('focus_prayer_lock_sub')),
-                  trailing: SizedBox(width: 160, child: DropdownButton<int>(isExpanded: true, 
-                    value: _focusLockDuration,
-                    underline: const SizedBox(),
-                    dropdownColor: theme.cardColor,
-                    items: [
-                      DropdownMenuItem(value: 0, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "إيقاف" : "Off"))),
-                      DropdownMenuItem(value: 5, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "٥ دقائق" : "5 Minutes"))),
-                      DropdownMenuItem(value: 10, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "١٠ دقائق" : "10 Minutes"))),
-                      DropdownMenuItem(value: 15, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "١٥ دقيقة" : "15 Minutes"))),
-                      DropdownMenuItem(value: 20, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "٢٠ دقيقة" : "20 Minutes"))),
-                      DropdownMenuItem(value: 30, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "٣٠ دقيقة" : "30 Minutes"))),
+                  children: [
+                    ListTile(
+                      title: Text(TranslationService.t('focus_timer')),
+                      subtitle: Text(
+                        TranslationService.t('focus_prayer_lock_sub'),
+                      ),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _focusLockDuration,
+                          underline: const SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(
+                              value: 0,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic ? "إيقاف" : "Off",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 5,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "٥ دقائق"
+                                      : "5 Minutes",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 10,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "١٠ دقائق"
+                                      : "10 Minutes",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 15,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "١٥ دقيقة"
+                                      : "15 Minutes",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 20,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "٢٠ دقيقة"
+                                      : "20 Minutes",
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 30,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "٣٠ دقيقة"
+                                      : "30 Minutes",
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: _changeFocusDuration,
+                        ),
+                      ),
+                    ),
+                    if (_focusLockDuration > 0) ...[
+                      const Divider(height: 1, color: Colors.white10),
+                      ListTile(
+                        title: Text(
+                          TranslationService.isArabic
+                              ? "نوع قفل التركيز"
+                              : "Focus Lock Mode",
+                        ),
+                        subtitle: Text(
+                          TranslationService.isArabic
+                              ? "اختر قفل التطبيق فقط أو قفل الهاتف بالكامل"
+                              : "Choose whether to lock the app or the entire phone",
+                        ),
+                        trailing: SizedBox(
+                          width: 160,
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _focusLockType,
+                            underline: const SizedBox(),
+                            dropdownColor: theme.cardColor,
+                            items: [
+                              DropdownMenuItem(
+                                value: 'app_only',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "قفل التطبيق فقط"
+                                        : "App Lock Only",
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'whole_phone',
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    TranslationService.isArabic
+                                        ? "قفل الهاتف بالكامل"
+                                        : "Whole Phone Lock",
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: _changeFocusLockType,
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, color: Colors.white10),
+                      SwitchListTile(
+                        title: Text(TranslationService.t('focus_setting_auto')),
+                        activeThumbColor: const Color(0xFFE5C158),
+                        value: _focusAutoStart,
+                        onChanged: _toggleFocusAutoStart,
+                      ),
                     ],
-                    onChanged: _changeFocusDuration,
-                  )),
+                  ],
                 ),
-                if (_focusLockDuration > 0) ...[
-                  const Divider(height: 1, color: Colors.white10),
-                  ListTile(
-                    title: Text(TranslationService.isArabic ? "نوع قفل التركيز" : "Focus Lock Mode"),
-                    subtitle: Text(TranslationService.isArabic 
-                        ? "اختر قفل التطبيق فقط أو قفل الهاتف بالكامل" 
-                        : "Choose whether to lock the app or the entire phone"),
-                    trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
-                      value: _focusLockType,
-                      underline: const SizedBox(),
-                      dropdownColor: theme.cardColor,
-                      items: [
-                        DropdownMenuItem(
-                          value: 'app_only',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "قفل التطبيق فقط" : "App Lock Only"),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'whole_phone',
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(TranslationService.isArabic ? "قفل الهاتف بالكامل" : "Whole Phone Lock"),
-                          ),
-                        ),
-                      ],
-                      onChanged: _changeFocusLockType,
-                    )),
-                  ),
-                  const Divider(height: 1, color: Colors.white10),
-                  SwitchListTile(
-                    title: Text(TranslationService.t('focus_setting_auto')),
-                    activeThumbColor: const Color(0xFFE5C158),
-                    value: _focusAutoStart,
-                    onChanged: _toggleFocusAutoStart,
-                  ),
-                ],
-              ],
-            )
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Donation Support Section
-          _buildSectionHeader(TranslationService.isArabic ? "الدعم والمساهمة" : "Support & Contribution"),
+          _buildSectionHeader(
+            TranslationService.isArabic
+                ? "الدعم والمساهمة"
+                : "Support & Contribution",
+          ),
           Card(
             color: theme.cardColor,
             child: ListTile(
-              leading: const Icon(Icons.volunteer_activism, color: Color(0xFFE5C158)),
+              leading: const Icon(
+                Icons.volunteer_activism,
+                color: Color(0xFFE5C158),
+              ),
               title: Text(
-                TranslationService.isArabic ? "دعم تطبيق آية" : "Support Aya App", 
-                style: const TextStyle(fontWeight: FontWeight.bold)
+                TranslationService.isArabic
+                    ? "دعم تطبيق آية"
+                    : "Support Aya App",
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text(
-                TranslationService.isArabic 
-                    ? "ساهم في دعم استضافة التطبيق وتطويره بدون إعلانات صدقة جارية" 
-                    : "Support server costs and development, ad-free continuous charity"
+                TranslationService.isArabic
+                    ? "ساهم في دعم استضافة التطبيق وتطويره بدون إعلانات صدقة جارية"
+                    : "Support server costs and development, ad-free continuous charity",
               ),
-              trailing: Icon(TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios, size: 14, color: const Color(0xFFE5C158)),
+              trailing: Icon(
+                TranslationService.isArabic
+                    ? Icons.arrow_back_ios
+                    : Icons.arrow_forward_ios,
+                size: 14,
+                color: const Color(0xFFE5C158),
+              ),
               onTap: _showDonateDialog,
             ),
           ),
@@ -1574,8 +2369,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             color: theme.cardColor,
             child: ListTile(
               leading: const Icon(Icons.info_outline, color: Color(0xFFE5C158)),
-              title: Text(TranslationService.isArabic ? "حول التطبيق" : "About Aya", style: const TextStyle(fontWeight: FontWeight.bold)),
-              trailing: Icon(TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios, size: 14, color: const Color(0xFFE5C158)),
+              title: Text(
+                TranslationService.isArabic ? "حول التطبيق" : "About Aya",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              trailing: Icon(
+                TranslationService.isArabic
+                    ? Icons.arrow_back_ios
+                    : Icons.arrow_forward_ios,
+                size: 14,
+                color: const Color(0xFFE5C158),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -1592,11 +2396,20 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             color: theme.cardColor,
             child: ListTile(
               title: Text(
-                TranslationService.t('reset_settings'), 
-                style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)
+                TranslationService.t('reset_settings'),
+                style: const TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               subtitle: Text(TranslationService.t('reset_settings_sub')),
-              trailing: Icon(TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios, size: 14, color: Colors.redAccent),
+              trailing: Icon(
+                TranslationService.isArabic
+                    ? Icons.arrow_back_ios
+                    : Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.redAccent,
+              ),
               onTap: _resetApp,
             ),
           ),
@@ -1610,17 +2423,28 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 const SizedBox(height: 12),
                 Text(
                   TranslationService.t('app_title').toUpperCase(),
-                  style: const TextStyle(letterSpacing: 4, fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(
+                    letterSpacing: 4,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   TranslationService.t('version_premium'),
-                  style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4), fontSize: 11),
+                  style: TextStyle(
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                    fontSize: 11,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   TranslationService.t('bless_journey'),
-                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.white30),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white30,
+                  ),
                 ),
               ],
             ),
@@ -1637,7 +2461,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         final status = states[reciterId] ?? DownloadStatus.notDownloaded;
         switch (status) {
           case DownloadStatus.downloaded:
-            return const Icon(Icons.check_circle, color: Colors.green, size: 16);
+            return const Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 16,
+            );
           case DownloadStatus.downloading:
             return const SizedBox(
               width: 12,
@@ -1648,7 +2476,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               ),
             );
           case DownloadStatus.notDownloaded:
-            return const Icon(Icons.cloud_download, color: Colors.orangeAccent, size: 16);
+            return const Icon(
+              Icons.cloud_download,
+              color: Colors.orangeAccent,
+              size: 16,
+            );
         }
       },
     );
@@ -1656,7 +2488,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 4.0, bottom: 8.0, end: 4.0),
+      padding: const EdgeInsetsDirectional.only(
+        start: 4.0,
+        bottom: 8.0,
+        end: 4.0,
+      ),
       child: Text(
         title.toUpperCase(),
         style: const TextStyle(
