@@ -272,24 +272,37 @@ class _HadithScreenState extends State<HadithScreen> {
     }
   }
 
-  /// Build a precise 8-word search query from the Arabic hadith text,
-  /// skipping narrator-chain prefix words like حدثنا / أخبرنا / عن / قال.
   String _buildHadithQuery(String text) {
-    // Common isnad/narrator opener words
-    const narratorPrefixes = {
-      'حدثنا', 'حدثني', 'أخبرنا', 'أخبرني', 'أنبأنا', 'أنبأني',
-      'روى', 'رواه', 'عن', 'قال', 'قالت', 'رضي', 'الله', 'عنه',
-      'عنها', 'عنهم', 'صلى', 'وسلم', 'النبي', 'رسول', 'ابن',
-    };
-    final words = text.split(RegExp(r'\s+'));
-    // Skip leading narrator words (up to first 6)
-    int start = 0;
-    while (start < words.length && start < 6 && narratorPrefixes.contains(words[start].replaceAll(RegExp(r'[،,.:؟]'), ''))) {
-      start++;
+    // 1. Try to extract text inside quotes (usually the core hadith matn)
+    final quoteMatch = RegExp(r'["«](.*?)["»]').firstMatch(text);
+    if (quoteMatch != null && quoteMatch.group(1)!.trim().length > 10) {
+      final words = quoteMatch.group(1)!.trim().split(RegExp(r'\s+'));
+      return words.take(10).join(' ');
     }
-    // Take up to 8 words from the matn
-    final taken = words.skip(start).take(8).join(' ');
-    return taken.isNotEmpty ? taken : words.take(8).join(' ');
+
+    // 2. Look for the Prophet's blessing and take what comes after it
+    final pbuhIndex = text.indexOf('صلى الله عليه وسلم');
+    if (pbuhIndex != -1) {
+      final afterPbuh = text.substring(pbuhIndex + 18).replaceAll(RegExp(r'قال|يقول|:|["«»]'), '').trim();
+      final words = afterPbuh.split(RegExp(r'\s+'));
+      if (words.length > 3) return words.take(10).join(' ');
+    }
+
+    // 3. Look for "رضي الله عنه" and take what comes after
+    final raIndex = text.indexOf('رضي الله عنه');
+    if (raIndex != -1) {
+      final afterRa = text.substring(raIndex + 12).replaceAll(RegExp(r'قال|يقول|:|["«»]'), '').trim();
+      final words = afterRa.split(RegExp(r'\s+'));
+      if (words.length > 3) return words.take(10).join(' ');
+    }
+
+    // 4. Fallback: skip the first chunk of words assuming it's a long narrator chain
+    final words = text.split(RegExp(r'\s+'));
+    if (words.length > 20) {
+      return words.skip(10).take(10).join(' ');
+    }
+    
+    return words.take(10).join(' ');
   }
 
   void _showHadithOptions(Map<String, dynamic> h) {
