@@ -49,45 +49,54 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     setState(() => _isLoading = true);
     final db = await DatabaseService.getInstance();
 
-    // Load selected date tracker
+    // ponytail: One DB call for the whole year, filter in memory
     _todayTracker = await db.getPrayerTracker(_formatDate(_selectedDate));
 
-    // Load statistics
     final now = DateTime.now();
-
-    // Weekly
-    final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    final weekEnd = weekStart.add(const Duration(days: 6));
-    await _calculateStats('weekly', weekStart, weekEnd, db);
-
-    // Monthly
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthEnd = DateTime(now.year, now.month + 1, 0);
-    await _calculateStats('monthly', monthStart, monthEnd, db);
-
-    // Yearly
     final yearStart = DateTime(now.year, 1, 1);
     final yearEnd = DateTime(now.year, 12, 31);
-    await _calculateStats('yearly', yearStart, yearEnd, db);
+    final monthStart = DateTime(now.year, now.month, 1);
+    final monthEnd = DateTime(now.year, now.month + 1, 0);
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
+    final yearlyList = await db.getPrayerTrackerRange(
+      _formatDate(yearStart),
+      _formatDate(yearEnd),
+    );
+
+    _calculateStats('yearly', yearStart, yearEnd, yearlyList);
+    _calculateStats(
+      'monthly',
+      monthStart,
+      monthEnd,
+      yearlyList.where((e) {
+        final d = DateTime.parse(e['date'] as String);
+        return d.isAfter(monthStart.subtract(const Duration(days: 1))) &&
+            d.isBefore(monthEnd.add(const Duration(days: 1)));
+      }),
+    );
+    _calculateStats(
+      'weekly',
+      weekStart,
+      weekEnd,
+      yearlyList.where((e) {
+        final d = DateTime.parse(e['date'] as String);
+        return d.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+            d.isBefore(weekEnd.add(const Duration(days: 1)));
+      }),
+    );
+
+    if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> _calculateStats(
+  void _calculateStats(
     String period,
     DateTime start,
     DateTime end,
-    DatabaseService db,
-  ) async {
-    final list = await db.getPrayerTrackerRange(
-      _formatDate(start),
-      _formatDate(end),
-    );
-    int prayed = 0;
-    int jamaah = 0;
-    int missed = 0;
+    Iterable<Map<String, dynamic>> list,
+  ) {
+    int prayed = 0, jamaah = 0, missed = 0;
 
     for (var item in list) {
       for (var p in _prayers) {
@@ -101,14 +110,12 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       }
     }
 
-    // Calculate total possible prayers for the period up to TODAY (don't count future days as missed)
     final daysInPeriod = DateTime.now().difference(start).inDays + 1;
     final validDays = daysInPeriod > end.difference(start).inDays + 1
         ? end.difference(start).inDays + 1
         : daysInPeriod;
     final total = validDays * 5;
 
-    // Adjust missed to only be for past/current days
     missed = total - (prayed + jamaah);
     if (missed < 0) missed = 0;
 

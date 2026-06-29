@@ -333,15 +333,11 @@ class DatabaseService {
     String prayer,
     int status,
   ) async {
-    final db = _database!;
-    final current = await getPrayerTracker(date);
-    final map = Map<String, dynamic>.from(current);
-    map[prayer] = status;
-
-    await db.insert(
-      'prayer_tracker',
-      map,
-      conflictAlgorithm: ConflictAlgorithm.replace,
+    // ponytail: single raw SQL upsert instead of select-then-replace
+    await _database!.execute(
+      'INSERT INTO prayer_tracker (date, $prayer) VALUES (?, ?) '
+      'ON CONFLICT(date) DO UPDATE SET $prayer = excluded.$prayer',
+      [date, status],
     );
   }
 
