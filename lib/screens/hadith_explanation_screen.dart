@@ -110,8 +110,8 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       if (mounted) {
         setState(() {
           _error = TranslationService.isArabic
-              ? "لم يتم العثور على نتائج"
-              : "No results found.";
+              ? "تعذر جلب النتائج. (${e.toString()})"
+              : "No results found. (${e.toString()})";
           _isLoading = false;
         });
       }

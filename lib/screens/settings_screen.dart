@@ -876,255 +876,397 @@ class _SettingsScreenState extends State<SettingsScreen>
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(TranslationService.t('theme_preset_label')),
-                      subtitle: Text(TranslationService.t('theme_preset_sub')),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _themePreset,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'light',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "فاتح"
-                                      : "Light",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'sepia',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "بني (قراءة)"
-                                      : "Sepia/Parchment",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'dark',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic ? "داكن" : "Dark",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'black',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "أسود OLED"
-                                      : "OLED Black",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'dark_monet',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "داكن متكيف"
-                                      : "Adaptive Dark",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'white_monet',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "فاتح متكيف"
-                                      : "Adaptive Light",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeThemePreset,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                    ),
-                    const Divider(height: 1, color: Colors.white10),
-                    ListTile(
-                      title: Text(
-                        TranslationService.t('bottom_navbar_style_label'),
-                      ),
-                      subtitle: Text(
-                        TranslationService.t('bottom_navbar_style_sub'),
-                      ),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _bottomNavbarStyle,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'solid',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.t('bottom_navbar_solid'),
-                                ),
-                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(TranslationService.t('theme_preset_label')),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
                             ),
-                            DropdownMenuItem(
-                              value: 'floating',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.t(
-                                    'bottom_navbar_floating',
+                            child: Text(
+                              TranslationService.t('theme_preset_sub'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _themePreset,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'light',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "فاتح"
+                                            : "Light",
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  DropdownMenuItem(
+                                    value: 'sepia',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "بني (قراءة)"
+                                            : "Sepia/Parchment",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'dark',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "داكن"
+                                            : "Dark",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'black',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "أسود OLED"
+                                            : "OLED Black",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'dark_monet',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "داكن متكيف"
+                                            : "Adaptive Dark",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'white_monet',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "فاتح متكيف"
+                                            : "Adaptive Light",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeThemePreset,
                               ),
                             ),
-                          ],
-                          onChanged: _changeBottomNavbarStyle,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 1, color: Colors.white10),
-                    ListTile(
-                      title: Text(TranslationService.t('quran_font')),
-                      subtitle: Text(TranslationService.t('quran_font_sub')),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _quranFont,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'font-scheherazade',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "خط شهرزاد"
-                                      : "Scheherazade Font",
-                                ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            TranslationService.t('bottom_navbar_style_label'),
+                          ),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(
+                              TranslationService.t('bottom_navbar_style_sub'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _bottomNavbarStyle,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'solid',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.t(
+                                          'bottom_navbar_solid',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'floating',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.t(
+                                          'bottom_navbar_floating',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeBottomNavbarStyle,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 'font-amiri',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "الخط الأميري"
-                                      : "Amiri Font",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeFont,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 1, color: Colors.white10),
-                    ListTile(
-                      title: Text(
-                        TranslationService.isArabic
-                            ? "تفسير القرآن"
-                            : "Quran Tafsir",
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      subtitle: Text(
-                        TranslationService.isArabic
-                            ? "اختر كتاب التفسير المفضل"
-                            : "Choose preferred Tafsir book",
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(TranslationService.t('quran_font')),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(TranslationService.t('quran_font_sub')),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _quranFont,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'font-scheherazade',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "خط شهرزاد"
+                                            : "Scheherazade Font",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'font-amiri',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "الخط الأميري"
+                                            : "Amiri Font",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeFont,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _tafsirEdition,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'ar.muyassar',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "التفسير الميسر (المجمع)"
-                                      : "Al-Muyassar (Assembly)",
-                                ),
+                    ),
+                    const Divider(height: 1, color: Colors.white10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            TranslationService.isArabic
+                                ? "تفسير القرآن"
+                                : "Quran Tafsir",
+                          ),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(
+                              TranslationService.isArabic
+                                  ? "اختر كتاب التفسير المفضل"
+                                  : "Choose preferred Tafsir book",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _tafsirEdition,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'ar.muyassar',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "التفسير الميسر (المجمع)"
+                                            : "Al-Muyassar (Assembly)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.jalalayn',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "تفسير الجلالين"
+                                            : "Tafsir Al-Jalalayn",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.qurtubi',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "تفسير القرطبي"
+                                            : "Tafsir Al-Qurtubi",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.miqbas',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "تنوير المقباس (ابن عباس)"
+                                            : "Tanwir al-Miqbas (Ibn Abbas)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.waseet',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "التفسير الوسيط (الطنطاوي)"
+                                            : "Al-Waseet (Tantawi)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.baghawi',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "تفسير البغوي"
+                                            : "Tafsir Al-Baghawi",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeTafsirEdition,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 'ar.jalalayn',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "تفسير الجلالين"
-                                      : "Tafsir Al-Jalalayn",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.qurtubi',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "تفسير القرطبي"
-                                      : "Tafsir Al-Qurtubi",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.miqbas',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "تنوير المقباس (ابن عباس)"
-                                      : "Tanwir al-Miqbas (Ibn Abbas)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.waseet',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "التفسير الوسيط (الطنطاوي)"
-                                      : "Al-Waseet (Tantawi)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.baghawi',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "تفسير البغوي"
-                                      : "Tafsir Al-Baghawi",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeTafsirEdition,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 1, color: Colors.white10),
@@ -1170,51 +1312,77 @@ class _SettingsScreenState extends State<SettingsScreen>
           _buildSectionHeader(TranslationService.t('app_lang')),
           Card(
             color: theme.cardColor,
-            child: ListTile(
-              title: Text(TranslationService.t('app_lang')),
-              subtitle: Text(TranslationService.t('app_lang_sub')),
-              trailing: SizedBox(
-                width: 160,
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: TranslationService.currentLanguage,
-                  underline: const SizedBox(),
-                  dropdownColor: theme.cardColor,
-                  items: [
-                    const DropdownMenuItem(
-                      value: 'ar',
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Text("العربية"),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(TranslationService.t('app_lang')),
+                  const SizedBox(height: 4),
+                  DefaultTextStyle(
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.7,
                       ),
+                      fontSize: 13,
                     ),
-                    const DropdownMenuItem(
-                      value: 'en',
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Text("English"),
-                      ),
+                    child: Text(TranslationService.t('app_lang_sub')),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
                     ),
-                  ],
-                  onChanged: (lang) async {
-                    if (lang != null) {
-                      final navigator = Navigator.of(context);
-                      await widget.storage.setString('lang_code', lang);
-                      TranslationService.setLanguage(lang);
-
-                      // Root level rebuild & reload navigation stack to main dashboard page
-                      widget.onThemeChanged();
-                      if (mounted) {
-                        unawaited(
-                          navigator.pushNamedAndRemoveUntil(
-                            '/',
-                            (route) => false,
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: TranslationService.currentLanguage,
+                        underline: const SizedBox(),
+                        dropdownColor: theme.cardColor,
+                        items: [
+                          const DropdownMenuItem(
+                            value: 'ar',
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text("العربية"),
+                            ),
                           ),
-                        );
-                      }
-                    }
-                  },
-                ),
+                          const DropdownMenuItem(
+                            value: 'en',
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text("English"),
+                            ),
+                          ),
+                        ],
+                        onChanged: (lang) async {
+                          if (lang != null) {
+                            final navigator = Navigator.of(context);
+                            await widget.storage.setString('lang_code', lang);
+                            TranslationService.setLanguage(lang);
+
+                            // Root level rebuild & reload navigation stack to main dashboard page
+                            widget.onThemeChanged();
+                            if (mounted) {
+                              unawaited(
+                                navigator.pushNamedAndRemoveUntil(
+                                  '/',
+                                  (route) => false,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1235,180 +1403,253 @@ class _SettingsScreenState extends State<SettingsScreen>
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(TranslationService.t('calc_method')),
-                      subtitle: Text(TranslationService.t('calc_settings')),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          value: _calcMethod,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 1,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "جامعة العلوم الإسلامية بكراتشي"
-                                      : "University of Islamic Sciences, Karachi",
-                                ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(TranslationService.t('calc_method')),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(TranslationService.t('calc_settings')),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _calcMethod,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 1,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "جامعة العلوم الإسلامية بكراتشي"
+                                            : "University of Islamic Sciences, Karachi",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 2,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "الهيئة الإسلامية لأمريكا الشمالية (ISNA)"
+                                            : "Islamic Society of North America (ISNA)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 3,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "رابطة العالم الإسلامي"
+                                            : "Muslim World League (MWL)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 4,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "جامعة أم القرى (مكة)"
+                                            : "Umm Al-Qura University (Makkah)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 5,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "الهيئة المصرية العامة للمساحة"
+                                            : "Egyptian General Authority of Survey",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 10,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "وزارة الأوقاف والشؤون الإسلامية (قطر)"
+                                            : "Ministry of Awqaf (Qatar)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 11,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "المجلس الإسلامي السنغافوري (MUIS)"
+                                            : "Majlis Ugama Islam Singapura (MUIS)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 12,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "اتحاد المنظمات الإسلامية بفرنسا (UOIF)"
+                                            : "Union of Islamic Organisations of France (UOIF)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 13,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "تركيا (الشؤون الدينية)"
+                                            : "Turkey (Diyanet)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 14,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "الإدارة الدينية لمسلمي روسيا الاتحادية"
+                                            : "Spiritual Administration of Muslims of Russia",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 16,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "الهيئة العامة للشؤون الإسلامية والأوقاف (الإمارات)"
+                                            : "General Authority of Islamic Affairs & Endowments (UAE)",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeCalcMethod,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 2,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "الهيئة الإسلامية لأمريكا الشمالية (ISNA)"
-                                      : "Islamic Society of North America (ISNA)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 3,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "رابطة العالم الإسلامي"
-                                      : "Muslim World League (MWL)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 4,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "جامعة أم القرى (مكة)"
-                                      : "Umm Al-Qura University (Makkah)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 5,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "الهيئة المصرية العامة للمساحة"
-                                      : "Egyptian General Authority of Survey",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 10,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "وزارة الأوقاف والشؤون الإسلامية (قطر)"
-                                      : "Ministry of Awqaf (Qatar)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 11,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "المجلس الإسلامي السنغافوري (MUIS)"
-                                      : "Majlis Ugama Islam Singapura (MUIS)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 12,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "اتحاد المنظمات الإسلامية بفرنسا (UOIF)"
-                                      : "Union of Islamic Organisations of France (UOIF)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 13,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "تركيا (الشؤون الدينية)"
-                                      : "Turkey (Diyanet)",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 14,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "الإدارة الدينية لمسلمي روسيا الاتحادية"
-                                      : "Spiritual Administration of Muslims of Russia",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 16,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "الهيئة العامة للشؤون الإسلامية والأوقاف (الإمارات)"
-                                      : "General Authority of Islamic Affairs & Endowments (UAE)",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeCalcMethod,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 1, color: Colors.white10),
-                    ListTile(
-                      title: Text(TranslationService.t('asr_calc_label')),
-                      subtitle: Text(TranslationService.t('asr_calc_sub')),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          value: _asrMethod,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 0,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "الشافعي، المالكي، الحنبلي"
-                                      : "Standard (Shafi'i, Maliki, Hanbali)",
-                                ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(TranslationService.t('asr_calc_label')),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(TranslationService.t('asr_calc_sub')),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _asrMethod,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 0,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "الشافعي، المالكي، الحنبلي"
+                                            : "Standard (Shafi'i, Maliki, Hanbali)",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 1,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "المذهب الحنفي"
+                                            : "Hanafi School",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeAsrMethod,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 1,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "المذهب الحنفي"
-                                      : "Hanafi School",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeAsrMethod,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1437,107 +1678,164 @@ class _SettingsScreenState extends State<SettingsScreen>
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(
-                        TranslationService.isArabic
-                            ? "وقت التنبيه قبل الأذان"
-                            : "Pre-Athan Alert Time",
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      subtitle: Text(
-                        TranslationService.isArabic
-                            ? "اختر وقت التنبيه بالدقائق قبل الأذان"
-                            : "Choose alert timing in minutes before Athan",
-                      ),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          value: _preAdhanDuration,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [0, 5, 10, 15, 20].map((mins) {
-                            return DropdownMenuItem<int>(
-                              value: mins,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  mins == 0
-                                      ? (TranslationService.isArabic
-                                            ? "إيقاف"
-                                            : "Off")
-                                      : (TranslationService.isArabic
-                                            ? "$mins دقائق"
-                                            : "$mins Mins"),
-                                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            TranslationService.isArabic
+                                ? "وقت التنبيه قبل الأذان"
+                                : "Pre-Athan Alert Time",
+                          ),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(
+                              TranslationService.isArabic
+                                  ? "اختر وقت التنبيه بالدقائق قبل الأذان"
+                                  : "Choose alert timing in minutes before Athan",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
                               ),
-                            );
-                          }).toList(),
-                          onChanged: _changePreAdhanDuration,
-                        ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _preAdhanDuration,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [0, 5, 10, 15, 20].map((mins) {
+                                  return DropdownMenuItem<int>(
+                                    value: mins,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        mins == 0
+                                            ? (TranslationService.isArabic
+                                                  ? "إيقاف"
+                                                  : "Off")
+                                            : (TranslationService.isArabic
+                                                  ? "$mins دقائق"
+                                                  : "$mins Mins"),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: _changePreAdhanDuration,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 1, color: Colors.white10),
-                    ListTile(
-                      title: Text(
-                        TranslationService.isArabic
-                            ? "نمط تنبيه قبل الأذان"
-                            : "Pre-Athan Alert Style",
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _preAdhanAlertMode,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'silent',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "صامت"
-                                      : "Silent",
-                                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            TranslationService.isArabic
+                                ? "نمط تنبيه قبل الأذان"
+                                : "Pre-Athan Alert Style",
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _preAdhanAlertMode,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'silent',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "صامت"
+                                            : "Silent",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'vibrate',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "اهتزاز فقط"
+                                            : "Vibrate Only",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'voice',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "تنبيه صوتي"
+                                            : "Voice Announcement",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'vibrate_and_voice',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "اهتزاز + تنبيه صوتي"
+                                            : "Vibrate + Voice",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changePreAdhanAlertMode,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 'vibrate',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "اهتزاز فقط"
-                                      : "Vibrate Only",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'voice',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "تنبيه صوتي"
-                                      : "Voice Announcement",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'vibrate_and_voice',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "اهتزاز + تنبيه صوتي"
-                                      : "Vibrate + Voice",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changePreAdhanAlertMode,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     if (_preAdhanAlertMode == 'voice' ||
@@ -1596,256 +1894,360 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ],
                     const Divider(height: 1, color: Colors.white10),
-                    ListTile(
-                      title: Text(
-                        TranslationService.isArabic
-                            ? "نوع تنبيه الأذان"
-                            : "Athan Alert Style",
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      subtitle: Text(
-                        TranslationService.isArabic
-                            ? "التنبيه عند دخول وقت الصلاة"
-                            : "Alert when prayer time starts",
-                      ),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _adhanAlertMode,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'silent',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "صامت"
-                                      : "Silent",
-                                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            TranslationService.isArabic
+                                ? "نوع تنبيه الأذان"
+                                : "Athan Alert Style",
+                          ),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(
+                              TranslationService.isArabic
+                                  ? "التنبيه عند دخول وقت الصلاة"
+                                  : "Alert when prayer time starts",
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _adhanAlertMode,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'silent',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "صامت"
+                                            : "Silent",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'vibrate',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "اهتزاز"
+                                            : "Vibrate",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'real_reciter',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "أذان بصوت المؤذن"
+                                            : "Real Reciter Adhan",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'vibrate_and_voice',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "اهتزاز + صوت المؤذن"
+                                            : "Vibrate + Reciter Voice",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeAdhanAlertMode,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 'vibrate',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "اهتزاز"
-                                      : "Vibrate",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'real_reciter',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "أذان بصوت المؤذن"
-                                      : "Real Reciter Adhan",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'vibrate_and_voice',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "اهتزاز + صوت المؤذن"
-                                      : "Vibrate + Reciter Voice",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeAdhanAlertMode,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     if (_adhanAlertMode == 'real_reciter' ||
                         _adhanAlertMode == 'vibrate_and_voice') ...[
                       const Divider(height: 1, color: Colors.white10),
-                      ListTile(
-                        title: Text(
-                          TranslationService.isArabic
-                              ? "المؤذن"
-                              : "Athan Reciter",
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
-                        subtitle: Text(
-                          TranslationService.isArabic
-                              ? "اختر صوت المؤذن للأذان"
-                              : "Select voice for the Athan",
-                        ),
-                        trailing: SizedBox(
-                          width: 160,
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: _adhanReciter,
-                            underline: const SizedBox(),
-                            dropdownColor: theme.cardColor,
-                            items: [
-                              DropdownMenuItem(
-                                value: 'mishary',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "مشاري العفاسي"
-                                        : "Mishary Alafasy",
-                                  ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              TranslationService.isArabic
+                                  ? "المؤذن"
+                                  : "Athan Reciter",
+                            ),
+                            const SizedBox(height: 4),
+                            DefaultTextStyle(
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color
+                                    ?.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                              child: Text(
+                                TranslationService.isArabic
+                                    ? "اختر صوت المؤذن للأذان"
+                                    : "Select voice for the Athan",
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.scaffoldBackgroundColor
+                                    .withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: _adhanReciter,
+                                  underline: const SizedBox(),
+                                  dropdownColor: theme.cardColor,
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: 'mishary',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "مشاري العفاسي"
+                                              : "Mishary Alafasy",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'abdul_basit',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "عبد الباسط عبد الصمد"
+                                              : "Abdul Basit",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'madinah',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "أذان الحرم المدني"
+                                              : "Al Haram Al Madani",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'kazabri',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "عمر القزابري"
+                                              : "Omar Al Kazabri",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'riad',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "رياض الجزائري"
+                                              : "Riad Al Djazairi",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'manssour',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "منصور الزهراني"
+                                              : "Manssour El Zahrani",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'nakshabandi',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "سيد النقشبندي"
+                                              : "Sayed Al Nakshabandi",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'maghriby',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "نور الدين المغربي"
+                                              : "Nurdin Al Maghriby",
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: _changeAdhanReciter,
                                 ),
                               ),
-                              DropdownMenuItem(
-                                value: 'abdul_basit',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "عبد الباسط عبد الصمد"
-                                        : "Abdul Basit",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'madinah',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "أذان الحرم المدني"
-                                        : "Al Haram Al Madani",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'kazabri',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "عمر القزابري"
-                                        : "Omar Al Kazabri",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'riad',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "رياض الجزائري"
-                                        : "Riad Al Djazairi",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'manssour',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "منصور الزهراني"
-                                        : "Manssour El Zahrani",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'nakshabandi',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "سيد النقشبندي"
-                                        : "Sayed Al Nakshabandi",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'maghriby',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "نور الدين المغربي"
-                                        : "Nurdin Al Maghriby",
-                                  ),
-                                ),
-                              ),
-                            ],
-                            onChanged: _changeAdhanReciter,
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       const Divider(height: 1, color: Colors.white10),
-                      ListTile(
-                        title: Text(
-                          TranslationService.isArabic
-                              ? "إيماءة إيقاف الأذان"
-                              : "Athan Stop Gesture",
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
-                        subtitle: Text(
-                          TranslationService.isArabic
-                              ? "إيقاف الأذان بالضغط على أزرار الصوت أو قلب الهاتف وجهه لأسفل"
-                              : "Stop Athan by pressing volume buttons or flipping the phone face down",
-                        ),
-                        trailing: SizedBox(
-                          width: 160,
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: _athanStopGesture,
-                            underline: const SizedBox(),
-                            dropdownColor: theme.cardColor,
-                            items: [
-                              DropdownMenuItem(
-                                value: 'both',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "أزرار الصوت وقلب الهاتف"
-                                        : "Volume keys & Flip",
-                                  ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              TranslationService.isArabic
+                                  ? "إيماءة إيقاف الأذان"
+                                  : "Athan Stop Gesture",
+                            ),
+                            const SizedBox(height: 4),
+                            DefaultTextStyle(
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color
+                                    ?.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                              child: Text(
+                                TranslationService.isArabic
+                                    ? "إيقاف الأذان بالضغط على أزرار الصوت أو قلب الهاتف وجهه لأسفل"
+                                    : "Stop Athan by pressing volume buttons or flipping the phone face down",
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.scaffoldBackgroundColor
+                                    .withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: _athanStopGesture,
+                                  underline: const SizedBox(),
+                                  dropdownColor: theme.cardColor,
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: 'both',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "أزرار الصوت وقلب الهاتف"
+                                              : "Volume keys & Flip",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'volume_only',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "أزرار الصوت فقط"
+                                              : "Volume keys only",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'flip_only',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "قلب الهاتف فقط"
+                                              : "Flip phone only",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'none',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "لا توقف"
+                                              : "Don't stop",
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: _changeAthanStopGesture,
                                 ),
                               ),
-                              DropdownMenuItem(
-                                value: 'volume_only',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "أزرار الصوت فقط"
-                                        : "Volume keys only",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'flip_only',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "قلب الهاتف فقط"
-                                        : "Flip phone only",
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'none',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "لا توقف"
-                                        : "Don't stop",
-                                  ),
-                                ),
-                              ),
-                            ],
-                            onChanged: _changeAthanStopGesture,
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -1910,64 +2312,98 @@ class _SettingsScreenState extends State<SettingsScreen>
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(TranslationService.t('qari')),
-                      subtitle: Text(TranslationService.t('qari_sub')),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _reciter,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'ar.alafasy',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "مشاري العفاسي"
-                                      : "Mishary Alafasy",
-                                ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(TranslationService.t('qari')),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(TranslationService.t('qari_sub')),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _reciter,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 'ar.alafasy',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "مشاري العفاسي"
+                                            : "Mishary Alafasy",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.abdurrahmaansudais',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "عبد الرحمن السديس"
+                                            : "Abdurrahman As-Sudais",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.mahermuaiqly',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "ماهر المعيقلي"
+                                            : "Maher Al-Muaiqly",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'ar.saadalghamidi',
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "سعد الغامدي"
+                                            : "Saad Al-Ghamdi",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeReciter,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 'ar.abdurrahmaansudais',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "عبد الرحمن السديس"
-                                      : "Abdurrahman As-Sudais",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.mahermuaiqly',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "ماهر المعيقلي"
-                                      : "Maher Al-Muaiqly",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.saadalghamidi',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "سعد الغامدي"
-                                      : "Saad Al-Ghamdi",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeReciter,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 1, color: Colors.white10),
@@ -2186,134 +2622,203 @@ class _SettingsScreenState extends State<SettingsScreen>
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(TranslationService.t('focus_timer')),
-                      subtitle: Text(
-                        TranslationService.t('focus_prayer_lock_sub'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          value: _focusLockDuration,
-                          underline: const SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 0,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic ? "إيقاف" : "Off",
-                                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(TranslationService.t('focus_timer')),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
+                            child: Text(
+                              TranslationService.t('focus_prayer_lock_sub'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _focusLockDuration,
+                                underline: const SizedBox(),
+                                dropdownColor: theme.cardColor,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: 0,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "إيقاف"
+                                            : "Off",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 5,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "٥ دقائق"
+                                            : "5 Minutes",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 10,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "١٠ دقائق"
+                                            : "10 Minutes",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 15,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "١٥ دقيقة"
+                                            : "15 Minutes",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 20,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "٢٠ دقيقة"
+                                            : "20 Minutes",
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 30,
+                                    child: Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? "٣٠ دقيقة"
+                                            : "30 Minutes",
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _changeFocusDuration,
                               ),
                             ),
-                            DropdownMenuItem(
-                              value: 5,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "٥ دقائق"
-                                      : "5 Minutes",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 10,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "١٠ دقائق"
-                                      : "10 Minutes",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 15,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "١٥ دقيقة"
-                                      : "15 Minutes",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 20,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "٢٠ دقيقة"
-                                      : "20 Minutes",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 30,
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "٣٠ دقيقة"
-                                      : "30 Minutes",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeFocusDuration,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     if (_focusLockDuration > 0) ...[
                       const Divider(height: 1, color: Colors.white10),
-                      ListTile(
-                        title: Text(
-                          TranslationService.isArabic
-                              ? "نوع قفل التركيز"
-                              : "Focus Lock Mode",
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
-                        subtitle: Text(
-                          TranslationService.isArabic
-                              ? "اختر قفل التطبيق فقط أو قفل الهاتف بالكامل"
-                              : "Choose whether to lock the app or the entire phone",
-                        ),
-                        trailing: SizedBox(
-                          width: 160,
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: _focusLockType,
-                            underline: const SizedBox(),
-                            dropdownColor: theme.cardColor,
-                            items: [
-                              DropdownMenuItem(
-                                value: 'app_only',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "قفل التطبيق فقط"
-                                        : "App Lock Only",
-                                  ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              TranslationService.isArabic
+                                  ? "نوع قفل التركيز"
+                                  : "Focus Lock Mode",
+                            ),
+                            const SizedBox(height: 4),
+                            DefaultTextStyle(
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color
+                                    ?.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                              child: Text(
+                                TranslationService.isArabic
+                                    ? "اختر قفل التطبيق فقط أو قفل الهاتف بالكامل"
+                                    : "Choose whether to lock the app or the entire phone",
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.scaffoldBackgroundColor
+                                    .withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: _focusLockType,
+                                  underline: const SizedBox(),
+                                  dropdownColor: theme.cardColor,
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: 'app_only',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "قفل التطبيق فقط"
+                                              : "App Lock Only",
+                                        ),
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'whole_phone',
+                                      child: Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Text(
+                                          TranslationService.isArabic
+                                              ? "قفل الهاتف بالكامل"
+                                              : "Whole Phone Lock",
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: _changeFocusLockType,
                                 ),
                               ),
-                              DropdownMenuItem(
-                                value: 'whole_phone',
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: Text(
-                                    TranslationService.isArabic
-                                        ? "قفل الهاتف بالكامل"
-                                        : "Whole Phone Lock",
-                                  ),
-                                ),
-                              ),
-                            ],
-                            onChanged: _changeFocusLockType,
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       const Divider(height: 1, color: Colors.white10),
