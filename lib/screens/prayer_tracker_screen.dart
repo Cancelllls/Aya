@@ -510,6 +510,81 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     );
   }
 
+  Widget _buildYearlyView(bool isAr, ThemeData theme) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      itemCount: 12,
+      itemBuilder: (context, index) {
+        final monthDate = DateTime(DateTime.now().year, index + 1, 1);
+        final monthStr = DateFormat('MMMM yyyy', isAr ? 'ar' : 'en').format(monthDate);
+        final int daysInMonth = DateTime(monthDate.year, monthDate.month + 1, 0).day;
+        final firstDayWeekday = monthDate.weekday;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+              child: Text(
+                monthStr.toUpperCase(),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+              ),
+            ),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+              ),
+              itemCount: daysInMonth + (firstDayWeekday - 1),
+              itemBuilder: (context, dayIndex) {
+                if (dayIndex < firstDayWeekday - 1) {
+                  return const SizedBox.shrink();
+                }
+                
+                final day = dayIndex - (firstDayWeekday - 1) + 1;
+                final date = DateTime(monthDate.year, monthDate.month, day);
+                final dateStr = _formatDate(date);
+                final dayData = _trackerData[dateStr] ?? {};
+                
+                List<bool> prayersDone = [];
+                for (var p in _prayers) {
+                  prayersDone.add((dayData[p] as int? ?? 0) > 0);
+                }
+                
+                return CustomPaint(
+                  painter: PrayerPiePainter(
+                    prayers: prayersDone,
+                    completeColor: const Color(0xFFE5C158),
+                    incompleteColor: theme.dividerColor.withOpacity(0.1),
+                    backgroundColor: theme.scaffoldBackgroundColor,
+                  ),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$day',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildStatsView(bool isAr, ThemeData theme) {
     return ListView(
       padding: const EdgeInsets.all(24),
