@@ -2,11 +2,12 @@
 
 # ☽ Aya — Premium Islamic Companion App
 
-**A beautifully crafted, feature-rich Islamic companion application designed for modern devices, supporting Android 7 up to Android 16.**
+**A masterfully crafted, ultra-resilient Islamic companion application designed for modern devices.**<br>
+*Supports Android 7 (API 24) all the way up to Android 16 (API 36).*
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?style=for-the-badge&logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-00B4AB?style=for-the-badge&logo=dart)](https://dart.dev)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-lightgrey?style=for-the-badge&logo=android)](https://github.com/Cancelllls/Islamic-App)
+[![Platform](https://img.shields.io/badge/Platform-Android-lightgrey?style=for-the-badge&logo=android)](https://github.com/Cancelllls/Islamic-App)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 </div>
@@ -15,76 +16,58 @@
 
 ## 🌙 About Aya
 
-**Aya** is a premium, ultra-precise Islamic companion app. Built using a sleek glassmorphic design system, dark obsidian backgrounds, golden accents, and smooth micro-animations, it provides a visually stunning and spiritually immersive experience. It bridges the gap between ancient practice and modern technology with clean, robust, and backward-compatible architectures.
+**Aya** is a premium, ultra-precise Islamic companion app engineered with a singular goal: **Zero Compromise.** 
+
+Visually, Aya is built utilizing a state-of-the-art **Glassmorphism Design System** featuring deep obsidian backgrounds, vibrant teal gradients, and elegant golden accents. Under the hood, it utilizes native Android hardware-clock APIs to guarantee exact prayer time alerts—bypassing even the most aggressive OEM task killers (like Xiaomi, Samsung, and Oppo) without forcing the user to run a constant foreground service.
 
 ---
 
-## ✨ Features
+## ✨ Signature Features
 
-### 📖 Quran Reader
-- **Multiple Reading Modes:** 
-  - *Translation:* Read verses along with their English/Arabic translations.
-  - *Arabic Only:* Immerse yourself in the pure Amiri Arabic typeface.
-  - *Tafsir:* Access Al-Muyassar Tafsir overlay per Ayah via bottom sheet.
-  - *Continuous Page:* Fluid layout mimicking physical Quran pages.
-- **Auto-Scroll Assist:** Hands-free scrolling with 5 adjustable speed increments and active scroll timer.
-- **Immersive Mode:** Auto-hides system bars (status and navigation) to minimize reading distractions.
-- **Auto-Bookmarking:** Automatically updates your last read position on audio playback launch or manual tag.
+### 🛡️ "Immortal" Background Alarms
+Unlike standard apps that get killed when swiped away, Aya registers your Adhan using Android's highest-priority `setAlarmClock()` API (the same system your morning alarm uses). This ensures prayer notifications and Adhan audio fire **flawlessly and exactly on the minute**, surviving Doze mode and aggressive task killers.
+- Automatically handles `USE_EXACT_ALARM` permissions to silently grant maximum privileges on Android 13+.
+- Dual-path audio logic correctly identifies and plays specific reciters for **Fajr vs. Standard** prayers.
 
-### 🔊 Audio Player
-- **High-Quality Streaming:** Clear, high-quality audio streaming from world-renowned Qaris (e.g., Mishary Alafasy, Maher Al-Muaiqly).
-- **Synchronized Scrolling:** The reader automatically highlights and scrolls to keep the currently playing verse centered.
-- **Continuous Playback:** Seamlessly advances from verse to verse and Surah to Surah in the background.
+### 💎 UI/UX Pro Max Design
+- **True Glassmorphism:** Real-time blurred backdrops (`BackdropFilter`) combined with semi-transparent frosted cards.
+- **Dynamic Theming:** Deep, eye-soothing dark mode and a crisp, vibrant light mode carefully balanced for contrast and readability.
+- **RTL / LTR Mastery:** Flawless alignment and typography for both Arabic and English interfaces.
 
-### 🕌 Prayer Times & Alerts
-- **GPS Coordinates & Auto-City Detection:** Auto-determines coordinates and city names using local reverse geocoding.
-- **Dynamic Pre-Adhan Reminders:** Get silent, vibrating, or vocal alerts up to 30 minutes before prayer enters.
-- **Athan Stop Gestures:** Silence your Athan alarm effortlessly by pressing the volume key or flipping your device face down.
-- **Multiple Calculation Standards:** Supports ISNA, Muslim World League, Umm Al-Qura, Egyptian Authority, and more.
+### 📖 Advanced Quran Reader & Tafsir
+- **Multi-lingual Tafsir:** Integrated offline Tafsir books (Al-Muyassar, Al-Jalalayn, Al-Qurtubi, etc.) clearly labeled in both Arabic and English.
+- **Auto-Bookmarking & Sync:** Automatically updates your last read position. The reader smoothly scrolls down the page in perfect synchronization with the streaming audio.
+- **Immersive Mode:** Auto-hides system status bars for a distraction-free, edge-to-edge reading experience.
 
-### 🧭 Qibla Compass
-- **Live Angle Detection:** Accurate angle calculations utilizing native device compass sensors.
-- **Visual Alignments:** Vibrates and highlights golden markers the exact moment your device aligns with the Holy Kaaba.
+### 📚 Hadith Library
+- Browse complete Hadith collections offline.
+- Features dynamic "Sahih" / "Daif" authenticity badges colored natively within the glassmorphic UI.
 
-### 📿 Tasbih & Custom Dhikr
-- **Interactive Counter:** Circular progress indicator with haptic feedback vibrations.
-- **Custom Dhikr Builder:** Write your own target counters, Arabic scripts, and custom titles.
-
-### 🔒 Khushu Focus Lock
-- **Distraction-Free Prayers:** Restricts app access or lock screen overlays during prayer periods to protect your focus.
-- **Double-Tap Emergency Override:** Quickly bypass focus lock constraints in emergency situations.
-
-### 🔌 Interactive Home Screen Widgets
-- **Daily Verse Widget:** Promotes daily reminders with a curated "Verse of the Day".
-- **Prayer Times Widget:** Displays current and upcoming prayer timings on your home screen launcher.
+### 🧭 Precision Qibla & 📿 Custom Tasbih
+- **Live Qibla Tracking:** Smooth, high-refresh-rate compass utilizing native device magnetometers. Vibrates and flashes gold upon exact Kaaba alignment.
+- **Haptic Tasbih Builder:** Create your own custom Dhikr targets with satisfying haptic feedback loops.
 
 ---
 
-## 🏗 System Architecture & Project Structure
+## 🏗 System Architecture
 
 The project conforms to a clean, layered architecture separating UI layout, state logic, and services:
 
-```
+```text
 lib/
 ├── main.dart                  # Root MaterialApp, locale bootstrapping & MainScaffold
-├── models/                    # Typed data schemas
-│   ├── prayer_models.dart     # Prayer schedule & times structures
-│   └── quran_models.dart      # Surah and Ayah structural objects
-├── screens/                   # Page layouts & interface views
+├── models/                    # Typed data schemas (Prayer schedules, Quran structures)
+├── screens/                   # Page layouts & interface views (Glassmorphism UI)
 │   ├── dashboard_screen.dart  # Home tab with daily content & quick actions
 │   ├── quran_screen.dart      # List of Surahs & search queries
-│   ├── surah_reader_screen.dart # Main Quran reading panel
+│   ├── surah_reader_screen.dart # Main Quran reading panel with synced scrolling
 │   ├── prayer_times_screen.dart # Prayer timetable & calculation settings
-│   ├── qibla_screen.dart      # Kaaba finder
-│   ├── azkar_screen.dart      # Morning and evening litanies
-│   ├── tasbih_screen.dart     # Custom counter interface
-│   ├── hadith_screen.dart     # Hadith browser with language filter
-│   ├── settings_screen.dart   # Calculations, alerts, widgets, and theme settings
-│   └── permission_guard.dart  # Sequenced onboarding wizard
+│   ├── hadith_screen.dart     # Hadith browser with multi-language filter
+│   └── settings_screen.dart   # Calculations, alerts, widgets, and theme settings
 ├── services/                  # Platform, APIs & storage managers
 │   ├── api_service.dart       # REST client for prayer schedules
-│   ├── audio_manager.dart     # Background player controller
-│   ├── notification_service.dart # Cron alarms & push alerts
+│   ├── adhan_audio_service.dart # Background player controller & Five Prayers Integration
+│   ├── notification_service.dart # Invincible setAlarmClock cron workers
 │   ├── storage_service.dart   # Local preferences manager
 │   └── translation_service.dart # Arabic / English localization keys
 └── widgets/                   # Custom UI paint tools & components
@@ -97,27 +80,11 @@ lib/
 | Layer | Dependency | Description |
 |-------|-----------|-------------|
 | **Core** | `Flutter 3.x / Dart 3` | Native compilation, high performance |
+| **Alarms** | `android_alarm_manager_plus` | Patched to utilize `AndroidScheduleMode.alarmClock` |
+| **Audio** | `audioplayers` | Background hardware playback for Adhan |
 | **Fonts** | `Google Fonts (Amiri, Inter)` | Classic Arabic Quranic script & modern clean UI |
-| **Audio** | `just_audio` | Stream player, background execution |
-| **Billing** | `in_app_purchase` | Premium in-app donations / project support |
-| **Alarms** | `android_alarm_manager_plus` | Robust background exact alarm workers |
 | **Location** | `geolocator` | GPS coordinates extraction |
-| **Preferences** | `shared_preferences` | Key-value settings cache |
-| **Sensors** | `flutter_compass` | Built-in device magnetometers |
-| **Networking** | `http` | External prayer data sync |
-
----
-
-## 🔐 Permissions & Backward Compatibility
-
-Aya is optimized to run reliably from **Android 7 (API 24) up to Android 16 (API 36)**. Permissions are requested sequentially in an onboarding wizard:
-
-1. **Location Access:** Required to obtain latitude/longitude for prayer calculation equations.
-2. **Notification Alerts:** Sends prayer athan calls and daily reminder notifications.
-3. **Exact Alarms (`SCHEDULE_EXACT_ALARM`):** Required on Android 12+ (API 31+) to trigger Athan calls precisely at the minute.
-4. **Ignore Battery Optimization:** Disables Doze mode constraints to prevent background processes from sleeping.
-
-All system permissions and intent requests use version check blocks (`Build.VERSION.SDK_INT >= API_LEVEL`) to avoid compatibility errors on legacy devices.
+| **Storage** | `shared_preferences` | Key-value settings cache |
 
 ---
 
@@ -126,32 +93,26 @@ All system permissions and intent requests use version check blocks (`Build.VERS
 ### Prerequisites
 - Flutter SDK (version 3.19.0 or higher recommended)
 - Java Development Kit (JDK 17)
-- Android Studio / Xcode
+- Android Studio
 
-### Installation & Run
+### Installation & Compilation
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/Cancelllls/Islamic-App.git
    cd Islamic-App
    ```
 
-2. Fetch project dependencies:
+2. **Fetch project dependencies:**
    ```bash
    flutter pub get
    ```
 
-3. Launch on a connected device:
+3. **Compile an optimized `arm64` Release APK (Recommended for stability and memory):**
    ```bash
-   flutter run
+   flutter build apk --release --target-platform=android-arm64
    ```
-
-### Compile Release APK (Android)
-To compile a optimized release build:
-```bash
-flutter build apk --release --target-platform=android-arm64
-```
-The compiled package will be located at `build/app/outputs/flutter-apk/app-release.apk`.
+   *The compiled package will be located at `build/app/outputs/flutter-apk/app-release.apk`.*
 
 ---
 
