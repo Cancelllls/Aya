@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'services/storage_service.dart';
 import 'services/translation_service.dart';
 import 'services/notification_service.dart';
+import 'package:path_provider/path_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/quran_screen.dart';
 import 'screens/prayer_times_screen.dart';
@@ -29,9 +30,13 @@ import 'models/prayer_models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final dbDir = await getDatabasesPath();
+  final supportDir = await getApplicationSupportDirectory();
+  final dbDir = Directory('${supportDir.path}/dorar_databases');
+  if (!dbDir.existsSync()) {
+    dbDir.createSync(recursive: true);
+  }
   await DorarHadithFlutter.ensureInitialized(
-    databaseDirectory: Directory(dbDir),
+    databaseDirectory: dbDir,
   );
 
   // Initialize Android Alarm Manager

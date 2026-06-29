@@ -368,7 +368,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               final isSelected = _formatDate(_selectedDate) == dateStr;
               final isToday = _formatDate(DateTime.now()) == dateStr;
 
-              Color completeColor = const Color(0xFFE5C158);
+              Color completeColor = theme.primaryColor;
               Color incompleteColor = theme.dividerColor.withOpacity(0.1);
 
               return GestureDetector(
@@ -526,7 +526,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               isCompleted ? Icons.check : Icons.circle_outlined,
               size: 20,
               color: isCompleted
-                  ? theme.textTheme.bodyLarge?.color?.withOpacity(0.7)
+                  ? theme.primaryColor
                   : theme.textTheme.bodyMedium?.color?.withOpacity(0.2),
             ),
             const SizedBox(width: 16),
@@ -537,7 +537,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                   fontSize: 16,
                   fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
                   color: isCompleted
-                      ? theme.textTheme.bodyLarge?.color
+                      ? theme.primaryColor
                       : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
                   decoration: null,
                   decorationColor: theme.textTheme.bodyMedium?.color
@@ -595,23 +595,32 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                   prayersDone.add((dayData[p] as int? ?? 0) > 0);
                 }
                 
-                return CustomPaint(
-                  painter: PrayerPiePainter(
-                    prayers: prayersDone,
-                    completeColor: const Color(0xFFE5C158),
-                    incompleteColor: theme.dividerColor.withOpacity(0.1),
-                    backgroundColor: theme.scaffoldBackgroundColor,
-                  ),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedDate = date;
+                      _selectedMonth = DateTime(date.year, date.month, 1);
+                      _tabController.animateTo(0);
+                    });
+                  },
+                  child: CustomPaint(
+                    painter: PrayerPiePainter(
+                      prayers: prayersDone,
+                      completeColor: theme.primaryColor,
+                      incompleteColor: theme.dividerColor.withOpacity(0.1),
+                      backgroundColor: theme.scaffoldBackgroundColor,
                     ),
-                    child: Center(
-                      child: Text(
-                        '$day',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                          ),
                         ),
                       ),
                     ),

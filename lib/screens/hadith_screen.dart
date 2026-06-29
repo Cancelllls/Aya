@@ -397,7 +397,11 @@ class _HadithScreenState extends State<HadithScreen> {
     query = query.replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '').trim();
     if (query.isEmpty) {
       final rawWords = text.replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '').trim().split(RegExp(r'\s+'));
-      query = rawWords.take(5).join(' ');
+      if (rawWords.isNotEmpty && rawWords.first.isNotEmpty) {
+        query = rawWords.take(5).join(' ');
+      } else {
+        query = "حديث"; // Fallback to prevent DorarValidationException
+      }
     }
     
     return query.isEmpty ? "حديث" : query;
