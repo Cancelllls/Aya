@@ -333,12 +333,12 @@ class DatabaseService {
     String prayer,
     int status,
   ) async {
-    // ponytail: single raw SQL upsert instead of select-then-replace
-    await _database!.execute(
-      'INSERT INTO prayer_tracker (date, $prayer) VALUES (?, ?) '
-      'ON CONFLICT(date) DO UPDATE SET $prayer = excluded.$prayer',
-      [date, status],
-    );
+    final maps = await _database!.query('prayer_tracker', where: 'date = ?', whereArgs: [date]);
+    if (maps.isEmpty) {
+      await _database!.insert('prayer_tracker', {'date': date, prayer: status});
+    } else {
+      await _database!.update('prayer_tracker', {prayer: status}, where: 'date = ?', whereArgs: [date]);
+    }
   }
 
   Future<List<Map<String, dynamic>>> getPrayerTrackerRange(

@@ -1,10 +1,11 @@
 import 'package:dorar_hadith/dorar_hadith.dart';
+
 void main() async {
-  final client = DorarClient();
   try {
-    final res = await client.searchHadith(HadithSearchParams(value: 'الاعمال بالنيات'));
-    print(res.data.length);
-  } catch (e) {
-    print(e);
+    final client = DorarClient();
+    final results = await client.searchHadith(HadithSearchParams(value: 'صيام'));
+    print("Found: ${results.data.length}");
+  } catch(e) {
+    print("Error: $e");
   }
 }
