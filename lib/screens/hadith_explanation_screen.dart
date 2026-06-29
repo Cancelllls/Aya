@@ -6,8 +6,9 @@ import 'package:translator/translator.dart';
 import '../services/translation_service.dart';
 class HadithExplanationScreen extends StatefulWidget {
   final String query;
+  final String displayLang;
 
-  const HadithExplanationScreen({super.key, required this.query});
+  const HadithExplanationScreen({super.key, required this.query, required this.displayLang});
 
   @override
   State<HadithExplanationScreen> createState() => _HadithExplanationScreenState();
@@ -36,7 +37,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         
         final parsed = _parseDorarHtml(htmlString);
         
-        if (!TranslationService.isArabic && parsed.isNotEmpty) {
+        if (widget.displayLang == 'eng' && parsed.isNotEmpty) {
           try {
             final translator = GoogleTranslator();
             final List<Map<String, String>> translatedParsed = [];
@@ -151,7 +152,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                                     color: theme.textTheme.bodyLarge?.color,
                                   ),
                                   textAlign: TextAlign.start,
-                                  textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
+                                  textDirection: widget.displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
                                 ),
                                 const SizedBox(height: 12),
                                 Container(
@@ -168,7 +169,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                                       color: theme.textTheme.bodyMedium?.color,
                                     ),
                                     textAlign: TextAlign.start,
-                                    textDirection: TranslationService.isArabic ? TextDirection.rtl : TextDirection.ltr,
+                                    textDirection: widget.displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
                                   ),
                                 ),
                               ],

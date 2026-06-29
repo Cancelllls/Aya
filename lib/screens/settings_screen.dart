@@ -117,6 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   @override
   void dispose() {
+    AdhanAudioService.instance.stopPreview();
     _purchaseSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -711,7 +712,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ListTile(
                   title: Text(TranslationService.t('theme_preset_label')),
                   subtitle: Text(TranslationService.t('theme_preset_sub')),
-                  trailing: DropdownButton<String>(
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                     value: _themePreset,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
@@ -724,13 +725,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 'white_monet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "فاتح متكيف" : "Adaptive Light"))),
                     ],
                     onChanged: _changeThemePreset,
-                  ),
+                  )),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.t('bottom_navbar_style_label')),
                   subtitle: Text(TranslationService.t('bottom_navbar_style_sub')),
-                  trailing: DropdownButton<String>(
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                     value: _bottomNavbarStyle,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
@@ -739,13 +740,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 'floating', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.t('bottom_navbar_floating')))),
                     ],
                     onChanged: _changeBottomNavbarStyle,
-                  ),
+                  )),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.t('quran_font')),
                   subtitle: Text(TranslationService.t('quran_font_sub')),
-                  trailing: DropdownButton<String>(
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                     value: _quranFont,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
@@ -754,41 +755,26 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 'font-amiri', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "الخط الأميري" : "Amiri Font"))),
                     ],
                     onChanged: _changeFont,
-                  ),
+                  )),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.isArabic ? "تفسير القرآن" : "Quran Tafsir"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(TranslationService.isArabic ? "اختر كتاب التفسير المفضل" : "Choose preferred Tafsir book"),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.black12,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: DropdownButton<String>(
-                    isExpanded: true,
-                                          value: _tafsirEdition,
+                  subtitle: Text(TranslationService.isArabic ? "اختر كتاب التفسير المفضل" : "Choose preferred Tafsir book"),
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
+                    value: _tafsirEdition,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
-                      DropdownMenuItem(                                          value: 'ar.muyassar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الميسر (المجمع)" : "Al-Muyassar (Assembly)"))),
-                      DropdownMenuItem(                                          value: 'ar.jalalayn', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير الجلالين" : "Tafsir Al-Jalalayn"))),
-                      DropdownMenuItem(                                          value: 'ar.qurtubi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير القرطبي" : "Tafsir Al-Qurtubi"))),
-                      DropdownMenuItem(                                          value: 'ar.miqbas', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تنوير المقباس (ابن عباس)" : "Tanwir al-Miqbas (Ibn Abbas)"))),
-                      DropdownMenuItem(                                          value: 'ar.waseet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الوسيط (الطنطاوي)" : "Al-Waseet (Tantawi)"))),
-                      DropdownMenuItem(                                          value: 'ar.baghawi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير البغوي" : "Tafsir Al-Baghawi"))),
+                      DropdownMenuItem(value: 'ar.muyassar', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الميسر (المجمع)" : "Al-Muyassar (Assembly)"))),
+                      DropdownMenuItem(value: 'ar.jalalayn', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير الجلالين" : "Tafsir Al-Jalalayn"))),
+                      DropdownMenuItem(value: 'ar.qurtubi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير القرطبي" : "Tafsir Al-Qurtubi"))),
+                      DropdownMenuItem(value: 'ar.miqbas', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تنوير المقباس (ابن عباس)" : "Tanwir al-Miqbas (Ibn Abbas)"))),
+                      DropdownMenuItem(value: 'ar.waseet', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "التفسير الوسيط (الطنطاوي)" : "Al-Waseet (Tantawi)"))),
+                      DropdownMenuItem(value: 'ar.baghawi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "تفسير البغوي" : "Tafsir Al-Baghawi"))),
                     ],
                     onChanged: _changeTafsirEdition,
-                  ),
-                      ),
-                    ],
-                  ),
+                  )),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 SwitchListTile(
@@ -824,7 +810,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             child: ListTile(
               title: Text(TranslationService.t('app_lang')),
               subtitle: Text(TranslationService.t('app_lang_sub')),
-              trailing: DropdownButton<String>(
+              trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                 value: TranslationService.currentLanguage,
                 underline: const SizedBox(),
                 dropdownColor: theme.cardColor,
@@ -845,7 +831,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     }
                   }
                 },
-              ),
+              )),
             ),
           ),
           const SizedBox(height: 20),
@@ -1027,29 +1013,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               children: [
                 ListTile(
                   title: Text(TranslationService.isArabic ? "وقت التنبيه قبل الأذان" : "Pre-Athan Alert Time"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(TranslationService.isArabic 
+                  subtitle: Text(TranslationService.isArabic 
                       ? "اختر وقت التنبيه بالدقائق قبل الأذان" 
                       : "Choose alert timing in minutes before Athan"),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.black12,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: DropdownButton<int>(
-                    isExpanded: true,
-                                          value: _preAdhanDuration,
+                  trailing: SizedBox(width: 160, child: DropdownButton<int>(isExpanded: true, 
+                    value: _preAdhanDuration,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [0, 5, 10, 15, 20].map((mins) {
                       return DropdownMenuItem<int>(
-                        
-                                          value: mins,
+                        value: mins,
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(mins == 0 
@@ -1059,15 +1032,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       );
                     }).toList(),
                     onChanged: _changePreAdhanDuration,
-                  ),
-                      ),
-                    ],
-                  ),
+                  )),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.isArabic ? "نمط تنبيه قبل الأذان" : "Pre-Athan Alert Style"),
-                  trailing: DropdownButton<String>(
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                     value: _preAdhanAlertMode,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
@@ -1102,7 +1072,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       ),
                     ],
                     onChanged: _changePreAdhanAlertMode,
-                  ),
+                  )),
                 ),
                 if (_preAdhanAlertMode == 'voice' || _preAdhanAlertMode == 'vibrate_and_voice') ...[
                   const Divider(height: 1, color: Colors.white10),
@@ -1137,53 +1107,37 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   title: Text(TranslationService.isArabic ? "نوع تنبيه الأذان" : "Athan Alert Style"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(TranslationService.isArabic 
+                  subtitle: Text(TranslationService.isArabic 
                       ? "التنبيه عند دخول وقت الصلاة" 
                       : "Alert when prayer time starts"),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.black12,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: DropdownButton<String>(
-                    isExpanded: true,
-                                          value: _adhanAlertMode,
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
+                    value: _adhanAlertMode,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
                     items: [
                       DropdownMenuItem(
-                        
-                                          value: 'silent',
+                        value: 'silent',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "صامت" : "Silent"),
                         ),
                       ),
                       DropdownMenuItem(
-                        
-                                          value: 'vibrate',
+                        value: 'vibrate',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "اهتزاز" : "Vibrate"),
                         ),
                       ),
                       DropdownMenuItem(
-                        
-                                          value: 'real_reciter',
+                        value: 'real_reciter',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "أذان بصوت المؤذن" : "Real Reciter Adhan"),
                         ),
                       ),
                       DropdownMenuItem(
-                        
-                                          value: 'vibrate_and_voice',
+                        value: 'vibrate_and_voice',
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(TranslationService.isArabic ? "اهتزاز + صوت المؤذن" : "Vibrate + Reciter Voice"),
@@ -1191,10 +1145,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       ),
                     ],
                     onChanged: _changeAdhanAlertMode,
-                  ),
-                      ),
-                    ],
-                  ),
+                  )),
                 ),
                 if (_adhanAlertMode == 'real_reciter' || _adhanAlertMode == 'vibrate_and_voice') ...[
                   const Divider(height: 1, color: Colors.white10),
@@ -1295,7 +1246,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     subtitle: Text(TranslationService.isArabic 
                         ? "إيقاف الأذان بالضغط على أزرار الصوت أو قلب الهاتف وجهه لأسفل" 
                         : "Stop Athan by pressing volume buttons or flipping the phone face down"),
-                    trailing: DropdownButton<String>(
+                    trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                       value: _athanStopGesture,
                       underline: const SizedBox(),
                       dropdownColor: theme.cardColor,
@@ -1330,7 +1281,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         ),
                       ],
                       onChanged: _changeAthanStopGesture,
-                    ),
+                    )),
                   ),
                 ],
                 const Divider(height: 1, color: Colors.white10),
@@ -1379,7 +1330,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ListTile(
                   title: Text(TranslationService.t('qari')),
                   subtitle: Text(TranslationService.t('qari_sub')),
-                  trailing: DropdownButton<String>(
+                  trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                     value: _reciter,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
@@ -1390,7 +1341,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 'ar.saadalghamidi', child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "سعد الغامدي" : "Saad Al-Ghamdi"))),
                     ],
                     onChanged: _changeReciter,
-                  ),
+                  )),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                  SwitchListTile(
@@ -1553,7 +1504,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ListTile(
                   title: Text(TranslationService.t('focus_timer')),
                   subtitle: Text(TranslationService.t('focus_prayer_lock_sub')),
-                  trailing: DropdownButton<int>(
+                  trailing: SizedBox(width: 160, child: DropdownButton<int>(isExpanded: true, 
                     value: _focusLockDuration,
                     underline: const SizedBox(),
                     dropdownColor: theme.cardColor,
@@ -1566,7 +1517,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       DropdownMenuItem(value: 30, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "٣٠ دقيقة" : "30 Minutes"))),
                     ],
                     onChanged: _changeFocusDuration,
-                  ),
+                  )),
                 ),
                 if (_focusLockDuration > 0) ...[
                   const Divider(height: 1, color: Colors.white10),
@@ -1575,7 +1526,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     subtitle: Text(TranslationService.isArabic 
                         ? "اختر قفل التطبيق فقط أو قفل الهاتف بالكامل" 
                         : "Choose whether to lock the app or the entire phone"),
-                    trailing: DropdownButton<String>(
+                    trailing: SizedBox(width: 160, child: DropdownButton<String>(isExpanded: true, 
                       value: _focusLockType,
                       underline: const SizedBox(),
                       dropdownColor: theme.cardColor,
@@ -1596,7 +1547,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         ),
                       ],
                       onChanged: _changeFocusLockType,
-                    ),
+                    )),
                   ),
                   const Divider(height: 1, color: Colors.white10),
                   SwitchListTile(

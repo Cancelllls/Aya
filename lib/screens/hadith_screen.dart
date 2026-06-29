@@ -339,6 +339,7 @@ class _HadithScreenState extends State<HadithScreen> {
                     MaterialPageRoute(
                       builder: (context) => HadithExplanationScreen(
                         query: queryWords,
+                        displayLang: _displayLang,
                       ),
                     ),
                   );
