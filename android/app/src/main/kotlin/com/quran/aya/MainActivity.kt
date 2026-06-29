@@ -318,6 +318,9 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                         result.error("ERROR", e.message, null)
                     }
                 }
+                "getTimeZoneName" -> {
+                    result.success(java.util.TimeZone.getDefault().id)
+                }
                 else -> {
                     result.notImplemented()
                 }

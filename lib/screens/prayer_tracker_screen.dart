@@ -48,8 +48,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     return days;
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadData({bool showLoading = true}) async {
+    if (showLoading) setState(() => _isLoading = true);
     final db = await DatabaseService.getInstance();
 
     final now = DateTime.now();
@@ -94,7 +94,13 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       }),
     );
 
-    if (mounted) setState(() => _isLoading = false);
+    if (mounted) {
+      if (showLoading) {
+        setState(() => _isLoading = false);
+      } else {
+        setState(() {}); // Just rebuild
+      }
+    }
   }
 
   void _calculateStats(
@@ -137,12 +143,22 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   Future<void> _togglePrayerForDate(DateTime date, String prayer, int currentStatus) async {
     final db = await DatabaseService.getInstance();
     int nextStatus = (currentStatus + 1) % 3;
+    final dateStr = _formatDate(date);
+    
+    // ponytail: Optimistic UI update, no heavy DB reload
+    setState(() {
+      if (_weekData[dateStr] == null) _weekData[dateStr] = {};
+      _weekData[dateStr]![prayer] = nextStatus;
+    });
+
     await db.updatePrayerTracker(
-      _formatDate(date),
+      dateStr,
       prayer,
       nextStatus,
     );
-    await _loadData();
+    
+    // Silently reload stats in background
+    _loadData(showLoading: false);
   }
 
   @override

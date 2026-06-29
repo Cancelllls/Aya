@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -403,8 +402,9 @@ class NotificationService {
   Future<void> init() async {
     tz.initializeTimeZones();
     try {
-      final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      final String timeZoneName = timezoneInfo.identifier;
+      // ponytail: YAGNI external dependency for this simple string check
+      const platform = MethodChannel('com.quran.aya/system');
+      final String timeZoneName = await platform.invokeMethod<String>('getTimeZoneName') ?? 'UTC';
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (_) {
       timezoneFallbackToUtc = true;
