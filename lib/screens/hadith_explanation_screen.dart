@@ -175,20 +175,6 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          item['text'] ?? '',
-                          style: TextStyle(
-                            fontSize: 16,
-                            height: 1.6,
-                            fontWeight: FontWeight.bold,
-                            color: theme.textTheme.bodyLarge?.color,
-                          ),
-                          textAlign: TextAlign.start,
-                          textDirection: widget.displayLang == 'eng'
-                              ? TextDirection.ltr
-                              : TextDirection.rtl,
-                        ),
-                        const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -200,9 +186,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                           child: Text(
                             item['info'] ?? '',
                             style: TextStyle(
-                              fontSize: 13,
-                              height: 1.5,
-                              color: theme.textTheme.bodyMedium?.color,
+                              fontSize: 14,
+                              height: 1.6,
+                              color: theme.textTheme.bodyLarge?.color,
                             ),
                             textAlign: TextAlign.start,
                             textDirection: widget.displayLang == 'eng'
