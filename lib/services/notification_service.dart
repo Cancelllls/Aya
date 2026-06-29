@@ -315,7 +315,7 @@ class NotificationService {
         body: body,
         scheduledDate: tzDateTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
         payload: 'prayer_times',
       );
     } catch (_) {
@@ -502,7 +502,7 @@ class NotificationService {
                     : 'It is time for the $localizedName prayer.',
                 scheduledDate: tzDateTime,
                 notificationDetails: notificationDetails,
-                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                androidScheduleMode: AndroidScheduleMode.alarmClock,
                 payload: 'prayer_times',
               );
             } catch (_) {
@@ -541,7 +541,7 @@ class NotificationService {
                     body: preBody,
                     scheduledDate: tzPreDateTime,
                     notificationDetails: notificationDetails,
-                    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                    androidScheduleMode: AndroidScheduleMode.alarmClock,
                     payload: 'prayer_times',
                   );
                 } catch (_) {
@@ -569,7 +569,8 @@ class NotificationService {
                   adhanAlarmId,
                   backgroundAdhanCallback,
                   exact: true,
-                  wakeup: true,
+                      wakeup: true,
+                      alarmClock: true,
                 );
               } catch (_) {
                 try {
@@ -594,6 +595,7 @@ class NotificationService {
                       backgroundPreAdhanCallback,
                       exact: true,
                       wakeup: true,
+                      alarmClock: true,
                     );
                   } catch (_) {
                     try {
@@ -628,6 +630,7 @@ class NotificationService {
                       backgroundPrayerTimesUpdateCallback,
                       exact: true,
                       wakeup: true,
+                      alarmClock: true,
                     );
                   } catch (_) {
                     try {
@@ -707,7 +710,7 @@ class NotificationService {
               : 'Read your morning Adhkar to start your day with blessing.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.alarmClock,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_morning',
         );
@@ -740,7 +743,7 @@ class NotificationService {
               : 'It is time for evening Adhkar for peace and protection.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.alarmClock,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_evening',
         );
@@ -801,7 +804,7 @@ class NotificationService {
             body: verseBody,
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.alarmClock,
             payload: versePayload,
           );
         } catch (_) {
