@@ -23,9 +23,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   final List<String> _prayersEn = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
   Map<String, Map<String, int>> _stats = {
-    'weekly': {'prayed': 0, 'missed': 0, 'jamaah': 0, 'total': 0},
-    'monthly': {'prayed': 0, 'missed': 0, 'jamaah': 0, 'total': 0},
-    'yearly': {'prayed': 0, 'missed': 0, 'jamaah': 0, 'total': 0},
+    'weekly': {'prayed': 0, 'missed': 0, 'total': 0},
+    'monthly': {'prayed': 0, 'missed': 0, 'total': 0},
+    'yearly': {'prayed': 0, 'missed': 0, 'total': 0},
   };
 
   @override
@@ -109,15 +109,13 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     DateTime end,
     Iterable<Map<String, dynamic>> list,
   ) {
-    int prayed = 0, jamaah = 0, missed = 0;
+    int prayed = 0, missed = 0;
 
     for (var item in list) {
       for (var p in _prayers) {
         final val = item[p] as int? ?? 0;
         if (val == 1)
           prayed++;
-        else if (val == 2)
-          jamaah++;
         else
           missed++;
       }
@@ -129,12 +127,11 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         : daysInPeriod;
     final total = validDays * 5;
 
-    missed = total - (prayed + jamaah);
+    missed = total - prayed;
     if (missed < 0) missed = 0;
 
     _stats[period] = {
       'prayed': prayed,
-      'jamaah': jamaah,
       'missed': missed,
       'total': total,
     };
@@ -142,7 +139,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
 
   Future<void> _togglePrayerForDate(DateTime date, String prayer, int currentStatus) async {
     final db = await DatabaseService.getInstance();
-    int nextStatus = (currentStatus + 1) % 3;
+    int nextStatus = currentStatus == 1 ? 0 : 1;
     final dateStr = _formatDate(date);
     
     // ponytail: Optimistic UI update, no heavy DB reload
@@ -322,7 +319,6 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
 
   Widget _buildPlannerChecklist(DateTime date, String prayerKey, String prayerName, int status, bool isAr, ThemeData theme) {
     final bool isCompleted = status > 0;
-    final bool isJamaah = status == 2;
     
     return InkWell(
       onTap: () => _togglePrayerForDate(date, prayerKey, status),
@@ -333,10 +329,10 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         child: Row(
           children: [
             Icon(
-              isCompleted ? (isJamaah ? Icons.people_outline : Icons.check) : Icons.circle_outlined,
+              isCompleted ? Icons.check : Icons.circle_outlined,
               size: 20,
               color: isCompleted 
-                  ? (isJamaah ? const Color(0xFFE5C158) : theme.textTheme.bodyLarge?.color?.withOpacity(0.7)) 
+                  ? theme.textTheme.bodyLarge?.color?.withOpacity(0.7) 
                   : theme.textTheme.bodyMedium?.color?.withOpacity(0.2),
             ),
             const SizedBox(width: 16),
@@ -354,15 +350,6 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 ),
               ),
             ),
-            if (isJamaah)
-              Text(
-                isAr ? 'جماعة' : 'Jamaah',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFE5C158),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
           ],
         ),
       ),
@@ -388,10 +375,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     if (total == 0) return const SizedBox.shrink();
 
     final prayed = data['prayed']!;
-    final jamaah = data['jamaah']!;
     final missed = data['missed']!;
-    final totalPrayed = prayed + jamaah;
-    final prayedPct = total > 0 ? (totalPrayed / total) : 0.0;
+    final prayedPct = total > 0 ? (prayed / total) : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,10 +418,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         ),
         const SizedBox(height: 24),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildMinimalStatItem(isAr ? 'صُليت' : 'Prayed', prayed, theme),
-            _buildMinimalStatItem(isAr ? 'جماعة' : 'Jamaah', jamaah, theme),
             _buildMinimalStatItem(isAr ? 'فائتة' : 'Missed', missed, theme),
           ],
         ),

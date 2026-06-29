@@ -12,12 +12,35 @@ import 'package:geolocator/geolocator.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
 import 'api_service.dart';
 import 'translation_service.dart';
 import 'quran_verses.dart';
 import 'adhan_audio_service.dart';
+import 'database_service.dart';
+
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse notificationResponse) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (notificationResponse.actionId == 'action_prayed' || notificationResponse.actionId == 'action_missed') {
+    final payload = notificationResponse.payload;
+    if (payload != null && payload.startsWith('tracker:')) {
+      final parts = payload.split(':');
+      if (parts.length >= 3) {
+        final dateStr = parts[1];
+        final prayerKey = parts[2];
+        final db = await DatabaseService.getInstance();
+        await db.updatePrayerTracker(
+          dateStr,
+          prayerKey,
+          notificationResponse.actionId == 'action_prayed' ? 1 : 0,
+        );
+      }
+    }
+  }
+}
 
 @pragma('vm:entry-point')
 void backgroundPrayerTimesUpdateCallback() async {
@@ -429,9 +452,22 @@ class NotificationService {
 
     await _notificationsPlugin.initialize(
       settings: initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        if (response.actionId == 'action_prayed' || response.actionId == 'action_missed') {
+          final payload = response.payload;
+          if (payload != null && payload.startsWith('tracker:')) {
+            final parts = payload.split(':');
+            if (parts.length >= 3) {
+              final dateStr = parts[1];
+              final prayerKey = parts[2];
+              final db = await DatabaseService.getInstance();
+              await db.updatePrayerTracker(dateStr, prayerKey, response.actionId == 'action_prayed' ? 1 : 0);
+            }
+          }
+        }
         selectNotificationStream.add(response.payload);
       },
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
     try {
@@ -480,6 +516,7 @@ class NotificationService {
     for (int i = 1; i <= 70; i++) {
       cancelFutures.add(_notificationsPlugin.cancel(id: i));
       cancelFutures.add(_notificationsPlugin.cancel(id: i + 2000));
+      cancelFutures.add(_notificationsPlugin.cancel(id: i + 5000)); // Tracker reminders
       if (Platform.isAndroid) {
         cancelFutures.add(
           Future.sync(() async {
@@ -626,6 +663,60 @@ class NotificationService {
                     payload: 'prayer_times',
                   );
                 } catch (_) {}
+              }
+
+              // Prayer Tracker Reminder (15 mins before next prayer)
+              final prevPrayerKeys = {
+                'Fajr': 'isha',
+                'Dhuhr': 'fajr',
+                'Asr': 'dhuhr',
+                'Maghrib': 'asr',
+                'Isha': 'maghrib',
+              };
+              
+              final prevPrayerKey = prevPrayerKeys[name];
+              if (prevPrayerKey != null) {
+                final trackerTime = scheduledDate.subtract(const Duration(minutes: 15));
+                if (trackerTime.isAfter(now)) {
+                  final tzTrackerTime = tz.TZDateTime.from(trackerTime, tz.local);
+                  final trackerNotificationId = notificationId + 5000;
+                  
+                  final prevPrayerNameAr = _arabicPrayerName(prevPrayerKey);
+                  final prevPrayerNameEn = prevPrayerKey[0].toUpperCase() + prevPrayerKey.substring(1);
+                  final prevPrayerName = isAr ? prevPrayerNameAr : prevPrayerNameEn;
+                  
+                  final trackerTitle = isAr ? 'هل صليت $prevPrayerName اليوم؟' : 'Did you pray $prevPrayerName today?';
+                  final trackerBody = isAr ? 'سجل صلاتك الآن.' : 'Log your prayer now.';
+                  
+                  final targetDateForTracker = name == 'Fajr' ? scheduledDate.subtract(const Duration(days: 1)) : scheduledDate;
+                  final dateStr = DateFormat('yyyy-MM-dd').format(targetDateForTracker);
+                  
+                  final trackerDetails = NotificationDetails(
+                    android: AndroidNotificationDetails(
+                      'tracker_channel',
+                      'Prayer Tracker',
+                      channelDescription: 'Reminders to log your prayers',
+                      importance: Importance.high,
+                      priority: Priority.high,
+                      actions: [
+                        AndroidNotificationAction('action_prayed', isAr ? 'صُليت' : 'Prayed', showsUserInterface: false, cancelNotification: true),
+                        AndroidNotificationAction('action_missed', isAr ? 'فائتة' : 'Missed', showsUserInterface: false, cancelNotification: true),
+                      ],
+                    ),
+                  );
+                  
+                  try {
+                    await _notificationsPlugin.zonedSchedule(
+                      id: trackerNotificationId,
+                      title: trackerTitle,
+                      body: trackerBody,
+                      scheduledDate: tzTrackerTime,
+                      notificationDetails: trackerDetails,
+                      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+                      payload: 'tracker:$dateStr:$prevPrayerKey',
+                    );
+                  } catch (_) {}
+                }
               }
 
               // Dynamic Pre-Adhan Timing and alerts
