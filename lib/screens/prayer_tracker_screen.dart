@@ -619,7 +619,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                           '$day',
                           style: TextStyle(
                             fontSize: 10,
-                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),

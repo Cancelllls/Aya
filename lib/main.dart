@@ -35,6 +35,10 @@ void main() async {
   if (!dbDir.existsSync()) {
     dbDir.createSync(recursive: true);
   }
+  
+  // Workaround for dorar_hadith package bug where CacheDatabase tries to use Directory.current
+  Directory.current = dbDir.path;
+
   await DorarHadithFlutter.ensureInitialized(
     databaseDirectory: dbDir,
   );
