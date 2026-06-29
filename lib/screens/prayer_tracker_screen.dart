@@ -142,11 +142,23 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   @override
   Widget build(BuildContext context) {
     final isAr = TranslationService.isArabic;
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(isAr ? 'متتبع الصلوات' : 'Prayer Tracker'),
+        title: Text(
+          isAr ? 'متتبع الصلوات' : 'Prayer Tracker',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: const Color(0xFFE5C158),
+          indicatorWeight: 3,
+          labelColor: const Color(0xFFE5C158),
+          unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
           tabs: [
             Tab(text: isAr ? 'اليوم' : 'Today'),
             Tab(text: isAr ? 'إحصائيات' : 'Statistics'),
@@ -154,53 +166,62 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+            )
           : TabBarView(
               controller: _tabController,
-              children: [_buildDailyView(isAr), _buildStatsView(isAr)],
+              children: [_buildDailyView(isAr, theme), _buildStatsView(isAr, theme)],
             ),
     );
   }
 
-  Widget _buildDailyView(bool isAr) {
+  Widget _buildDailyView(bool isAr, ThemeData theme) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
+        Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left),
+                icon: const Icon(Icons.chevron_left, color: Color(0xFFE5C158)),
                 onPressed: () {
                   setState(
-                    () => _selectedDate = _selectedDate.subtract(
-                      const Duration(days: 1),
-                    ),
+                    () => _selectedDate = _selectedDate.subtract(const Duration(days: 1)),
                   );
                   _loadData();
                 },
               ),
               Text(
-                DateFormat(
-                  'EEEE, MMM d',
-                  isAr ? 'ar' : 'en',
-                ).format(_selectedDate),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                DateFormat('EEEE, MMM d', isAr ? 'ar' : 'en').format(_selectedDate),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed:
-                    _formatDate(_selectedDate) == _formatDate(DateTime.now())
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: _formatDate(_selectedDate) == _formatDate(DateTime.now())
+                      ? Colors.grey.withOpacity(0.3)
+                      : const Color(0xFFE5C158),
+                ),
+                onPressed: _formatDate(_selectedDate) == _formatDate(DateTime.now())
                     ? null
                     : () {
                         setState(
-                          () => _selectedDate = _selectedDate.add(
-                            const Duration(days: 1),
-                          ),
+                          () => _selectedDate = _selectedDate.add(const Duration(days: 1)),
                         );
                         _loadData();
                       },
@@ -210,31 +231,76 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         ),
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _prayers.length,
             itemBuilder: (context, index) {
               final prayerKey = _prayers[index];
               final prayerName = isAr ? _prayersAr[index] : _prayersEn[index];
               final status = _todayTracker?[prayerKey] as int? ?? 0;
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  title: Text(prayerName, style: const TextStyle(fontSize: 18)),
-                  subtitle: Text(_getStatusText(status, isAr)),
-                  trailing: _getStatusIcon(status),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
                   onTap: () => _togglePrayer(prayerKey, status),
+                  borderRadius: BorderRadius.circular(16),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _getStatusBgColor(status, theme),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _getStatusBorderColor(status),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              prayerName,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _getStatusText(status, isAr),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _getStatusTextColor(status),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _getStatusIconBgColor(status),
+                            shape: BoxShape.circle,
+                          ),
+                          child: _getStatusIcon(status),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(24.0),
           child: Text(
             isAr
-                ? 'اضغط على الصلاة لتغيير حالتها (لم تُصلى -> صُليت -> جماعة)'
-                : 'Tap on a prayer to change its status (Missed -> Prayed -> Jamaah)',
-            style: const TextStyle(color: Colors.grey),
+                ? 'اضغط على الصلاة لتغيير حالتها'
+                : 'Tap on a prayer to change its status',
+            style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontSize: 12),
             textAlign: TextAlign.center,
           ),
         ),
@@ -242,42 +308,86 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     );
   }
 
+  Color _getStatusBgColor(int status, ThemeData theme) {
+    switch (status) {
+      case 1:
+        return const Color(0xFF4CAF50).withOpacity(0.05); // Green tint
+      case 2:
+        return const Color(0xFFE5C158).withOpacity(0.08); // Gold tint
+      default:
+        return theme.cardColor;
+    }
+  }
+
+  Color _getStatusBorderColor(int status) {
+    switch (status) {
+      case 1:
+        return const Color(0xFF4CAF50).withOpacity(0.5);
+      case 2:
+        return const Color(0xFFE5C158).withOpacity(0.6);
+      default:
+        return Colors.white10;
+    }
+  }
+
+  Color _getStatusTextColor(int status) {
+    switch (status) {
+      case 1:
+        return const Color(0xFF4CAF50);
+      case 2:
+        return const Color(0xFFE5C158);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _getStatusIconBgColor(int status) {
+    switch (status) {
+      case 1:
+        return const Color(0xFF4CAF50).withOpacity(0.15);
+      case 2:
+        return const Color(0xFFE5C158).withOpacity(0.15);
+      default:
+        return Colors.grey.withOpacity(0.1);
+    }
+  }
+
   String _getStatusText(int status, bool isAr) {
     switch (status) {
       case 1:
         return isAr ? 'صُليت' : 'Prayed';
       case 2:
-        return isAr ? 'جماعة' : 'Jamaah';
+        return isAr ? 'صليت في جماعة' : 'Prayed in Jamaah';
       default:
-        return isAr ? 'لم تُصلى' : 'Not Prayed/Missed';
+        return isAr ? 'لم تُصلى' : 'Not Prayed';
     }
   }
 
   Widget _getStatusIcon(int status) {
     switch (status) {
       case 1:
-        return const Icon(Icons.check_circle, color: Colors.green);
+        return const Icon(Icons.check, color: Color(0xFF4CAF50), size: 24);
       case 2:
-        return const Icon(Icons.people, color: AppColors.teal);
+        return const Icon(Icons.people, color: Color(0xFFE5C158), size: 24);
       default:
-        return const Icon(Icons.radio_button_unchecked, color: Colors.grey);
+        return const Icon(Icons.circle_outlined, color: Colors.grey, size: 24);
     }
   }
 
-  Widget _buildStatsView(bool isAr) {
+  Widget _buildStatsView(bool isAr, ThemeData theme) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildStatCard('weekly', isAr ? 'هذا الأسبوع' : 'This Week', isAr),
+        _buildStatCard('weekly', isAr ? 'هذا الأسبوع' : 'This Week', isAr, theme),
         const SizedBox(height: 16),
-        _buildStatCard('monthly', isAr ? 'هذا الشهر' : 'This Month', isAr),
+        _buildStatCard('monthly', isAr ? 'هذا الشهر' : 'This Month', isAr, theme),
         const SizedBox(height: 16),
-        _buildStatCard('yearly', isAr ? 'هذا العام' : 'This Year', isAr),
+        _buildStatCard('yearly', isAr ? 'هذا العام' : 'This Year', isAr, theme),
       ],
     );
   }
 
-  Widget _buildStatCard(String period, String title, bool isAr) {
+  Widget _buildStatCard(String period, String title, bool isAr, ThemeData theme) {
     final data = _stats[period]!;
     final total = data['total']!;
     if (total == 0) return const SizedBox.shrink();
@@ -285,57 +395,84 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     final prayed = data['prayed']!;
     final jamaah = data['jamaah']!;
     final missed = data['missed']!;
+    final totalPrayed = prayed + jamaah;
+    final prayedPct = total > 0 ? (totalPrayed / total) : 0.0;
 
-    final prayedPct = ((prayed + jamaah) / total);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(
-              value: prayedPct,
-              backgroundColor: Colors.red.withOpacity(0.3),
-              color: AppColors.teal,
-              minHeight: 10,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(isAr ? 'صُليت' : 'Prayed', prayed, Colors.green),
-                _buildStatItem(
-                  isAr ? 'جماعة' : 'Jamaah',
-                  jamaah,
-                  AppColors.teal,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                "${(prayedPct * 100).toInt()}%",
+                style: const TextStyle(
+                  fontSize: 18, 
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFE5C158),
                 ),
-                _buildStatItem(isAr ? 'فائتة' : 'Missed', missed, Colors.red),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: prayedPct,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                prayedPct > 0.8 ? const Color(0xFFE5C158) : const Color(0xFF4CAF50),
+              ),
+              minHeight: 12,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStatItem(isAr ? 'صُليت' : 'Prayed', prayed, const Color(0xFF4CAF50), theme),
+              Container(width: 1, height: 40, color: Colors.white10),
+              _buildStatItem(isAr ? 'جماعة' : 'Jamaah', jamaah, const Color(0xFFE5C158), theme),
+              Container(width: 1, height: 40, color: Colors.white10),
+              _buildStatItem(isAr ? 'فائتة' : 'Missed', missed, Colors.redAccent, theme),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, int value, Color color) {
+  Widget _buildStatItem(String label, int value, Color color, ThemeData theme) {
     return Column(
       children: [
         Text(
           value.toString(),
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        const SizedBox(height: 4),
+        Text(
+          label, 
+          style: TextStyle(
+            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }

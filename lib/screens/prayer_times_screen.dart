@@ -1074,57 +1074,111 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final todayYearStr = now.year.toString();
     final todayFormatted = "$todayDayStr-$todayMonthStr-$todayYearStr";
 
+    final events = _getHijriEventsForMonth();
+
     for (final day in _monthlyData!) {
       final gregDay = day['date']['gregorian']['day'] ?? '';
       final hijriDay = day['date']['hijri']['day'] ?? '';
       final fullDate = day['date']['gregorian']['date'] as String;
       final isToday = fullDate == todayFormatted;
 
+      final dayEvents = events.where((e) => e['gregDate'] == fullDate).toList();
+      final hasEvent = dayEvents.isNotEmpty;
+      final eventTitle = hasEvent ? dayEvents.first['title'] as String : '';
+
       gridItems.add(
-        Container(
-          margin: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: isToday
-                ? const Color(0xFFE5C158).withOpacity(0.15)
-                : theme.cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isToday ? const Color(0xFFE5C158) : Colors.white10,
-              width: isToday ? 1.5 : 1.0,
+        InkWell(
+          onTap: hasEvent
+              ? () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: theme.cardColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Color(0xFFE5C158)),
+                      ),
+                      title: Text(
+                        TranslationService.isArabic ? 'حدث إسلامي' : 'Islamic Event',
+                        style: const TextStyle(color: Color(0xFFE5C158)),
+                      ),
+                      content: Text(
+                        eventTitle,
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(TranslationService.isArabic ? 'حسناً' : 'OK', style: const TextStyle(color: Color(0xFFE5C158))),
+                        )
+                      ],
+                    ),
+                  );
+                }
+              : null,
+          child: Container(
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isToday
+                  ? const Color(0xFFE5C158).withOpacity(0.15)
+                  : (hasEvent ? const Color(0xFFE5C158).withOpacity(0.05) : theme.cardColor.withOpacity(0.6)),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isToday
+                    ? const Color(0xFFE5C158)
+                    : (hasEvent ? const Color(0xFFE5C158).withOpacity(0.5) : Colors.white10),
+                width: isToday || hasEvent ? 1.5 : 1.0,
+              ),
             ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 4,
-                left: 4,
-                child: Text(
-                  gregDay,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  child: Text(
+                    gregDay,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                    ),
                   ),
                 ),
-              ),
-              Center(
-                child: Text(
-                  hijriDay,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isToday
-                        ? const Color(0xFFE5C158)
-                        : theme.textTheme.bodyLarge?.color,
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        hijriDay,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isToday
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      if (hasEvent)
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE5C158),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
-    final events = _getHijriEventsForMonth();
+
 
     return Card(
       color: theme.cardColor,
