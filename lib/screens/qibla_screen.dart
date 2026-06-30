@@ -173,7 +173,7 @@ class _QiblaScreenState extends State<QiblaScreen>
         _calculateQiblaDirection();
       });
     }
-    final theme = theme;
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -284,7 +284,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                               ),
                               child: CustomPaint(
                                 painter: CompassDialPainter(
-                                  theme: theme,
+                                  theme: Theme.of(context),
                                   isAligned: isAligned,
                                 ),
                               ),
