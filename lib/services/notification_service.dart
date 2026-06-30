@@ -113,14 +113,14 @@ void backgroundPreAdhanCallback(int id) async {
       final localFile = File(localPath);
       final player = AudioPlayer();
       await player.setAudioContext(
-        const AudioContext(
-          android: AudioContextAndroid(
+        AudioContext(
+          android: const AudioContextAndroid(
             usageType: AndroidUsageType.alarm,
             contentType: AndroidContentType.sonification,
             audioFocus: AndroidAudioFocus.gainTransientMayDuck,
           ),
           iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.alarm,
+            category: AVAudioSessionCategory.playback,
             options: [
               AVAudioSessionOptions.duckOthers,
             ],
@@ -184,14 +184,14 @@ void backgroundAdhanCallback(int id) async {
 
       final player = AudioPlayer();
       await player.setAudioContext(
-        const AudioContext(
-          android: AudioContextAndroid(
+        AudioContext(
+          android: const AudioContextAndroid(
             usageType: AndroidUsageType.alarm,
             contentType: AndroidContentType.sonification,
             audioFocus: AndroidAudioFocus.gainTransientMayDuck,
           ),
           iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.alarm,
+            category: AVAudioSessionCategory.playback,
             options: [
               AVAudioSessionOptions.duckOthers,
             ],
