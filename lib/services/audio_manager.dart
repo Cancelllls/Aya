@@ -119,8 +119,8 @@ class AudioManager {
       final dur = _currentDuration;
       if (dur != null && dur.inMilliseconds > 0) {
         final remaining = dur.inMilliseconds - pos.inMilliseconds;
-        // Start crossfading 1.2s before the end of the ayah
-        if (remaining <= 1200 &&
+        // Start crossfading 800ms before the end of the ayah
+        if (remaining <= 800 &&
             remaining > 0 &&
             _currentIndex < _currentPlaylist.length - 1) {
           final continuous = _storage.getBool(
@@ -421,7 +421,7 @@ class AudioManager {
       );
 
       int step = 0;
-      const steps = 10;
+      const steps = 16;
       _crossfadeTimer = Timer.periodic(const Duration(milliseconds: 50), (
         timer,
       ) async {
