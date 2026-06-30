@@ -13,6 +13,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:alarm/alarm.dart';
 import 'package:intl/intl.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
@@ -662,9 +663,10 @@ class NotificationService {
 
           scheduleFutures.add(
             Future.sync(() async {
-              try {
-                await _notificationsPlugin.zonedSchedule(
-                  id: notificationId,
+              if (!Platform.isAndroid) {
+                try {
+                  await _notificationsPlugin.zonedSchedule(
+                    id: notificationId,
                   title: isAr
                       ? 'حان الآن موعد صلاة $localizedName'
                       : 'Time for $localizedName',
@@ -689,11 +691,28 @@ class NotificationService {
                         : 'It is time for the $localizedName prayer.',
                     scheduledDate: tzDateTime,
                     notificationDetails: notificationDetails,
-                    androidScheduleMode:
-                        AndroidScheduleMode.inexactAllowWhileIdle,
+                    androidScheduleMode: AndroidScheduleMode.alarmClock,
                     payload: 'prayer_times',
                   );
-                } catch (_) {}
+                } catch (_) {
+                  try {
+                    await _notificationsPlugin.zonedSchedule(
+                      id: notificationId,
+                      title: isAr
+                          ? 'حان الآن موعد صلاة $localizedName'
+                          : 'Time for $localizedName',
+                      body: isAr
+                          ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
+                          : 'It is time for the $localizedName prayer.',
+                      scheduledDate: tzDateTime,
+                      notificationDetails: notificationDetails,
+                      androidScheduleMode:
+                          AndroidScheduleMode.inexactAllowWhileIdle,
+                      payload: 'prayer_times',
+                    );
+                  } catch (_) {}
+                  } catch (_) {}
+                }
               }
 
               // Prayer Tracker Reminder (15 mins before next prayer)
@@ -795,17 +814,7 @@ class NotificationService {
                     ),
                   );
 
-                  try {
-                    await _notificationsPlugin.zonedSchedule(
-                      id: preNotificationId,
-                      title: preTitle,
-                      body: preBody,
-                      scheduledDate: tzPreDateTime,
-                      notificationDetails: preDetails,
-                      androidScheduleMode: AndroidScheduleMode.alarmClock,
-                      payload: 'prayer_times',
-                    );
-                  } catch (_) {
+                  if (!Platform.isAndroid) {
                     try {
                       await _notificationsPlugin.zonedSchedule(
                         id: preNotificationId,
@@ -813,11 +822,23 @@ class NotificationService {
                         body: preBody,
                         scheduledDate: tzPreDateTime,
                         notificationDetails: preDetails,
-                        androidScheduleMode:
-                            AndroidScheduleMode.inexactAllowWhileIdle,
+                        androidScheduleMode: AndroidScheduleMode.alarmClock,
                         payload: 'prayer_times',
                       );
-                    } catch (_) {}
+                    } catch (_) {
+                      try {
+                        await _notificationsPlugin.zonedSchedule(
+                          id: preNotificationId,
+                          title: preTitle,
+                          body: preBody,
+                          scheduledDate: tzPreDateTime,
+                          notificationDetails: preDetails,
+                          androidScheduleMode:
+                              AndroidScheduleMode.inexactAllowWhileIdle,
+                          payload: 'prayer_times',
+                        );
+                      } catch (_) {}
+                    }
                   }
                 }
               }
@@ -825,25 +846,37 @@ class NotificationService {
               // Schedule background alarms on Android
               if (Platform.isAndroid) {
                 final adhanAlarmId = notificationId + 4000;
+                
+                // Get the appropriate local path for the alarm
+                final isFajr = prayerName == 'fajr';
+                final reciterSetting = isFajr ? 'fajr_adhan_reciter' : 'adhan_reciter';
+                final reciter = await StorageService.getInstance().then((s) => s.getString(
+                  reciterSetting,
+                  defaultValue: isFajr ? 'mishary' : 'mishary',
+                ));
+                final dir = await getApplicationDocumentsDirectory();
+                final localPath = '${dir.path}/adhan_audio/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
+
+                final alarmSettings = AlarmSettings(
+                  id: adhanAlarmId,
+                  dateTime: scheduledDate,
+                  assetAudioPath: localPath,
+                  loopAudio: false,
+                  vibrate: adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
+                  volume: (adhanMode == 'silent' || adhanMode == 'vibrate') ? 0.0 : 1.0,
+                  fadeDuration: 0.0,
+                  notificationSettings: NotificationSettings(
+                    title: adhanMode == 'silent' ? 'Athan (Silent)' : 'Athan',
+                    body: 'Time for $prayerName prayer',
+                    stopButton: 'Stop',
+                    icon: 'ic_launcher',
+                  ),
+                );
+
                 try {
-                  await AndroidAlarmManager.oneShotAt(
-                    scheduledDate,
-                    adhanAlarmId,
-                    backgroundAdhanCallback,
-                    exact: true,
-                    wakeup: true,
-                    alarmClock: true,
-                  );
-                } catch (_) {
-                  try {
-                    await AndroidAlarmManager.oneShotAt(
-                      scheduledDate,
-                      adhanAlarmId,
-                      backgroundAdhanCallback,
-                      exact: false,
-                      wakeup: true,
-                    );
-                  } catch (_) {}
+                  await Alarm.set(alarmSettings: alarmSettings);
+                } catch (e) {
+                  print('Error setting alarm: $e');
                 }
 
                 if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
@@ -851,27 +884,28 @@ class NotificationService {
                     Duration(minutes: preAdhanMins),
                   );
                   if (preAdhanTimeVal.isAfter(now)) {
-                    final preAdhanAlarmId = notificationId + 3000;
+                    final preAlarmId = (notificationId + 2000) + 4000;
+                    final preLocalPath = '${dir.path}/pre_adhan_audio/pre_adhan_${isAr ? 'ar' : 'en'}_v2.mp3';
+                    
+                    final preAlarmSettings = AlarmSettings(
+                      id: preAlarmId,
+                      dateTime: preAdhanTimeVal,
+                      assetAudioPath: preLocalPath,
+                      loopAudio: false,
+                      vibrate: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
+                      volume: (preAdhanAlertMode == 'silent' || preAdhanAlertMode == 'vibrate') ? 0.0 : 1.0,
+                      fadeDuration: 0.0,
+                      notificationSettings: NotificationSettings(
+                        title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
+                        body: isAr ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.' : '$preAdhanMins minutes remaining until $localizedName Athan.',
+                        stopButton: 'Stop',
+                        icon: 'ic_launcher',
+                      ),
+                    );
+
                     try {
-                      await AndroidAlarmManager.oneShotAt(
-                        preAdhanTimeVal,
-                        preAdhanAlarmId,
-                        backgroundPreAdhanCallback,
-                        exact: true,
-                        wakeup: true,
-                        alarmClock: true,
-                      );
-                    } catch (_) {
-                      try {
-                        await AndroidAlarmManager.oneShotAt(
-                          preAdhanTimeVal,
-                          preAdhanAlarmId,
-                          backgroundPreAdhanCallback,
-                          exact: false,
-                          wakeup: true,
-                        );
-                      } catch (_) {}
-                    }
+                      await Alarm.set(alarmSettings: preAlarmSettings);
+                    } catch (_) {}
                   }
                 }
               }
