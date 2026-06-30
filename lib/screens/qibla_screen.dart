@@ -176,13 +176,13 @@ class _QiblaScreenState extends State<QiblaScreen>
     final theme = theme;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           TranslationService.t('qibla'),
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        backgroundColor: theme.appBarTheme.backgroundColor,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
       body: Padding(
@@ -195,8 +195,8 @@ class _QiblaScreenState extends State<QiblaScreen>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.cardColor,
-                border: Border.all(color: theme.dividerColor.withOpacity(0.12)),
+                color: Theme.of(context).cardColor,
+                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -205,7 +205,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                     TranslationService.t('your_location'),
                     _locationName,
                   ),
-                  Container(width: 1, height: 40, color: theme.dividerColor.withOpacity(0.12)),
+                  Container(width: 1, height: 40, color: Theme.of(context).dividerColor.withOpacity(0.12)),
                   _buildStatColumn(
                     TranslationService.t('qibla_angle'),
                     "${_qiblaAngle.toStringAsFixed(1)}° N",
@@ -237,7 +237,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                         fontWeight: FontWeight.bold,
                         color: isAligned
                             ? const Color(0xFF10B981)
-                            : (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+                            : (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
                       ),
                     ),
                     SizedBox(height: 40),
@@ -261,7 +261,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                               width: 260,
                               height: 260,
                               decoration: BoxDecoration(
-                                color: theme.cardColor,
+                                color: Theme.of(context).cardColor,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: isAligned
@@ -380,7 +380,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                           : "Compass Simulator (No sensor detected): ${(heading % 360).toInt()}°",
                       style: TextStyle(
                         fontSize: 12,
-                        color: (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38),
+                        color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38),
                       ),
                     ),
                     if (!_hasSensor) ...[
@@ -393,7 +393,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                       ),
                       Text(
                         "Swipe/Drag the compass or use the slider to rotate.",
-                        style: TextStyle(fontSize: 11, color: (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.24)),
+                        style: TextStyle(fontSize: 11, color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.24)),
                         textAlign: TextAlign.center,
                       ),
                     ] else
@@ -401,7 +401,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                         padding: EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
                           "Point the top of your device in the direction of the mosque.",
-                          style: TextStyle(fontSize: 11, color: (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.24)),
+                          style: TextStyle(fontSize: 11, color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.24)),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -472,7 +472,7 @@ class _QiblaScreenState extends State<QiblaScreen>
             label.toUpperCase(),
             style: TextStyle(
               fontSize: 10,
-              color: (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38),
+              color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38),
               letterSpacing: 0.5,
             ),
           ),

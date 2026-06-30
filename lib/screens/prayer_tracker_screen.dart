@@ -388,8 +388,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                       border: isSelected
                           ? Border.all(
                               color:
-                                  theme.textTheme.bodyLarge?.color ??
-                                  Theme.of(context).textTheme.bodyLarge?.color,
+                                  theme.textTheme.bodyLarge?.color ?? Colors.white,
                               width: 2.0,
                             )
                           : null,
