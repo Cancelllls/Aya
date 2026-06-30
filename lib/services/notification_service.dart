@@ -121,9 +121,9 @@ void backgroundPreAdhanCallback(int id) async {
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
-            options: [
+            options: {
               AVAudioSessionOptions.duckOthers,
-            ],
+            },
           ),
         ),
       );
@@ -192,9 +192,9 @@ void backgroundAdhanCallback(int id) async {
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
-            options: [
+            options: {
               AVAudioSessionOptions.duckOthers,
-            ],
+            },
           ),
         ),
       );
