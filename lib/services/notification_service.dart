@@ -118,12 +118,14 @@ void backgroundPreAdhanCallback(int id) async {
       final player = AudioPlayer();
       if (await localFile.exists()) {
         await player.play(DeviceFileSource(localPath));
+        await player.onPlayerComplete.first;
       } else {
         final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
         if (urls != null) {
           final url = urls[lang];
           if (url != null) {
             await player.play(UrlSource(url));
+            await player.onPlayerComplete.first;
           }
         }
       }
