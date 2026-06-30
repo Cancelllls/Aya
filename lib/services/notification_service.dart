@@ -575,7 +575,7 @@ class NotificationService {
           playSound: channelId == 'athan_channel_v2_sound',
           enableVibration:
               adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
-          vibrationPattern: Int64List.fromList(NotificationService.islamicVibrationPattern),
+          vibrationPattern: (adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice') ? Int64List.fromList(NotificationService.islamicVibrationPattern) : null,
           icon: 'ic_notification',
           color: const Color(0xFF0F766E),
           visibility: NotificationVisibility.public,
@@ -751,7 +751,7 @@ class NotificationService {
                     priority: Priority.high,
                     playSound: false,
                     enableVibration: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
-                    vibrationPattern: Int64List.fromList(NotificationService.islamicVibrationPattern),
+                    vibrationPattern: (preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice') ? Int64List.fromList(NotificationService.islamicVibrationPattern) : null,
                     icon: 'ic_notification',
                     color: const Color(0xFF0F766E),
                     visibility: NotificationVisibility.public,
