@@ -230,7 +230,7 @@ class _TasbihScreenState extends State<TasbihScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 TranslationService.t('cancel'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -338,7 +338,7 @@ class _TasbihScreenState extends State<TasbihScreen>
               onPressed: () => Navigator.pop(context),
               child: Text(
                 TranslationService.t('cancel'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -501,7 +501,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                               child: CircularProgressIndicator(
                                 value: progressPercent,
                                 strokeWidth: 8,
-                                backgroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.04),
+                                backgroundColor: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                   Color(0xFFE5C158),
                                 ),
@@ -555,7 +555,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                   // Reset Action Button
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.24)),
+                      side: BorderSide(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.24)),
                       foregroundColor: theme.textTheme.bodyMedium?.color
                           ?.withOpacity(0.7),
                       padding: const EdgeInsets.symmetric(

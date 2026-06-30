@@ -741,7 +741,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 TranslationService.t('cancel'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -868,7 +868,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
+              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1227,7 +1227,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
+              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1429,7 +1429,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
+              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1902,7 +1902,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
+              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2043,7 +2043,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ? Icons.arrow_back_ios
                             : Icons.arrow_forward_ios,
                         size: 14,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
+                        color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3),
                       ),
                       onTap: () {
                         Navigator.push(
@@ -2071,7 +2071,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
+              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2116,7 +2116,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 : Icons.arrow_forward_ios,
                             size: 12,
                             color: _exactAlarmPermitted
-                                ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3)
+                                ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3)
                                 : const Color(0xFFE5C158),
                           ),
                         ],
@@ -2155,7 +2155,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 : Icons.arrow_forward_ios,
                             size: 12,
                             color: _batteryIgnored
-                                ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3)
+                                ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3)
                                 : const Color(0xFFE5C158),
                           ),
                         ],
@@ -2178,7 +2178,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
+              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2443,7 +2443,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
+                    color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3),
                   ),
                 ),
               ],

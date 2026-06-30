@@ -431,7 +431,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     onPressed: () => Navigator.pop(dialogCtx, false),
                     child: Text(
                       TranslationService.t('cancel'),
-                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                      style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
                     ),
                   ),
                   ElevatedButton(
@@ -569,7 +569,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 TranslationService.t('cancel'),
-                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -1298,7 +1298,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         "${event['hijriDate']} (${event['gregDate']})",
                         style: TextStyle(
                           fontSize: 11,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.38),
+                          color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38),
                         ),
                       ),
                       trailing: IconButton(
@@ -1356,7 +1356,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.04),
+                color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: const Color(0xFFE5C158), size: 18),

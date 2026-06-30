@@ -558,7 +558,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: TextStyle(
                       color: isDark
                           ? const Color(0xFFE5C158)
-                          : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.9),
+                          : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.9),
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
@@ -568,7 +568,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     TranslationService.t('blessed_day'),
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white),
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
@@ -577,7 +577,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     _randomVerse.getDisplayString(TranslationService.isArabic),
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
                       fontSize: 14,
                       fontStyle: FontStyle.italic,
                     ),
@@ -1100,7 +1100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.04), width: 1.0),
+        side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04), width: 1.0),
       ),
       child: InkWell(
         onTap: onTap,

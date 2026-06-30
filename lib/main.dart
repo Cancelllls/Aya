@@ -419,7 +419,7 @@ class _AyaAppState extends State<AyaApp> {
       debugShowCheckedModeBanner: false,
       theme: themeData,
       locale: Locale(TranslationService.currentLanguage),
-      supportedLocales: const [Locale('ar'), Locale('en')],
+      supportedLocales: [Locale('ar'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

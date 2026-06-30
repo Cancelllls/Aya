@@ -202,7 +202,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               TranslationService.t('cancel'),
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+              style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
             ),
           ),
           ElevatedButton(
@@ -504,7 +504,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                                     'cancel',
                                                   ),
                                                   style: TextStyle(
-                                                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                                    color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
                                                   ),
                                                 ),
                                               ),
@@ -718,7 +718,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                                     'cancel',
                                                   ),
                                                   style: TextStyle(
-                                                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                                    color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
                                                   ),
                                                 ),
                                               ),
@@ -811,7 +811,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                         ).withOpacity(0.12),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                         "تحميل الكل...",
                                         style: TextStyle(
                                           fontSize: 11,
@@ -1009,7 +1009,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                             child: Text(
                                               TranslationService.t('cancel'),
                                               style: TextStyle(
-                                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                                color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
                                               ),
                                             ),
                                           ),
@@ -1133,7 +1133,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         TranslationService.t('cancel'),
-                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                        style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
                       ),
                     ),
                     ElevatedButton(
@@ -1177,7 +1177,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
           ),
           SizedBox(width: 4),
           IconButton(
-            icon: Icon(Icons.cancel, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3), size: 18),
+            icon: Icon(Icons.cancel, color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3), size: 18),
             onPressed: () =>
                 QuranDownloadService.instance.cancelDownload(surahNum),
           ),

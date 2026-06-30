@@ -136,7 +136,7 @@ class _QuranScreenState extends State<QuranScreen> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.08)),
+                borderSide: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.08)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

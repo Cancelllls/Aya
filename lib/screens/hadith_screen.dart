@@ -601,7 +601,7 @@ class _HadithScreenState extends State<HadithScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.15),
+                          color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -854,7 +854,7 @@ class _HadithScreenState extends State<HadithScreen> {
                             border: Border.all(
                               color: isHighlighted
                                   ? const Color(0xFFE5C158)
-                                  : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
                               width: isHighlighted ? 2.0 : 1.0,
                             ),
                           ),

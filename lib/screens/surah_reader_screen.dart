@@ -692,7 +692,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             tooltip: 'Bookmark Surah',
           ),
           PopupMenuButton<String>(
-            icon: Icon(Icons.chrome_reader_mode, color: Theme.of(context).textTheme.bodyLarge?.color),
+            icon: Icon(Icons.chrome_reader_mode, color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)),
             tooltip: TranslationService.isArabic
                 ? "تغيير نمط العرض"
                 : "Change View Mode",
@@ -1592,7 +1592,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           // ignore: deprecated_member_use
           color: isDark
               ? const Color(0xFF0C1D1B).withOpacity(0.9)
-              : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.9),
+              : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             // ignore: deprecated_member_use
@@ -1686,7 +1686,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               decoration: BoxDecoration(
                 // ignore: deprecated_member_use
                 color: isDark
-                    ? Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.06)
+                    ? (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.06)
                     : Theme.of(context).shadowColor.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
               ),

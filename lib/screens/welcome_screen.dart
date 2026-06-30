@@ -363,7 +363,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3) : Colors.black38,
+              color: isDark ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3) : Colors.black38,
               height: 1.5,
             ),
           ),
@@ -460,7 +460,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               Text(
                 description,
                 style: TextStyle(
-                  color: isDark ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.38) : Colors.black45,
+                  color: isDark ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38) : Colors.black45,
                   fontSize: 13,
                   height: 1.4,
                 ),
