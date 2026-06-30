@@ -117,7 +117,7 @@ void backgroundPreAdhanCallback(int id) async {
           android: const AudioContextAndroid(
             usageType: AndroidUsageType.alarm,
             contentType: AndroidContentType.sonification,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+            audioFocus: AndroidAudioFocus.gain,
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
@@ -590,19 +590,19 @@ class NotificationService {
         (adhanMode == 'real_reciter' ||
             adhanMode == 'voice' ||
             adhanMode == 'vibrate_and_voice')
-        ? 'athan_channel_v2_silent'
-        : 'athan_channel_v2_sound';
+        ? 'athan_channel_v3_silent'
+        : 'athan_channel_v3_sound';
 
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           channelId,
-          channelId == 'athan_channel_v2_silent'
+          channelId == 'athan_channel_v3_silent'
               ? 'Athan Alarms (Silent)'
               : 'Athan Alarms',
           channelDescription: 'Notifications for prayer time athan alerts',
           importance: Importance.max,
           priority: Priority.high,
-          playSound: channelId == 'athan_channel_v2_sound',
+          playSound: channelId == 'athan_channel_v3_sound',
           enableVibration:
               adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
           vibrationPattern: (adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice') ? Int64List.fromList(NotificationService.islamicVibrationPattern) : null,
