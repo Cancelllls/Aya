@@ -856,7 +856,7 @@ class NotificationService {
                 ));
                 final dir = await getApplicationDocumentsDirectory();
                 final localPath = '${dir.path}/adhan_audio/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
-                final String? validLocalPath = File(localPath).existsSync() ? localPath : null;
+                final String validLocalPath = File(localPath).existsSync() ? localPath : 'assets/audio/default_adhan.mp3';
 
                 final alarmSettings = AlarmSettings(
                   id: adhanAlarmId,
@@ -888,7 +888,7 @@ class NotificationService {
                   if (preAdhanTimeVal.isAfter(now)) {
                     final preAlarmId = (notificationId + 2000) + 4000;
                     final preLocalPath = '${dir.path}/pre_adhan_audio/pre_adhan_${isAr ? 'ar' : 'en'}_v2.mp3';
-                    final String? validPreLocalPath = File(preLocalPath).existsSync() ? preLocalPath : null;
+                    final String validPreLocalPath = File(preLocalPath).existsSync() ? preLocalPath : 'assets/audio/default_pre_adhan.mp3';
                     
                     final preAlarmSettings = AlarmSettings(
                       id: preAlarmId,
