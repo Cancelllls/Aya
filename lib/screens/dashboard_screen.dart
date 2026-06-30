@@ -912,22 +912,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor),
-                  ),
-                  child: Text(
-                    "${location['city']}, ${location['country']}",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
-                        0.8,
+                Flexible(
+                  child: Container(
+                    margin: const EdgeInsetsDirectional.only(start: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.dividerColor),
+                    ),
+                    child: Text(
+                      "${location['city']}, ${location['country']}",
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.8,
+                        ),
                       ),
                     ),
                   ),

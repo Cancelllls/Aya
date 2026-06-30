@@ -540,55 +540,75 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _showDonateDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          TranslationService.isArabic
-              ? "دعم وتطوير التطبيق"
-              : "Support Project & Development",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              TranslationService.isArabic
-                  ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
-                  : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, height: 1.4),
-            ),
-            SizedBox(height: 20),
-            ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5C158),
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size(double.infinity, 44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _supportProject(val);
-                  },
-                  child: Text(
+      builder: (context) {
+        return FutureBuilder<ProductDetailsResponse>(
+          future: InAppPurchase.instance.queryProductDetails({
+            'support_donation_1',
+            'support_donation_5',
+            'support_donation_10',
+            'support_donation_20',
+            'support_donation_50',
+          }),
+          builder: (context, snapshot) {
+            final products = snapshot.data?.productDetails ?? [];
+            final productMap = {for (var p in products) p.id: p};
+
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                TranslationService.isArabic
+                    ? "دعم وتطوير التطبيق"
+                    : "Support Project & Development",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
                     TranslationService.isArabic
-                        ? "دعم بقيمة \$$val دولار"
-                        : "Support \$$val USD",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                        ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
+                        : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, height: 1.4),
                   ),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
+                  SizedBox(height: 20),
+                  ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
+                    final productId = 'support_donation_${val.toInt()}';
+                    final product = productMap[productId];
+                    final displayPrice = product?.price ?? '\$${val.toInt()} USD';
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5C158),
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(double.infinity, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _supportProject(val);
+                        },
+                        child: Text(
+                          TranslationService.isArabic
+                              ? "دعم بقيمة $displayPrice"
+                              : "Support $displayPrice",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
