@@ -87,6 +87,7 @@ void backgroundPrayerTimesUpdateCallback() async {
 }
 
 @pragma('vm:entry-point')
+@pragma('vm:entry-point')
 void backgroundPreAdhanCallback(int id) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -738,13 +739,38 @@ class NotificationService {
                       ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
                       : '$preAdhanMins minutes remaining until $localizedName Athan.';
 
+                  final preChannelId = (preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice') 
+                      ? 'pre_athan_channel_vib_v3' 
+                      : 'pre_athan_channel_sil_v3';
+                      
+                  final preAndroidDetails = AndroidNotificationDetails(
+                    preChannelId,
+                    'Pre-Athan Alerts',
+                    channelDescription: 'Notifications before prayer time',
+                    importance: Importance.max,
+                    priority: Priority.high,
+                    playSound: false,
+                    enableVibration: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
+                    icon: 'ic_notification',
+                    color: const Color(0xFF0F766E),
+                    visibility: NotificationVisibility.public,
+                  );
+                  
+                  final preDetails = NotificationDetails(
+                    android: preAndroidDetails,
+                    iOS: const DarwinNotificationDetails(
+                      presentAlert: true,
+                      presentSound: false,
+                    ),
+                  );
+
                   try {
                     await _notificationsPlugin.zonedSchedule(
                       id: preNotificationId,
                       title: preTitle,
                       body: preBody,
                       scheduledDate: tzPreDateTime,
-                      notificationDetails: notificationDetails,
+                      notificationDetails: preDetails,
                       androidScheduleMode: AndroidScheduleMode.alarmClock,
                       payload: 'prayer_times',
                     );
@@ -755,7 +781,7 @@ class NotificationService {
                         title: preTitle,
                         body: preBody,
                         scheduledDate: tzPreDateTime,
-                        notificationDetails: notificationDetails,
+                        notificationDetails: preDetails,
                         androidScheduleMode:
                             AndroidScheduleMode.inexactAllowWhileIdle,
                         payload: 'prayer_times',
