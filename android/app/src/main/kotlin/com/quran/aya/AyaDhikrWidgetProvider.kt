@@ -19,6 +19,8 @@ class AyaDhikrWidgetProvider : AppWidgetProvider() {
 
             // Read from SharedPreferences saved by Flutter
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
+            val appName = if (isArabic) "آية" else "Aya"
             
             // Get dhikr details
             val text = prefs.getString("flutter.widget_dhikr_text", "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ") ?: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ"

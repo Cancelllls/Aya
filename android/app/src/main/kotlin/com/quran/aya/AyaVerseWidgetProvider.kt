@@ -19,6 +19,8 @@ class AyaVerseWidgetProvider : AppWidgetProvider() {
 
             // Read from SharedPreferences saved by Flutter
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
+            val appName = if (isArabic) "آية" else "Aya"
             
             // Get verse details
             val text = prefs.getString("flutter.widget_verse_text", "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ") ?: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ"

@@ -13,6 +13,8 @@ class AyaHijriWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.aya_hijri_widget)
             
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
+            val appName = if (isArabic) "آية" else "Aya"
             val hijriDate = prefs.getString("flutter.widget_hijri_date", "15 Ramadan 1447") ?: "15 Ramadan 1447"
             
             views.setTextViewText(R.id.hijri_date_text, hijriDate)

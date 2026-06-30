@@ -165,13 +165,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-            const SizedBox(width: 8),
+            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            SizedBox(width: 8),
             Text(
               TranslationService.isArabic
                   ? "صلاحيات غير مكتملة"
                   : "Permissions Incomplete",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -179,7 +179,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           TranslationService.isArabic
               ? "تحذير: إذا واصلت بدون تفعيل صلاحيات الموقع، والتنبيهات، وحفظ البطارية، فقد لا يتم تشغيل الأذان في موعده بدقة في الخلفية أو عند قفل الهاتف. هل تود المتابعة على أي حال؟"
               : "Warning: If you proceed without granting location, notifications, and battery optimization, Athan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
-          style: const TextStyle(height: 1.5, fontSize: 14),
+          style: TextStyle(height: 1.5, fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -194,7 +194,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -272,14 +272,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     TranslationService.setLanguage(newLang);
                     widget.onThemeChanged();
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.language,
                     size: 16,
                     color: Color(0xFFE5C158),
                   ),
                   label: Text(
                     TranslationService.isArabic ? 'English' : 'العربية',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFE5C158),
@@ -337,17 +337,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               );
             },
           ),
-          const SizedBox(height: 48),
+          SizedBox(height: 48),
           Text(
             TranslationService.t('welcome_app_name'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w900,
               letterSpacing: 4,
               color: Color(0xFFE5C158),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             TranslationService.t('welcome_spiritual_companion'),
             style: TextStyle(
@@ -363,7 +363,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? Colors.white30 : Colors.black38,
+              color: isDark ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3) : Colors.black38,
               height: 1.5,
             ),
           ),
@@ -380,16 +380,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Text(
             TranslationService.t('welcome_features_title'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             TranslationService.t('welcome_features_sub'),
             style: TextStyle(
@@ -397,25 +397,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               color: isDark ? Colors.white60 : Colors.black54,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _buildFeatureRow(
             icon: Icons.access_time_filled,
             title: TranslationService.t('welcome_feat_prayer_title'),
             description: TranslationService.t('welcome_feat_prayer_desc'),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildFeatureRow(
             icon: Icons.menu_book,
             title: TranslationService.t('welcome_feat_quran_title'),
             description: TranslationService.t('welcome_feat_quran_desc'),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildFeatureRow(
             icon: Icons.explore,
             title: TranslationService.t('welcome_feat_qibla_title'),
             description: TranslationService.t('welcome_feat_qibla_desc'),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildFeatureRow(
             icon: Icons.volunteer_activism,
             title: TranslationService.t('welcome_feat_tasbih_title'),
@@ -444,23 +444,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ),
           child: Icon(icon, color: const Color(0xFFE5C158), size: 20),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 description,
                 style: TextStyle(
-                  color: isDark ? Colors.white38 : Colors.black45,
+                  color: isDark ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.38) : Colors.black45,
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -478,24 +478,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.security_rounded,
             color: Color(0xFFE5C158),
             size: 64,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             TranslationService.isArabic
                 ? "صلاحيات النظام المطلوبة"
                 : "Required System Permissions",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             TranslationService.isArabic
                 ? "يتطلب التطبيق الصلاحيات التالية للعمل بشكل صحيح وتشغيل الأذان في وقته بالخلفية."
@@ -507,7 +507,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Expanded(
             child: ListView(
               shrinkWrap: true,
@@ -525,7 +525,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ),
                 // Always Allow — only on API 29+ (Android 10+)
                 if (_androidSdkVersion >= 29) ...[
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   _buildPermissionItem(
                     icon: Icons.location_searching,
                     title: TranslationService.isArabic
@@ -542,7 +542,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         : "Requires location permission first",
                   ),
                 ],
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 _buildPermissionItem(
                   icon: Icons.notifications_active,
                   title: TranslationService.isArabic
@@ -556,7 +556,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ),
                 // Alarms & Reminders — only on API 31+ (Android 12+)
                 if (_androidSdkVersion >= 31) ...[
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   _buildPermissionItem(
                     icon: Icons.access_alarm,
                     title: TranslationService.isArabic
@@ -569,7 +569,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     onRequest: _requestExactAlarm,
                   ),
                 ],
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 _buildPermissionItem(
                   icon: Icons.battery_saver,
                   title: TranslationService.isArabic
@@ -581,7 +581,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   isGranted: _batteryIgnored,
                   onRequest: _requestBattery,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
               ],
             ),
           ),
@@ -624,20 +624,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                     textAlign: TextAlign.start,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     requiresPrior && priorLabel != null
                         ? priorLabel
@@ -657,9 +657,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             isGranted
-                ? const Icon(Icons.check_circle, color: Colors.green)
+                ? Icon(Icons.check_circle, color: Colors.green)
                 : TextButton(
                     style: TextButton.styleFrom(
                       foregroundColor: theme.primaryColor,
@@ -668,7 +668,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     onPressed: requiresPrior ? null : onRequest,
                     child: Text(
                       TranslationService.isArabic ? "تفعيل" : "Enable",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
           ],
@@ -709,7 +709,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              textStyle: const TextStyle(fontWeight: FontWeight.bold),
+              textStyle: TextStyle(fontWeight: FontWeight.bold),
             ),
             onPressed: () {
               if (_currentPage < 2) {

@@ -176,21 +176,21 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 TranslationService.isArabic ? 'التفسير:' : 'Tafseer:',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFFE5C158),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Expanded(
                 child: SingleChildScrollView(
                   child: Text(
@@ -468,14 +468,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 TranslationService.isArabic
                     ? "${_currentSurah.name} : الآية ${ayah.numberInSurah}"
                     : "${_currentSurah.englishName} : Verse ${ayah.numberInSurah}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.play_circle_outline,
                   color: Color(0xFFE5C158),
                 ),
@@ -511,7 +511,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.copy, color: Color(0xFFE5C158)),
+                leading: Icon(Icons.copy, color: Color(0xFFE5C158)),
                 title: Text(TranslationService.t('copy_verse')),
                 onTap: () {
                   Navigator.pop(context);
@@ -585,7 +585,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               ),
               child: Text(
                 "${TranslationService.t('hizb')} $hizb",
-                style: const TextStyle(
+                style: TextStyle(
                   color: Color(0xFFE5C158),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
@@ -632,10 +632,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             _currentSurah.englishName,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
               letterSpacing: 1,
@@ -667,7 +667,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           children: [
             Text(
               _currentSurah.englishName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               "${_currentSurah.name} • ${_getHizbRangeText()}",
@@ -692,7 +692,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             tooltip: 'Bookmark Surah',
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.chrome_reader_mode, color: Colors.white),
+            icon: Icon(Icons.chrome_reader_mode, color: Theme.of(context).textTheme.bodyLarge?.color),
             tooltip: TranslationService.isArabic
                 ? "تغيير نمط العرض"
                 : "Change View Mode",
@@ -714,7 +714,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Colors.white54,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic
                           ? "المصحف المتصل"
@@ -741,7 +741,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Colors.white54,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic
                           ? "العربية فقط"
@@ -768,7 +768,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Colors.white54,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic ? "الترجمة" : "Translation",
                       style: TextStyle(
@@ -793,7 +793,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Colors.white54,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic ? "التفسير" : "Tafsir",
                       style: TextStyle(
@@ -811,7 +811,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.text_fields),
+            icon: Icon(Icons.text_fields),
             onPressed: () {
               showModalBottomSheet(
                 context: context,
@@ -829,14 +829,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                         children: [
                           Text(
                             TranslationService.t('reading_settings'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           // Reading mode selection now via TabBar.
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -852,7 +852,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               Row(
                                 children: [
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.remove_circle_outline,
                                       color: Color(0xFFE5C158),
                                     ),
@@ -863,12 +863,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   ),
                                   Text(
                                     "${(_fontSizeMultiplier * 100).toInt()}%",
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.add_circle_outline,
                                       color: Color(0xFFE5C158),
                                     ),
@@ -927,16 +927,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                         : const Color(0xFFECEFF1),
                                     child: Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.volume_up,
                                           color: Color(0xFFE5C158),
                                         ),
-                                        const SizedBox(width: 12),
+                                        SizedBox(width: 12),
                                         Text(
                                           TranslationService.t(
                                             'listen_full_surah',
                                           ),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w600,
                                             fontSize: 13,
                                           ),
@@ -952,7 +952,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                               horizontal: 12,
                                               vertical: 4,
                                             ),
-                                            textStyle: const TextStyle(
+                                            textStyle: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -962,7 +962,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                                   playState.surahNum ==
                                                       _currentSurah.number &&
                                                   playState.ayahNum == 0)
-                                              ? const SizedBox(
+                                              ? SizedBox(
                                                   width: 12,
                                                   height: 12,
                                                   child:
@@ -974,11 +974,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                               : (playState.isPlaying &&
                                                     playState.surahNum ==
                                                         _currentSurah.number)
-                                              ? const Icon(
+                                              ? Icon(
                                                   Icons.pause,
                                                   size: 16,
                                                 )
-                                              : const Icon(
+                                              : Icon(
                                                   Icons.play_arrow,
                                                   size: 16,
                                                 ),
@@ -1052,7 +1052,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                             if (index == 0) {
                                               if (_currentSurah.number == 9 ||
                                                   _currentSurah.number == 1) {
-                                                return const SizedBox.shrink();
+                                                return SizedBox.shrink();
                                               }
                                               return Container(
                                                 alignment: Alignment.center,
@@ -1125,7 +1125,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         color: isPlaying
             // ignore: deprecated_member_use
             ? const Color(0xFFE5C158).withOpacity(0.06)
-            : (isDark ? const Color(0xFF111716) : Colors.white),
+            : (isDark ? const Color(0xFF111716) : Theme.of(context).textTheme.bodyLarge?.color),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isHighlighted
@@ -1140,7 +1140,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 // ignore: deprecated_member_use
                 ? const Color(0xFFE5C158).withOpacity(0.08)
                 // ignore: deprecated_member_use
-                : Colors.black.withOpacity(isDark ? 0.15 : 0.02),
+                : Theme.of(context).shadowColor.withOpacity(isDark ? 0.15 : 0.02),
             blurRadius: 8,
           ),
         ],
@@ -1191,7 +1191,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.menu_book_outlined,
                           size: 20,
                           color: Color(0xFFE5C158),
@@ -1217,7 +1217,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             (playState.isLoading &&
                                 playState.surahNum == _currentSurah.number &&
                                 playState.ayahNum == ayah.numberInSurah)
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -1225,7 +1225,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   color: Color(0xFFE5C158),
                                 ),
                               )
-                            : const Icon(
+                            : Icon(
                                 Icons.play_circle_outline,
                                 size: 20,
                                 color: Color(0xFFE5C158),
@@ -1245,7 +1245,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -1260,9 +1260,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 ),
               ),
               if (_readingMode == 'translation') ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Divider(color: theme.dividerColor, height: 1),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   ayah.translation,
                   style: GoogleFonts.inter(
@@ -1273,9 +1273,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   ),
                 ),
               ] else if (_readingMode == 'tafseer') ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Divider(color: theme.dividerColor, height: 1),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   ayah.tafseer.isNotEmpty
                       ? ayah.tafseer
@@ -1592,7 +1592,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           // ignore: deprecated_member_use
           color: isDark
               ? const Color(0xFF0C1D1B).withOpacity(0.9)
-              : Colors.white.withOpacity(0.9),
+              : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             // ignore: deprecated_member_use
@@ -1602,7 +1602,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           boxShadow: [
             BoxShadow(
               // ignore: deprecated_member_use
-              color: Colors.black.withOpacity(0.2),
+              color: Theme.of(context).shadowColor.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1633,18 +1633,18 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
                   return Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.swap_vertical_circle_outlined,
                         color: Color(0xFFE5C158),
                         size: 18,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           _isAutoScrolling
                               ? timeText
                               : TranslationService.t('auto_scroll'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
                           ),
@@ -1653,7 +1653,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                         ),
                       ),
                       if (_isAutoScrollPaused) ...[
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 4,
@@ -1666,7 +1666,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ),
                           child: Text(
                             TranslationService.isArabic ? 'موقوف' : 'Paused',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 8,
                               color: Color(0xFFE5C158),
                               fontWeight: FontWeight.bold,
@@ -1679,15 +1679,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 },
               ),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             // Custom compact speed pill control
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 // ignore: deprecated_member_use
                 color: isDark
-                    ? Colors.white.withOpacity(0.06)
-                    : Colors.black.withOpacity(0.06),
+                    ? Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.06)
+                    : Theme.of(context).shadowColor.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -1696,7 +1696,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   GestureDetector(
                     onTap: () => _changeSpeedLevel(-1),
                     behavior: HitTestBehavior.opaque,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
                         Icons.remove,
@@ -1705,20 +1705,20 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     "x$_speedLevel",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFE5C158),
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => _changeSpeedLevel(1),
                     behavior: HitTestBehavior.opaque,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
                         Icons.add,
@@ -1730,7 +1730,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             // Custom compact circular play/pause button
             GestureDetector(
               onTap: _isAutoScrolling ? _stopAutoScroll : _startAutoScroll,

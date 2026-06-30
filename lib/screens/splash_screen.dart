@@ -203,7 +203,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 // Animated App Name and Subtitle
                 FadeTransition(
@@ -219,7 +219,7 @@ class _SplashScreenState extends State<SplashScreen>
                           color: const Color(0xFFE5C158),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         TranslationService.isArabic
                             ? "رفيقك الإسلامي اليومي"
@@ -228,7 +228,7 @@ class _SplashScreenState extends State<SplashScreen>
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2.5,
-                          color: isDark ? Colors.white30 : Colors.black38,
+                          color: isDark ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3) : Colors.black38,
                         ),
                       ),
                     ],

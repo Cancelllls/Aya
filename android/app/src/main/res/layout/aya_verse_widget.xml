@@ -28,7 +28,7 @@
             android:id="@+id/widget_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="نور"
+            android:text="Aya"
             android:textColor="#80FFFFFF"
             android:textSize="11sp"
             android:layout_alignParentEnd="true"

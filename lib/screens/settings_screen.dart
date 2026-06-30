@@ -339,12 +339,12 @@ class _SettingsScreenState extends State<SettingsScreen>
           SnackBar(
             content: Row(
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   TranslationService.isArabic
                       ? 'جاري تنزيل صوت المؤذن...'
@@ -387,12 +387,12 @@ class _SettingsScreenState extends State<SettingsScreen>
           SnackBar(
             content: Row(
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   TranslationService.isArabic
                       ? 'جاري تنزيل التنبيه الصوتي...'
@@ -548,7 +548,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ? "دعم وتطوير التطبيق"
               : "Support Project & Development",
           textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -558,9 +558,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
                   : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, height: 1.4),
+              style: TextStyle(fontSize: 13, height: 1.4),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -581,7 +581,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     TranslationService.isArabic
                         ? "دعم بقيمة \$$val دولار"
                         : "Support \$$val USD",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               );
@@ -726,7 +726,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           backgroundColor: Theme.of(context).cardColor,
           title: Text(
             "${TranslationService.t('reset_settings')}?",
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -741,7 +741,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 TranslationService.t('cancel'),
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -852,7 +852,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       appBar: AppBar(
         title: Text(
           TranslationService.t('settings'),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -868,7 +868,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -884,7 +884,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _themePreset,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -956,7 +956,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(
                         TranslationService.t('bottom_navbar_style_label'),
@@ -969,7 +969,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _bottomNavbarStyle,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -997,7 +997,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(TranslationService.t('quran_font')),
                       subtitle: Text(TranslationService.t('quran_font_sub')),
@@ -1006,7 +1006,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _quranFont,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1036,7 +1036,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1053,7 +1053,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _tafsirEdition,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1127,7 +1127,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1143,7 +1143,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _use24hFormat,
                       onChanged: _toggleUse24hFormat,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1164,7 +1164,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Section Language
           _buildSectionHeader(TranslationService.t('app_lang')),
@@ -1178,7 +1178,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 child: DropdownButton<String>(
                   isExpanded: true,
                   value: TranslationService.currentLanguage,
-                  underline: const SizedBox(),
+                  underline: SizedBox(),
                   dropdownColor: theme.cardColor,
                   items: [
                     const DropdownMenuItem(
@@ -1218,7 +1218,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Section Calculations
           _buildSectionHeader(TranslationService.t('calc_settings')),
@@ -1227,7 +1227,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1243,7 +1243,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<int>(
                           isExpanded: true,
                           value: _calcMethod,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1372,7 +1372,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(TranslationService.t('asr_calc_label')),
                       subtitle: Text(TranslationService.t('asr_calc_sub')),
@@ -1381,7 +1381,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<int>(
                           isExpanded: true,
                           value: _asrMethod,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1416,7 +1416,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Section Notifications & Alerts
           _buildSectionHeader(
@@ -1429,7 +1429,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1453,7 +1453,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<int>(
                           isExpanded: true,
                           value: _preAdhanDuration,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [0, 5, 10, 15, 20].map((mins) {
                             return DropdownMenuItem<int>(
@@ -1476,7 +1476,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1488,7 +1488,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _preAdhanAlertMode,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1542,7 +1542,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                     if (_preAdhanAlertMode == 'voice' ||
                         _preAdhanAlertMode == 'vibrate_and_voice') ...[
-                      const Divider(height: 1, color: Colors.white10),
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -1595,7 +1595,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ],
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1612,7 +1612,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _adhanAlertMode,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1666,7 +1666,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                     if (_adhanAlertMode == 'real_reciter' ||
                         _adhanAlertMode == 'vibrate_and_voice') ...[
-                      const Divider(height: 1, color: Colors.white10),
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -1683,7 +1683,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           child: DropdownButton<String>(
                             isExpanded: true,
                             value: _adhanReciter,
-                            underline: const SizedBox(),
+                            underline: SizedBox(),
                             dropdownColor: theme.cardColor,
                             items: [
                               DropdownMenuItem(
@@ -1779,7 +1779,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ),
                         ),
                       ),
-                      const Divider(height: 1, color: Colors.white10),
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -1796,7 +1796,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           child: DropdownButton<String>(
                             isExpanded: true,
                             value: _athanStopGesture,
-                            underline: const SizedBox(),
+                            underline: SizedBox(),
                             dropdownColor: theme.cardColor,
                             items: [
                               DropdownMenuItem(
@@ -1849,7 +1849,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ],
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.t('morning_azkar_reminder'),
@@ -1862,7 +1862,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         (v) => _morningAzkarReminder = v,
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.t('evening_azkar_reminder'),
@@ -1875,7 +1875,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         (v) => _eveningAzkarReminder = v,
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.t('todays_verse_reminder'),
@@ -1893,7 +1893,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Section Audio & Quran
           _buildSectionHeader(TranslationService.t('recitations')),
@@ -1902,7 +1902,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1918,7 +1918,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: _reciter,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -1970,7 +1970,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(TranslationService.t('continuous_rec_label')),
                       subtitle: Text(
@@ -1980,7 +1980,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _continuousPlay,
                       onChanged: _toggleContinuousPlay,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1996,7 +1996,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _hideContinuousBorders,
                       onChanged: _toggleHideContinuousBorders,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -2012,7 +2012,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _autoBookmark,
                       onChanged: _toggleAutoBookmark,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -2028,9 +2028,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _immersiveReader,
                       onChanged: _toggleImmersiveReader,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
-                      leading: const Icon(
+                      leading: Icon(
                         Icons.download_for_offline,
                         color: Color(0xFFE5C158),
                       ),
@@ -2043,7 +2043,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ? Icons.arrow_back_ios
                             : Icons.arrow_forward_ios,
                         size: 14,
-                        color: Colors.white30,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
                       ),
                       onTap: () {
                         Navigator.push(
@@ -2060,7 +2060,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Section Permissions
           _buildSectionHeader(
@@ -2071,7 +2071,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2086,7 +2086,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _keepScreenAwake,
                       onChanged: _toggleKeepScreenAwake,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(TranslationService.t('exact_alarms')),
                       subtitle: Text(TranslationService.t('exact_alarms_sub')),
@@ -2109,21 +2109,21 @@ class _SettingsScreenState extends State<SettingsScreen>
                               fontSize: 13,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Icon(
                             TranslationService.isArabic
                                 ? Icons.arrow_back_ios
                                 : Icons.arrow_forward_ios,
                             size: 12,
                             color: _exactAlarmPermitted
-                                ? Colors.white30
+                                ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3)
                                 : const Color(0xFFE5C158),
                           ),
                         ],
                       ),
                       onTap: _exactAlarmPermitted ? null : _requestExactAlarm,
                     ),
-                    const Divider(height: 1, color: Colors.white10),
+                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ListTile(
                       title: Text(TranslationService.t('battery_optimization')),
                       subtitle: Text(
@@ -2148,14 +2148,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                               fontSize: 13,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Icon(
                             TranslationService.isArabic
                                 ? Icons.arrow_back_ios
                                 : Icons.arrow_forward_ios,
                             size: 12,
                             color: _batteryIgnored
-                                ? Colors.white30
+                                ? Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3)
                                 : const Color(0xFFE5C158),
                           ),
                         ],
@@ -2169,7 +2169,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Section Focus Lock
           _buildSectionHeader(TranslationService.t('focus_prayer_lock')),
@@ -2178,7 +2178,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+              side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2196,7 +2196,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: DropdownButton<int>(
                           isExpanded: true,
                           value: _focusLockDuration,
-                          underline: const SizedBox(),
+                          underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
                             DropdownMenuItem(
@@ -2269,7 +2269,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ),
                     if (_focusLockDuration > 0) ...[
-                      const Divider(height: 1, color: Colors.white10),
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -2286,7 +2286,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           child: DropdownButton<String>(
                             isExpanded: true,
                             value: _focusLockType,
-                            underline: const SizedBox(),
+                            underline: SizedBox(),
                             dropdownColor: theme.cardColor,
                             items: [
                               DropdownMenuItem(
@@ -2316,7 +2316,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ),
                         ),
                       ),
-                      const Divider(height: 1, color: Colors.white10),
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
                       SwitchListTile(
                         title: Text(TranslationService.t('focus_setting_auto')),
                         activeThumbColor: const Color(0xFFE5C158),
@@ -2329,7 +2329,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Donation Support Section
           _buildSectionHeader(
@@ -2340,7 +2340,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           Card(
             color: theme.cardColor,
             child: ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.volunteer_activism,
                 color: Color(0xFFE5C158),
               ),
@@ -2348,7 +2348,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 TranslationService.isArabic
                     ? "دعم تطبيق آية"
                     : "Support Aya App",
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text(
                 TranslationService.isArabic
@@ -2368,10 +2368,10 @@ class _SettingsScreenState extends State<SettingsScreen>
           Card(
             color: theme.cardColor,
             child: ListTile(
-              leading: const Icon(Icons.info_outline, color: Color(0xFFE5C158)),
+              leading: Icon(Icons.info_outline, color: Color(0xFFE5C158)),
               title: Text(
                 TranslationService.isArabic ? "حول التطبيق" : "About Aya",
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               trailing: Icon(
                 TranslationService.isArabic
@@ -2388,7 +2388,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               },
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Reset Section
           _buildSectionHeader(TranslationService.t('system_management')),
@@ -2397,7 +2397,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             child: ListTile(
               title: Text(
                 TranslationService.t('reset_settings'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.redAccent,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2413,23 +2413,23 @@ class _SettingsScreenState extends State<SettingsScreen>
               onTap: _resetApp,
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
 
           // App info credits
           Center(
             child: Column(
               children: [
-                const Icon(Icons.mosque, color: Color(0xFFE5C158), size: 48),
-                const SizedBox(height: 12),
+                Icon(Icons.mosque, color: Color(0xFFE5C158), size: 48),
+                SizedBox(height: 12),
                 Text(
                   TranslationService.t('app_title').toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     letterSpacing: 4,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   TranslationService.t('version_premium'),
                   style: TextStyle(
@@ -2437,13 +2437,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                     fontSize: 11,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   TranslationService.t('bless_journey'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: Colors.white30,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
                   ),
                 ),
               ],
@@ -2461,13 +2461,13 @@ class _SettingsScreenState extends State<SettingsScreen>
         final status = states[reciterId] ?? DownloadStatus.notDownloaded;
         switch (status) {
           case DownloadStatus.downloaded:
-            return const Icon(
+            return Icon(
               Icons.check_circle,
               color: Colors.green,
               size: 16,
             );
           case DownloadStatus.downloading:
-            return const SizedBox(
+            return SizedBox(
               width: 12,
               height: 12,
               child: CircularProgressIndicator(
@@ -2476,7 +2476,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             );
           case DownloadStatus.notDownloaded:
-            return const Icon(
+            return Icon(
               Icons.cloud_download,
               color: Colors.orangeAccent,
               size: 16,
@@ -2495,7 +2495,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       ),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: Color(0xFF0F766E),
           fontSize: 11,
           fontWeight: FontWeight.bold,

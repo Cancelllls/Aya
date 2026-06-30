@@ -215,7 +215,7 @@ class _TasbihScreenState extends State<TasbihScreen>
             TranslationService.isArabic
                 ? "إعادة تعيين العداد؟"
                 : "Reset Counter?",
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -230,7 +230,7 @@ class _TasbihScreenState extends State<TasbihScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 TranslationService.t('cancel'),
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -290,7 +290,7 @@ class _TasbihScreenState extends State<TasbihScreen>
           backgroundColor: theme.cardColor,
           title: Text(
             TranslationService.t('add_custom_dhikr'),
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -305,7 +305,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                     labelText: TranslationService.t('dhikr_name'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextField(
                   controller: arabicController,
                   textDirection: TextDirection.rtl,
@@ -313,7 +313,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                     labelText: TranslationService.t('arabic_script'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextField(
                   controller: translationController,
                   decoration: InputDecoration(
@@ -322,7 +322,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                         : 'Translation (Optional)',
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextField(
                   controller: targetController,
                   keyboardType: TextInputType.number,
@@ -338,7 +338,7 @@ class _TasbihScreenState extends State<TasbihScreen>
               onPressed: () => Navigator.pop(context),
               child: Text(
                 TranslationService.t('cancel'),
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
               ),
             ),
             ElevatedButton(
@@ -379,7 +379,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       appBar: AppBar(
         title: Text(
           TranslationService.t('digital_tasbih'),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -406,7 +406,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                           return Padding(
                             padding: const EdgeInsetsDirectional.only(end: 8.0),
                             child: ActionChip(
-                              avatar: const Icon(
+                              avatar: Icon(
                                 Icons.add,
                                 size: 16,
                                 color: Color(0xFFE5C158),
@@ -460,7 +460,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                       children: [
                         Text(
                           _arabicText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Amiri',
                             fontSize: 26,
                             color: Color(0xFFE5C158),
@@ -468,7 +468,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           _translationText,
                           style: TextStyle(
@@ -501,7 +501,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                               child: CircularProgressIndicator(
                                 value: progressPercent,
                                 strokeWidth: 8,
-                                backgroundColor: Colors.white.withOpacity(0.04),
+                                backgroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.04),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                   Color(0xFFE5C158),
                                 ),
@@ -516,7 +516,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Theme.of(context).shadowColor.withOpacity(0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
                                   ),
@@ -527,12 +527,12 @@ class _TasbihScreenState extends State<TasbihScreen>
                                 children: [
                                   Text(
                                     _count.toString(),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 64,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     "Target: $_target",
                                     style: TextStyle(
@@ -555,7 +555,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                   // Reset Action Button
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white24),
+                      side: BorderSide(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.24)),
                       foregroundColor: theme.textTheme.bodyMedium?.color
                           ?.withOpacity(0.7),
                       padding: const EdgeInsets.symmetric(
@@ -563,11 +563,11 @@ class _TasbihScreenState extends State<TasbihScreen>
                         vertical: 12,
                       ),
                     ),
-                    icon: const Icon(Icons.refresh, size: 18),
+                    icon: Icon(Icons.refresh, size: 18),
                     label: Text(TranslationService.t('reset_count')),
                     onPressed: _reset,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                 ],
               ),
             ),

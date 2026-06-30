@@ -430,9 +430,9 @@ class _HadithScreenState extends State<HadithScreen> {
                   color: Theme.of(context).primaryColor,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.fact_check, color: Color(0xFFE5C158)),
+                leading: Icon(Icons.fact_check, color: Color(0xFFE5C158)),
                 title: Text(
                   TranslationService.isArabic
                       ? "تخريج الحديث (إنترنت)"
@@ -459,7 +459,7 @@ class _HadithScreenState extends State<HadithScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.menu_book, color: Color(0xFFE5C158)),
+                leading: Icon(Icons.menu_book, color: Color(0xFFE5C158)),
                 title: Text(
                   TranslationService.isArabic
                       ? "قراءة الشرح (إنترنت)"
@@ -548,7 +548,7 @@ class _HadithScreenState extends State<HadithScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
             ],
           ),
         );
@@ -585,7 +585,7 @@ class _HadithScreenState extends State<HadithScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Theme.of(context).shadowColor.withOpacity(0.15),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -601,7 +601,7 @@ class _HadithScreenState extends State<HadithScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -610,7 +610,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           size: 20,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<HadithBook>(
@@ -625,7 +625,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                     TranslationService.isArabic
                                         ? b.nameAr
                                         : b.nameEn,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFFE5C158),
                                       fontSize: 15,
@@ -665,7 +665,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       TextButton(
                         onPressed: () {
                           final newLang = _displayLang == 'ara' ? 'eng' : 'ara';
@@ -688,17 +688,17 @@ class _HadithScreenState extends State<HadithScreen> {
                         ),
                         child: Text(
                           'En | ع',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                             color: Color(0xFFE5C158),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       if (!_isOffline)
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.download_for_offline,
                             color: Color(0xFFE5C158),
                           ),
@@ -712,7 +712,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           message: TranslationService.isArabic
                               ? 'متاح للقراءة بدون إنترنت'
                               : 'Available offline',
-                          child: const Icon(
+                          child: Icon(
                             Icons.check_circle,
                             color: Colors.green,
                           ),
@@ -762,7 +762,7 @@ class _HadithScreenState extends State<HadithScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     flex: 1,
                     child: TextField(
@@ -809,9 +809,9 @@ class _HadithScreenState extends State<HadithScreen> {
                             Text(
                               _error,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.redAccent),
+                              style: TextStyle(color: Colors.redAccent),
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: _loadSelectedBookData,
                               style: ElevatedButton.styleFrom(
@@ -854,7 +854,7 @@ class _HadithScreenState extends State<HadithScreen> {
                             border: Border.all(
                               color: isHighlighted
                                   ? const Color(0xFFE5C158)
-                                  : Colors.white.withOpacity(0.1),
+                                  : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
                               width: isHighlighted ? 2.0 : 1.0,
                             ),
                           ),
@@ -909,7 +909,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
+                                            SizedBox(width: 8),
                                             if ((h['grades'] != null &&
                                                     (h['grades'] as List)
                                                         .isNotEmpty) ||
@@ -1010,7 +1010,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                               ),
                                           ],
                                         ),
-                                        const SizedBox(height: 12),
+                                        SizedBox(height: 12),
                                         if (h['arabic'].toString().isNotEmpty &&
                                             _displayLang == 'ara')
                                           Text(

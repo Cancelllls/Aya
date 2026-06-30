@@ -153,7 +153,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: _showTranslation ? Colors.black : Colors.white70,
+                      color: _showTranslation ? Colors.black : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                   ),
                   selected: _showTranslation,
@@ -167,7 +167,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     widget.storage.setBool('azkar_show_translation', val);
                   },
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 FilterChip(
                   label: Text(
                     TranslationService.isArabic
@@ -178,7 +178,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                       fontWeight: FontWeight.bold,
                       color: _showTransliteration
                           ? Colors.black
-                          : Colors.white70,
+                          : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                   ),
                   selected: _showTransliteration,
@@ -213,7 +213,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(TranslationService.t('morning')),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         _getTabProgress(AzkarData.morning),
                         style: TextStyle(
@@ -234,7 +234,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(TranslationService.t('evening')),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         _getTabProgress(AzkarData.evening),
                         style: TextStyle(
@@ -255,7 +255,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(TranslationService.t('post_prayer')),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         _getTabProgress(AzkarData.postPrayer),
                         style: TextStyle(
@@ -276,7 +276,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(TranslationService.t('daily_duas')),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         _getTabProgress(AzkarData.daily),
                         style: TextStyle(
@@ -301,7 +301,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                             ? "أسماء الله"
                             : "Allah's Names",
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         "99",
                         style: TextStyle(
@@ -351,14 +351,14 @@ class _AzkarScreenState extends State<AzkarScreen>
             children: [
               TextButton.icon(
                 onPressed: () => _resetAzkarTab(list),
-                icon: const Icon(
+                icon: Icon(
                   Icons.restore,
                   size: 16,
                   color: Color(0xFFE5C158),
                 ),
                 label: Text(
                   TranslationService.t('reset_counts'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFFE5C158),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -387,7 +387,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                   side: BorderSide(
                     color: isDone
                         ? const Color(0xFF10B981).withOpacity(0.5)
-                        : Colors.white.withOpacity(0.04),
+                        : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.04),
                     width: isDone ? 1.5 : 1.0,
                   ),
                 ),
@@ -411,7 +411,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                             ),
                             child: Text(
                               "${TranslationService.t('read')} ${item.count} ${TranslationService.t('times')}",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Color(0xFFE5C158),
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -425,7 +425,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                                   ? const Color(0xFF10B981)
                                   : const Color(0xFFE5C158),
                               foregroundColor: isDone
-                                  ? Colors.white
+                                  ? Theme.of(context).textTheme.bodyLarge?.color
                                   : Colors.black,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
@@ -444,7 +444,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                               isDone
                                   ? TranslationService.t('done')
                                   : "$currentCount ${TranslationService.t('remaining')}",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -455,14 +455,14 @@ class _AzkarScreenState extends State<AzkarScreen>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       // Arabic text (Right Aligned)
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
                           item.arabic,
                           textDirection: TextDirection.rtl,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Amiri',
                             fontSize: 22,
                             height: 1.8,
@@ -470,13 +470,13 @@ class _AzkarScreenState extends State<AzkarScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       if ((_showTransliteration &&
                               item.transliteration.isNotEmpty) ||
                           (_showTranslation &&
                               item.translation.isNotEmpty)) ...[
-                        const Divider(color: Colors.white10),
-                        const SizedBox(height: 8),
+                        Divider(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                        SizedBox(height: 8),
                       ],
                       // Transliteration (Italicized)
                       if (_showTransliteration &&
@@ -491,7 +491,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                             height: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                       ],
                       // English Translation
                       if (_showTranslation && item.translation.isNotEmpty) ...[
@@ -504,7 +504,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                             height: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                       ],
                       // Reference citation
                       Text(
@@ -546,7 +546,7 @@ class _AzkarScreenState extends State<AzkarScreen>
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withOpacity(0.04), width: 1.0),
+            side: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.04), width: 1.0),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
@@ -566,7 +566,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     ),
                     child: Text(
                       "#${item.number}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFE5C158),
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -578,14 +578,14 @@ class _AzkarScreenState extends State<AzkarScreen>
                 Text(
                   item.arabic,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Amiri',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFE5C158),
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 if (_showTransliteration)
                   Text(
                     item.transliteration,
@@ -599,7 +599,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     ),
                   ),
                 if (_showTranslation) ...[
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     item.translation,
                     textAlign: TextAlign.center,

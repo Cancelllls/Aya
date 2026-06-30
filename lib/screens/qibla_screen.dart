@@ -180,7 +180,7 @@ class _QiblaScreenState extends State<QiblaScreen>
       appBar: AppBar(
         title: Text(
           TranslationService.t('qibla'),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -190,13 +190,13 @@ class _QiblaScreenState extends State<QiblaScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             // Info Cards
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.cardColor,
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -205,7 +205,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                     TranslationService.t('your_location'),
                     _locationName,
                   ),
-                  Container(width: 1, height: 40, color: Colors.white12),
+                  Container(width: 1, height: 40, color: Theme.of(context).dividerColor.withOpacity(0.12)),
                   _buildStatColumn(
                     TranslationService.t('qibla_angle'),
                     "${_qiblaAngle.toStringAsFixed(1)}° N",
@@ -213,7 +213,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             AnimatedBuilder(
               animation: _animationController,
@@ -237,10 +237,10 @@ class _QiblaScreenState extends State<QiblaScreen>
                         fontWeight: FontWeight.bold,
                         color: isAligned
                             ? const Color(0xFF10B981)
-                            : Colors.white70,
+                            : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
 
                     // Interactive Rotating Compass
                     GestureDetector(
@@ -364,7 +364,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                 );
               },
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
 
             // Simulation Slider for Emulator
             const Spacer(),
@@ -378,9 +378,9 @@ class _QiblaScreenState extends State<QiblaScreen>
                       _hasSensor
                           ? "${TranslationService.t('compass_active')}: ${(heading % 360).toInt()}° N"
                           : "Compass Simulator (No sensor detected): ${(heading % 360).toInt()}°",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white38,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.38),
                       ),
                     ),
                     if (!_hasSensor) ...[
@@ -393,15 +393,15 @@ class _QiblaScreenState extends State<QiblaScreen>
                       ),
                       const Text(
                         "Swipe/Drag the compass or use the slider to rotate.",
-                        style: TextStyle(fontSize: 11, color: Colors.white24),
+                        style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.24)),
                         textAlign: TextAlign.center,
                       ),
                     ] else
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
                           "Point the top of your device in the direction of the mosque.",
-                          style: TextStyle(fontSize: 11, color: Colors.white24),
+                          style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.24)),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -409,12 +409,12 @@ class _QiblaScreenState extends State<QiblaScreen>
                 );
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE5C158).withOpacity(0.08),
                 foregroundColor: const Color(0xFFE5C158),
-                side: const BorderSide(color: Color(0xFFE5C158), width: 1),
+                side: BorderSide(color: Color(0xFFE5C158), width: 1),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 12,
@@ -423,10 +423,10 @@ class _QiblaScreenState extends State<QiblaScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              icon: const Icon(Icons.map, size: 20),
+              icon: Icon(Icons.map, size: 20),
               label: Text(
                 TranslationService.t('show_map_makkah').toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                   fontSize: 12,
@@ -457,7 +457,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                 }
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
         ),
       ),
@@ -470,16 +470,16 @@ class _QiblaScreenState extends State<QiblaScreen>
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
-              color: Colors.white38,
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.38),
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
@@ -543,9 +543,9 @@ class CompassDialPainter extends CustomPainter {
       0,
       isAligned ? const Color(0xFF10B981) : const Color(0xFFE5C158),
     );
-    drawLabel("E", pi / 2, Colors.white70);
-    drawLabel("S", pi, Colors.white70);
-    drawLabel("W", 3 * pi / 2, Colors.white70);
+    drawLabel("E", pi / 2, Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7));
+    drawLabel("S", pi, Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7));
+    drawLabel("W", 3 * pi / 2, Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7));
 
     // Draw dial ticks
     final tickPaint = Paint()

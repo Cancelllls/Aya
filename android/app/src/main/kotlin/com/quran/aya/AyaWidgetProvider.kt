@@ -20,6 +20,8 @@ class AyaWidgetProvider : AppWidgetProvider() {
 
             // Read from SharedPreferences saved by Flutter
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
+            val appName = if (isArabic) "آية" else "Aya"
             
             // Get prayer times
             val fajr = prefs.getString("flutter.widget_prayer_fajr", "--:--") ?: "--:--"
@@ -34,7 +36,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
             val activePrayer = prefs.getString("flutter.widget_active_prayer", "") ?: ""
 
             // Update labels in Arabic
-            views.setTextViewText(R.id.widget_title, "نور")
+            views.setTextViewText(R.id.widget_title, appName)
             views.setTextViewText(R.id.widget_fajr_name, "الفجر")
             views.setTextViewText(R.id.widget_dhuhr_name, "الظهر")
             views.setTextViewText(R.id.widget_asr_name, "العصر")
@@ -51,7 +53,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
             if (nextName.isNotEmpty() && nextTime.isNotEmpty()) {
                 views.setTextViewText(R.id.widget_next_prayer, "$nextName: $nextTime")
             } else {
-                views.setTextViewText(R.id.widget_next_prayer, "نور")
+                views.setTextViewText(R.id.widget_next_prayer, appName)
             }
 
             // Styling colors and backgrounds dynamically for active highlighting

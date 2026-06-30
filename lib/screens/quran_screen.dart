@@ -105,17 +105,17 @@ class _QuranScreenState extends State<QuranScreen> {
           child: TextField(
             controller: _searchController,
             onChanged: _filterSurahs,
-            style: const TextStyle(fontSize: 15),
+            style: TextStyle(fontSize: 15),
             decoration: InputDecoration(
               hintText: TranslationService.t('search_placeholder'),
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 Icons.search,
                 size: 20,
                 color: Color(0xFFE5C158),
               ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
+                      icon: Icon(Icons.clear, size: 18),
                       onPressed: () {
                         _searchController.clear();
                         _filterSurahs('');
@@ -136,11 +136,11 @@ class _QuranScreenState extends State<QuranScreen> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                borderSide: BorderSide(color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.08)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE5C158)),
+                borderSide: BorderSide(color: Color(0xFFE5C158)),
               ),
             ),
           ),
@@ -157,22 +157,22 @@ class _QuranScreenState extends State<QuranScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         size: 48,
                         color: Colors.red,
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         TranslationService.isArabic
                             ? "فشل تحميل قائمة السور"
                             : "Failed to load Surah list",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE5C158),
@@ -198,10 +198,10 @@ class _QuranScreenState extends State<QuranScreen> {
                         size: 48,
                         color: theme.disabledColor,
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         TranslationService.t('no_surah_match'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -268,7 +268,7 @@ class _QuranScreenState extends State<QuranScreen> {
               ),
               Text(
                 surah.number.toString(),
-                style: const TextStyle(
+                style: TextStyle(
                   color: Color(0xFFE5C158),
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -279,7 +279,7 @@ class _QuranScreenState extends State<QuranScreen> {
         ),
         title: Text(
           surah.englishName,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         subtitle: Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -314,7 +314,7 @@ class _QuranScreenState extends State<QuranScreen> {
         ),
         trailing: Text(
           surah.name,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Amiri', // Arabic font loaded
             color: Color(0xFFE5C158),
             fontSize: 20,

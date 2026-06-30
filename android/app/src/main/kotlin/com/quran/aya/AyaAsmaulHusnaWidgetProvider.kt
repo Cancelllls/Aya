@@ -13,6 +13,8 @@ class AyaAsmaulHusnaWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.aya_asma_widget)
             
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
+            val appName = if (isArabic) "آية" else "Aya"
             val asmaArabic = prefs.getString("flutter.widget_asma_arabic", "الرَّحْمَنُ") ?: "الرَّحْمَنُ"
             val asmaEnglish = prefs.getString("flutter.widget_asma_english", "Ar-Rahman") ?: "Ar-Rahman"
             val asmaMeaning = prefs.getString("flutter.widget_asma_meaning", "The Beneficent") ?: "The Beneficent"
