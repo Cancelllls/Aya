@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -102,12 +103,7 @@ void backgroundPreAdhanCallback(int id) async {
       return;
     }
 
-    if (alertMode == 'vibrate' || alertMode == 'vibrate_and_voice') {
-      await platform.invokeMethod('vibrate', {
-        'pattern': NotificationService.islamicVibrationPattern,
-        'amplitudes': NotificationService.islamicVibrationAmplitudes,
-      });
-    }
+    // Vibration is now handled directly by AndroidNotificationDetails
 
     if (alertMode == 'voice' || alertMode == 'vibrate_and_voice') {
       final isAr = TranslationService.currentLanguage == 'ar';
@@ -147,12 +143,7 @@ void backgroundAdhanCallback(int id) async {
     );
     const platform = MethodChannel('com.quran.aya/system');
 
-    if (adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice') {
-      await platform.invokeMethod('vibrate', {
-        'pattern': NotificationService.islamicVibrationPattern,
-        'amplitudes': NotificationService.islamicVibrationAmplitudes,
-      });
-    }
+    // Vibration is now handled directly by AndroidNotificationDetails
 
     if (adhanMode == 'real_reciter' || adhanMode == 'vibrate_and_voice') {
       final prayerIndex = (id - 4000) % 10;
@@ -185,17 +176,21 @@ void backgroundAdhanCallback(int id) async {
         'adhan_stop_port',
       );
 
+      final completer = Completer<void>();
+
       receivePort.listen((message) {
         if (message == 'stop') {
           player.stop();
           receivePort.close();
           IsolateNameServer.removePortNameMapping('adhan_stop_port');
+          if (!completer.isCompleted) completer.complete();
         }
       });
 
       player.onPlayerComplete.listen((_) {
         receivePort.close();
         IsolateNameServer.removePortNameMapping('adhan_stop_port');
+        if (!completer.isCompleted) completer.complete();
       });
 
       // Try playing offline first
@@ -216,6 +211,8 @@ void backgroundAdhanCallback(int id) async {
           }
         } catch (_) {}
       }
+      
+      await completer.future;
     }
   } catch (e) {
     // ignore: avoid_print
@@ -578,6 +575,7 @@ class NotificationService {
           playSound: channelId == 'athan_channel_v2_sound',
           enableVibration:
               adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
+          vibrationPattern: Int64List.fromList(NotificationService.islamicVibrationPattern),
           icon: 'ic_notification',
           color: const Color(0xFF0F766E),
           visibility: NotificationVisibility.public,
@@ -753,6 +751,7 @@ class NotificationService {
                     priority: Priority.high,
                     playSound: false,
                     enableVibration: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
+                    vibrationPattern: Int64List.fromList(NotificationService.islamicVibrationPattern),
                     icon: 'ic_notification',
                     color: const Color(0xFF0F766E),
                     visibility: NotificationVisibility.public,
