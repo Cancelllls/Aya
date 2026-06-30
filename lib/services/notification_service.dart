@@ -863,13 +863,12 @@ class NotificationService {
                   assetAudioPath: localPath,
                   loopAudio: false,
                   vibrate: adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
-                  volumeSettings: VolumeSettings(
+                  volumeSettings: VolumeSettings.fixed(
                     volume: (adhanMode == 'silent' || adhanMode == 'vibrate') ? 0.0 : 1.0,
-                    fadeDuration: const Duration(seconds: 0),
                   ),
                   notificationSettings: NotificationSettings(
                     title: adhanMode == 'silent' ? 'Athan (Silent)' : 'Athan',
-                    body: 'Time for $prayerName prayer',
+                    body: 'Time for $localizedName prayer',
                     stopButton: 'Stop',
                     icon: 'ic_launcher',
                   ),
@@ -895,9 +894,8 @@ class NotificationService {
                       assetAudioPath: preLocalPath,
                       loopAudio: false,
                       vibrate: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
-                      volumeSettings: VolumeSettings(
+                      volumeSettings: VolumeSettings.fixed(
                         volume: (preAdhanAlertMode == 'silent' || preAdhanAlertMode == 'vibrate') ? 0.0 : 1.0,
-                        fadeDuration: const Duration(seconds: 0),
                       ),
                       notificationSettings: NotificationSettings(
                         title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
