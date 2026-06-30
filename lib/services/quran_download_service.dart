@@ -273,7 +273,8 @@ class QuranDownloadService extends ChangeNotifier {
     int count = 0;
     for (int i = 1; i <= 114; i++) {
       final cached = storage.getString('cached_surah_${i}_details');
-      if (cached.isNotEmpty) {
+      final cachedQC = storage.getString('cached_surah_${i}_details_qurancom');
+      if (cached.isNotEmpty || cachedQC.isNotEmpty) {
         count++;
       }
     }
@@ -290,7 +291,8 @@ class QuranDownloadService extends ChangeNotifier {
     for (int i = 1; i <= 114; i++) {
       if (!_isDownloadingText) break;
       final cached = storage.getString('cached_surah_${i}_details');
-      if (cached.isEmpty) {
+      final cachedQC = storage.getString('cached_surah_${i}_details_qurancom');
+      if (cached.isEmpty && cachedQC.isEmpty) {
         try {
           await ApiService.fetchSurahDetails(i);
         } catch (_) {}
