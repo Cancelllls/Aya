@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
-import 'package:workmanager/workmanager.dart';
 import 'package:alarm/alarm.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';

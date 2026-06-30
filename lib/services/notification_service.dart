@@ -848,7 +848,7 @@ class NotificationService {
                 final adhanAlarmId = notificationId + 4000;
                 
                 // Get the appropriate local path for the alarm
-                final isFajr = prayerName == 'fajr';
+                final isFajr = name.toLowerCase() == 'fajr';
                 final reciterSetting = isFajr ? 'fajr_adhan_reciter' : 'adhan_reciter';
                 final reciter = await StorageService.getInstance().then((s) => s.getString(
                   reciterSetting,
@@ -863,8 +863,10 @@ class NotificationService {
                   assetAudioPath: localPath,
                   loopAudio: false,
                   vibrate: adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
-                  volume: (adhanMode == 'silent' || adhanMode == 'vibrate') ? 0.0 : 1.0,
-                  fadeDuration: 0.0,
+                  volumeSettings: VolumeSettings(
+                    volume: (adhanMode == 'silent' || adhanMode == 'vibrate') ? 0.0 : 1.0,
+                    fadeDuration: const Duration(seconds: 0),
+                  ),
                   notificationSettings: NotificationSettings(
                     title: adhanMode == 'silent' ? 'Athan (Silent)' : 'Athan',
                     body: 'Time for $prayerName prayer',
@@ -893,8 +895,10 @@ class NotificationService {
                       assetAudioPath: preLocalPath,
                       loopAudio: false,
                       vibrate: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
-                      volume: (preAdhanAlertMode == 'silent' || preAdhanAlertMode == 'vibrate') ? 0.0 : 1.0,
-                      fadeDuration: 0.0,
+                      volumeSettings: VolumeSettings(
+                        volume: (preAdhanAlertMode == 'silent' || preAdhanAlertMode == 'vibrate') ? 0.0 : 1.0,
+                        fadeDuration: const Duration(seconds: 0),
+                      ),
                       notificationSettings: NotificationSettings(
                         title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
                         body: isAr ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.' : '$preAdhanMins minutes remaining until $localizedName Athan.',
