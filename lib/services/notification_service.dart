@@ -112,6 +112,21 @@ void backgroundPreAdhanCallback(int id) async {
       final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
       final localFile = File(localPath);
       final player = AudioPlayer();
+      await player.setAudioContext(
+        const AudioContext(
+          android: AudioContextAndroid(
+            usageType: AndroidUsageType.alarm,
+            contentType: AndroidContentType.sonification,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.alarm,
+            options: [
+              AVAudioSessionOptions.duckOthers,
+            ],
+          ),
+        ),
+      );
       if (await localFile.exists()) {
         await player.play(DeviceFileSource(localPath));
         await player.onPlayerComplete.first;
@@ -168,6 +183,21 @@ void backgroundAdhanCallback(int id) async {
       }
 
       final player = AudioPlayer();
+      await player.setAudioContext(
+        const AudioContext(
+          android: AudioContextAndroid(
+            usageType: AndroidUsageType.alarm,
+            contentType: AndroidContentType.sonification,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.alarm,
+            options: [
+              AVAudioSessionOptions.duckOthers,
+            ],
+          ),
+        ),
+      );
 
       final receivePort = ReceivePort();
       IsolateNameServer.removePortNameMapping('adhan_stop_port');
