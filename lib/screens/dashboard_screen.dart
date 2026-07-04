@@ -5,6 +5,10 @@ import '../models/prayer_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import '../widgets/welcome_header.dart';
+import '../widgets/grid_service_card.dart';
+import '../widgets/prayer_bar_card.dart';
+import '../widgets/quick_access_pill.dart';
 import '../services/notification_service.dart';
 import '../services/quran_verses.dart';
 import 'qibla_screen.dart';
@@ -523,61 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Welcome Box
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [const Color(0xFF042F1A), const Color(0xFF02170D)]
-                      : [const Color(0xFF0D9488), const Color(0xFF115E59)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).shadowColor.withOpacity(0.15),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationService.t('welcome'),
-                    style: TextStyle(
-                      color: isDark
-                          ? const Color(0xFFE5C158)
-                          : Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    TranslationService.t('blessed_day'),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    _randomVerse.getDisplayString(TranslationService.isArabic),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            WelcomeHeader(isDark: isDark, randomVerse: _randomVerse),
             SizedBox(height: 24),
 
             if (NotificationService.timezoneFallbackToUtc) ...[
@@ -763,8 +713,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? bookmarks.first
                         : <String, dynamic>{};
 
-                    return _buildQuickCard(
-                      context: context,
+                    return QuickAccessPill(theme: theme,
                       icon: Icons.bookmark_outline,
                       title: TranslationService.t('continue_reading'),
                       subtitle: lastBookmark.isEmpty
@@ -798,19 +747,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSpacing: 10,
                   childAspectRatio: 0.95,
                   children: [
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.menu_book,
                       title: TranslationService.t('quran'),
                       onTap: () => widget.onTabChange(1),
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.access_time_filled,
                       title: TranslationService.t('prayer'),
                       onTap: () => widget.onTabChange(2, subTab: 0),
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.explore,
                       title: TranslationService.t('qibla'),
@@ -824,7 +773,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.fingerprint,
                       title: TranslationService.t('tasbih'),
@@ -838,19 +787,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.wb_sunny_outlined,
                       title: TranslationService.t('morning_azkar'),
                       onTap: () => widget.onTabChange(3, subTab: 0),
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.nights_stay_outlined,
                       title: TranslationService.t('evening_azkar'),
                       onTap: () => widget.onTabChange(3, subTab: 1),
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.track_changes,
                       title: TranslationService.isArabic
@@ -865,13 +814,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.calendar_month,
                       title: TranslationService.t('hijri_calendar'),
                       onTap: () => widget.onTabChange(2, subTab: 2),
                     ),
-                    _buildGridServiceCard(
+                    GridServiceCard(
                       theme: theme,
                       icon: Icons.date_range,
                       title: TranslationService.isArabic
@@ -931,42 +880,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       children: [
-                        _buildPrayerBarCard(
+                        PrayerBarCard(
                           theme,
                           TranslationService.t('fajr'),
                           _prayerData?.fajr ?? "--:--",
                           _getCurrentPrayerName() == 'Fajr',
                           Icons.cloud_queue,
                         ),
-                        _buildPrayerBarCard(
+                        PrayerBarCard(
                           theme,
                           TranslationService.t('sunrise'),
                           _prayerData?.sunrise ?? "--:--",
                           _getCurrentPrayerName() == 'Sunrise',
                           Icons.wb_sunny_outlined,
                         ),
-                        _buildPrayerBarCard(
+                        PrayerBarCard(
                           theme,
                           TranslationService.t('dhuhr'),
                           _prayerData?.dhuhr ?? "--:--",
                           _getCurrentPrayerName() == 'Dhuhr',
                           Icons.wb_sunny,
                         ),
-                        _buildPrayerBarCard(
+                        PrayerBarCard(
                           theme,
                           TranslationService.t('asr'),
                           _prayerData?.asr ?? "--:--",
                           _getCurrentPrayerName() == 'Asr',
                           Icons.wb_twilight,
                         ),
-                        _buildPrayerBarCard(
+                        PrayerBarCard(
                           theme,
                           TranslationService.t('maghrib'),
                           _prayerData?.maghrib ?? "--:--",
                           _getCurrentPrayerName() == 'Maghrib',
                           Icons.wb_cloudy_outlined,
                         ),
-                        _buildPrayerBarCard(
+                        PrayerBarCard(
                           theme,
                           TranslationService.t('isha'),
                           _prayerData?.isha ?? "--:--",
@@ -1003,179 +952,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickCard({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            border: Border.all(color: theme.dividerColor),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5C158).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: const Color(0xFFE5C158), size: 20),
-              ),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
-                          0.6,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                TranslationService.isArabic
-                    ? Icons.chevron_left
-                    : Icons.chevron_right,
-                size: 16,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridServiceCard({
-    required ThemeData theme,
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      color: theme.cardColor,
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-              .withOpacity(0.04),
-          width: 1.0,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5C158).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: const Color(0xFFE5C158), size: 18),
-              ),
-              SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPrayerBarCard(
-    ThemeData theme,
-    String name,
-    String time,
-    bool isCurrent,
-    IconData icon,
-  ) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsetsDirectional.only(end: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isCurrent
-            ? const Color(0xFFE5C158).withOpacity(0.12)
-            : theme.cardColor,
-        border: Border.all(
-          color: isCurrent
-              ? const Color(0xFFE5C158).withOpacity(0.5)
-              : theme.dividerColor,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isCurrent
-                ? const Color(0xFFE5C158)
-                : theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
-            size: 18,
-          ),
-          SizedBox(height: 8),
-          Text(
-            name,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isCurrent
-                  ? const Color(0xFFE5C158)
-                  : theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            _formatTime(time),
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 extension ColorsExtension on Colors {
