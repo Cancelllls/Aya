@@ -1,7 +1,6 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'dart:ui';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
@@ -1014,67 +1013,11 @@ class _MainScaffoldState extends State<MainScaffold>
           valueListenable: AudioManager.instance.playState,
           builder: (context, audioState, child) {
             final hasPlayer = audioState.title.isNotEmpty;
-            final bottomNavbarStyle = widget.storage.getString(
-              'bottom_navbar_style',
-              defaultValue: 'solid',
-            );
-            final bool isFloatingNav = bottomNavbarStyle == 'floating';
-            final double originalBottomSafeArea = MediaQuery.of(
-              context,
-            ).padding.bottom;
-            final double floatingNavHeight = isFloatingNav
-                ? (56.0 + 16.0 + originalBottomSafeArea)
-                : 0.0;
-
-            final bottomBarWidget = BottomNavigationBar(
-              currentIndex: _currentTab,
-              onTap: (index) {
-                setState(() {
-                  _currentTab = index;
-                });
-              },
-              type: BottomNavigationBarType.fixed,
-              selectedFontSize: 11,
-              unselectedFontSize: 11,
-              backgroundColor: isFloatingNav
-                  ? Colors.transparent
-                  : theme.bottomNavigationBarTheme.backgroundColor,
-              elevation: isFloatingNav ? 0 : null,
-              items: [
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.dashboard_outlined),
-                  activeIcon: const Icon(Icons.dashboard),
-                  label: TranslationService.t('home'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.menu_book_outlined),
-                  activeIcon: const Icon(Icons.menu_book),
-                  label: TranslationService.t('quran'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.import_contacts_outlined),
-                  activeIcon: const Icon(Icons.import_contacts),
-                  label: TranslationService.isArabic ? "الحديث" : "Hadith",
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.access_time),
-                  activeIcon: const Icon(Icons.access_time_filled),
-                  label: TranslationService.t('prayer'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.volunteer_activism_outlined),
-                  activeIcon: const Icon(Icons.volunteer_activism),
-                  label: TranslationService.t('azkar'),
-                ),
-              ],
-            );
 
             return Stack(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(
-                    bottom: (hasPlayer ? 80.0 : 0.0) + floatingNavHeight,
-                  ),
+                  padding: EdgeInsets.only(bottom: hasPlayer ? 80.0 : 0.0),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     switchInCurve: Curves.easeInOut,
@@ -1094,7 +1037,7 @@ class _MainScaffoldState extends State<MainScaffold>
                   Positioned(
                     left: 12,
                     right: 12,
-                    bottom: 8 + floatingNavHeight,
+                    bottom: 8,
                     child: Container(
                       decoration: BoxDecoration(
                         color: isDark
@@ -1187,55 +1130,6 @@ class _MainScaffoldState extends State<MainScaffold>
                               onPressed: () => AudioManager.instance.stop(),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                if (isFloatingNav)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        16.0,
-                        0.0,
-                        16.0,
-                        16.0 + originalBottomSafeArea,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28.0),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.cardColor.withOpacity(0.85),
-                              borderRadius: BorderRadius.circular(28.0),
-                              border: Border.all(
-                                color: theme.brightness == Brightness.dark
-                                    ? Colors.white.withOpacity(0.08)
-                                    : Colors.black.withOpacity(0.06),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.25),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Theme(
-                              data: theme.copyWith(
-                                canvasColor: Colors.transparent,
-                              ),
-                              child: MediaQuery.removePadding(
-                                context: context,
-                                removeBottom: true,
-                                child: bottomBarWidget,
-                              ),
-                            ),
-                          ),
                         ),
                       ),
                     ),
@@ -1386,11 +1280,7 @@ class _MainScaffoldState extends State<MainScaffold>
             'bottom_navbar_style',
             defaultValue: 'solid',
           );
-          if (bottomNavbarStyle == 'floating') {
-            return null; // Rendered in Stack
-          }
-
-          return BottomNavigationBar(
+          final bottomBarWidget = BottomNavigationBar(
             currentIndex: _currentTab,
             onTap: (index) {
               setState(() {
@@ -1400,7 +1290,10 @@ class _MainScaffoldState extends State<MainScaffold>
             type: BottomNavigationBarType.fixed,
             selectedFontSize: 11,
             unselectedFontSize: 11,
-            backgroundColor: theme.bottomNavigationBarTheme.backgroundColor,
+            backgroundColor: bottomNavbarStyle == 'floating'
+                ? Colors.transparent
+                : theme.bottomNavigationBarTheme.backgroundColor,
+            elevation: bottomNavbarStyle == 'floating' ? 0 : null,
             items: [
               BottomNavigationBarItem(
                 icon: const Icon(Icons.dashboard_outlined),
@@ -1429,6 +1322,48 @@ class _MainScaffoldState extends State<MainScaffold>
               ),
             ],
           );
+          if (bottomNavbarStyle == 'floating') {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16.0,
+                0.0,
+                16.0,
+                16.0 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.cardColor.withOpacity(0.60),
+                  borderRadius: BorderRadius.circular(28.0),
+                  border: Border.all(
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.black.withOpacity(0.06),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                // Theme override forces the BottomNavigationBar to paint
+                // transparent — our container provides the background.
+                child: Theme(
+                  data: theme.copyWith(canvasColor: Colors.transparent),
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeBottom: true,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28.0),
+                      child: bottomBarWidget,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+          return bottomBarWidget;
         }(),
       ),
     );
