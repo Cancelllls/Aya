@@ -35,13 +35,13 @@ class AyaWidgetProvider : AppWidgetProvider() {
             val nextTime = prefs.getString("flutter.widget_widget_next_display", "") ?: "" // e.g. "Asr in 1h 10m" or "Maghrib 18:20"
             val activePrayer = prefs.getString("flutter.widget_active_prayer", "") ?: ""
 
-            // Update labels in Arabic
+            // Update labels based on language
             views.setTextViewText(R.id.widget_title, appName)
-            views.setTextViewText(R.id.widget_fajr_name, "الفجر")
-            views.setTextViewText(R.id.widget_dhuhr_name, "الظهر")
-            views.setTextViewText(R.id.widget_asr_name, "العصر")
-            views.setTextViewText(R.id.widget_maghrib_name, "المغرب")
-            views.setTextViewText(R.id.widget_isha_name, "العشاء")
+            views.setTextViewText(R.id.widget_fajr_name, if (isArabic) "الفجر" else "Fajr")
+            views.setTextViewText(R.id.widget_dhuhr_name, if (isArabic) "الظهر" else "Dhuhr")
+            views.setTextViewText(R.id.widget_asr_name, if (isArabic) "العصر" else "Asr")
+            views.setTextViewText(R.id.widget_maghrib_name, if (isArabic) "المغرب" else "Maghrib")
+            views.setTextViewText(R.id.widget_isha_name, if (isArabic) "العشاء" else "Isha")
 
             // Update text values
             views.setTextViewText(R.id.widget_fajr_time, fajr)

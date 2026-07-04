@@ -206,12 +206,17 @@ class DatabaseService {
 
   Future<void> addBookmark(int surah, String name, int ayah) async {
     final db = _database!;
+
+    // Remove any existing bookmark for this surah first so we only keep the last one.
+    // This prevents the reciter from flooding the bookmarks list with every ayah played.
+    await db.delete('bookmarks', where: 'surah_number = ?', whereArgs: [surah]);
+
     await db.insert('bookmarks', {
       'surah_number': surah,
       'surah_name': name,
       'ayah_number': ayah,
       'created_at': DateTime.now().millisecondsSinceEpoch,
-    }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> removeBookmark(int surah, {int? ayah}) async {

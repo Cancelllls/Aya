@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
+import '../services/storage_service.dart';
+import '../services/offline_prayer_service.dart';
+import '../models/prayer_models.dart';
 import '../services/translation_service.dart';
 import '../theme/app_colors.dart';
 
@@ -26,6 +29,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   );
   Map<String, Map<String, dynamic>> _trackerData = {};
   bool _isLoading = true;
+  int _selectedYear = DateTime.now().year;
+  PrayerTimeData? _selectedDatePrayerTimes;
 
   final List<String> _prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
   final List<String> _prayersAr = [
@@ -48,6 +53,35 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    _loadPrayerTimesForSelectedDate();
+  }
+
+  Future<void> _loadPrayerTimesForSelectedDate() async {
+    try {
+      final storage = await StorageService.getInstance();
+      final location = storage.getLocation();
+      final lat = location['lat'] as double? ?? 0.0;
+      final lng = location['lng'] as double? ?? 0.0;
+      final method = storage.getInt('prayer_method', defaultValue: 3);
+      final school = storage.getInt('prayer_school', defaultValue: 0);
+
+      if (lat != 0.0 && lng != 0.0) {
+        final times = await OfflinePrayerService.getPrayerTimes(
+          latitude: lat,
+          longitude: lng,
+          method: method,
+          school: school,
+          date: _selectedDate,
+        );
+        if (mounted) {
+          setState(() {
+            _selectedDatePrayerTimes = times;
+          });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -71,8 +105,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     final db = await DatabaseService.getInstance();
 
     final now = DateTime.now();
-    final yearStart = DateTime(now.year, 1, 1);
-    final yearEnd = DateTime(now.year, 12, 31);
+    final yearStart = DateTime(_selectedYear, 1, 1);
+    final yearEnd = DateTime(_selectedYear, 12, 31);
     final monthStart = DateTime(now.year, now.month, 1);
     final monthEnd = DateTime(now.year, now.month + 1, 0);
 
@@ -139,10 +173,10 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       }
     }
 
-    final daysInPeriod = DateTime.now().difference(start).inDays + 1;
-    final validDays = daysInPeriod > end.difference(start).inDays + 1
-        ? end.difference(start).inDays + 1
-        : daysInPeriod;
+    int daysInPeriod = DateTime.now().difference(start).inDays + 1;
+    if (daysInPeriod < 0) daysInPeriod = 0;
+    int maxDays = end.difference(start).inDays + 1;
+    final validDays = daysInPeriod > maxDays ? maxDays : daysInPeriod;
     final total = validDays * 5;
 
     missed = total - prayed;
@@ -180,8 +214,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
 
   void _updateStatsLocally() {
     final now = DateTime.now();
-    final yearStart = DateTime(now.year, 1, 1);
-    final yearEnd = DateTime(now.year, 12, 31);
+    final yearStart = DateTime(_selectedYear, 1, 1);
+    final yearEnd = DateTime(_selectedYear, 12, 31);
     final monthStart = DateTime(now.year, now.month, 1);
     final monthEnd = DateTime(now.year, now.month + 1, 0);
     final currentWeekStart = now.subtract(Duration(days: now.weekday - 1));
@@ -374,6 +408,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               return GestureDetector(
                 onTap: () {
                   setState(() => _selectedDate = date);
+                  _loadPrayerTimesForSelectedDate();
                 },
                 child: CustomPaint(
                   painter: PrayerPiePainter(
@@ -490,6 +525,28 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             final pKey = e.value;
             final pName = isAr ? _prayersAr[idx] : _prayersEn[idx];
             final status = data[pKey] as int? ?? 0;
+
+            String supposedTime = '';
+            if (_selectedDatePrayerTimes != null) {
+              switch (pKey) {
+                case 'fajr':
+                  supposedTime = _selectedDatePrayerTimes!.fajr;
+                  break;
+                case 'dhuhr':
+                  supposedTime = _selectedDatePrayerTimes!.dhuhr;
+                  break;
+                case 'asr':
+                  supposedTime = _selectedDatePrayerTimes!.asr;
+                  break;
+                case 'maghrib':
+                  supposedTime = _selectedDatePrayerTimes!.maghrib;
+                  break;
+                case 'isha':
+                  supposedTime = _selectedDatePrayerTimes!.isha;
+                  break;
+              }
+            }
+
             return _buildPlannerChecklist(
               date,
               pKey,
@@ -497,6 +554,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               status,
               isAr,
               theme,
+              supposedTime,
             );
           }).toList(),
         ],
@@ -511,6 +569,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     int status,
     bool isAr,
     ThemeData theme,
+    String supposedTime,
   ) {
     final bool isCompleted = status > 0;
 
@@ -545,6 +604,15 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 ),
               ),
             ),
+            if (supposedTime.isNotEmpty)
+              Text(
+                supposedTime,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3),
+                ),
+              ),
           ],
         ),
       ),
@@ -552,102 +620,156 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   }
 
   Widget _buildYearlyView(bool isAr, ThemeData theme) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      itemCount: 12,
-      itemBuilder: (context, index) {
-        final monthDate = DateTime(DateTime.now().year, index + 1, 1);
-        final monthStr = DateFormat(
-          'MMMM yyyy',
-          isAr ? 'ar' : 'en',
-        ).format(monthDate);
-        final int daysInMonth = DateTime(
-          monthDate.year,
-          monthDate.month + 1,
-          0,
-        ).day;
-        final firstDayWeekday = monthDate.weekday;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 8.0,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_left,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                onPressed: () {
+                  setState(() => _selectedYear--);
+                  _loadData();
+                },
               ),
-              child: Text(
-                monthStr.toUpperCase(),
+              Text(
+                '$_selectedYear',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
                 ),
               ),
-            ),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                onPressed: () {
+                  setState(() => _selectedYear++);
+                  _loadData();
+                },
               ),
-              itemCount: daysInMonth + (firstDayWeekday - 1),
-              itemBuilder: (context, dayIndex) {
-                if (dayIndex < firstDayWeekday - 1) {
-                  return SizedBox.shrink();
-                }
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            itemCount: 12,
+            itemBuilder: (context, index) {
+              final monthDate = DateTime(_selectedYear, index + 1, 1);
+              final monthStr = DateFormat(
+                'MMMM yyyy',
+                isAr ? 'ar' : 'en',
+              ).format(monthDate);
+              final int daysInMonth = DateTime(
+                monthDate.year,
+                monthDate.month + 1,
+                0,
+              ).day;
+              final firstDayWeekday = monthDate.weekday;
 
-                final day = dayIndex - (firstDayWeekday - 1) + 1;
-                final date = DateTime(monthDate.year, monthDate.month, day);
-                final dateStr = _formatDate(date);
-                final dayData = _trackerData[dateStr] ?? {};
-
-                List<bool> prayersDone = [];
-                for (var p in _prayers) {
-                  prayersDone.add((dayData[p] as int? ?? 0) > 0);
-                }
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedDate = date;
-                      _selectedMonth = DateTime(date.year, date.month, 1);
-                      _tabController.animateTo(0);
-                    });
-                  },
-                  child: CustomPaint(
-                    painter: PrayerPiePainter(
-                      prayers: prayersDone,
-                      completeColor: theme.primaryColor,
-                      incompleteColor: theme.dividerColor.withOpacity(0.1),
-                      backgroundColor: theme.scaffoldBackgroundColor,
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 8.0,
                     ),
-                    child: Container(
-                      decoration: const BoxDecoration(shape: BoxShape.circle),
-                      child: Center(
-                        child: Text(
-                          '$day',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color:
-                                (Theme.of(context).textTheme.bodyLarge?.color ??
-                                        Colors.white)
-                                    .withOpacity(0.9),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                    child: Text(
+                      monthStr.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-            SizedBox(height: 32),
-          ],
-        );
-      },
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                        ),
+                    itemCount: daysInMonth + (firstDayWeekday - 1),
+                    itemBuilder: (context, dayIndex) {
+                      if (dayIndex < firstDayWeekday - 1) {
+                        return SizedBox.shrink();
+                      }
+
+                      final day = dayIndex - (firstDayWeekday - 1) + 1;
+                      final date = DateTime(
+                        monthDate.year,
+                        monthDate.month,
+                        day,
+                      );
+                      final dateStr = _formatDate(date);
+                      final dayData = _trackerData[dateStr] ?? {};
+
+                      List<bool> prayersDone = [];
+                      for (var p in _prayers) {
+                        prayersDone.add((dayData[p] as int? ?? 0) > 0);
+                      }
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedDate = date;
+                            _selectedMonth = DateTime(date.year, date.month, 1);
+                            _tabController.animateTo(0);
+                          });
+                          _loadPrayerTimesForSelectedDate();
+                        },
+                        child: CustomPaint(
+                          painter: PrayerPiePainter(
+                            prayers: prayersDone,
+                            completeColor: theme.primaryColor,
+                            incompleteColor: theme.dividerColor.withOpacity(
+                              0.1,
+                            ),
+                            backgroundColor: theme.scaffoldBackgroundColor,
+                          ),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '$day',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color:
+                                      (Theme.of(
+                                                context,
+                                              ).textTheme.bodyLarge?.color ??
+                                              Colors.white)
+                                          .withOpacity(0.9),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 32),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -714,7 +836,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w300,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
           ],
@@ -754,7 +876,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+            color: theme.textTheme.bodyLarge?.color,
           ),
         ),
         SizedBox(height: 4),

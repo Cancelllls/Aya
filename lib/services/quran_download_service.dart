@@ -417,6 +417,21 @@ class QuranDownloadService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<int> getTafsirCountForEdition(String tafsirEdition) async {
+    final dir = await getApplicationDocumentsDirectory();
+    int count = 0;
+    for (int i = 1; i <= 114; i++) {
+      bool has = File(
+        '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
+      ).existsSync();
+      if (!has && tafsirEdition == 'ar.muyassar') {
+        has = File('${dir.path}/cached_tafsir_$i.json').existsSync();
+      }
+      if (has) count++;
+    }
+    return count;
+  }
+
   Future<void> deleteAllTafsir(
     StorageService storage,
     String tafsirEdition,

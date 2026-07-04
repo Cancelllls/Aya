@@ -852,24 +852,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _buildGridServiceCard(
                       theme: theme,
-                      icon: Icons.grid_view,
-                      title: TranslationService.t('names_of_allah'),
-                      onTap: () => widget.onTabChange(3, subTab: 4),
-                    ),
-                    _buildGridServiceCard(
-                      theme: theme,
-                      icon: Icons.calendar_month,
-                      title: TranslationService.t('hijri_calendar'),
-                      onTap: () => widget.onTabChange(2, subTab: 2),
-                    ),
-                    _buildGridServiceCard(
-                      theme: theme,
-                      icon: Icons.calendar_month,
-                      title: TranslationService.t('hijri_calendar'),
-                      onTap: () => widget.onTabChange(2, subTab: 2),
-                    ),
-                    _buildGridServiceCard(
-                      theme: theme,
                       icon: Icons.track_changes,
                       title: TranslationService.isArabic
                           ? 'متتبع الصلاة'
@@ -882,6 +864,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         );
                       },
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.calendar_month,
+                      title: TranslationService.t('hijri_calendar'),
+                      onTap: () => widget.onTabChange(2, subTab: 2),
+                    ),
+                    _buildGridServiceCard(
+                      theme: theme,
+                      icon: Icons.date_range,
+                      title: TranslationService.isArabic
+                          ? 'جدول الصلوات'
+                          : 'Prayer Calendar',
+                      onTap: () => widget.onTabChange(2, subTab: 1),
                     ),
                   ],
                 ),

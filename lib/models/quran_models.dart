@@ -1,17 +1,54 @@
 class TafsirEdition {
   final String identifier;
   final String name;
+  final String mufassir; // Arabic scholar name
+  final String mufassirEn; // English scholar name
 
-  const TafsirEdition(this.identifier, this.name);
+  const TafsirEdition(
+    this.identifier,
+    this.name,
+    this.mufassir,
+    this.mufassirEn,
+  );
 }
 
 const List<TafsirEdition> availableTafsirs = [
-  TafsirEdition('ar.muyassar', 'التفسير الميسر (المجمع)'),
-  TafsirEdition('ar.jalalayn', 'تفسير الجلالين'),
-  TafsirEdition('ar.qurtubi', 'تفسير القرطبي'),
-  TafsirEdition('ar.miqbas', 'تنوير المقباس من تفسير بن عباس'),
-  TafsirEdition('ar.waseet', 'التفسير الوسيط'),
-  TafsirEdition('ar.baghawi', 'تفسير البغوي'),
+  TafsirEdition(
+    'ar.muyassar',
+    'التفسير الميسر',
+    'مجمع الملك فهد لطباعة المصحف الشريف',
+    'King Fahd Quran Printing Complex',
+  ),
+  TafsirEdition(
+    'ar.jalalayn',
+    'تفسير الجلالين',
+    'جلال الدين السيوطي وجلال الدين المحلي',
+    'Jalal al-Din al-Suyuti & Jalal al-Din al-Mahalli',
+  ),
+  TafsirEdition(
+    'ar.qurtubi',
+    'تفسير القرطبي',
+    'الإمام محمد بن أحمد القرطبي',
+    'Imam Muhammad al-Qurtubi',
+  ),
+  TafsirEdition(
+    'ar.miqbas',
+    'تنوير المقباس من تفسير ابن عباس',
+    'عبدالله بن عباس (رواية)',
+    'Ibn Abbas (narrated)',
+  ),
+  TafsirEdition(
+    'ar.waseet',
+    'التفسير الوسيط',
+    'مجمع البحوث الإسلامية بالأزهر',
+    'Al-Azhar Islamic Research Academy',
+  ),
+  TafsirEdition(
+    'ar.baghawi',
+    'تفسير البغوي',
+    'الإمام الحسين بن مسعود البغوي',
+    'Imam al-Husayn al-Baghawi',
+  ),
 ];
 
 class Surah {

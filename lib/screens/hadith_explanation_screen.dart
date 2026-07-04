@@ -175,20 +175,48 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Main Text (Hadith or Title)
+                        Text(
+                          item['text'] ?? '',
+                          style: TextStyle(
+                            fontSize: 16,
+                            height: 1.6,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                          textAlign: TextAlign.start,
+                          textDirection: widget.displayLang == 'eng'
+                              ? TextDirection.ltr
+                              : TextDirection.rtl,
+                        ),
+                        const SizedBox(height: 16),
+                        // Secondary Box (Explanation or Grading Details)
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: theme.scaffoldBackgroundColor.withOpacity(
-                              0.5,
+                            color: theme.primaryColor.withOpacity(0.05),
+                            border: Border(
+                              left: widget.displayLang == 'eng'
+                                  ? BorderSide(
+                                      color: theme.primaryColor,
+                                      width: 4,
+                                    )
+                                  : BorderSide.none,
+                              right: widget.displayLang != 'eng'
+                                  ? BorderSide(
+                                      color: theme.primaryColor,
+                                      width: 4,
+                                    )
+                                  : BorderSide.none,
                             ),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             item['info'] ?? '',
                             style: TextStyle(
                               fontSize: 14,
                               height: 1.6,
-                              color: theme.textTheme.bodyLarge?.color,
+                              color: theme.textTheme.bodyMedium?.color,
                             ),
                             textAlign: TextAlign.start,
                             textDirection: widget.displayLang == 'eng'
