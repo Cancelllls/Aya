@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:dorar_hadith/dorar_hadith.dart';
 import 'package:translator/translator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/translation_service.dart';
 
 class HadithExplanationScreen extends StatefulWidget {
@@ -179,10 +180,53 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
             )
           : _parsedExplanations.isEmpty
           ? Center(
-              child: Text(
-                TranslationService.isArabic
-                    ? "لا توجد نتائج مطابقة"
-                    : "No exact matches found",
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 64,
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      TranslationService.isArabic
+                          ? "لم نجد شرحاً لهذا الحديث في قاعدة البيانات."
+                          : "No explanation found in our database.",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE5C158),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.travel_explore),
+                      label: Text(
+                        TranslationService.isArabic ? "ابحث عن الشرح عبر الإنترنت" : "Search Online",
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      onPressed: () async {
+                        final q = Uri.encodeComponent(widget.query + (widget.isSharh ? (TranslationService.isArabic ? " شرح حديث" : " hadith explanation") : ""));
+                        final url = Uri.parse("https://www.google.com/search?q=$q");
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
             )
           : ListView.builder(
@@ -259,39 +303,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                         // 3. Grading Details (Linked Box)
                         if ((item['grading'] ?? '').isNotEmpty) ...[
                           const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.primaryColor.withOpacity(0.05),
-                              border: Border(
-                                left: widget.displayLang == 'eng'
-                                    ? BorderSide(
-                                        color: theme.primaryColor,
-                                        width: 4,
-                                      )
-                                    : BorderSide.none,
-                                right: widget.displayLang != 'eng'
-                                    ? BorderSide(
-                                        color: theme.primaryColor,
-                                        width: 4,
-                                      )
-                                    : BorderSide.none,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              item['grading']!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.6,
-                                color: theme.textTheme.bodyMedium?.color,
-                              ),
-                              textAlign: TextAlign.start,
-                              textDirection: widget.displayLang == 'eng'
-                                  ? TextDirection.ltr
-                                  : TextDirection.rtl,
-                            ),
-                          ),
+                          _buildBeautifulGrading(item['grading']!, theme, widget.displayLang),
                         ],
                       ],
                     ),
@@ -299,6 +311,99 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                 );
               },
             ),
+    );
+  }
+
+  Widget _buildBeautifulGrading(String grading, ThemeData theme, String displayLang) {
+    if (grading.trim().isEmpty) return const SizedBox();
+
+    final Map<String, String> parsed = {};
+    final parts = grading.split(RegExp(r'\n|\|'));
+    for (var part in parts) {
+      if (part.trim().isEmpty) continue;
+      final split = part.split(':');
+      if (split.length >= 2) {
+        final key = split[0].trim();
+        final value = split.sublist(1).join(':').trim();
+        parsed[key] = value;
+      }
+    }
+
+    if (parsed.isEmpty) {
+      // Fallback if parsing failed
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.primaryColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          grading,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.6,
+            color: theme.textTheme.bodyMedium?.color,
+          ),
+          textAlign: TextAlign.start,
+          textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+        ),
+      );
+    }
+
+    return Directionality(
+      textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.primaryColor.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.primaryColor.withOpacity(0.1)),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: parsed.entries.map((e) {
+            final isGrade = e.key.contains('حكم') || e.key.toLowerCase().contains('grade');
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isGrade ? const Color(0xFFE5C158).withOpacity(0.2) : theme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      e.key,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isGrade ? const Color(0xFFE5C158) : theme.primaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Text(
+                        e.value,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isGrade ? FontWeight.bold : FontWeight.normal,
+                          color: theme.textTheme.bodyLarge?.color,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 }
