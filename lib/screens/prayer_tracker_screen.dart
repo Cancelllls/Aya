@@ -388,7 +388,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                       border: isSelected
                           ? Border.all(
                               color:
-                                  theme.textTheme.bodyLarge?.color ?? Colors.white,
+                                  theme.textTheme.bodyLarge?.color ??
+                                  Colors.white,
                               width: 2.0,
                             )
                           : null,
@@ -556,18 +557,32 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       itemCount: 12,
       itemBuilder: (context, index) {
         final monthDate = DateTime(DateTime.now().year, index + 1, 1);
-        final monthStr = DateFormat('MMMM yyyy', isAr ? 'ar' : 'en').format(monthDate);
-        final int daysInMonth = DateTime(monthDate.year, monthDate.month + 1, 0).day;
+        final monthStr = DateFormat(
+          'MMMM yyyy',
+          isAr ? 'ar' : 'en',
+        ).format(monthDate);
+        final int daysInMonth = DateTime(
+          monthDate.year,
+          monthDate.month + 1,
+          0,
+        ).day;
         final firstDayWeekday = monthDate.weekday;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 8.0,
+              ),
               child: Text(
                 monthStr.toUpperCase(),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
               ),
             ),
             GridView.builder(
@@ -583,17 +598,17 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 if (dayIndex < firstDayWeekday - 1) {
                   return SizedBox.shrink();
                 }
-                
+
                 final day = dayIndex - (firstDayWeekday - 1) + 1;
                 final date = DateTime(monthDate.year, monthDate.month, day);
                 final dateStr = _formatDate(date);
                 final dayData = _trackerData[dateStr] ?? {};
-                
+
                 List<bool> prayersDone = [];
                 for (var p in _prayers) {
                   prayersDone.add((dayData[p] as int? ?? 0) > 0);
                 }
-                
+
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -610,15 +625,16 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                       backgroundColor: theme.scaffoldBackgroundColor,
                     ),
                     child: Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: const BoxDecoration(shape: BoxShape.circle),
                       child: Center(
                         child: Text(
                           '$day',
                           style: TextStyle(
                             fontSize: 10,
-                            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.9),
+                            color:
+                                (Theme.of(context).textTheme.bodyLarge?.color ??
+                                        Colors.white)
+                                    .withOpacity(0.9),
                             fontWeight: FontWeight.bold,
                           ),
                         ),

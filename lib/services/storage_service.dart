@@ -63,7 +63,7 @@ class StorageService {
       }
       await _prefs!.setBool('db_migrated_v1', true);
     }
-    
+
     // Migrate large JSON strings from SharedPreferences to Files
     final migratedFiles = _prefs!.getBool('quran_files_migrated_v1') ?? false;
     if (!migratedFiles) {
@@ -71,7 +71,8 @@ class StorageService {
         final dir = await getApplicationDocumentsDirectory();
         final keys = _prefs!.getKeys().toList();
         for (final key in keys) {
-          if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
+          if (key.startsWith('cached_surah_') ||
+              key.startsWith('cached_tafsir_')) {
             final value = _prefs!.getString(key);
             if (value != null) {
               final file = File('${dir.path}/$key.json');

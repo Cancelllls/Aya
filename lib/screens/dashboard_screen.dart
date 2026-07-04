@@ -345,7 +345,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final currentActive = _getCurrentPrayerName();
     await setStringIfChanged('widget_active_prayer', currentActive);
     await prefs.setBool("widget_is_arabic", TranslationService.isArabic);
-    await setStringIfChanged("widget_app_name", TranslationService.isArabic ? "آية" : "Aya");
+    await setStringIfChanged(
+      "widget_app_name",
+      TranslationService.isArabic ? "آية" : "Aya",
+    );
 
     final localizedNextName = TranslationService.t(
       _nextPrayerName.toLowerCase(),
@@ -598,10 +601,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.orange,
-                    ),
+                    Icon(Icons.warning_amber_rounded, color: Colors.orange),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -644,11 +644,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 40,
-                        ),
+                        Icon(Icons.error_outline, color: Colors.red, size: 40),
                         SizedBox(height: 12),
                         Text(
                           TranslationService.isArabic
@@ -682,7 +678,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).shadowColor.withOpacity(0.05),
+                          color: Theme.of(
+                            context,
+                          ).shadowColor.withOpacity(0.05),
                           blurRadius: 10,
                         ),
                       ],
@@ -907,10 +905,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   TranslationService.t('today_schedule'),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Flexible(
                   child: Container(
@@ -1105,7 +1100,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04), width: 1.0),
+        side: BorderSide(
+          color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
+              .withOpacity(0.04),
+          width: 1.0,
+        ),
       ),
       child: InkWell(
         onTap: onTap,
@@ -1130,10 +1129,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ],
           ),

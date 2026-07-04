@@ -356,7 +356,7 @@ class _HadithScreenState extends State<HadithScreen> {
 
   String _buildHadithQuery(String text) {
     String query = '';
-    
+
     final quoteMatch = RegExp(r'["«](.*?)["»]').firstMatch(text);
     if (quoteMatch != null && quoteMatch.group(1)!.trim().length > 10) {
       final words = quoteMatch.group(1)!.trim().split(RegExp(r'\s+'));
@@ -371,7 +371,7 @@ class _HadithScreenState extends State<HadithScreen> {
         final words = afterPbuh.split(RegExp(r'\s+'));
         if (words.length > 3) query = words.take(10).join(' ');
       }
-      
+
       if (query.isEmpty) {
         final raIndex = text.indexOf('رضي الله عنه');
         if (raIndex != -1) {
@@ -383,7 +383,7 @@ class _HadithScreenState extends State<HadithScreen> {
           if (words.length > 3) query = words.take(10).join(' ');
         }
       }
-      
+
       if (query.isEmpty) {
         final words = text.split(RegExp(r'\s+'));
         if (words.length > 20) {
@@ -393,17 +393,20 @@ class _HadithScreenState extends State<HadithScreen> {
         }
       }
     }
-    
+
     query = query.replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '').trim();
     if (query.isEmpty) {
-      final rawWords = text.replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '').trim().split(RegExp(r'\s+'));
+      final rawWords = text
+          .replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '')
+          .trim()
+          .split(RegExp(r'\s+'));
       if (rawWords.isNotEmpty && rawWords.first.isNotEmpty) {
         query = rawWords.take(5).join(' ');
       } else {
         query = "حديث"; // Fallback to prevent DorarValidationException
       }
     }
-    
+
     return query.isEmpty ? "حديث" : query;
   }
 
@@ -601,7 +604,10 @@ class _HadithScreenState extends State<HadithScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.15),
+                          color:
+                              (Theme.of(context).textTheme.bodyLarge?.color ??
+                                      Colors.white)
+                                  .withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -712,10 +718,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           message: TranslationService.isArabic
                               ? 'متاح للقراءة بدون إنترنت'
                               : 'Available offline',
-                          child: Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                          ),
+                          child: Icon(Icons.check_circle, color: Colors.green),
                         ),
                     ],
                   ),
@@ -854,7 +857,11 @@ class _HadithScreenState extends State<HadithScreen> {
                             border: Border.all(
                               color: isHighlighted
                                   ? const Color(0xFFE5C158)
-                                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
+                                  : (Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.color ??
+                                            Colors.white)
+                                        .withOpacity(0.1),
                               width: isHighlighted ? 2.0 : 1.0,
                             ),
                           ),

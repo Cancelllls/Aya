@@ -204,7 +204,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               TranslationService.t('cancel'),
-              style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
+              style: TextStyle(
+                color:
+                    (Theme.of(context).textTheme.bodyMedium?.color ??
+                            Colors.white)
+                        .withOpacity(0.7),
+              ),
             ),
           ),
           ElevatedButton(
@@ -314,7 +319,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Theme.of(context).shadowColor.withOpacity(0.1),
+                                color: Theme.of(
+                                  context,
+                                ).shadowColor.withOpacity(0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -388,7 +395,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   value: isDownloadingText
                                       ? textDownloadProgress
                                       : textProgress,
-                                  backgroundColor: Theme.of(context).dividerColor.withOpacity(0.12),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).dividerColor.withOpacity(0.12),
                                   color: isDownloadingText
                                       ? const Color(0xFF10B981)
                                       : const Color(0xFFE5C158),
@@ -501,7 +510,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                                     'cancel',
                                                   ),
                                                   style: TextStyle(
-                                                    color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+                                                    color:
+                                                        (Theme.of(context)
+                                                                    .textTheme
+                                                                    .bodyMedium
+                                                                    ?.color ??
+                                                                Colors.white)
+                                                            .withOpacity(0.7),
                                                   ),
                                                 ),
                                               ),
@@ -531,7 +546,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   ],
                                 ],
                               ),
-                              Divider(height: 16, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                              Divider(
+                                height: 16,
+                                color: Theme.of(
+                                  context,
+                                ).dividerColor.withOpacity(0.1),
+                              ),
 
                               // --- QURAN TAFSIR SECTION ---
                               Row(
@@ -598,7 +618,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   value: isDownloadingTafsir
                                       ? tafsirDownloadProgress
                                       : tafsirProgress,
-                                  backgroundColor: Theme.of(context).dividerColor.withOpacity(0.12),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).dividerColor.withOpacity(0.12),
                                   color: isDownloadingTafsir
                                       ? const Color(0xFF10B981)
                                       : const Color(0xFFE5C158),
@@ -715,7 +737,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                                     'cancel',
                                                   ),
                                                   style: TextStyle(
-                                                    color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+                                                    color:
+                                                        (Theme.of(context)
+                                                                    .textTheme
+                                                                    .bodyMedium
+                                                                    ?.color ??
+                                                                Colors.white)
+                                                            .withOpacity(0.7),
                                                   ),
                                                 ),
                                               ),
@@ -746,7 +774,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   ],
                                 ],
                               ),
-                              Divider(height: 16, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                              Divider(
+                                height: 16,
+                                color: Theme.of(
+                                  context,
+                                ).dividerColor.withOpacity(0.1),
+                              ),
 
                               // --- QURAN AUDIO RECITATIONS SECTION ---
                               Row(
@@ -824,7 +857,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                 borderRadius: BorderRadius.circular(6),
                                 child: LinearProgressIndicator(
                                   value: overallProgress,
-                                  backgroundColor: Theme.of(context).dividerColor.withOpacity(0.12),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).dividerColor.withOpacity(0.12),
                                   color: const Color(0xFFE5C158),
                                   minHeight: 6,
                                 ),
@@ -1006,7 +1041,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                             child: Text(
                                               TranslationService.t('cancel'),
                                               style: TextStyle(
-                                                color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+                                                color:
+                                                    (Theme.of(context)
+                                                                .textTheme
+                                                                .bodyMedium
+                                                                ?.color ??
+                                                            Colors.white)
+                                                        .withOpacity(0.7),
                                               ),
                                             ),
                                           ),
@@ -1130,7 +1171,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         TranslationService.t('cancel'),
-                        style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
+                        style: TextStyle(
+                          color:
+                              (Theme.of(context).textTheme.bodyMedium?.color ??
+                                      Colors.white)
+                                  .withOpacity(0.7),
+                        ),
                       ),
                     ),
                     ElevatedButton(
@@ -1174,7 +1220,14 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
           ),
           SizedBox(width: 4),
           IconButton(
-            icon: Icon(Icons.cancel, color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3), size: 18),
+            icon: Icon(
+              Icons.cancel,
+              color:
+                  (Theme.of(context).textTheme.bodyMedium?.color ??
+                          Colors.white)
+                      .withOpacity(0.3),
+              size: 18,
+            ),
             onPressed: () =>
                 QuranDownloadService.instance.cancelDownload(surahNum),
           ),

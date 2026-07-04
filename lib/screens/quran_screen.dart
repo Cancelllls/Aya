@@ -136,7 +136,12 @@ class _QuranScreenState extends State<QuranScreen> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.08)),
+                borderSide: BorderSide(
+                  color:
+                      (Theme.of(context).textTheme.bodyLarge?.color ??
+                              Colors.white)
+                          .withOpacity(0.08),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -157,11 +162,7 @@ class _QuranScreenState extends State<QuranScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Colors.red,
-                      ),
+                      Icon(Icons.error_outline, size: 48, color: Colors.red),
                       SizedBox(height: 12),
                       Text(
                         TranslationService.isArabic

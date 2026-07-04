@@ -555,7 +555,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
             return AlertDialog(
               backgroundColor: Theme.of(context).cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: Text(
                 TranslationService.isArabic
                     ? "دعم وتطوير التطبيق"
@@ -577,7 +579,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
                     final productId = 'support_donation_${val.toInt()}';
                     final product = productMap[productId];
-                    final displayPrice = product?.price ?? '\$${val.toInt()} USD';
+                    final displayPrice =
+                        product?.price ?? '\$${val.toInt()} USD';
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -761,7 +764,12 @@ class _SettingsScreenState extends State<SettingsScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 TranslationService.t('cancel'),
-                style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
+                style: TextStyle(
+                  color:
+                      (Theme.of(context).textTheme.bodyMedium?.color ??
+                              Colors.white)
+                          .withOpacity(0.7),
+                ),
               ),
             ),
             ElevatedButton(
@@ -888,7 +896,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
+              side: BorderSide(
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.1),
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -976,7 +989,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(
                         TranslationService.t('bottom_navbar_style_label'),
@@ -1017,7 +1033,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(TranslationService.t('quran_font')),
                       subtitle: Text(TranslationService.t('quran_font_sub')),
@@ -1056,7 +1075,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1147,7 +1169,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1163,7 +1188,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _use24hFormat,
                       onChanged: _toggleUse24hFormat,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1247,7 +1275,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
+              side: BorderSide(
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.1),
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1392,7 +1425,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(TranslationService.t('asr_calc_label')),
                       subtitle: Text(TranslationService.t('asr_calc_sub')),
@@ -1449,7 +1485,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
+              side: BorderSide(
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.1),
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1496,7 +1537,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1562,7 +1606,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                     if (_preAdhanAlertMode == 'voice' ||
                         _preAdhanAlertMode == 'vibrate_and_voice') ...[
-                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -1615,7 +1662,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ],
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -1686,7 +1736,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                     if (_adhanAlertMode == 'real_reciter' ||
                         _adhanAlertMode == 'vibrate_and_voice') ...[
-                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -1799,7 +1852,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ),
                         ),
                       ),
-                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -1869,7 +1925,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ],
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.t('morning_azkar_reminder'),
@@ -1882,7 +1941,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         (v) => _morningAzkarReminder = v,
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.t('evening_azkar_reminder'),
@@ -1895,7 +1957,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         (v) => _eveningAzkarReminder = v,
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.t('todays_verse_reminder'),
@@ -1922,7 +1987,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
+              side: BorderSide(
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.1),
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -1990,7 +2060,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(TranslationService.t('continuous_rec_label')),
                       subtitle: Text(
@@ -2000,7 +2073,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _continuousPlay,
                       onChanged: _toggleContinuousPlay,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -2016,7 +2092,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _hideContinuousBorders,
                       onChanged: _toggleHideContinuousBorders,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -2032,7 +2111,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _autoBookmark,
                       onChanged: _toggleAutoBookmark,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     SwitchListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -2048,7 +2130,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _immersiveReader,
                       onChanged: _toggleImmersiveReader,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       leading: Icon(
                         Icons.download_for_offline,
@@ -2063,7 +2148,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ? Icons.arrow_back_ios
                             : Icons.arrow_forward_ios,
                         size: 14,
-                        color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3),
+                        color:
+                            (Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Colors.white)
+                                .withOpacity(0.3),
                       ),
                       onTap: () {
                         Navigator.push(
@@ -2091,7 +2179,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
+              side: BorderSide(
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.1),
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2106,7 +2199,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       value: _keepScreenAwake,
                       onChanged: _toggleKeepScreenAwake,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(TranslationService.t('exact_alarms')),
                       subtitle: Text(TranslationService.t('exact_alarms_sub')),
@@ -2136,14 +2232,21 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 : Icons.arrow_forward_ios,
                             size: 12,
                             color: _exactAlarmPermitted
-                                ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3)
+                                ? (Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.color ??
+                                          Colors.white)
+                                      .withOpacity(0.3)
                                 : const Color(0xFFE5C158),
                           ),
                         ],
                       ),
                       onTap: _exactAlarmPermitted ? null : _requestExactAlarm,
                     ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
                     ListTile(
                       title: Text(TranslationService.t('battery_optimization')),
                       subtitle: Text(
@@ -2175,7 +2278,11 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 : Icons.arrow_forward_ios,
                             size: 12,
                             color: _batteryIgnored
-                                ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3)
+                                ? (Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.color ??
+                                          Colors.white)
+                                      .withOpacity(0.3)
                                 : const Color(0xFFE5C158),
                           ),
                         ],
@@ -2198,7 +2305,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1)),
+              side: BorderSide(
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.1),
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -2289,7 +2401,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ),
                     if (_focusLockDuration > 0) ...[
-                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
                       ListTile(
                         title: Text(
                           TranslationService.isArabic
@@ -2336,7 +2451,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ),
                         ),
                       ),
-                      Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
                       SwitchListTile(
                         title: Text(TranslationService.t('focus_setting_auto')),
                         activeThumbColor: const Color(0xFFE5C158),
@@ -2360,10 +2478,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           Card(
             color: theme.cardColor,
             child: ListTile(
-              leading: Icon(
-                Icons.volunteer_activism,
-                color: Color(0xFFE5C158),
-              ),
+              leading: Icon(Icons.volunteer_activism, color: Color(0xFFE5C158)),
               title: Text(
                 TranslationService.isArabic
                     ? "دعم تطبيق آية"
@@ -2463,7 +2578,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3),
+                    color:
+                        (Theme.of(context).textTheme.bodyMedium?.color ??
+                                Colors.white)
+                            .withOpacity(0.3),
                   ),
                 ),
               ],
@@ -2481,11 +2599,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         final status = states[reciterId] ?? DownloadStatus.notDownloaded;
         switch (status) {
           case DownloadStatus.downloaded:
-            return Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 16,
-            );
+            return Icon(Icons.check_circle, color: Colors.green, size: 16);
           case DownloadStatus.downloading:
             return SizedBox(
               width: 12,

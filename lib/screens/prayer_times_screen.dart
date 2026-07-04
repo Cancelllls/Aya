@@ -431,7 +431,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     onPressed: () => Navigator.pop(dialogCtx, false),
                     child: Text(
                       TranslationService.t('cancel'),
-                      style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
+                      style: TextStyle(
+                        color:
+                            (Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Colors.white)
+                                .withOpacity(0.7),
+                      ),
                     ),
                   ),
                   ElevatedButton(
@@ -569,7 +574,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 TranslationService.t('cancel'),
-                style: TextStyle(color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7)),
+                style: TextStyle(
+                  color:
+                      (Theme.of(context).textTheme.bodyMedium?.color ??
+                              Colors.white)
+                          .withOpacity(0.7),
+                ),
               ),
             ),
             ElevatedButton(
@@ -659,7 +669,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: theme.cardColor,
-                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.12),
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -736,7 +748,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 decoration: BoxDecoration(
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.12),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -768,10 +782,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 // Today
                 Text(
                   TranslationService.t('daily_schedule'),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 12),
 
@@ -936,7 +947,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       color: theme.cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withOpacity(0.12),
+        ),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1003,10 +1016,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             return DataRow(
               cells: [
                 DataCell(
-                  Text(
-                    dateStr,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  Text(dateStr, style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 DataCell(Text(_formatTime(timings['Fajr']))),
                 DataCell(Text(_formatTime(timings['Sunrise']))),
@@ -1099,18 +1109,20 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         side: BorderSide(color: Color(0xFFE5C158)),
                       ),
                       title: Text(
-                        TranslationService.isArabic ? 'حدث إسلامي' : 'Islamic Event',
+                        TranslationService.isArabic
+                            ? 'حدث إسلامي'
+                            : 'Islamic Event',
                         style: TextStyle(color: Color(0xFFE5C158)),
                       ),
-                      content: Text(
-                        eventTitle,
-                        style: TextStyle(fontSize: 18),
-                      ),
+                      content: Text(eventTitle, style: TextStyle(fontSize: 18)),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: Text(TranslationService.isArabic ? 'حسناً' : 'OK', style: TextStyle(color: Color(0xFFE5C158))),
-                        )
+                          child: Text(
+                            TranslationService.isArabic ? 'حسناً' : 'OK',
+                            style: TextStyle(color: Color(0xFFE5C158)),
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -1121,12 +1133,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             decoration: BoxDecoration(
               color: isToday
                   ? const Color(0xFFE5C158).withOpacity(0.15)
-                  : (hasEvent ? const Color(0xFFE5C158).withOpacity(0.05) : theme.cardColor.withOpacity(0.6)),
+                  : (hasEvent
+                        ? const Color(0xFFE5C158).withOpacity(0.05)
+                        : theme.cardColor.withOpacity(0.6)),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isToday
                     ? const Color(0xFFE5C158)
-                    : (hasEvent ? const Color(0xFFE5C158).withOpacity(0.5) : Theme.of(context).dividerColor.withOpacity(0.1)),
+                    : (hasEvent
+                          ? const Color(0xFFE5C158).withOpacity(0.5)
+                          : Theme.of(context).dividerColor.withOpacity(0.1)),
                 width: isToday || hasEvent ? 1.5 : 1.0,
               ),
             ),
@@ -1139,7 +1155,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     gregDay,
                     style: TextStyle(
                       fontSize: 10,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.5,
+                      ),
                     ),
                   ),
                 ),
@@ -1178,13 +1196,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       );
     }
 
-
-
     return Card(
       color: theme.cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withOpacity(0.12),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1194,10 +1212,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(
-                    Icons.chevron_left,
-                    color: Color(0xFFE5C158),
-                  ),
+                  icon: Icon(Icons.chevron_left, color: Color(0xFFE5C158)),
                   onPressed: _isCalendarLoading ? null : _prevCalendarMonth,
                 ),
                 Expanded(
@@ -1212,10 +1227,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFFE5C158),
-                  ),
+                  icon: Icon(Icons.chevron_right, color: Color(0xFFE5C158)),
                   onPressed: _isCalendarLoading ? null : _nextCalendarMonth,
                 ),
               ],
@@ -1252,7 +1264,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   );
                 },
               ),
-              Divider(color: Theme.of(context).dividerColor.withOpacity(0.12), height: 12),
+              Divider(
+                color: Theme.of(context).dividerColor.withOpacity(0.12),
+                height: 12,
+              ),
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -1267,7 +1282,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               ),
               if (events.isNotEmpty) ...[
                 SizedBox(height: 16),
-                Divider(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+                Divider(
+                  color: Theme.of(context).dividerColor.withOpacity(0.12),
+                ),
                 SizedBox(height: 8),
                 Align(
                   alignment: AlignmentDirectional.centerStart,
@@ -1298,7 +1315,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         "${event['hijriDate']} (${event['gregDate']})",
                         style: TextStyle(
                           fontSize: 11,
-                          color: (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38),
+                          color:
+                              (Theme.of(context).textTheme.bodyMedium?.color ??
+                                      Colors.white)
+                                  .withOpacity(0.38),
                         ),
                       ),
                       trailing: IconButton(
@@ -1356,7 +1376,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04),
+                color:
+                    (Theme.of(context).textTheme.bodyLarge?.color ??
+                            Colors.white)
+                        .withOpacity(0.04),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: const Color(0xFFE5C158), size: 18),
@@ -1368,10 +1391,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 children: [
                   Text(
                     displayName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ],
               ),

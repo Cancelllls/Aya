@@ -228,7 +228,13 @@ class _SplashScreenState extends State<SplashScreen>
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2.5,
-                          color: isDark ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3) : Colors.black38,
+                          color: isDark
+                              ? (Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color ??
+                                        Colors.white)
+                                    .withOpacity(0.3)
+                              : Colors.black38,
                         ),
                       ),
                     ],

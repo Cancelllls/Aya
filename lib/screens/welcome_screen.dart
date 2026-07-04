@@ -363,7 +363,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.3) : Colors.black38,
+              color: isDark
+                  ? (Theme.of(context).textTheme.bodyMedium?.color ??
+                            Colors.white)
+                        .withOpacity(0.3)
+                  : Colors.black38,
               height: 1.5,
             ),
           ),
@@ -451,16 +455,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               SizedBox(height: 4),
               Text(
                 description,
                 style: TextStyle(
-                  color: isDark ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.38) : Colors.black45,
+                  color: isDark
+                      ? (Theme.of(context).textTheme.bodyMedium?.color ??
+                                Colors.white)
+                            .withOpacity(0.38)
+                      : Colors.black45,
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -478,11 +483,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.security_rounded,
-            color: Color(0xFFE5C158),
-            size: 64,
-          ),
+          Icon(Icons.security_rounded, color: Color(0xFFE5C158), size: 64),
           SizedBox(height: 16),
           Text(
             TranslationService.isArabic
@@ -631,10 +632,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     textAlign: TextAlign.start,
                   ),
                   SizedBox(height: 2),

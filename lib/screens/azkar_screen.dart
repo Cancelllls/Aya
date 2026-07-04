@@ -153,7 +153,11 @@ class _AzkarScreenState extends State<AzkarScreen>
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: _showTranslation ? Colors.black : (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+                      color: _showTranslation
+                          ? Colors.black
+                          : (Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Colors.white)
+                                .withOpacity(0.7),
                     ),
                   ),
                   selected: _showTranslation,
@@ -178,7 +182,9 @@ class _AzkarScreenState extends State<AzkarScreen>
                       fontWeight: FontWeight.bold,
                       color: _showTransliteration
                           ? Colors.black
-                          : (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+                          : (Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Colors.white)
+                                .withOpacity(0.7),
                     ),
                   ),
                   selected: _showTransliteration,
@@ -351,11 +357,7 @@ class _AzkarScreenState extends State<AzkarScreen>
             children: [
               TextButton.icon(
                 onPressed: () => _resetAzkarTab(list),
-                icon: Icon(
-                  Icons.restore,
-                  size: 16,
-                  color: Color(0xFFE5C158),
-                ),
+                icon: Icon(Icons.restore, size: 16, color: Color(0xFFE5C158)),
                 label: Text(
                   TranslationService.t('reset_counts'),
                   style: TextStyle(
@@ -387,7 +389,9 @@ class _AzkarScreenState extends State<AzkarScreen>
                   side: BorderSide(
                     color: isDone
                         ? const Color(0xFF10B981).withOpacity(0.5)
-                        : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04),
+                        : (Theme.of(context).textTheme.bodyLarge?.color ??
+                                  Colors.white)
+                              .withOpacity(0.04),
                     width: isDone ? 1.5 : 1.0,
                   ),
                 ),
@@ -475,7 +479,11 @@ class _AzkarScreenState extends State<AzkarScreen>
                               item.transliteration.isNotEmpty) ||
                           (_showTranslation &&
                               item.translation.isNotEmpty)) ...[
-                        Divider(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                        Divider(
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withOpacity(0.1),
+                        ),
                         SizedBox(height: 8),
                       ],
                       // Transliteration (Italicized)
@@ -546,7 +554,12 @@ class _AzkarScreenState extends State<AzkarScreen>
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04), width: 1.0),
+            side: BorderSide(
+              color:
+                  (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
+                      .withOpacity(0.04),
+              width: 1.0,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),

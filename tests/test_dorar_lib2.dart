@@ -5,9 +5,9 @@ void main() async {
   try {
     print('Searching Sharh...');
     final sharhResults = await client.searchSharh(
-      HadithSearchParams(value: 'إنما الأعمال بالنيات', page: 1)
+      HadithSearchParams(value: 'إنما الأعمال بالنيات', page: 1),
     );
-    
+
     print('Found \${sharhResults.data.length} sharh results');
     if (sharhResults.data.isNotEmpty) {
       final s = sharhResults.data.first;

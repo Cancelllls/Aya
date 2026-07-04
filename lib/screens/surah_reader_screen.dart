@@ -468,17 +468,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 TranslationService.isArabic
                     ? "${_currentSurah.name} : الآية ${ayah.numberInSurah}"
                     : "${_currentSurah.englishName} : Verse ${ayah.numberInSurah}",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               SizedBox(height: 20),
               ListTile(
-                leading: Icon(
-                  Icons.menu_book,
-                  color: Color(0xFFE5C158),
-                ),
+                leading: Icon(Icons.menu_book, color: Color(0xFFE5C158)),
                 title: Text(TranslationService.isArabic ? "التفسير" : "Tafsir"),
                 onTap: () {
                   Navigator.pop(context);
@@ -703,7 +697,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             tooltip: 'Bookmark Surah',
           ),
           PopupMenuButton<String>(
-            icon: Icon(Icons.chrome_reader_mode, color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)),
+            icon: Icon(
+              Icons.chrome_reader_mode,
+              color:
+                  (Theme.of(context).textTheme.bodyLarge?.color ??
+                  Colors.white),
+            ),
             tooltip: TranslationService.isArabic
                 ? "تغيير نمط العرض"
                 : "Change View Mode",
@@ -985,10 +984,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                               : (playState.isPlaying &&
                                                     playState.surahNum ==
                                                         _currentSurah.number)
-                                              ? Icon(
-                                                  Icons.pause,
-                                                  size: 16,
-                                                )
+                                              ? Icon(Icons.pause, size: 16)
                                               : Icon(
                                                   Icons.play_arrow,
                                                   size: 16,
@@ -1136,7 +1132,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         color: isPlaying
             // ignore: deprecated_member_use
             ? const Color(0xFFE5C158).withOpacity(0.06)
-            : (isDark ? const Color(0xFF111716) : Theme.of(context).textTheme.bodyLarge?.color),
+            : (isDark
+                  ? const Color(0xFF111716)
+                  : Theme.of(context).textTheme.bodyLarge?.color),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isHighlighted
@@ -1151,7 +1149,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 // ignore: deprecated_member_use
                 ? const Color(0xFFE5C158).withOpacity(0.08)
                 // ignore: deprecated_member_use
-                : Theme.of(context).shadowColor.withOpacity(isDark ? 0.15 : 0.02),
+                : Theme.of(
+                    context,
+                  ).shadowColor.withOpacity(isDark ? 0.15 : 0.02),
             blurRadius: 8,
           ),
         ],
@@ -1603,7 +1603,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           // ignore: deprecated_member_use
           color: isDark
               ? const Color(0xFF0C1D1B).withOpacity(0.9)
-              : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.9),
+              : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
+                    .withOpacity(0.9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             // ignore: deprecated_member_use
@@ -1697,7 +1698,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               decoration: BoxDecoration(
                 // ignore: deprecated_member_use
                 color: isDark
-                    ? (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.06)
+                    ? (Theme.of(context).textTheme.bodyLarge?.color ??
+                              Colors.white)
+                          .withOpacity(0.06)
                     : Theme.of(context).shadowColor.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
               ),

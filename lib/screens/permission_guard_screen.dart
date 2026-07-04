@@ -372,7 +372,9 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.primaryColor,
-                      foregroundColor: isDark ? Colors.black : Theme.of(context).textTheme.bodyLarge?.color,
+                      foregroundColor: isDark
+                          ? Colors.black
+                          : Theme.of(context).textTheme.bodyLarge?.color,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -438,10 +440,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     textAlign: TextAlign.start,
                   ),
                   SizedBox(height: 3),
