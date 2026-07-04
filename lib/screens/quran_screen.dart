@@ -4,6 +4,9 @@ import '../models/quran_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'surah_reader_screen.dart';
 
 class QuranScreen extends StatefulWidget {
@@ -22,6 +25,12 @@ class _QuranScreenState extends State<QuranScreen> {
   bool _hasError = false;
   final TextEditingController _searchController = TextEditingController();
 
+  int _activeSearchTab = 0;
+  List<Map<String, dynamic>> _ayahSearchResults = [];
+  bool _isSearchingAyahs = false;
+  String _ayahSearchError = '';
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +39,7 @@ class _QuranScreenState extends State<QuranScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -65,6 +75,52 @@ class _QuranScreenState extends State<QuranScreen> {
     }
   }
 
+  bool _isArabic(String text) {
+    final arabicRegex = RegExp(r'[\u0600-\u06FF]');
+    return arabicRegex.hasMatch(text);
+  }
+
+  Future<void> _searchAyahs(String query) async {
+    if (query.trim().isEmpty) return;
+    setState(() {
+      _isSearchingAyahs = true;
+      _ayahSearchError = '';
+    });
+
+    try {
+      final edition = _isArabic(query) ? 'quran-simple-clean' : 'en.asad';
+      final encodedQuery = Uri.encodeComponent(query);
+      final url =
+          'http://api.alquran.cloud/v1/search/$encodedQuery/all/$edition';
+
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _ayahSearchResults = List<Map<String, dynamic>>.from(
+              data['data']['matches'] ?? [],
+            );
+            _isSearchingAyahs = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load search results');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSearchingAyahs = false;
+          _ayahSearchError = TranslationService.isArabic
+              ? "حدث خطأ أثناء البحث"
+              : "Error occurred while searching";
+        });
+      }
+    }
+  }
+
   String _stripTashkeel(String input) {
     final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
     return input.replaceAll(tashkeelRegex, '');
@@ -74,6 +130,8 @@ class _QuranScreenState extends State<QuranScreen> {
     if (query.isEmpty) {
       setState(() {
         _filteredSurahList = _surahList;
+        _activeSearchTab = 0;
+        _ayahSearchResults.clear();
       });
       return;
     }
@@ -89,6 +147,11 @@ class _QuranScreenState extends State<QuranScreen> {
             surah.name.contains(query) ||
             surah.number.toString() == query;
       }).toList();
+    });
+
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), () {
+      _searchAyahs(query);
     });
   }
 
@@ -151,6 +214,75 @@ class _QuranScreenState extends State<QuranScreen> {
           ),
         ),
 
+        // Segmented Controls for Search Results
+        if (_searchController.text.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeSearchTab = 0),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _activeSearchTab == 0
+                            ? const Color(0xFFE5C158)
+                            : theme.cardColor,
+                        borderRadius: BorderRadius.horizontal(
+                          left: Radius.circular(12),
+                        ),
+                        border: Border.all(color: const Color(0xFFE5C158)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          TranslationService.isArabic ? "السور" : "Surahs",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _activeSearchTab == 0
+                                ? Colors.black
+                                : theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeSearchTab = 1),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _activeSearchTab == 1
+                            ? const Color(0xFFE5C158)
+                            : theme.cardColor,
+                        borderRadius: BorderRadius.horizontal(
+                          right: Radius.circular(12),
+                        ),
+                        border: Border.all(color: const Color(0xFFE5C158)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          TranslationService.isArabic ? "الآيات" : "Verses",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _activeSearchTab == 1
+                                ? Colors.black
+                                : theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         // Surah List Builder
         Expanded(
           child: _isLoading
@@ -189,6 +321,8 @@ class _QuranScreenState extends State<QuranScreen> {
                     ],
                   ),
                 )
+              : _activeSearchTab == 1
+              ? _buildAyahSearchResults(theme, isDark)
               : _filteredSurahList.isEmpty
               ? Center(
                   child: Column(
@@ -332,6 +466,114 @@ class _QuranScreenState extends State<QuranScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildAyahSearchResults(ThemeData theme, bool isDark) {
+    if (_isSearchingAyahs) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+      );
+    }
+    if (_ayahSearchError.isNotEmpty) {
+      return Center(
+        child: Text(
+          _ayahSearchError,
+          style: TextStyle(color: Colors.red, fontSize: 16),
+        ),
+      );
+    }
+    if (_ayahSearchResults.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48, color: theme.disabledColor),
+            SizedBox(height: 12),
+            Text(
+              TranslationService.isArabic
+                  ? "لا توجد نتائج"
+                  : "No matches found",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      itemCount: _ayahSearchResults.length,
+      itemBuilder: (context, index) {
+        final match = _ayahSearchResults[index];
+        final surahInfo = match['surah'];
+        final String surahName = surahInfo['name'] ?? '';
+        final String englishName = surahInfo['englishName'] ?? '';
+        final int numberInSurah = match['numberInSurah'] ?? 0;
+        final String text = match['text'] ?? '';
+        final int surahNumber = surahInfo['number'] ?? 1;
+
+        return Card(
+          color: theme.cardColor,
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFFE5C158).withOpacity(0.12),
+              width: 1,
+            ),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            title: Text(
+              text,
+              style: TextStyle(fontSize: 16, height: 1.5),
+              textDirection: _isArabic(text)
+                  ? TextDirection.rtl
+                  : TextDirection.ltr,
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                TranslationService.isArabic
+                    ? "$surahName - الآية $numberInSurah"
+                    : "$englishName - Verse $numberInSurah",
+                style: TextStyle(
+                  color: const Color(0xFFE5C158),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            onTap: () {
+              // Find the Surah object
+              Surah? targetSurah;
+              try {
+                targetSurah = _surahList.firstWhere(
+                  (s) => s.number == surahNumber,
+                );
+              } catch (_) {}
+
+              if (targetSurah != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SurahReaderScreen(
+                      surah: targetSurah!,
+                      storage: widget.storage,
+                      initialAyahNumber: numberInSurah,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }
