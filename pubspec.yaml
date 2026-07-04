@@ -57,8 +57,6 @@ dependencies:
   dorar_hadith_flutter: ^0.5.0
   sqlite3_flutter_libs: ^0.6.0+eol
   sqlite3: ^3.3.3
-  alarm: 
-    path: ./plugins/alarm
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
-import 'package:alarm/alarm.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'services/storage_service.dart';
@@ -46,7 +45,6 @@ void main() async {
 
   // Initialize Android Alarm Manager
   await AndroidAlarmManager.initialize();
-  await Alarm.init();
 
   final storage = await StorageService.getInstance();
   TranslationService.setLanguage(

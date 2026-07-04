@@ -13,7 +13,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:alarm/alarm.dart';
 import 'package:intl/intl.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
@@ -24,9 +23,12 @@ import 'adhan_audio_service.dart';
 import 'database_service.dart';
 
 @pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse notificationResponse) async {
+void notificationTapBackground(
+  NotificationResponse notificationResponse,
+) async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (notificationResponse.actionId == 'action_prayed' || notificationResponse.actionId == 'action_missed') {
+  if (notificationResponse.actionId == 'action_prayed' ||
+      notificationResponse.actionId == 'action_missed') {
     final payload = notificationResponse.payload;
     if (payload != null && payload.startsWith('tracker:')) {
       final parts = payload.split(':');
@@ -122,9 +124,7 @@ void backgroundPreAdhanCallback(int id) async {
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
-            options: {
-              AVAudioSessionOptions.duckOthers,
-            },
+            options: {AVAudioSessionOptions.duckOthers},
           ),
         ),
       );
@@ -193,9 +193,7 @@ void backgroundAdhanCallback(int id) async {
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
-            options: {
-              AVAudioSessionOptions.duckOthers,
-            },
+            options: {AVAudioSessionOptions.duckOthers},
           ),
         ),
       );
@@ -242,7 +240,7 @@ void backgroundAdhanCallback(int id) async {
           }
         } catch (_) {}
       }
-      
+
       await completer.future;
     }
   } catch (e) {
@@ -458,7 +456,8 @@ class NotificationService {
     try {
       // ponytail: YAGNI external dependency for this simple string check
       const platform = MethodChannel('com.quran.aya/system');
-      final String timeZoneName = await platform.invokeMethod<String>('getTimeZoneName') ?? 'UTC';
+      final String timeZoneName =
+          await platform.invokeMethod<String>('getTimeZoneName') ?? 'UTC';
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (_) {
       timezoneFallbackToUtc = true;
@@ -484,7 +483,8 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
-        if (response.actionId == 'action_prayed' || response.actionId == 'action_missed') {
+        if (response.actionId == 'action_prayed' ||
+            response.actionId == 'action_missed') {
           final payload = response.payload;
           if (payload != null && payload.startsWith('tracker:')) {
             final parts = payload.split(':');
@@ -492,7 +492,11 @@ class NotificationService {
               final dateStr = parts[1];
               final prayerKey = parts[2];
               final db = await DatabaseService.getInstance();
-              await db.updatePrayerTracker(dateStr, prayerKey, response.actionId == 'action_prayed' ? 1 : 0);
+              await db.updatePrayerTracker(
+                dateStr,
+                prayerKey,
+                response.actionId == 'action_prayed' ? 1 : 0,
+              );
             }
           }
         }
@@ -547,7 +551,9 @@ class NotificationService {
     for (int i = 1; i <= 70; i++) {
       cancelFutures.add(_notificationsPlugin.cancel(id: i));
       cancelFutures.add(_notificationsPlugin.cancel(id: i + 2000));
-      cancelFutures.add(_notificationsPlugin.cancel(id: i + 5000)); // Tracker reminders
+      cancelFutures.add(
+        _notificationsPlugin.cancel(id: i + 5000),
+      ); // Tracker reminders
       if (Platform.isAndroid) {
         cancelFutures.add(
           Future.sync(() async {
@@ -587,26 +593,24 @@ class NotificationService {
       'adhan_alert_mode',
       defaultValue: 'real_reciter',
     );
-    final channelId =
-        (adhanMode == 'real_reciter' ||
-            adhanMode == 'voice' ||
-            adhanMode == 'vibrate_and_voice')
-        ? 'athan_channel_v3_silent'
-        : 'athan_channel_v3_sound';
-
+    final channelId = adhanMode == 'silent'
+        ? 'adhan_v4_silent'
+        : 'adhan_v4_sound';
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           channelId,
-          channelId == 'athan_channel_v3_silent'
-              ? 'Athan Alarms (Silent)'
-              : 'Athan Alarms',
+          'Athan Alarms',
           channelDescription: 'Notifications for prayer time athan alerts',
           importance: Importance.max,
           priority: Priority.high,
-          playSound: channelId == 'athan_channel_v3_sound',
-          enableVibration:
-              adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
-          vibrationPattern: (adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice') ? Int64List.fromList(NotificationService.islamicVibrationPattern) : null,
+          playSound: adhanMode != 'silent' && adhanMode != 'vibrate',
+          sound: (adhanMode != 'silent' && adhanMode != 'vibrate')
+              ? const RawResourceAndroidNotificationSound('default_adhan')
+              : null,
+          enableVibration: adhanMode != 'silent' && adhanMode != 'voice',
+          vibrationPattern: (adhanMode != 'silent' && adhanMode != 'voice')
+              ? Int64List.fromList([0, 300, 150, 300, 150, 500])
+              : null,
           icon: 'ic_notification',
           color: const Color(0xFF0F766E),
           visibility: NotificationVisibility.public,
@@ -661,12 +665,40 @@ class NotificationService {
           final isAr = TranslationService.isArabic;
           final localizedName = isAr ? _arabicPrayerName(name) : name;
 
-          scheduleFutures.add(
-            Future.sync(() async {
-              if (!Platform.isAndroid) {
-                try {
-                  await _notificationsPlugin.zonedSchedule(
-                    id: notificationId,
+          try {
+            await _notificationsPlugin.zonedSchedule(
+              id: notificationId,
+              title: isAr
+                  ? 'حان الآن موعد صلاة $localizedName'
+                  : 'Time for $localizedName',
+              body: isAr
+                  ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
+                  : 'It is time for the $localizedName prayer.',
+              scheduledDate: tzDateTime,
+              notificationDetails: notificationDetails,
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              payload: 'prayer_times',
+            );
+          } catch (_) {
+            // Fallback for Android 12+ if exact alarms permission is revoked
+            try {
+              await _notificationsPlugin.zonedSchedule(
+                id: notificationId,
+                title: isAr
+                    ? 'حان الآن موعد صلاة $localizedName'
+                    : 'Time for $localizedName',
+                body: isAr
+                    ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
+                    : 'It is time for the $localizedName prayer.',
+                scheduledDate: tzDateTime,
+                notificationDetails: notificationDetails,
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                payload: 'prayer_times',
+              );
+            } catch (_) {
+              try {
+                await _notificationsPlugin.zonedSchedule(
+                  id: notificationId,
                   title: isAr
                       ? 'حان الآن موعد صلاة $localizedName'
                       : 'Time for $localizedName',
@@ -675,283 +707,209 @@ class NotificationService {
                       : 'It is time for the $localizedName prayer.',
                   scheduledDate: tzDateTime,
                   notificationDetails: notificationDetails,
-                  androidScheduleMode: AndroidScheduleMode.alarmClock,
+                  androidScheduleMode:
+                      AndroidScheduleMode.inexactAllowWhileIdle,
+                  payload: 'prayer_times',
+                );
+              } catch (_) {}
+            }
+          }
+
+          // Prayer Tracker Reminder (15 mins before next prayer)
+          final prevPrayerKeys = {
+            'Fajr': 'isha',
+            'Dhuhr': 'fajr',
+            'Asr': 'dhuhr',
+            'Maghrib': 'asr',
+            'Isha': 'maghrib',
+          };
+
+          final prevPrayerKey = prevPrayerKeys[name];
+          if (prevPrayerKey != null) {
+            final trackerTime = scheduledDate.subtract(
+              const Duration(minutes: 15),
+            );
+            if (trackerTime.isAfter(now)) {
+              final tzTrackerTime = tz.TZDateTime.from(trackerTime, tz.local);
+              final trackerNotificationId = notificationId + 5000;
+
+              final prevPrayerNameAr = _arabicPrayerName(prevPrayerKey);
+              final prevPrayerNameEn =
+                  prevPrayerKey[0].toUpperCase() + prevPrayerKey.substring(1);
+              final prevPrayerName = isAr ? prevPrayerNameAr : prevPrayerNameEn;
+
+              final trackerTitle = isAr
+                  ? 'هل صليت $prevPrayerName اليوم؟'
+                  : 'Did you pray $prevPrayerName today?';
+              final trackerBody = isAr
+                  ? 'سجل صلاتك الآن.'
+                  : 'Log your prayer now.';
+
+              final targetDateForTracker = name == 'Fajr'
+                  ? scheduledDate.subtract(const Duration(days: 1))
+                  : scheduledDate;
+              final dateStr = DateFormat(
+                'yyyy-MM-dd',
+              ).format(targetDateForTracker);
+
+              final trackerDetails = NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'tracker_channel',
+                  'Prayer Tracker',
+                  channelDescription: 'Reminders to log your prayers',
+                  importance: Importance.high,
+                  priority: Priority.high,
+                  actions: [
+                    AndroidNotificationAction(
+                      'action_prayed',
+                      isAr ? 'صُليت' : 'Prayed',
+                      showsUserInterface: false,
+                      cancelNotification: true,
+                    ),
+                    AndroidNotificationAction(
+                      'action_missed',
+                      isAr ? 'فائتة' : 'Missed',
+                      showsUserInterface: false,
+                      cancelNotification: true,
+                    ),
+                  ],
+                ),
+              );
+
+              try {
+                await _notificationsPlugin.zonedSchedule(
+                  id: trackerNotificationId,
+                  title: trackerTitle,
+                  body: trackerBody,
+                  scheduledDate: tzTrackerTime,
+                  notificationDetails: trackerDetails,
+                  androidScheduleMode:
+                      AndroidScheduleMode.inexactAllowWhileIdle,
+                  payload: 'tracker:$dateStr:$prevPrayerKey',
+                );
+              } catch (_) {}
+            }
+          }
+
+          // Dynamic Pre-Adhan Timing and alerts
+          if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
+            final preAzanTime = scheduledDate.subtract(
+              Duration(minutes: preAdhanMins),
+            );
+            if (preAzanTime.isAfter(now)) {
+              final tzPreDateTime = tz.TZDateTime.from(preAzanTime, tz.local);
+              final preNotificationId = notificationId + 2000;
+
+              final preTitle = isAr
+                  ? 'اقترب موعد الأذان'
+                  : 'Athan is approaching';
+              final preBody = isAr
+                  ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
+                  : '$preAdhanMins minutes remaining until $localizedName Athan.';
+              final preChannelId = preAdhanAlertMode == 'silent'
+                  ? 'pre_adhan_v4_silent'
+                  : 'pre_adhan_v4_sound';
+
+              final preAndroidDetails = AndroidNotificationDetails(
+                preChannelId,
+                'Pre-Athan Alerts',
+                channelDescription: 'Notifications before prayer time',
+                importance: Importance.max,
+                priority: Priority.high,
+                playSound:
+                    preAdhanAlertMode != 'silent' &&
+                    preAdhanAlertMode != 'vibrate',
+                sound:
+                    (preAdhanAlertMode != 'silent' &&
+                        preAdhanAlertMode != 'vibrate')
+                    ? const RawResourceAndroidNotificationSound(
+                        'default_pre_adhan',
+                      )
+                    : null,
+                enableVibration:
+                    preAdhanAlertMode != 'silent' &&
+                    preAdhanAlertMode != 'voice',
+                vibrationPattern:
+                    (preAdhanAlertMode != 'silent' &&
+                        preAdhanAlertMode != 'voice')
+                    ? Int64List.fromList([0, 300, 150, 300, 150, 500])
+                    : null,
+                icon: 'ic_notification',
+                color: const Color(0xFF0F766E),
+                visibility: NotificationVisibility.public,
+              );
+
+              final preDetails = NotificationDetails(
+                android: preAndroidDetails,
+                iOS: const DarwinNotificationDetails(
+                  presentAlert: true,
+                  presentSound: false,
+                ),
+              );
+
+              try {
+                await _notificationsPlugin.zonedSchedule(
+                  id: preNotificationId,
+                  title: preTitle,
+                  body: preBody,
+                  scheduledDate: tzPreDateTime,
+                  notificationDetails: preDetails,
+                  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
                   payload: 'prayer_times',
                 );
               } catch (_) {
-                // Fallback for Android 12+ if exact alarms permission is revoked
                 try {
                   await _notificationsPlugin.zonedSchedule(
-                    id: notificationId,
-                    title: isAr
-                        ? 'حان الآن موعد صلاة $localizedName'
-                        : 'Time for $localizedName',
-                    body: isAr
-                        ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
-                        : 'It is time for the $localizedName prayer.',
-                    scheduledDate: tzDateTime,
-                    notificationDetails: notificationDetails,
-                    androidScheduleMode: AndroidScheduleMode.alarmClock,
+                    id: preNotificationId,
+                    title: preTitle,
+                    body: preBody,
+                    scheduledDate: tzPreDateTime,
+                    notificationDetails: preDetails,
+                    androidScheduleMode:
+                        AndroidScheduleMode.exactAllowWhileIdle,
                     payload: 'prayer_times',
+                  );
+                } catch (_) {}
+              }
+            }
+          }
+
+          // Cancel previous background alarm for this prayer time to prevent duplicates
+          final alarmId = notificationId + 1000;
+          if (Platform.isAndroid) {
+            try {
+              await AndroidAlarmManager.cancel(alarmId);
+            } catch (_) {}
+
+            // Schedule background GPS check alarm 15 minutes before this prayer time
+            if (dayOffset <= 1) {
+              final checkTime = scheduledDate.subtract(
+                const Duration(minutes: 15),
+              );
+              if (checkTime.isAfter(now)) {
+                try {
+                  await AndroidAlarmManager.oneShotAt(
+                    checkTime,
+                    alarmId,
+                    backgroundPrayerTimesUpdateCallback,
+                    exact: true,
+                    wakeup: true,
+                    alarmClock: true,
                   );
                 } catch (_) {
                   try {
-                    await _notificationsPlugin.zonedSchedule(
-                      id: notificationId,
-                      title: isAr
-                          ? 'حان الآن موعد صلاة $localizedName'
-                          : 'Time for $localizedName',
-                      body: isAr
-                          ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
-                          : 'It is time for the $localizedName prayer.',
-                      scheduledDate: tzDateTime,
-                      notificationDetails: notificationDetails,
-                      androidScheduleMode:
-                          AndroidScheduleMode.inexactAllowWhileIdle,
-                      payload: 'prayer_times',
-                    );
-                  } catch (_) {}
-                  } catch (_) {}
-                }
-              }
-
-              // Prayer Tracker Reminder (15 mins before next prayer)
-              final prevPrayerKeys = {
-                'Fajr': 'isha',
-                'Dhuhr': 'fajr',
-                'Asr': 'dhuhr',
-                'Maghrib': 'asr',
-                'Isha': 'maghrib',
-              };
-              
-              final prevPrayerKey = prevPrayerKeys[name];
-              if (prevPrayerKey != null) {
-                final trackerTime = scheduledDate.subtract(const Duration(minutes: 15));
-                if (trackerTime.isAfter(now)) {
-                  final tzTrackerTime = tz.TZDateTime.from(trackerTime, tz.local);
-                  final trackerNotificationId = notificationId + 5000;
-                  
-                  final prevPrayerNameAr = _arabicPrayerName(prevPrayerKey);
-                  final prevPrayerNameEn = prevPrayerKey[0].toUpperCase() + prevPrayerKey.substring(1);
-                  final prevPrayerName = isAr ? prevPrayerNameAr : prevPrayerNameEn;
-                  
-                  final trackerTitle = isAr ? 'هل صليت $prevPrayerName اليوم؟' : 'Did you pray $prevPrayerName today?';
-                  final trackerBody = isAr ? 'سجل صلاتك الآن.' : 'Log your prayer now.';
-                  
-                  final targetDateForTracker = name == 'Fajr' ? scheduledDate.subtract(const Duration(days: 1)) : scheduledDate;
-                  final dateStr = DateFormat('yyyy-MM-dd').format(targetDateForTracker);
-                  
-                  final trackerDetails = NotificationDetails(
-                    android: AndroidNotificationDetails(
-                      'tracker_channel',
-                      'Prayer Tracker',
-                      channelDescription: 'Reminders to log your prayers',
-                      importance: Importance.high,
-                      priority: Priority.high,
-                      actions: [
-                        AndroidNotificationAction('action_prayed', isAr ? 'صُليت' : 'Prayed', showsUserInterface: false, cancelNotification: true),
-                        AndroidNotificationAction('action_missed', isAr ? 'فائتة' : 'Missed', showsUserInterface: false, cancelNotification: true),
-                      ],
-                    ),
-                  );
-                  
-                  try {
-                    await _notificationsPlugin.zonedSchedule(
-                      id: trackerNotificationId,
-                      title: trackerTitle,
-                      body: trackerBody,
-                      scheduledDate: tzTrackerTime,
-                      notificationDetails: trackerDetails,
-                      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-                      payload: 'tracker:$dateStr:$prevPrayerKey',
+                    await AndroidAlarmManager.oneShotAt(
+                      checkTime,
+                      alarmId,
+                      backgroundPrayerTimesUpdateCallback,
+                      exact: false,
+                      wakeup: true,
                     );
                   } catch (_) {}
                 }
               }
-
-              // Dynamic Pre-Adhan Timing and alerts
-              if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
-                final preAzanTime = scheduledDate.subtract(
-                  Duration(minutes: preAdhanMins),
-                );
-                if (preAzanTime.isAfter(now)) {
-                  final tzPreDateTime = tz.TZDateTime.from(
-                    preAzanTime,
-                    tz.local,
-                  );
-                  final preNotificationId = notificationId + 2000;
-
-                  final preTitle = isAr
-                      ? 'اقترب موعد الأذان'
-                      : 'Athan is approaching';
-                  final preBody = isAr
-                      ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
-                      : '$preAdhanMins minutes remaining until $localizedName Athan.';
-
-                  final preChannelId = (preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice') 
-                      ? 'pre_athan_channel_vib_v3' 
-                      : 'pre_athan_channel_sil_v3';
-                      
-                  final preAndroidDetails = AndroidNotificationDetails(
-                    preChannelId,
-                    'Pre-Athan Alerts',
-                    channelDescription: 'Notifications before prayer time',
-                    importance: Importance.max,
-                    priority: Priority.high,
-                    playSound: false,
-                    enableVibration: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
-                    vibrationPattern: (preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice') ? Int64List.fromList(NotificationService.islamicVibrationPattern) : null,
-                    icon: 'ic_notification',
-                    color: const Color(0xFF0F766E),
-                    visibility: NotificationVisibility.public,
-                  );
-                  
-                  final preDetails = NotificationDetails(
-                    android: preAndroidDetails,
-                    iOS: const DarwinNotificationDetails(
-                      presentAlert: true,
-                      presentSound: false,
-                    ),
-                  );
-
-                  if (!Platform.isAndroid) {
-                    try {
-                      await _notificationsPlugin.zonedSchedule(
-                        id: preNotificationId,
-                        title: preTitle,
-                        body: preBody,
-                        scheduledDate: tzPreDateTime,
-                        notificationDetails: preDetails,
-                        androidScheduleMode: AndroidScheduleMode.alarmClock,
-                        payload: 'prayer_times',
-                      );
-                    } catch (_) {
-                      try {
-                        await _notificationsPlugin.zonedSchedule(
-                          id: preNotificationId,
-                          title: preTitle,
-                          body: preBody,
-                          scheduledDate: tzPreDateTime,
-                          notificationDetails: preDetails,
-                          androidScheduleMode:
-                              AndroidScheduleMode.inexactAllowWhileIdle,
-                          payload: 'prayer_times',
-                        );
-                      } catch (_) {}
-                    }
-                  }
-                }
-              }
-
-              // Schedule background alarms on Android
-              if (Platform.isAndroid) {
-                final adhanAlarmId = notificationId + 4000;
-                
-                // Get the appropriate local path for the alarm
-                final isFajr = name.toLowerCase() == 'fajr';
-                final reciterSetting = isFajr ? 'fajr_adhan_reciter' : 'adhan_reciter';
-                final reciter = await StorageService.getInstance().then((s) => s.getString(
-                  reciterSetting,
-                  defaultValue: isFajr ? 'mishary' : 'mishary',
-                ));
-                final dir = await getApplicationDocumentsDirectory();
-                final localPath = '${dir.path}/adhan_audio/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
-                final String validLocalPath = File(localPath).existsSync() ? localPath : 'assets/audio/default_adhan.mp3';
-
-                final alarmSettings = AlarmSettings(
-                  id: adhanAlarmId,
-                  dateTime: scheduledDate,
-                  assetAudioPath: validLocalPath,
-                  loopAudio: false,
-                  vibrate: adhanMode == 'vibrate' || adhanMode == 'vibrate_and_voice',
-                  volumeSettings: VolumeSettings.fixed(
-                    volume: (adhanMode == 'silent' || adhanMode == 'vibrate') ? 0.0 : 1.0,
-                  ),
-                  notificationSettings: NotificationSettings(
-                    title: adhanMode == 'silent' ? 'Athan (Silent)' : 'Athan',
-                    body: 'Time for $localizedName prayer',
-                    stopButton: 'Stop',
-                    icon: 'ic_launcher',
-                  ),
-                );
-
-                try {
-                  await Alarm.set(alarmSettings: alarmSettings);
-                } catch (e) {
-                  print('Error setting alarm: $e');
-                }
-
-                if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
-                  final preAdhanTimeVal = scheduledDate.subtract(
-                    Duration(minutes: preAdhanMins),
-                  );
-                  if (preAdhanTimeVal.isAfter(now)) {
-                    final preAlarmId = (notificationId + 2000) + 4000;
-                    final preLocalPath = '${dir.path}/pre_adhan_audio/pre_adhan_${isAr ? 'ar' : 'en'}_v2.mp3';
-                    final String validPreLocalPath = File(preLocalPath).existsSync() ? preLocalPath : 'assets/audio/default_pre_adhan.mp3';
-                    
-                    final preAlarmSettings = AlarmSettings(
-                      id: preAlarmId,
-                      dateTime: preAdhanTimeVal,
-                      assetAudioPath: validPreLocalPath,
-                      loopAudio: false,
-                      vibrate: preAdhanAlertMode == 'vibrate' || preAdhanAlertMode == 'vibrate_and_voice',
-                      volumeSettings: VolumeSettings.fixed(
-                        volume: (preAdhanAlertMode == 'silent' || preAdhanAlertMode == 'vibrate') ? 0.0 : 1.0,
-                      ),
-                      notificationSettings: NotificationSettings(
-                        title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
-                        body: isAr ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.' : '$preAdhanMins minutes remaining until $localizedName Athan.',
-                        stopButton: 'Stop',
-                        icon: 'ic_launcher',
-                      ),
-                    );
-
-                    try {
-                      await Alarm.set(alarmSettings: preAlarmSettings);
-                    } catch (_) {}
-                  }
-                }
-              }
-
-              // Cancel previous background alarm for this prayer time to prevent duplicates
-              final alarmId = notificationId + 1000;
-              if (Platform.isAndroid) {
-                try {
-                  await AndroidAlarmManager.cancel(alarmId);
-                } catch (_) {}
-
-                // Schedule background GPS check alarm 15 minutes before this prayer time
-                if (dayOffset <= 1) {
-                  final checkTime = scheduledDate.subtract(
-                    const Duration(minutes: 15),
-                  );
-                  if (checkTime.isAfter(now)) {
-                    try {
-                      await AndroidAlarmManager.oneShotAt(
-                        checkTime,
-                        alarmId,
-                        backgroundPrayerTimesUpdateCallback,
-                        exact: true,
-                        wakeup: true,
-                        alarmClock: true,
-                      );
-                    } catch (_) {
-                      try {
-                        await AndroidAlarmManager.oneShotAt(
-                          checkTime,
-                          alarmId,
-                          backgroundPrayerTimesUpdateCallback,
-                          exact: false,
-                          wakeup: true,
-                        );
-                      } catch (_) {}
-                    }
-                  }
-                }
-              }
-            }),
-          );
+            }
+          }
         }
       }
       id++;

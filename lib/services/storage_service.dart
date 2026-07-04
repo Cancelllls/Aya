@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
 
@@ -60,6 +62,26 @@ class StorageService {
         } catch (_) {}
       }
       await _prefs!.setBool('db_migrated_v1', true);
+    }
+    
+    // Migrate large JSON strings from SharedPreferences to Files
+    final migratedFiles = _prefs!.getBool('quran_files_migrated_v1') ?? false;
+    if (!migratedFiles) {
+      try {
+        final dir = await getApplicationDocumentsDirectory();
+        final keys = _prefs!.getKeys().toList();
+        for (final key in keys) {
+          if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
+            final value = _prefs!.getString(key);
+            if (value != null) {
+              final file = File('${dir.path}/$key.json');
+              await file.writeAsString(value);
+              await _prefs!.remove(key);
+            }
+          }
+        }
+        await _prefs!.setBool('quran_files_migrated_v1', true);
+      } catch (_) {}
     }
   }
 

@@ -46,8 +46,13 @@ class QuranDownloadService extends ChangeNotifier {
 
   bool _isDownloadingText = false;
   double _textDownloadProgress = 0.0;
+  int _downloadedTextCount = 0;
+  int _downloadedTafsirCount = 0;
+
   bool get isDownloadingText => _isDownloadingText;
   double get textDownloadProgress => _textDownloadProgress;
+  int get downloadedTextCount => _downloadedTextCount;
+  int get downloadedTafsirCount => _downloadedTafsirCount;
 
   Map<int, SurahDownloadState> get downloadStates => _downloadStates;
 
@@ -269,16 +274,24 @@ class QuranDownloadService extends ChangeNotifier {
     notifyListeners();
   }
 
-  int getDownloadedTextCount(StorageService storage) {
-    int count = 0;
+  Future<void> calculateCounts(StorageService storage) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final tafsirEdition = storage.getString('tafsir_edition', defaultValue: 'ar.muyassar');
+    int textCount = 0;
+    int tafsirCount = 0;
     for (int i = 1; i <= 114; i++) {
-      final cached = storage.getString('cached_surah_${i}_details');
-      final cachedQC = storage.getString('cached_surah_${i}_details_qurancom');
-      if (cached.isNotEmpty || cachedQC.isNotEmpty) {
-        count++;
+      if (File('${dir.path}/cached_surah_${i}_details_$tafsirEdition.json').existsSync() ||
+          File('${dir.path}/cached_surah_${i}_details_qurancom.json').existsSync()) {
+        textCount++;
+      }
+      if (File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json').existsSync() ||
+          File('${dir.path}/cached_tafsir_$i.json').existsSync()) {
+        tafsirCount++;
       }
     }
-    return count;
+    _downloadedTextCount = textCount;
+    _downloadedTafsirCount = tafsirCount;
+    notifyListeners();
   }
 
   Future<void> downloadAllText(StorageService storage) async {
@@ -288,16 +301,19 @@ class QuranDownloadService extends ChangeNotifier {
     notifyListeners();
 
     int downloaded = 0;
+    final tafsirEdition = storage.getString('tafsir_edition', defaultValue: 'ar.muyassar');
     for (int i = 1; i <= 114; i++) {
       if (!_isDownloadingText) break;
-      final cached = storage.getString('cached_surah_${i}_details');
-      final cachedQC = storage.getString('cached_surah_${i}_details_qurancom');
-      if (cached.isEmpty && cachedQC.isEmpty) {
+      final dir = await getApplicationDocumentsDirectory();
+      bool hasCache = File('${dir.path}/cached_surah_${i}_details_$tafsirEdition.json').existsSync() ||
+                      File('${dir.path}/cached_surah_${i}_details_qurancom.json').existsSync();
+      if (!hasCache) {
         try {
           await ApiService.fetchSurahDetails(i);
         } catch (_) {}
       }
       downloaded++;
+      _downloadedTextCount = downloaded;
       _textDownloadProgress = downloaded / 114.0;
       notifyListeners();
     }
@@ -313,10 +329,15 @@ class QuranDownloadService extends ChangeNotifier {
 
   Future<void> deleteAllText(StorageService storage) async {
     _isDownloadingText = false;
+    final tafsirEdition = storage.getString('tafsir_edition', defaultValue: 'ar.muyassar');
+    final dir = await getApplicationDocumentsDirectory();
     for (int i = 1; i <= 114; i++) {
-      await storage.remove('cached_surah_${i}_details');
-      await storage.remove('cached_surah_${i}_details_qurancom');
+      final f1 = File('${dir.path}/cached_surah_${i}_details_$tafsirEdition.json');
+      if (f1.existsSync()) f1.deleteSync();
+      final f2 = File('${dir.path}/cached_surah_${i}_details_qurancom.json');
+      if (f2.existsSync()) f2.deleteSync();
     }
+    _downloadedTextCount = 0;
     _textDownloadProgress = 0.0;
     notifyListeners();
   }
@@ -326,20 +347,6 @@ class QuranDownloadService extends ChangeNotifier {
   double _tafsirDownloadProgress = 0.0;
   bool get isDownloadingTafsir => _isDownloadingTafsir;
   double get tafsirDownloadProgress => _tafsirDownloadProgress;
-
-  int getDownloadedTafsirCount(StorageService storage, String tafsirEdition) {
-    int count = 0;
-    for (int i = 1; i <= 114; i++) {
-      var cached = storage.getString('cached_tafsir_${tafsirEdition}_$i');
-      if (cached.isEmpty && tafsirEdition == 'ar.muyassar') {
-        cached = storage.getString('cached_tafsir_$i');
-      }
-      if (cached.isNotEmpty) {
-        count++;
-      }
-    }
-    return count;
-  }
 
   Future<void> downloadAllTafsir(
     StorageService storage,

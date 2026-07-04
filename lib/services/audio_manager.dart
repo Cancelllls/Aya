@@ -421,7 +421,7 @@ class AudioManager {
       );
 
       int step = 0;
-      const steps = 16;
+      const steps = 30; // 1500ms crossfade
       _crossfadeTimer = Timer.periodic(const Duration(milliseconds: 50), (
         timer,
       ) async {

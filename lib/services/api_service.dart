@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
@@ -224,6 +226,12 @@ class ApiService {
   // ─── Quran Data & Caching ────────────────────────────────────────────────
   static Future<void> _cacheString(String key, String value) async {
     try {
+      if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
+        final dir = await getApplicationDocumentsDirectory();
+        final file = File('${dir.path}/$key.json');
+        await file.writeAsString(value);
+        return;
+      }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(key, value);
     } catch (_) {}
@@ -231,6 +239,16 @@ class ApiService {
 
   static Future<String?> _getCachedString(String key) async {
     try {
+      if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
+        final dir = await getApplicationDocumentsDirectory();
+        final file = File('${dir.path}/$key.json');
+        if (await file.exists()) {
+          return await file.readAsString();
+        }
+        // Fallback to shared prefs for users who already downloaded
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.getString(key);
+      }
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(key);
     } catch (_) {

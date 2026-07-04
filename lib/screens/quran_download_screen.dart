@@ -41,6 +41,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     _loadSurahList();
     _checkHadithStates();
     QuranDownloadService.instance.initStates(_reciter);
+    QuranDownloadService.instance.calculateCounts(widget.storage);
     QuranDownloadService.instance.addListener(_onDownloadServiceUpdate);
   }
 
@@ -53,6 +54,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   void _onDownloadServiceUpdate() {
     if (mounted) {
       unawaited(_updateTotalSpace());
+      setState(() {});
     }
   }
 
@@ -241,18 +243,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     final overallProgress = downloadedCount / 114.0;
     final isDownloadingAll = QuranDownloadService.instance.isDownloadingAll;
 
-    final textCount = QuranDownloadService.instance.getDownloadedTextCount(
-      widget.storage,
-    );
+    final textCount = QuranDownloadService.instance.downloadedTextCount;
     final textProgress = textCount / 114.0;
     final isDownloadingText = QuranDownloadService.instance.isDownloadingText;
     final textDownloadProgress =
         QuranDownloadService.instance.textDownloadProgress;
 
-    final tafsirCount = QuranDownloadService.instance.getDownloadedTafsirCount(
-      widget.storage,
-      _tafsirEdition,
-    );
+    final tafsirCount = QuranDownloadService.instance.downloadedTafsirCount;
     final tafsirProgress = tafsirCount / 114.0;
     final isDownloadingTafsir =
         QuranDownloadService.instance.isDownloadingTafsir;
