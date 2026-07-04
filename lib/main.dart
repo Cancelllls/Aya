@@ -1021,7 +1021,11 @@ class _MainScaffoldState extends State<MainScaffold>
             return Stack(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(bottom: hasPlayer ? 80.0 : 0.0),
+                  padding: EdgeInsets.only(
+                    bottom: hasPlayer
+                        ? (bottomNavbarStyle == 'floating' ? 150.0 : 80.0)
+                        : (bottomNavbarStyle == 'floating' ? 80.0 : 0.0),
+                  ),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     switchInCurve: Curves.easeInOut,
@@ -1041,7 +1045,9 @@ class _MainScaffoldState extends State<MainScaffold>
                   Positioned(
                     left: 12,
                     right: 12,
-                    bottom: 8,
+                    bottom: bottomNavbarStyle == 'floating'
+                        ? 82.0 + MediaQuery.of(context).padding.bottom
+                        : 8.0,
                     child: Container(
                       decoration: BoxDecoration(
                         color: theme.cardColor.withOpacity(0.95),
