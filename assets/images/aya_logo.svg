@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F9D47D"/>
+      <stop offset="50%" stop-color="#E5C158"/>
+      <stop offset="100%" stop-color="#B89B45"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background for preview (can be removed if transparent background is needed) -->
+  <rect width="400" height="400" rx="60" fill="#0A0F18" />
+  
+  <!-- Outer Ring Decoration -->
+  <circle cx="200" cy="200" r="160" fill="none" stroke="url(#goldGradient)" stroke-width="2" stroke-dasharray="8 8" opacity="0.6"/>
+  <circle cx="200" cy="200" r="170" fill="none" stroke="url(#goldGradient)" stroke-width="1" opacity="0.3"/>
+
+  <!-- Arabic Calligraphy "آية" -->
+  <g transform="translate(200, 180)" filter="url(#glow)">
+    <path d="M-20,-15 C-10,-35 20,-35 40,-15 C45,-10 50,-5 50,0 C50,15 35,30 20,30 C5,30 -10,15 -10,5 C-10,-5 -5,-15 -20,-15 Z" fill="url(#goldGradient)" />
+    <path d="M-50,10 C-40,-5 -20,-5 -10,10 C-5,15 0,20 0,25 C0,40 -15,55 -30,55 C-45,55 -60,40 -60,30 C-60,20 -55,10 -50,10 Z" fill="url(#goldGradient)" />
+    <!-- Text Fallback if SVG paths aren't preferred -->
+    <text x="0" y="20" font-family="'Amiri', 'Reem Kufi', serif" font-size="110" font-weight="bold" fill="url(#goldGradient)" text-anchor="middle">آية</text>
+  </g>
+
+  <!-- English "AYA" Text -->
+  <g transform="translate(200, 310)">
+    <text x="0" y="0" font-family="'Outfit', 'Montserrat', sans-serif" font-size="64" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="16">AYA</text>
+  </g>
+  
+  <!-- Decorative Dots -->
+  <circle cx="200" cy="80" r="4" fill="url(#goldGradient)"/>
+  <circle cx="200" cy="350" r="4" fill="url(#goldGradient)"/>
+  <circle cx="80" cy="200" r="4" fill="url(#goldGradient)"/>
+  <circle cx="320" cy="200" r="4" fill="url(#goldGradient)"/>
+</svg>
