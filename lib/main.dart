@@ -1,7 +1,6 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'dart:ui';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
@@ -1010,402 +1009,269 @@ class _MainScaffoldState extends State<MainScaffold>
             ),
           ],
         ),
-        body: Builder(
-          builder: (context) {
-            final bottomNavbarStyle = widget.storage.getString(
-              'bottom_navbar_style',
-              defaultValue: 'solid',
-            );
-            final isFloating = bottomNavbarStyle == 'floating';
-            // Read device safe area ONCE here — Scaffold has no bottomNavigationBar
-            // when floating, so padding.bottom here is the pure gesture/home-bar inset.
-            final deviceSafeArea = MediaQuery.of(context).padding.bottom;
-            // Pill: 56px tall + 16px top gap + 16px bottom margin + safeArea
-            const double pillHeight = 56.0;
-            const double pillBottomMargin = 16.0;
-            final double floatingNavReserve = isFloating
-                ? pillHeight + pillBottomMargin + deviceSafeArea
-                : 0.0;
+        body: ValueListenableBuilder<AudioPlayState>(
+          valueListenable: AudioManager.instance.playState,
+          builder: (context, audioState, child) {
+            final hasPlayer = audioState.title.isNotEmpty;
 
-            return ValueListenableBuilder<AudioPlayState>(
-              valueListenable: AudioManager.instance.playState,
-              builder: (context, audioState, child) {
-                final hasPlayer = audioState.title.isNotEmpty;
-                final double audioPlayerHeight = hasPlayer ? 80.0 : 0.0;
-
-                return Stack(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: audioPlayerHeight + floatingNavReserve,
+            return Stack(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(bottom: hasPlayer ? 80.0 : 0.0),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    switchInCurve: Curves.easeInOut,
+                    switchOutCurve: Curves.easeInOut,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey<String>(
+                        '$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId',
                       ),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        switchInCurve: Curves.easeInOut,
-                        switchOutCurve: Curves.easeInOut,
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          );
-                        },
-                        child: KeyedSubtree(
-                          key: ValueKey<String>(
-                            '$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId',
+                      child: screens[_currentTab],
+                    ),
+                  ),
+                ),
+                if (hasPlayer)
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 8,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF111520).withOpacity(0.9)
+                            : Colors.white.withOpacity(0.9),
+                        border: Border.all(
+                          color: const Color(0xFFE5C158).withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
-                          child: screens[_currentTab],
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 10.0,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFE5C158),
+                                    Color(0xFFB45309),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.music_note,
+                                color: Colors.black,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    audioState.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    audioState.subtitle,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.textTheme.bodyMedium?.color
+                                          ?.withOpacity(0.6),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                audioState.isPlaying
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: const Color(0xFFE5C158),
+                              ),
+                              onPressed: () =>
+                                  AudioManager.instance.togglePlayPause(),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.white60,
+                              ),
+                              onPressed: () => AudioManager.instance.stop(),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    if (hasPlayer)
-                      Positioned(
-                        left: 12,
-                        right: 12,
-                        bottom: floatingNavReserve + 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF111520).withOpacity(0.9)
-                                : Colors.white.withOpacity(0.9),
-                            border: Border.all(
-                              color: const Color(0xFFE5C158).withOpacity(0.2),
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
+                  ),
+
+                // Focus Lock Screen Overlay
+                if (_isFocusOverlayShowing)
+                  Positioned.fill(
+                    child: PopScope(
+                      canPop: false,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF041A16), Color(0xFF000806)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                           ),
+                        ),
+                        child: SafeArea(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 10.0,
+                              horizontal: 24.0,
+                              vertical: 32.0,
                             ),
-                            child: Row(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFE5C158),
-                                        Color(0xFFB45309),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
+                                const Spacer(),
+                                // Pulsing Golden Vector Star
+                                ScaleTransition(
+                                  scale: Tween<double>(begin: 0.92, end: 1.08)
+                                      .animate(
+                                        CurvedAnimation(
+                                          parent: _pulseController,
+                                          curve: Curves.easeInOutCubic,
+                                        ),
+                                      ),
+                                  child: FadeTransition(
+                                    opacity: Tween<double>(begin: 0.7, end: 1.0)
+                                        .animate(
+                                          CurvedAnimation(
+                                            parent: _pulseController,
+                                            curve: Curves.easeInOutCubic,
+                                          ),
+                                        ),
+                                    child: Container(
+                                      width: 140,
+                                      height: 140,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFFE5C158,
+                                            ).withOpacity(0.15),
+                                            blurRadius: 40,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: CustomPaint(
+                                        painter: IslamicLogoPainter(
+                                          animationValue:
+                                              _pulseController.value,
+                                          color: const Color(0xFFE5C158),
+                                        ),
+                                      ),
                                     ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.music_note,
-                                    color: Colors.black,
-                                    size: 20,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        audioState.title,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        audioState.subtitle,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.color
-                                              ?.withOpacity(0.6),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                const SizedBox(height: 48),
+
+                                // Focus Title
+                                Text(
+                                  TranslationService.t('focus_active'),
+                                  style: const TextStyle(
+                                    color: Color(0xFFE5C158),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Large Timer Display
+                                Text(
+                                  _formatFocusTime(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 56,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  icon: Icon(
-                                    audioState.isPlaying
-                                        ? Icons.pause
-                                        : Icons.play_arrow,
-                                    color: const Color(0xFFE5C158),
+                                const SizedBox(height: 24),
+
+                                // Quote / Warning text
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0,
                                   ),
-                                  onPressed: () =>
-                                      AudioManager.instance.togglePlayPause(),
+                                  child: Text(
+                                    TranslationService.t('focus_warning'),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 15,
+                                      height: 1.6,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.close,
-                                    size: 18,
-                                    color: Colors.white60,
+
+                                const Spacer(),
+
+                                // Emergency Bypass trigger (Double Tap)
+                                GestureDetector(
+                                  onDoubleTap: _bypassFocusLock,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text(
+                                      TranslationService.t('focus_bypass'),
+                                      style: const TextStyle(
+                                        color: Colors.white24,
+                                        fontSize: 12,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
                                   ),
-                                  onPressed: () => AudioManager.instance.stop(),
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-
-                    // Focus Lock Screen Overlay
-                    if (_isFocusOverlayShowing)
-                      Positioned.fill(
-                        child: PopScope(
-                          canPop: false,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF041A16), Color(0xFF000806)],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
-                            ),
-                            child: SafeArea(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24.0,
-                                  vertical: 32.0,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Spacer(),
-                                    // Pulsing Golden Vector Star
-                                    ScaleTransition(
-                                      scale:
-                                          Tween<double>(
-                                            begin: 0.92,
-                                            end: 1.08,
-                                          ).animate(
-                                            CurvedAnimation(
-                                              parent: _pulseController,
-                                              curve: Curves.easeInOutCubic,
-                                            ),
-                                          ),
-                                      child: FadeTransition(
-                                        opacity:
-                                            Tween<double>(
-                                              begin: 0.7,
-                                              end: 1.0,
-                                            ).animate(
-                                              CurvedAnimation(
-                                                parent: _pulseController,
-                                                curve: Curves.easeInOutCubic,
-                                              ),
-                                            ),
-                                        child: Container(
-                                          width: 140,
-                                          height: 140,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFFE5C158,
-                                                ).withOpacity(0.15),
-                                                blurRadius: 40,
-                                                spreadRadius: 2,
-                                              ),
-                                            ],
-                                          ),
-                                          child: CustomPaint(
-                                            painter: IslamicLogoPainter(
-                                              animationValue:
-                                                  _pulseController.value,
-                                              color: const Color(0xFFE5C158),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 48),
-
-                                    // Focus Title
-                                    Text(
-                                      TranslationService.t('focus_active'),
-                                      style: const TextStyle(
-                                        color: Color(0xFFE5C158),
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-
-                                    // Large Timer Display
-                                    Text(
-                                      _formatFocusTime(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 56,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 2,
-                                        fontFeatures: [
-                                          FontFeature.tabularFigures(),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-
-                                    // Quote / Warning text
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20.0,
-                                      ),
-                                      child: Text(
-                                        TranslationService.t('focus_warning'),
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 15,
-                                          height: 1.6,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-
-                                    const Spacer(),
-
-                                    // Emergency Bypass trigger (Double Tap)
-                                    GestureDetector(
-                                      onDoubleTap: _bypassFocusLock,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Text(
-                                          TranslationService.t('focus_bypass'),
-                                          style: const TextStyle(
-                                            color: Colors.white24,
-                                            fontSize: 12,
-                                            decoration:
-                                                TextDecoration.underline,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Floating pill navigation overlay
-                    if (isFloating)
-                      Positioned(
-                        left: 16,
-                        right: 16,
-                        bottom: deviceSafeArea + pillBottomMargin,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(28),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                            child: Container(
-                              height: pillHeight,
-                              decoration: BoxDecoration(
-                                color: theme.brightness == Brightness.dark
-                                    ? const Color(0xFF1C1C1E).withOpacity(0.80)
-                                    : Colors.white.withOpacity(0.80),
-                                borderRadius: BorderRadius.circular(28),
-                                border: Border.all(
-                                  color: theme.brightness == Brightness.dark
-                                      ? Colors.white.withOpacity(0.10)
-                                      : Colors.black.withOpacity(0.06),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.20),
-                                    blurRadius: 24,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                              ),
-                              child: Theme(
-                                data: theme.copyWith(
-                                  canvasColor: Colors.transparent,
-                                ),
-                                child: MediaQuery.removePadding(
-                                  context: context,
-                                  removeBottom: true,
-                                  child: BottomNavigationBar(
-                                    currentIndex: _currentTab,
-                                    onTap: (index) =>
-                                        setState(() => _currentTab = index),
-                                    type: BottomNavigationBarType.fixed,
-                                    selectedFontSize: 11,
-                                    unselectedFontSize: 11,
-                                    backgroundColor: Colors.transparent,
-                                    elevation: 0,
-                                    items: [
-                                      BottomNavigationBarItem(
-                                        icon: const Icon(
-                                          Icons.dashboard_outlined,
-                                        ),
-                                        activeIcon: const Icon(Icons.dashboard),
-                                        label: TranslationService.t('home'),
-                                      ),
-                                      BottomNavigationBarItem(
-                                        icon: const Icon(
-                                          Icons.menu_book_outlined,
-                                        ),
-                                        activeIcon: const Icon(Icons.menu_book),
-                                        label: TranslationService.t('quran'),
-                                      ),
-                                      BottomNavigationBarItem(
-                                        icon: const Icon(
-                                          Icons.import_contacts_outlined,
-                                        ),
-                                        activeIcon: const Icon(
-                                          Icons.import_contacts,
-                                        ),
-                                        label: TranslationService.isArabic
-                                            ? "الحديث"
-                                            : "Hadith",
-                                      ),
-                                      BottomNavigationBarItem(
-                                        icon: const Icon(Icons.access_time),
-                                        activeIcon: const Icon(
-                                          Icons.access_time_filled,
-                                        ),
-                                        label: TranslationService.t('prayer'),
-                                      ),
-                                      BottomNavigationBarItem(
-                                        icon: const Icon(
-                                          Icons.volunteer_activism_outlined,
-                                        ),
-                                        activeIcon: const Icon(
-                                          Icons.volunteer_activism,
-                                        ),
-                                        label: TranslationService.t('azkar'),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -1414,12 +1280,7 @@ class _MainScaffoldState extends State<MainScaffold>
             'bottom_navbar_style',
             defaultValue: 'solid',
           );
-          // When floating, the pill is rendered inside the body Stack.
-          // Returning null here keeps Scaffold's MediaQuery.padding.bottom
-          // equal to the raw device safe area only — no feedback loop.
-          if (bottomNavbarStyle == 'floating') return null;
-
-          return BottomNavigationBar(
+          final bottomBarWidget = BottomNavigationBar(
             currentIndex: _currentTab,
             onTap: (index) {
               setState(() {
@@ -1429,7 +1290,10 @@ class _MainScaffoldState extends State<MainScaffold>
             type: BottomNavigationBarType.fixed,
             selectedFontSize: 11,
             unselectedFontSize: 11,
-            backgroundColor: theme.bottomNavigationBarTheme.backgroundColor,
+            backgroundColor: bottomNavbarStyle == 'floating'
+                ? Colors.transparent
+                : theme.bottomNavigationBarTheme.backgroundColor,
+            elevation: bottomNavbarStyle == 'floating' ? 0 : null,
             items: [
               BottomNavigationBarItem(
                 icon: const Icon(Icons.dashboard_outlined),
@@ -1458,6 +1322,36 @@ class _MainScaffoldState extends State<MainScaffold>
               ),
             ],
           );
+          if (bottomNavbarStyle == 'floating') {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16.0,
+                0.0,
+                16.0,
+                16.0 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.all(Radius.circular(28.0)),
+                ),
+                // Theme override forces the BottomNavigationBar to paint
+                // transparent — our container provides the background.
+                child: Theme(
+                  data: theme.copyWith(canvasColor: Colors.transparent),
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeBottom: true,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28.0),
+                      child: bottomBarWidget,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+          return bottomBarWidget;
         }(),
       ),
     );
