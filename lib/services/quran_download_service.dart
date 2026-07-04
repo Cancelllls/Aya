@@ -326,7 +326,7 @@ class QuranDownloadService extends ChangeNotifier {
           ).existsSync();
       if (!hasCache) {
         try {
-          await ApiService.fetchSurahDetails(i);
+          await ApiService.fetchSurahDetails(i, tafsirEdition: tafsirEdition);
         } catch (_) {}
       }
       downloaded++;

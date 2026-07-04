@@ -41,6 +41,9 @@ void main() async {
 
   await DorarHadithFlutter.ensureInitialized(databaseDirectory: dbDir);
 
+  // Migrate huge caches from SharedPreferences to Files to fix startup memory lag
+  await ApiService.migrateCacheToFiles();
+
   // Initialize Android Alarm Manager
   await AndroidAlarmManager.initialize();
 

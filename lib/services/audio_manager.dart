@@ -119,8 +119,8 @@ class AudioManager {
       final dur = _currentDuration;
       if (dur != null && dur.inMilliseconds > 0) {
         final remaining = dur.inMilliseconds - pos.inMilliseconds;
-        // Start crossfading 800ms before the end of the ayah
-        if (remaining <= 800 &&
+        // Start crossfading 1500ms before the end of the ayah
+        if (remaining <= 1500 &&
             remaining > 0 &&
             _currentIndex < _currentPlaylist.length - 1) {
           final continuous = _storage.getBool(

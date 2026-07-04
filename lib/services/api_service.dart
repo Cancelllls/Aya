@@ -224,6 +224,28 @@ class ApiService {
   }
 
   // ─── Quran Data & Caching ────────────────────────────────────────────────
+  static Future<void> migrateCacheToFiles() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys().toList();
+      final dir = await getApplicationDocumentsDirectory();
+      bool migrated = false;
+      for (final key in keys) {
+        if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
+          final value = prefs.getString(key);
+          if (value != null) {
+            final file = File('${dir.path}/$key.json');
+            await file.writeAsString(value);
+          }
+          await prefs.remove(key);
+          migrated = true;
+        }
+      }
+      if (migrated) {
+        print("Migrated large JSONs from SharedPreferences to Files.");
+      }
+    } catch (_) {}
+  }
   static Future<void> _cacheString(String key, String value) async {
     try {
       if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
@@ -245,9 +267,7 @@ class ApiService {
         if (await file.exists()) {
           return await file.readAsString();
         }
-        // Fallback to shared prefs for users who already downloaded
-        final prefs = await SharedPreferences.getInstance();
-        return prefs.getString(key);
+        return null; // Don't fallback to prefs to avoid memory spikes, they should be migrated
       }
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(key);

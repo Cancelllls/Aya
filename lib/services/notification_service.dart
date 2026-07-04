@@ -41,7 +41,11 @@ void notificationTapBackground(
           prayerKey,
           notificationResponse.actionId == 'action_prayed' ? 1 : 0,
         );
-      }
+    }
+  } else if (notificationResponse.actionId == 'action_stop_adhan') {
+    final sendPort = IsolateNameServer.lookupPortByName('adhan_stop_port');
+    if (sendPort != null) {
+      sendPort.send('stop');
     }
   }
 }
@@ -130,17 +134,34 @@ void backgroundPreAdhanCallback(int id) async {
       );
       if (await localFile.exists()) {
         await player.play(DeviceFileSource(localPath));
-        await player.onPlayerComplete.first;
       } else {
         final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
         if (urls != null) {
           final url = urls[lang];
           if (url != null) {
             await player.play(UrlSource(url));
-            await player.onPlayerComplete.first;
           }
         }
       }
+
+      final receivePort = ReceivePort();
+      IsolateNameServer.removePortNameMapping('adhan_stop_port');
+      IsolateNameServer.registerPortWithName(
+        receivePort.sendPort,
+        'adhan_stop_port',
+      );
+
+      receivePort.listen((message) async {
+        if (message == 'stop') {
+          await player.stop();
+          receivePort.close();
+          IsolateNameServer.removePortNameMapping('adhan_stop_port');
+        }
+      });
+
+      await player.onPlayerComplete.first;
+      receivePort.close();
+      IsolateNameServer.removePortNameMapping('adhan_stop_port');
     }
   } catch (e) {
     // ignore: avoid_print
@@ -428,7 +449,7 @@ class NotificationService {
         body: body,
         scheduledDate: tzDateTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: 'prayer_times',
       );
     } catch (_) {
@@ -609,12 +630,21 @@ class NotificationService {
               : null,
           enableVibration: adhanMode != 'silent' && adhanMode != 'voice',
           vibrationPattern: (adhanMode != 'silent' && adhanMode != 'voice')
-              ? Int64List.fromList([0, 300, 150, 300, 150, 500])
+              ? Int64List.fromList([0, 500, 200, 500, 200, 200])
               : null,
           icon: 'ic_notification',
           color: const Color(0xFF0F766E),
           visibility: NotificationVisibility.public,
-          fullScreenIntent: true,
+          fullScreenIntent: adhanMode != 'silent',
+          actions: [
+            if (adhanMode != 'silent' && adhanMode != 'vibrate')
+              AndroidNotificationAction(
+                'action_stop_adhan',
+                TranslationService.currentLanguage == 'ar' ? 'إيقاف' : 'Stop',
+                showsUserInterface: false,
+                cancelNotification: true,
+              ),
+          ],
         );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
@@ -832,11 +862,21 @@ class NotificationService {
                 vibrationPattern:
                     (preAdhanAlertMode != 'silent' &&
                         preAdhanAlertMode != 'voice')
-                    ? Int64List.fromList([0, 300, 150, 300, 150, 500])
+                    ? Int64List.fromList([0, 500, 200, 500, 200, 200])
                     : null,
                 icon: 'ic_notification',
                 color: const Color(0xFF0F766E),
                 visibility: NotificationVisibility.public,
+                actions: [
+                  if (preAdhanAlertMode != 'silent' &&
+                      preAdhanAlertMode != 'vibrate')
+                    AndroidNotificationAction(
+                      'action_stop_adhan',
+                      TranslationService.currentLanguage == 'ar' ? 'إيقاف' : 'Stop',
+                      showsUserInterface: false,
+                      cancelNotification: true,
+                    ),
+                ],
               );
 
               final preDetails = NotificationDetails(
@@ -894,7 +934,7 @@ class NotificationService {
                     backgroundPrayerTimesUpdateCallback,
                     exact: true,
                     wakeup: true,
-                    alarmClock: true,
+                    alarmClock: false,
                   );
                 } catch (_) {
                   try {
@@ -992,7 +1032,7 @@ class NotificationService {
               : 'Read your morning Adhkar to start your day with blessing.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.alarmClock,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_morning',
         );
@@ -1035,7 +1075,7 @@ class NotificationService {
               : 'It is time for evening Adhkar for peace and protection.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.alarmClock,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_evening',
         );
@@ -1104,7 +1144,7 @@ class NotificationService {
             body: verseBody,
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.alarmClock,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
             payload: versePayload,
           );
         } catch (_) {
