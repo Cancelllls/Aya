@@ -847,6 +847,10 @@ class _MainScaffoldState extends State<MainScaffold>
   Widget build(BuildContext context) {
     final isDark = widget.storage.isDarkMode();
     final theme = Theme.of(context);
+    final bottomNavbarStyle = widget.storage.getString(
+      'bottom_navbar_style',
+      defaultValue: 'solid',
+    );
 
     // Screens list mapping
     final List<Widget> screens = [
@@ -922,7 +926,7 @@ class _MainScaffoldState extends State<MainScaffold>
         await SystemNavigator.pop();
       },
       child: Scaffold(
-        extendBody: false,
+        extendBody: bottomNavbarStyle == 'floating',
         appBar: AppBar(
           title: Text(
             tabTitles[_currentTab],
@@ -1274,10 +1278,6 @@ class _MainScaffoldState extends State<MainScaffold>
           },
         ),
         bottomNavigationBar: () {
-          final bottomNavbarStyle = widget.storage.getString(
-            'bottom_navbar_style',
-            defaultValue: 'solid',
-          );
           final bottomBarWidget = BottomNavigationBar(
             currentIndex: _currentTab,
             onTap: (index) {
