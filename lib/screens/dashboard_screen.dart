@@ -207,22 +207,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _lastLoadedCalcMethod = method;
       _lastLoadedAsrMethod = school;
 
-      PrayerTimeData data;
-      if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
-        data = await ApiService.fetchPrayerTimesByCity(
-          city: loc['city'] ?? 'Cairo',
-          country: loc['country'] ?? 'Egypt',
-          method: method,
-          school: school,
-        );
-      } else {
-        data = await ApiService.fetchPrayerTimes(
-          latitude: loc['latitude'],
-          longitude: loc['longitude'],
-          method: method,
-          school: school,
-        );
-      }
+      PrayerTimeData data = await ApiService.fetchPrayerTimes(
+        latitude: loc['latitude'] ?? 30.0444,
+        longitude: loc['longitude'] ?? 31.2357,
+        method: method,
+        school: school,
+      );
 
       setState(() {
         _prayerData = data;

@@ -114,26 +114,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     setState(() => _isCalendarLoading = true);
     try {
       final loc = widget.storage.getLocation();
-      List<dynamic> monthlyList = [];
-      if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
-        monthlyList = await ApiService.fetchMonthlyCalendarByCity(
-          city: loc['city'] ?? 'Cairo',
-          country: loc['country'] ?? 'Egypt',
-          method: _calcMethod,
-          school: _asrMethod,
-          month: _calendarMonth,
-          year: _calendarYear,
-        );
-      } else {
-        monthlyList = await ApiService.fetchMonthlyCalendar(
-          latitude: loc['latitude'],
-          longitude: loc['longitude'],
-          method: _calcMethod,
-          school: _asrMethod,
-          month: _calendarMonth,
-          year: _calendarYear,
-        );
-      }
+      final monthlyList = await OfflinePrayerService.getMonthlyCalendar(
+        latitude: loc['latitude'] ?? 30.0444,
+        longitude: loc['longitude'] ?? 31.2357,
+        method: _calcMethod,
+        school: _asrMethod,
+        month: _calendarMonth,
+        year: _calendarYear,
+      );
       setState(() {
         _monthlyData = monthlyList;
         _isCalendarLoading = false;
@@ -592,14 +580,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 final country = countryController.text.trim();
                 if (city.isNotEmpty && country.isNotEmpty) {
                   final navigator = Navigator.of(context);
-                  // Save coordinates as fallback or mock
-                  // For manual inputs, we set fallback coordinates to Cairo or London coordinates,
-                  // but the API timingsByCity handles the city name directly
+                  // Fetch actual coordinates for the entered city using the fallback geocoder
+                  final coords = await ApiService.fetchCoordinatesByCity(
+                    city: city,
+                    country: country,
+                  );
                   await widget.storage.setLocation(
                     city,
                     country,
-                    30.0444,
-                    31.2357,
+                    coords?['latitude'] ?? 30.0444,
+                    coords?['longitude'] ?? 31.2357,
                     'manual',
                   );
                   navigator.pop();

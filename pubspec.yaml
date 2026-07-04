@@ -28,6 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  geocoding: ^3.0.0
+  adhan: ^2.0.2
+  hijri: ^3.0.0
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -58,6 +61,9 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   sqlite3: ^3.3.3
 dev_dependencies:
+  geocoding: ^3.0.0
+  adhan: ^2.0.2
+  hijri: ^3.0.0
   flutter_test:
     sdk: flutter
 

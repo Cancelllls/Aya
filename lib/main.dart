@@ -645,22 +645,12 @@ class _MainScaffoldState extends State<MainScaffold>
       final method = widget.storage.getInt('calc_method', defaultValue: 2);
       final school = widget.storage.getInt('asr_method', defaultValue: 0);
 
-      final PrayerTimeData data;
-      if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
-        data = await ApiService.fetchPrayerTimesByCity(
-          city: loc['city'] ?? 'Cairo',
-          country: loc['country'] ?? 'Egypt',
-          method: method,
-          school: school,
-        );
-      } else {
-        data = await ApiService.fetchPrayerTimes(
-          latitude: loc['latitude'],
-          longitude: loc['longitude'],
-          method: method,
-          school: school,
-        );
-      }
+      final PrayerTimeData data = await ApiService.fetchPrayerTimes(
+        latitude: loc['latitude'] ?? 30.0444,
+        longitude: loc['longitude'] ?? 31.2357,
+        method: method,
+        school: school,
+      );
       await NotificationService().schedulePrayerAlarms(data, widget.storage);
     } catch (_) {}
   }

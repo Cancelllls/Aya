@@ -1,3 +1,4 @@
+import 'offline_prayer_service.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -85,71 +86,6 @@ class ApiService {
     return jsonDecode(body);
   }
 
-  static Future<PrayerTimeData> _fetchPrayerTimesHelper({
-    required String cacheKey,
-    required String aladhanPath,
-    required Map<String, String> aladhanQuery,
-    required Uri prayZoneUri,
-  }) async {
-    // 1. Primary: AlAdhan
-    try {
-      final response = await _client
-          .get(Uri.https('api.aladhan.com', aladhanPath, aladhanQuery))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final decoded =
-            await compute(_parseJson, response.body) as Map<String, dynamic>;
-        final data = PrayerTimeData.fromJson(decoded['data']);
-        await cachePrayerTimes(cacheKey, data);
-        await cachePrayerTimes('cached_latest_prayer_times', data);
-        return data;
-      } else {
-        // ignore: avoid_print
-        print('AlAdhan API returned status code ${response.statusCode}');
-      }
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error fetching from AlAdhan API: $e');
-    }
-
-    // 2. Fallback 2: pray.zone
-    try {
-      final resp = await _client
-          .get(prayZoneUri)
-          .timeout(const Duration(seconds: 5));
-      if (resp.statusCode == 200) {
-        final decoded =
-            await compute(_parseJson, resp.body) as Map<String, dynamic>;
-        final timings =
-            decoded['results']['datetime'][0]['times'] as Map<String, dynamic>;
-        final prayerData = PrayerTimeData.fromPrayZone(timings);
-        await cachePrayerTimes(cacheKey, prayerData);
-        await cachePrayerTimes('cached_latest_prayer_times', prayerData);
-        return prayerData;
-      } else {
-        // ignore: avoid_print
-        print('PrayZone API returned status code ${resp.statusCode}');
-      }
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error fetching from PrayZone API: $e');
-    }
-
-    // 3. Fallback to local cache for this specific location
-    final cached = await getCachedPrayerTimes(cacheKey);
-    if (cached != null) return cached;
-
-    // 4. Fallback to latest successfully fetched prayer times anywhere
-    final globalLatest = await getCachedPrayerTimes(
-      'cached_latest_prayer_times',
-    );
-    if (globalLatest != null) return globalLatest;
-
-    throw Exception(
-      'Failed to fetch prayer times and no cached data available',
-    );
-  }
-
   static Future<PrayerTimeData> fetchPrayerTimes({
     required double latitude,
     required double longitude,
@@ -159,69 +95,37 @@ class ApiService {
     int midnightMode = 0,
     int adjustment = 0,
   }) async {
-    final cacheKey =
-        'cached_prayer_times_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}_m${method}_s$school';
-    final now = DateTime.now();
-    final date = "${now.day}-${now.month}-${now.year}";
-
-    final aladhanQuery = {
-      'latitude': latitude.toString(),
-      'longitude': longitude.toString(),
-      'method': method.toString(),
-      'latitudeAdjustmentMethod': latitudeAdjustmentMethod.toString(),
-      'school': school.toString(),
-      'midnightMode': midnightMode.toString(),
-      'adjustment': adjustment.toString(),
-    };
-
-    final prayZoneUri = Uri.https('api.pray.zone', '/v2/times/today.json', {
-      'latitude': latitude.toString(),
-      'longitude': longitude.toString(),
-    });
-
-    return _fetchPrayerTimesHelper(
-      cacheKey: cacheKey,
-      aladhanPath: '/v1/timings/$date',
-      aladhanQuery: aladhanQuery,
-      prayZoneUri: prayZoneUri,
+    return OfflinePrayerService.getPrayerTimes(
+      latitude: latitude,
+      longitude: longitude,
+      method: method,
+      school: school,
     );
   }
 
-  static Future<PrayerTimeData> fetchPrayerTimesByCity({
+  static Future<Map<String, double>?> fetchCoordinatesByCity({
     required String city,
     required String country,
-    required int method,
-    required int school,
-    int latitudeAdjustmentMethod = 3,
-    int midnightMode = 0,
-    int adjustment = 0,
   }) async {
-    final cacheKey =
-        'cached_prayer_times_city_${city.toLowerCase()}_${country.toLowerCase()}_m${method}_s$school';
-    final now = DateTime.now();
-    final date = "${now.day}-${now.month}-${now.year}";
-
-    final aladhanQuery = {
-      'city': city,
-      'country': country,
-      'method': method.toString(),
-      'latitudeAdjustmentMethod': latitudeAdjustmentMethod.toString(),
-      'school': school.toString(),
-      'midnightMode': midnightMode.toString(),
-      'adjustment': adjustment.toString(),
-    };
-
-    final prayZoneUri = Uri.https('api.pray.zone', '/v2/times/today.json', {
-      'city': city,
-    });
-
-    return _fetchPrayerTimesHelper(
-      cacheKey: cacheKey,
-      aladhanPath: '/v1/timingsByCity/$date',
-      aladhanQuery: aladhanQuery,
-      prayZoneUri: prayZoneUri,
-    );
+    try {
+      final uri = Uri.https('api.aladhan.com', '/v1/timingsByCity', {
+        'city': city,
+        'country': country,
+        'method': '2',
+      });
+      final response = await _client.get(uri).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final decoded = await compute(_parseJson, response.body) as Map<String, dynamic>;
+        final meta = decoded['data']['meta'] as Map<String, dynamic>;
+        return {
+          'latitude': (meta['latitude'] as num).toDouble(),
+          'longitude': (meta['longitude'] as num).toDouble(),
+        };
+      }
+    } catch (_) {}
+    return null;
   }
+
 
   // ─── Quran Data & Caching ────────────────────────────────────────────────
   static Future<void> migrateCacheToFiles() async {
