@@ -1331,9 +1331,21 @@ class _MainScaffoldState extends State<MainScaffold>
                 16.0 + MediaQuery.of(context).padding.bottom,
               ),
               child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.all(Radius.circular(28.0)),
+                decoration: BoxDecoration(
+                  color: theme.cardColor.withOpacity(0.60),
+                  borderRadius: BorderRadius.circular(28.0),
+                  border: Border.all(
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.black.withOpacity(0.06),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 // Theme override forces the BottomNavigationBar to paint
                 // transparent — our container provides the background.
