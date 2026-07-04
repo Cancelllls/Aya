@@ -41,6 +41,7 @@ void notificationTapBackground(
           prayerKey,
           notificationResponse.actionId == 'action_prayed' ? 1 : 0,
         );
+      }
     }
   } else if (notificationResponse.actionId == 'action_stop_adhan') {
     final sendPort = IsolateNameServer.lookupPortByName('adhan_stop_port');
@@ -553,8 +554,9 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-        
-    final bool? androidGranted = await androidImplementation?.requestNotificationsPermission();
+
+    final bool? androidGranted = await androidImplementation
+        ?.requestNotificationsPermission();
     await androidImplementation?.requestExactAlarmsPermission();
 
     final bool? iosGranted = await _notificationsPlugin
@@ -874,7 +876,9 @@ class NotificationService {
                       preAdhanAlertMode != 'vibrate')
                     AndroidNotificationAction(
                       'action_stop_adhan',
-                      TranslationService.currentLanguage == 'ar' ? 'إيقاف' : 'Stop',
+                      TranslationService.currentLanguage == 'ar'
+                          ? 'إيقاف'
+                          : 'Stop',
                       showsUserInterface: false,
                       cancelNotification: true,
                     ),

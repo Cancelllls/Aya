@@ -380,23 +380,22 @@ class QuranDownloadService extends ChangeNotifier {
     notifyListeners();
 
     int downloaded = 0;
+    final dir = await getApplicationDocumentsDirectory();
     for (int i = 1; i <= 114; i++) {
       if (!_isDownloadingTafsir) break;
-      var cached = storage.getString('cached_tafsir_${tafsirEdition}_$i');
-      if (cached.isEmpty && tafsirEdition == 'ar.muyassar') {
-        cached = storage.getString('cached_tafsir_$i');
+      bool hasCache = File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json').existsSync();
+      if (!hasCache && tafsirEdition == 'ar.muyassar') {
+        hasCache = File('${dir.path}/cached_tafsir_$i.json').existsSync();
       }
-      if (cached.isEmpty) {
+      if (!hasCache) {
         try {
           final url = 'https://api.alquran.cloud/v1/surah/$i/$tafsirEdition';
           final response = await http
               .get(Uri.parse(url))
               .timeout(const Duration(seconds: 5));
           if (response.statusCode == 200) {
-            await storage.setString(
-              'cached_tafsir_${tafsirEdition}_$i',
-              response.body,
-            );
+            final f = File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json');
+            await f.writeAsString(response.body);
           }
         } catch (_) {}
       }
@@ -419,10 +418,13 @@ class QuranDownloadService extends ChangeNotifier {
     String tafsirEdition,
   ) async {
     _isDownloadingTafsir = false;
+    final dir = await getApplicationDocumentsDirectory();
     for (int i = 1; i <= 114; i++) {
-      await storage.remove('cached_tafsir_${tafsirEdition}_$i');
+      final f1 = File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json');
+      if (f1.existsSync()) f1.deleteSync();
       if (tafsirEdition == 'ar.muyassar') {
-        await storage.remove('cached_tafsir_$i');
+        final f2 = File('${dir.path}/cached_tafsir_$i.json');
+        if (f2.existsSync()) f2.deleteSync();
       }
     }
     _tafsirDownloadProgress = 0.0;

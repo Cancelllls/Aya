@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/prayer_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/offline_prayer_service.dart';
 import '../services/translation_service.dart';
 import '../services/notification_service.dart';
 
@@ -50,22 +51,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     try {
       final loc = widget.storage.getLocation();
 
-      PrayerTimeData data;
-      if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
-        data = await ApiService.fetchPrayerTimesByCity(
-          city: loc['city'] ?? 'Cairo',
-          country: loc['country'] ?? 'Egypt',
-          method: _calcMethod,
-          school: _asrMethod,
-        );
-      } else {
-        data = await ApiService.fetchPrayerTimes(
-          latitude: loc['latitude'],
-          longitude: loc['longitude'],
-          method: _calcMethod,
-          school: _asrMethod,
-        );
-      }
+      final PrayerTimeData data = await ApiService.fetchPrayerTimes(
+        latitude: loc['latitude'] ?? 30.0444,
+        longitude: loc['longitude'] ?? 31.2357,
+        method: _calcMethod,
+        school: _asrMethod,
+      );
 
       final now = DateTime.now();
       List<dynamic> monthlyList = [];

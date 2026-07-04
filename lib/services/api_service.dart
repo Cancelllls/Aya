@@ -113,9 +113,12 @@ class ApiService {
         'country': country,
         'method': '2',
       });
-      final response = await _client.get(uri).timeout(const Duration(seconds: 5));
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
-        final decoded = await compute(_parseJson, response.body) as Map<String, dynamic>;
+        final decoded =
+            await compute(_parseJson, response.body) as Map<String, dynamic>;
         final meta = decoded['data']['meta'] as Map<String, dynamic>;
         return {
           'latitude': (meta['latitude'] as num).toDouble(),
@@ -126,7 +129,6 @@ class ApiService {
     return null;
   }
 
-
   // ─── Quran Data & Caching ────────────────────────────────────────────────
   static Future<void> migrateCacheToFiles() async {
     try {
@@ -135,7 +137,8 @@ class ApiService {
       final dir = await getApplicationDocumentsDirectory();
       bool migrated = false;
       for (final key in keys) {
-        if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
+        if (key.startsWith('cached_surah_') ||
+            key.startsWith('cached_tafsir_')) {
           final value = prefs.getString(key);
           if (value != null) {
             final file = File('${dir.path}/$key.json');
@@ -150,6 +153,7 @@ class ApiService {
       }
     } catch (_) {}
   }
+
   static Future<void> _cacheString(String key, String value) async {
     try {
       if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
@@ -240,15 +244,14 @@ class ApiService {
     String tafsirEdition,
   ) async {
     try {
-      final storage = await StorageService.getInstance();
-      var tafsirRaw = storage.getString(
+      var tafsirRaw = await _getCachedString(
         'cached_tafsir_${tafsirEdition}_$surahNumber',
       );
-      if (tafsirRaw.isEmpty && tafsirEdition == 'ar.muyassar') {
+      if (tafsirRaw == null && tafsirEdition == 'ar.muyassar') {
         // Fallback for old cache key
-        tafsirRaw = storage.getString('cached_tafsir_$surahNumber');
+        tafsirRaw = await _getCachedString('cached_tafsir_$surahNumber');
       }
-      if (tafsirRaw.isNotEmpty) {
+      if (tafsirRaw != null && tafsirRaw.isNotEmpty) {
         final decoded = jsonDecode(tafsirRaw);
         final tafsirAyahs = decoded['data']['ayahs'] as List<dynamic>;
         for (int i = 0; i < ayahs.length; i++) {
