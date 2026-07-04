@@ -727,7 +727,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                       Icons.menu_book,
                       color: _readingMode == 'continuous'
                           ? const Color(0xFFE5C158)
-                          : Colors.white54,
+                          : Theme.of(context).disabledColor,
                     ),
                     SizedBox(width: 8),
                     Text(
@@ -754,7 +754,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                       Icons.text_format,
                       color: _readingMode == 'arabic_only'
                           ? const Color(0xFFE5C158)
-                          : Colors.white54,
+                          : Theme.of(context).disabledColor,
                     ),
                     SizedBox(width: 8),
                     Text(
@@ -781,7 +781,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                       Icons.translate,
                       color: _readingMode == 'translation'
                           ? const Color(0xFFE5C158)
-                          : Colors.white54,
+                          : Theme.of(context).disabledColor,
                     ),
                     SizedBox(width: 8),
                     Text(
@@ -806,7 +806,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                       Icons.info_outline,
                       color: _readingMode == 'tafseer'
                           ? const Color(0xFFE5C158)
-                          : Colors.white54,
+                          : Theme.of(context).disabledColor,
                     ),
                     SizedBox(width: 8),
                     Text(
@@ -1246,13 +1246,13 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Color(0xFFE5C158),
+                                  color: isDark ? const Color(0xFFE5C158) : theme.primaryColor,
                                 ),
                               )
                             : Icon(
                                 Icons.play_circle_outline,
                                 size: 20,
-                                color: Color(0xFFE5C158),
+                                color: isDark ? const Color(0xFFE5C158) : theme.primaryColor,
                               ),
                         onPressed: () {
                           final idx = _ayahList.indexOf(ayah);

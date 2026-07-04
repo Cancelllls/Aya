@@ -325,7 +325,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       if (split.length >= 2) {
         final key = split[0].trim();
         final value = split.sublist(1).join(':').trim();
-        parsed[key] = value;
+        if (value.isNotEmpty) {
+          parsed[key] = value;
+        }
       }
     }
 

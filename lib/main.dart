@@ -1115,7 +1115,7 @@ class _MainScaffoldState extends State<MainScaffold>
                                 audioState.isPlaying
                                     ? Icons.pause
                                     : Icons.play_arrow,
-                                color: const Color(0xFFE5C158),
+                                color: isDark ? const Color(0xFFE5C158) : theme.primaryColor,
                               ),
                               onPressed: () =>
                                   AudioManager.instance.togglePlayPause(),

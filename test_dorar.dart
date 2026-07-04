@@ -2,12 +2,13 @@ import 'package:dorar_hadith/dorar_hadith.dart';
 
 void main() async {
   final client = DorarClient();
-  final sharhResults = await client.searchSharh(
-    HadithSearchParams(value: "الأعمال بالنيات", page: 1),
-  );
-  print("--- HADITH TEXT ---");
-  print(sharhResults.data.first.hadithText);
-  print("--- SHARH TEXT ---");
-  print(sharhResults.data.first.sharhText);
-  await client.dispose();
+  final res = await client.searchHadith(HadithSearchParams(value: 'إنما الأعمال بالنيات', page: 1));
+  for (var h in res.data) {
+    print('Rawi: "${h.rawi}"');
+    print('Mohdith: "${h.mohdith}"');
+    print('Book: "${h.book}"');
+    print('Grade: "${h.grade}"');
+    print('---');
+  }
+  client.dispose();
 }
