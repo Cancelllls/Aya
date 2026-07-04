@@ -129,7 +129,16 @@ class OfflinePrayerService {
       ];
 
       monthData.add({
-        "timings": pData.toJson(),
+        "timings": {
+          "Fajr": pData.fajr,
+          "Sunrise": pData.sunrise,
+          "Dhuhr": pData.dhuhr,
+          "Asr": pData.asr,
+          "Sunset": pData.sunset,
+          "Maghrib": pData.maghrib,
+          "Isha": pData.isha,
+          "Imsak": pData.imsak
+        },
         "date": {
           "readable": pData.gregorianDate,
           "gregorian": {

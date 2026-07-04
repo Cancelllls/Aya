@@ -846,6 +846,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       )
                     : _buildHijriCalendar(theme),
               ],
+              SizedBox(height: 130),
             ],
           ),
         ),

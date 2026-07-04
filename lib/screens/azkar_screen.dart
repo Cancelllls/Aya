@@ -374,7 +374,7 @@ class _AzkarScreenState extends State<AzkarScreen>
         Expanded(
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 130),
             itemCount: list.length,
             itemBuilder: (context, index) {
               final item = list[index];
@@ -539,7 +539,7 @@ class _AzkarScreenState extends State<AzkarScreen>
     final list = NamesOfAllahData.names;
     return GridView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 130),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
