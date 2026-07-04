@@ -615,11 +615,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF142B28), const Color(0xFF0C1D1B)]
-              : [const Color(0xFFFDFBF7), const Color(0xFFF5EFE0)],
-        ),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         // ignore: deprecated_member_use
         border: Border.all(
@@ -683,9 +679,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ),
           ],
         ),
-        backgroundColor: isDark
-            ? const Color(0xFF0F172A)
-            : const Color(0xFF0F766E),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
           IconButton(
@@ -932,9 +926,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       horizontal: 16,
                                       vertical: 8,
                                     ),
-                                    color: isDark
-                                        ? const Color(0xFF1E293B)
-                                        : const Color(0xFFECEFF1),
+                                    color: theme.cardColor,
                                     child: Row(
                                       children: [
                                         Icon(
@@ -1132,9 +1124,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         color: isPlaying
             // ignore: deprecated_member_use
             ? const Color(0xFFE5C158).withOpacity(0.06)
-            : (isDark
-                  ? const Color(0xFF111716)
-                  : Theme.of(context).textTheme.bodyLarge?.color),
+            : theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isHighlighted
@@ -1433,15 +1423,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 ),
                 decoration: _hideContinuousBorders
                     ? BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0F1E1B)
-                            : const Color(0xFFFDFBF7),
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(16),
                       )
                     : BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0F1E1B)
-                            : const Color(0xFFFDFBF7),
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(16),
                         // ignore: deprecated_member_use
                         border: Border.all(
@@ -1600,11 +1586,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       child: Container(
         height: 58,
         decoration: BoxDecoration(
-          // ignore: deprecated_member_use
-          color: isDark
-              ? const Color(0xFF0C1D1B).withOpacity(0.9)
-              : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.9),
+          color: Theme.of(context).cardColor.withOpacity(0.95),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             // ignore: deprecated_member_use
