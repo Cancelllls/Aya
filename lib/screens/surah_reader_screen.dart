@@ -472,14 +472,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               ),
               SizedBox(height: 20),
               ListTile(
-                leading: Icon(Icons.menu_book, color: Color(0xFFE5C158)),
-                title: Text(TranslationService.isArabic ? "التفسير" : "Tafsir"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showTafseerDialog(ayah);
-                },
-              ),
-              ListTile(
                 leading: Icon(
                   Icons.play_circle_outline,
                   color: Color(0xFFE5C158),
@@ -494,6 +486,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                     _ayahList,
                     idx,
                   );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.menu_book, color: Color(0xFFE5C158)),
+                title: Text(TranslationService.isArabic ? "التفسير" : "Tafsir"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showTafseerDialog(ayah);
                 },
               ),
               ListTile(
