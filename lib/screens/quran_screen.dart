@@ -447,13 +447,19 @@ class _QuranScreenState extends State<QuranScreen> {
             ),
           ],
         ),
-        trailing: Text(
-          surah.name,
-          style: TextStyle(
-            fontFamily: 'Amiri', // Arabic font loaded
-            color: Color(0xFFE5C158),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        trailing: Hero(
+          tag: 'surah_name_${surah.number}',
+          child: Material(
+            color: Colors.transparent,
+            child: Text(
+              surah.name,
+              style: TextStyle(
+                fontFamily: 'Amiri', // Arabic font loaded
+                color: Color(0xFFE5C158),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
         onTap: () {

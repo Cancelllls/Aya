@@ -36,6 +36,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   List<Ayah> _ayahList = [];
   bool _isLoading = true;
   double _fontSizeMultiplier = 1.0;
+  double _baseFontSizeMultiplier = 1.0;
   String _readingMode =
       'translation'; // 'translation', 'arabic_only', 'tafseer', 'continuous'
   bool _isBookmarked = false;
@@ -82,6 +83,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _swipeSurahNavigation = widget.storage.getBool(
       'swipe_surah_navigation',
       defaultValue: true,
+    );
+    _fontSizeMultiplier = widget.storage.getDouble(
+      'setting_quran_font_size_multiplier',
+      defaultValue: 1.0,
     );
     _loadAyahs();
     _checkBookmarkStatus();
@@ -625,12 +630,18 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       ),
       child: Column(
         children: [
-          Text(
-            _currentSurah.name,
-            style: GoogleFonts.amiri(
-              color: const Color(0xFFE5C158),
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+          Hero(
+            tag: 'surah_name_${_currentSurah.number}',
+            child: Material(
+              color: Colors.transparent,
+              child: Text(
+                _currentSurah.name,
+                style: GoogleFonts.amiri(
+                  color: const Color(0xFFE5C158),
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           SizedBox(height: 4),
@@ -905,6 +916,18 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           } else if (details.primaryVelocity! < -150) {
             _goToPrevSurah();
           }
+        },
+        onScaleStart: (details) {
+          _baseFontSizeMultiplier = _fontSizeMultiplier;
+        },
+        onScaleUpdate: (details) {
+          if (details.scale == 1.0) return;
+          setState(() {
+            _fontSizeMultiplier = (_baseFontSizeMultiplier * details.scale).clamp(0.5, 3.0);
+          });
+        },
+        onScaleEnd: (details) {
+          widget.storage.setDouble('setting_quran_font_size_multiplier', _fontSizeMultiplier);
         },
         child: _isLoading
             ? const Center(
