@@ -42,18 +42,37 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         final sharhResults = await client.searchSharh(
           HadithSearchParams(value: widget.query, page: 1),
         );
-        parsed = sharhResults.data
-            .map(
-              (s) => {
-                'text': (s.hadithText)
-                    .replaceAll(RegExp(r'<[^>]*>'), '')
-                    .trim(),
-                'info': (s.sharhText ?? '')
-                    .replaceAll(RegExp(r'<[^>]*>'), '')
-                    .trim(),
-              },
-            )
-            .toList();
+        parsed = sharhResults.data.map((s) {
+          final sharhFull = (s.sharhText ?? '')
+              .replaceAll(RegExp(r'<[^>]*>'), '')
+              .trim();
+          String explanation = '';
+          String grading = '';
+
+          int rawiIndex = sharhFull.indexOf('الراوي');
+          int takhreejIndex = sharhFull.indexOf('التخريج');
+
+          if (rawiIndex != -1 && takhreejIndex != -1) {
+            int doubleNewline = sharhFull.indexOf('\n\n', takhreejIndex);
+            if (doubleNewline != -1) {
+              grading = sharhFull.substring(rawiIndex, doubleNewline).trim();
+              explanation = sharhFull.substring(doubleNewline).trim();
+            } else {
+              int endOfTakhreej = sharhFull.indexOf('\n', takhreejIndex);
+              if (endOfTakhreej == -1) endOfTakhreej = sharhFull.length;
+              grading = sharhFull.substring(rawiIndex, endOfTakhreej).trim();
+              explanation = sharhFull.substring(endOfTakhreej).trim();
+            }
+          } else {
+            explanation = sharhFull;
+          }
+
+          return {
+            'text': (s.hadithText).replaceAll(RegExp(r'<[^>]*>'), '').trim(),
+            'explanation': explanation,
+            'grading': grading,
+          };
+        }).toList();
       } else {
         final hadithResults = await client.searchHadith(
           HadithSearchParams(value: widget.query, page: 1),
@@ -62,7 +81,8 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
             .map(
               (h) => {
                 'text': h.hadith.replaceAll(RegExp(r'<[^>]*>'), '').trim(),
-                'info':
+                'explanation': '',
+                'grading':
                     'الراوي: ${h.rawi}\nالمحدث: ${h.mohdith}\nالمصدر: ${h.book}\nخلاصة حكم المحدث: ${h.grade}'
                         .replaceAll(RegExp(r'<[^>]*>'), '')
                         .trim(),
@@ -81,12 +101,21 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
               from: 'ar',
               to: 'en',
             );
-            final tInfo = await translator.translate(
-              item['info'] ?? '',
+            final tExplanation = await translator.translate(
+              item['explanation'] ?? '',
               from: 'ar',
               to: 'en',
             );
-            translatedParsed.add({'text': tText.text, 'info': tInfo.text});
+            final tGrading = await translator.translate(
+              item['grading'] ?? '',
+              from: 'ar',
+              to: 'en',
+            );
+            translatedParsed.add({
+              'text': tText.text,
+              'explanation': tExplanation.text,
+              'grading': tGrading.text,
+            });
           }
           if (mounted) {
             setState(() {
@@ -175,48 +204,23 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Main Text (Hadith or Title)
-                        Text(
-                          item['text'] ?? '',
-                          style: TextStyle(
-                            fontSize: 16,
-                            height: 1.6,
-                            fontWeight: FontWeight.bold,
-                            color: theme.textTheme.bodyLarge?.color,
-                          ),
-                          textAlign: TextAlign.start,
-                          textDirection: widget.displayLang == 'eng'
-                              ? TextDirection.ltr
-                              : TextDirection.rtl,
-                        ),
-                        const SizedBox(height: 16),
-                        // Secondary Box (Explanation or Grading Details)
+                        // 1. Main Text (Hadith)
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: theme.primaryColor.withOpacity(0.05),
-                            border: Border(
-                              left: widget.displayLang == 'eng'
-                                  ? BorderSide(
-                                      color: theme.primaryColor,
-                                      width: 4,
-                                    )
-                                  : BorderSide.none,
-                              right: widget.displayLang != 'eng'
-                                  ? BorderSide(
-                                      color: theme.primaryColor,
-                                      width: 4,
-                                    )
-                                  : BorderSide.none,
+                            color: theme.scaffoldBackgroundColor,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: theme.dividerColor.withOpacity(0.1),
                             ),
-                            borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            item['info'] ?? '',
+                            item['text'] ?? '',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 16,
                               height: 1.6,
-                              color: theme.textTheme.bodyMedium?.color,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color,
                             ),
                             textAlign: TextAlign.start,
                             textDirection: widget.displayLang == 'eng'
@@ -224,6 +228,71 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                                 : TextDirection.rtl,
                           ),
                         ),
+
+                        // 2. Explanation Text (Main Box)
+                        if ((item['explanation'] ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: theme.dividerColor.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Text(
+                              item['explanation']!,
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.6,
+                                color: theme.textTheme.bodyLarge?.color,
+                              ),
+                              textAlign: TextAlign.start,
+                              textDirection: widget.displayLang == 'eng'
+                                  ? TextDirection.ltr
+                                  : TextDirection.rtl,
+                            ),
+                          ),
+                        ],
+
+                        // 3. Grading Details (Linked Box)
+                        if ((item['grading'] ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.primaryColor.withOpacity(0.05),
+                              border: Border(
+                                left: widget.displayLang == 'eng'
+                                    ? BorderSide(
+                                        color: theme.primaryColor,
+                                        width: 4,
+                                      )
+                                    : BorderSide.none,
+                                right: widget.displayLang != 'eng'
+                                    ? BorderSide(
+                                        color: theme.primaryColor,
+                                        width: 4,
+                                      )
+                                    : BorderSide.none,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              item['grading']!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.6,
+                                color: theme.textTheme.bodyMedium?.color,
+                              ),
+                              textAlign: TextAlign.start,
+                              textDirection: widget.displayLang == 'eng'
+                                  ? TextDirection.ltr
+                                  : TextDirection.rtl,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
