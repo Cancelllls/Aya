@@ -5,7 +5,9 @@ import '../models/prayer_models.dart';
 class OfflinePrayerService {
   static String _formatTime(DateTime? dt) {
     if (dt == null) return "00:00";
-    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    // Round to nearest minute to match standard prayer time apps (e.g., Aladhan, Five Prayers)
+    final rounded = dt.add(const Duration(seconds: 30));
+    return "${rounded.hour.toString().padLeft(2, '0')}:${rounded.minute.toString().padLeft(2, '0')}";
   }
 
   static Future<PrayerTimeData> getPrayerTimes({
