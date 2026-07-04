@@ -1040,19 +1040,17 @@ class _MainScaffoldState extends State<MainScaffold>
                     bottom: 8,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF111520).withOpacity(0.9)
-                            : Colors.white.withOpacity(0.9),
+                        color: theme.cardColor.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE5C158).withOpacity(0.2),
+                          color: const Color(0xFFE5C158).withOpacity(0.4),
                           width: 1.5,
                         ),
-                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                            color: theme.shadowColor.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
