@@ -1,6 +1,7 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:ui';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
@@ -922,7 +923,12 @@ class _MainScaffoldState extends State<MainScaffold>
         await SystemNavigator.pop();
       },
       child: Scaffold(
-        extendBody: false,
+        extendBody:
+            widget.storage.getString(
+              'bottom_navbar_style',
+              defaultValue: 'solid',
+            ) ==
+            'floating',
         appBar: AppBar(
           title: Text(
             tabTitles[_currentTab],
@@ -1013,11 +1019,22 @@ class _MainScaffoldState extends State<MainScaffold>
           valueListenable: AudioManager.instance.playState,
           builder: (context, audioState, child) {
             final hasPlayer = audioState.title.isNotEmpty;
+            final bottomNavbarStyle = widget.storage.getString(
+              'bottom_navbar_style',
+              defaultValue: 'solid',
+            );
+            final bool isFloatingNav = bottomNavbarStyle == 'floating';
+            final double bottomSafeArea = MediaQuery.of(context).padding.bottom;
+            final double navBarHeight = isFloatingNav
+                ? (56.0 + 16.0 + bottomSafeArea)
+                : 0.0;
 
             return Stack(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(bottom: hasPlayer ? 80.0 : 0.0),
+                  padding: EdgeInsets.only(
+                    bottom: (hasPlayer ? 80.0 : 0.0) + navBarHeight,
+                  ),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     switchInCurve: Curves.easeInOut,
@@ -1037,7 +1054,7 @@ class _MainScaffoldState extends State<MainScaffold>
                   Positioned(
                     left: 12,
                     right: 12,
-                    bottom: 8,
+                    bottom: 8 + navBarHeight,
                     child: Container(
                       decoration: BoxDecoration(
                         color: isDark
@@ -1330,33 +1347,34 @@ class _MainScaffoldState extends State<MainScaffold>
                 16.0,
                 16.0 + MediaQuery.of(context).padding.bottom,
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.cardColor.withOpacity(0.60),
-                  borderRadius: BorderRadius.circular(28.0),
-                  border: Border.all(
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white.withOpacity(0.08)
-                        : Colors.black.withOpacity(0.06),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                // Theme override forces the BottomNavigationBar to paint
-                // transparent — our container provides the background.
-                child: Theme(
-                  data: theme.copyWith(canvasColor: Colors.transparent),
-                  child: MediaQuery.removePadding(
-                    context: context,
-                    removeBottom: true,
-                    child: ClipRRect(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28.0),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: theme.cardColor.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(28.0),
-                      child: bottomBarWidget,
+                      border: Border.all(
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.06),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Theme(
+                      data: theme.copyWith(canvasColor: Colors.transparent),
+                      child: MediaQuery.removePadding(
+                        context: context,
+                        removeBottom: true,
+                        child: bottomBarWidget,
+                      ),
                     ),
                   ),
                 ),
