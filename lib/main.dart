@@ -1,5 +1,6 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
@@ -1020,25 +1021,18 @@ class _MainScaffoldState extends State<MainScaffold>
 
             return Stack(
               children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    bottom: hasPlayer
-                        ? (bottomNavbarStyle == 'floating' ? 150.0 : 80.0)
-                        : (bottomNavbarStyle == 'floating' ? 80.0 : 0.0),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    switchInCurve: Curves.easeInOut,
-                    switchOutCurve: Curves.easeInOut,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    child: KeyedSubtree(
-                      key: ValueKey<String>(
-                        '$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId',
-                      ),
-                      child: screens[_currentTab],
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<String>(
+                      '$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId',
                     ),
+                    child: screens[_currentTab],
                   ),
                 ),
                 if (hasPlayer)
@@ -1048,27 +1042,24 @@ class _MainScaffoldState extends State<MainScaffold>
                     bottom: bottomNavbarStyle == 'floating'
                         ? 82.0 + MediaQuery.of(context).padding.bottom
                         : 8.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: theme.cardColor.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFFE5C158).withOpacity(0.4),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.shadowColor.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.cardColor.withOpacity(0.90),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFE5C158).withOpacity(0.4),
+                              width: 1.5,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 10.0,
-                        ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 10.0,
+                            ),
                         child: Row(
                           children: [
                             Container(
@@ -1130,10 +1121,10 @@ class _MainScaffoldState extends State<MainScaffold>
                                   AudioManager.instance.togglePlayPause(),
                             ),
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.close,
                                 size: 18,
-                                color: Colors.white60,
+                                color: isDark ? Colors.white60 : Colors.black54,
                               ),
                               onPressed: () => AudioManager.instance.stop(),
                             ),
@@ -1142,6 +1133,8 @@ class _MainScaffoldState extends State<MainScaffold>
                       ),
                     ),
                   ),
+                ),
+              ),
 
                 // Focus Lock Screen Overlay
                 if (_isFocusOverlayShowing)
@@ -1336,12 +1329,7 @@ class _MainScaffoldState extends State<MainScaffold>
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.cardColor.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(28.0),
-                  border: Border.all(
-                    color: const Color(0xFFE5C158).withOpacity(0.4),
-                    width: 1.5,
-                  ),
                   boxShadow: [
                     BoxShadow(
                       color: theme.shadowColor.withOpacity(0.2),
@@ -1350,16 +1338,32 @@ class _MainScaffoldState extends State<MainScaffold>
                     ),
                   ],
                 ),
-                // Theme override forces the BottomNavigationBar to paint
-                // transparent — our container provides the background.
-                child: Theme(
-                  data: theme.copyWith(canvasColor: Colors.transparent),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28.0),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.cardColor.withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(28.0),
+                        border: Border.all(
+                          color: const Color(0xFFE5C158).withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      // Theme override forces the BottomNavigationBar to paint
+                      // transparent — our container provides the background.
+                      child: Theme(
+                        data: theme.copyWith(canvasColor: Colors.transparent),
                   child: MediaQuery.removePadding(
                     context: context,
                     removeBottom: true,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28.0),
                       child: bottomBarWidget,
+                    ),
+                  ),
+                      ),
                     ),
                   ),
                 ),
