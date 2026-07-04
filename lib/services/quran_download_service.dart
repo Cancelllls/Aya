@@ -383,7 +383,9 @@ class QuranDownloadService extends ChangeNotifier {
     final dir = await getApplicationDocumentsDirectory();
     for (int i = 1; i <= 114; i++) {
       if (!_isDownloadingTafsir) break;
-      bool hasCache = File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json').existsSync();
+      bool hasCache = File(
+        '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
+      ).existsSync();
       if (!hasCache && tafsirEdition == 'ar.muyassar') {
         hasCache = File('${dir.path}/cached_tafsir_$i.json').existsSync();
       }
@@ -394,7 +396,9 @@ class QuranDownloadService extends ChangeNotifier {
               .get(Uri.parse(url))
               .timeout(const Duration(seconds: 5));
           if (response.statusCode == 200) {
-            final f = File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json');
+            final f = File(
+              '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
+            );
             await f.writeAsString(response.body);
           }
         } catch (_) {}

@@ -111,6 +111,21 @@ class OfflinePrayerService {
       );
       final hijri = HijriCalendar.fromDate(date);
 
+      final monthNamesEn = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
       monthData.add({
         "timings": pData.toJson(),
         "date": {
@@ -118,12 +133,19 @@ class OfflinePrayerService {
           "gregorian": {
             "date":
                 "${day.toString().padLeft(2, '0')}-${month.toString().padLeft(2, '0')}-$year",
+            "day": day.toString().padLeft(2, '0'),
+            "year": year.toString(),
+            "month": {"en": monthNamesEn[month - 1]},
           },
           "hijri": {
             "date": pData.hijriDate,
             "day": hijri.hDay.toString().padLeft(2, '0'),
-            "month": {"number": hijri.hMonth, "ar": hijri.getLongMonthName()},
             "year": hijri.hYear.toString(),
+            "month": {
+              "number": hijri.hMonth,
+              "ar": hijri.getLongMonthName(),
+              "en": hijri.getLongMonthName(),
+            },
           },
         },
       });
