@@ -619,8 +619,10 @@ class NotificationService {
       defaultValue: 'real_reciter',
     );
     final channelId = adhanMode == 'silent'
-        ? 'adhan_v4_silent'
-        : 'adhan_v4_sound';
+        ? 'adhan_v5_silent'
+        : adhanMode == 'vibrate'
+            ? 'adhan_v5_vibrate'
+            : 'adhan_v5_sound';
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           channelId,
@@ -826,7 +828,7 @@ class NotificationService {
           }
 
           // Dynamic Pre-Adhan Timing and alerts
-          if (preAdhanMins > 0 && preAdhanAlertMode != 'silent') {
+          if (preAdhanMins > 0) {
             final preAzanTime = scheduledDate.subtract(
               Duration(minutes: preAdhanMins),
             );
@@ -841,8 +843,10 @@ class NotificationService {
                   ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
                   : '$preAdhanMins minutes remaining until $localizedName Athan.';
               final preChannelId = preAdhanAlertMode == 'silent'
-                  ? 'pre_adhan_v4_silent'
-                  : 'pre_adhan_v4_sound';
+                  ? 'pre_adhan_v5_silent'
+                  : preAdhanAlertMode == 'vibrate'
+                      ? 'pre_adhan_v5_vibrate'
+                      : 'pre_adhan_v5_sound';
 
               final preAndroidDetails = AndroidNotificationDetails(
                 preChannelId,
