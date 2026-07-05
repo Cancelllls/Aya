@@ -395,6 +395,8 @@ class Ayah {
     if (numberInSurah != 1) return text;
     // Do not clean Basmalah for Surah 1 (Al-Fatiha), which corresponds to global ayah numbers 1 to 7
     if (globalNumber >= 1 && globalNumber <= 7) return text;
+    
+    String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
     final basmalahs = [
       "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
       "بِسْمِ ٱللَّهِ ٱلرَّحْمَنِ ٱلرَّحِيمِ",
@@ -406,14 +408,26 @@ class Ayah {
       "بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ",
     ];
     for (final basmalah in basmalahs) {
-      if (text.startsWith(basmalah)) {
-        if (text.trim() == basmalah) {
-          return text;
+      if (t.startsWith(basmalah)) {
+        if (t.trim() == basmalah) {
+          return t;
         }
-        return text.substring(basmalah.length).trim();
+        return t.substring(basmalah.length).trim();
       }
     }
-    return text;
+    
+    // Fallback: If it still contains Bismillah (maybe different diacritics)
+    if (t.contains('بِسْمِ') && t.contains('الرَّحِيمِ') && t.indexOf('الرَّحِيمِ') < 60) {
+      final idx = t.indexOf('الرَّحِيمِ') + 'الرَّحِيمِ'.length;
+      if (idx < t.length) {
+         final remainder = t.substring(idx).trim();
+         // Only strip if remainder has actual content to avoid returning empty text
+         if (remainder.isNotEmpty && remainder.length > 2) {
+             return remainder;
+         }
+      }
+    }
+    return t;
   }
 
   factory Ayah.fromEditions(

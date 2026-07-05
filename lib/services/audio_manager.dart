@@ -170,7 +170,14 @@ class AudioManager {
       'default_reciter',
       defaultValue: 'ar.alafasy',
     );
-    final url = ApiService.buildAyahAudioUrl(nextAyah.number, reciter: reciter);
+    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+    final url = ApiService.buildAyahAudioUrl(
+      nextAyah.number,
+      _surahNum,
+      nextAyah.numberInSurah,
+      reciter: reciter,
+      quranScriptType: quranScriptType,
+    );
     final localPath = await _getLocalAyahPath(nextAyah.number, reciter);
     final localFile = File(localPath);
     final isOffline = await localFile.exists();
@@ -194,7 +201,7 @@ class AudioManager {
     int index,
   ) async {
     final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
-    if (quranScriptType != 'hafs') {
+    if (!['hafs', 'warsh', 'susi'].contains(quranScriptType)) {
       playSurah(surahNum, surahName, ayahs);
       return;
     }
@@ -226,7 +233,13 @@ class AudioManager {
       'default_reciter',
       defaultValue: 'ar.alafasy',
     );
-    final url = ApiService.buildAyahAudioUrl(ayah.number, reciter: reciter);
+    final url = ApiService.buildAyahAudioUrl(
+      ayah.number,
+      surahNum,
+      ayah.numberInSurah,
+      reciter: reciter,
+      quranScriptType: quranScriptType,
+    );
     final localPath = await _getLocalAyahPath(ayah.number, reciter);
     final localFile = File(localPath);
     final isOffline = await localFile.exists();
@@ -339,7 +352,7 @@ class AudioManager {
           isLoading: false,
         );
       }
-    } else if (quranScriptType != 'hafs') {
+    } else if (!['hafs', 'warsh', 'susi'].contains(quranScriptType)) {
       _currentPlaylist = ayahs;
       _currentIndex = -1;
 
@@ -417,7 +430,14 @@ class AudioManager {
       'default_reciter',
       defaultValue: 'ar.alafasy',
     );
-    final url = ApiService.buildAyahAudioUrl(nextAyah.number, reciter: reciter);
+    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+    final url = ApiService.buildAyahAudioUrl(
+      nextAyah.number,
+      _surahNum,
+      nextAyah.numberInSurah,
+      reciter: reciter,
+      quranScriptType: quranScriptType,
+    );
     final localPath = await _getLocalAyahPath(nextAyah.number, reciter);
     final localFile = File(localPath);
     final isOffline = await localFile.exists();

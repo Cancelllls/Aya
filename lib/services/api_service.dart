@@ -557,9 +557,17 @@ class ApiService {
 
   // ─── Audio URLs ────────────────────────────────────────────────────────
   static String buildAyahAudioUrl(
-    int globalAyahNumber, {
+    int globalAyahNumber,
+    int surahNumber,
+    int ayahNumberInSurah, {
     String reciter = 'ar.alafasy',
+    String quranScriptType = 'hafs',
   }) {
+    if (quranScriptType == 'warsh') {
+      return 'https://everyayah.com/data/warsh/warsh_yassin_al_jazaery_64kbps/${surahNumber.toString().padLeft(3, '0')}${ayahNumberInSurah.toString().padLeft(3, '0')}.mp3';
+    } else if (quranScriptType == 'susi') {
+      return 'https://everyayah.com/data/Ali_Hajjaj_AlSuesy_128kbps/${surahNumber.toString().padLeft(3, '0')}${ayahNumberInSurah.toString().padLeft(3, '0')}.mp3';
+    }
     return 'https://cdn.islamic.network/quran/audio/64/$reciter/$globalAyahNumber.mp3';
   }
 

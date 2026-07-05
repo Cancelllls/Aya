@@ -247,6 +247,110 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     }
   }
 
+  void _playAudioWithDisclaimer({int? ayahIndex}) {
+    final supportsAyahSync = ['hafs', 'warsh', 'susi'].contains(_quranScriptType);
+    final hideDisclaimer = widget.storage.getBool('hide_full_surah_disclaimer', defaultValue: false);
+    
+    if (supportsAyahSync || hideDisclaimer) {
+      if (ayahIndex != null) {
+        AudioManager.instance.playAyah(
+          _currentSurah.number,
+          _currentSurah.englishName,
+          _ayahList,
+          ayahIndex,
+        );
+      } else {
+        AudioManager.instance.playSurah(
+          _currentSurah.number,
+          _currentSurah.englishName,
+          _ayahList,
+        );
+      }
+      return;
+    }
+    
+    bool dontShowAgain = false;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                TranslationService.isArabic ? 'تنبيه' : 'Notice',
+                style: TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    TranslationService.isArabic
+                        ? 'هذه الرواية لا تدعم التزامن آية بآية وسيتم تشغيل السورة كاملة.'
+                        : 'This Rewayah does not support Ayah-by-Ayah synchronization. The full Surah will be played.',
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: dontShowAgain,
+                        onChanged: (val) {
+                          setState(() {
+                            dontShowAgain = val ?? false;
+                          });
+                        },
+                        activeColor: Color(0xFFE5C158),
+                      ),
+                      Expanded(
+                        child: Text(
+                          TranslationService.isArabic ? 'لا تظهر هذه الرسالة مرة أخرى' : 'Do not show this again',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text(TranslationService.isArabic ? 'إلغاء' : 'Cancel', style: TextStyle(color: Colors.grey)),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (dontShowAgain) {
+                      await widget.storage.setBool('hide_full_surah_disclaimer', true);
+                    }
+                    if (context.mounted) Navigator.pop(context);
+                    if (ayahIndex != null) {
+                      AudioManager.instance.playAyah(
+                        _currentSurah.number,
+                        _currentSurah.englishName,
+                        _ayahList,
+                        ayahIndex,
+                      );
+                    } else {
+                      AudioManager.instance.playSurah(
+                        _currentSurah.number,
+                        _currentSurah.englishName,
+                        _ayahList,
+                      );
+                    }
+                  },
+                  child: Text(TranslationService.isArabic ? 'تشغيل' : 'Play', style: TextStyle(color: Color(0xFFE5C158))),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _loadAyahs() async {
     setState(() => _isLoading = true);
     try {
@@ -508,12 +612,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 onTap: () {
                   Navigator.pop(context);
                   final idx = _ayahList.indexOf(ayah);
-                  AudioManager.instance.playAyah(
-                    _currentSurah.number,
-                    _currentSurah.englishName,
-                    _ayahList,
-                    idx,
-                  );
+                  _playAudioWithDisclaimer(ayahIndex: idx);
                 },
               ),
               ListTile(
@@ -1097,11 +1196,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                               AudioManager.instance
                                                   .togglePlayPause();
                                             } else {
-                                              AudioManager.instance.playSurah(
-                                                _currentSurah.number,
-                                                _currentSurah.englishName,
-                                                _ayahList,
-                                              );
+                                              _playAudioWithDisclaimer();
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
@@ -1324,13 +1419,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 color: isDark ? const Color(0xFFE5C158) : theme.primaryColor,
                               ),
                         onPressed: () {
-                          final idx = _ayahList.indexOf(ayah);
-                          AudioManager.instance.playAyah(
-                            _currentSurah.number,
-                            _currentSurah.englishName,
-                            _ayahList,
-                            idx,
-                          );
+                          _playAudioWithDisclaimer(ayahIndex: _ayahList.indexOf(ayah));
                         },
                         tooltip: 'Play Verse Audio',
                       ),
