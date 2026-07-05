@@ -10,6 +10,8 @@
 [![Platform](https://img.shields.io/badge/Platform-Android-lightgrey?style=for-the-badge&logo=android)](https://github.com/Cancelllls/Islamic-App)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
+### [⬇️ Download Latest APK (Android)](https://github.com/Cancelllls/Islamic-App/raw/main/app-release.apk)
+
 </div>
 
 ---
@@ -39,9 +41,10 @@ Unlike standard apps that get killed when swiped away, Aya registers your Adhan 
 - **Auto-Bookmarking & Sync:** Automatically updates your last read position. The reader smoothly scrolls down the page in perfect synchronization with the streaming audio.
 - **Immersive Mode:** Auto-hides system status bars for a distraction-free, edge-to-edge reading experience.
 
-### 📚 Hadith Library
+### 📚 Hadith Library & Explanations
 - Browse complete Hadith collections offline.
 - Features dynamic "Sahih" / "Daif" authenticity badges colored natively within the glassmorphic UI.
+- Gracefully handles missing scraping metadata with "Search Online" fallbacks.
 
 ### 🧭 Precision Qibla & 📿 Custom Tasbih
 - **Live Qibla Tracking:** Smooth, high-refresh-rate compass utilizing native device magnetometers. Vibrates and flashes gold upon exact Kaaba alignment.
