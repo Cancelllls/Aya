@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../models/prayer_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
@@ -61,25 +62,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       final now = DateTime.now();
       List<dynamic> monthlyList = [];
       try {
-        if (loc['source'] == 'default' || loc['latitude'] == 30.0444) {
-          monthlyList = await ApiService.fetchMonthlyCalendarByCity(
-            city: loc['city'] ?? 'Cairo',
-            country: loc['country'] ?? 'Egypt',
-            method: _calcMethod,
-            school: _asrMethod,
-            month: now.month,
-            year: now.year,
-          );
-        } else {
-          monthlyList = await ApiService.fetchMonthlyCalendar(
-            latitude: loc['latitude'],
-            longitude: loc['longitude'],
-            method: _calcMethod,
-            school: _asrMethod,
-            month: now.month,
-            year: now.year,
-          );
-        }
+        monthlyList = await OfflinePrayerService.getMonthlyCalendar(
+          latitude: loc['latitude'] ?? 30.0444,
+          longitude: loc['longitude'] ?? 31.2357,
+          method: _calcMethod,
+          school: _asrMethod,
+          month: now.month,
+          year: now.year,
+        );
       } catch (_) {}
 
       setState(() {
@@ -464,11 +454,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             (TranslationService.isArabic ? 'موقعي' : 'My Location');
         country = address['country'] ?? 'GPS';
       } else {
-        final ipLoc = await ApiService.fetchLocationByIP();
-        city = ipLoc['city']!;
-        country = ipLoc['country']!;
-        lat = double.parse(ipLoc['latitude']!);
-        lon = double.parse(ipLoc['longitude']!);
+        city = 'Cairo';
+        country = 'Egypt';
+        lat = 30.0444;
+        lon = 31.2357;
       }
 
       await widget.storage.setLocation(city, country, lat, lon, 'gps');
@@ -571,16 +560,22 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 final country = countryController.text.trim();
                 if (city.isNotEmpty && country.isNotEmpty) {
                   final navigator = Navigator.of(context);
-                  // Fetch actual coordinates for the entered city using the fallback geocoder
-                  final coords = await ApiService.fetchCoordinatesByCity(
-                    city: city,
-                    country: country,
-                  );
+                  // Fetch actual coordinates for the entered city using the native geocoder
+                  double? fetchLat;
+                  double? fetchLon;
+                  try {
+                    List<Location> locations = await locationFromAddress('$city, $country');
+                    if (locations.isNotEmpty) {
+                      fetchLat = locations.first.latitude;
+                      fetchLon = locations.first.longitude;
+                    }
+                  } catch (_) {}
+                  
                   await widget.storage.setLocation(
                     city,
                     country,
-                    coords?['latitude'] ?? 30.0444,
-                    coords?['longitude'] ?? 31.2357,
+                    fetchLat ?? 30.0444,
+                    fetchLon ?? 31.2357,
                     'manual',
                   );
                   navigator.pop();

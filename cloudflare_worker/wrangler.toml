@@ -1,0 +1,15 @@
+name = "quran-audio-proxy"
+main = "src/index.js"
+compatibility_date = "2026-07-05"
+
+[[r2_buckets]]
+binding = "QURAN_AUDIO"
+bucket_name = "aya-audio-bucket"
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+#   { pattern = "quran-audio-proxy.abdalraman-samir2001.workers.dev/*", custom_domain = true }
+# ]

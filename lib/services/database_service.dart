@@ -1,10 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 2;
+  static const int _version = 3;
 
   DatabaseService._();
 
@@ -18,15 +20,46 @@ class DatabaseService {
 
   static Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'aya_app.db');
-    return openDatabase(
+    final db = await openDatabase(
       path,
       version: _version,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+    await _seedQuranData(db);
+    return db;
   }
 
   static Future<void> _onCreate(Database db, int version) async {
+    // Quran Surahs table
+    await db.execute('''
+      CREATE TABLE surahs (
+        number INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        englishName TEXT NOT NULL,
+        englishNameTranslation TEXT NOT NULL,
+        numberOfAyahs INTEGER NOT NULL,
+        revelationType TEXT NOT NULL
+      )
+    ''');
+
+    // Quran Ayahs table
+    await db.execute('''
+      CREATE TABLE ayahs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        surah_number INTEGER NOT NULL,
+        ayah_number INTEGER NOT NULL,
+        global_number INTEGER NOT NULL,
+        text_arabic TEXT NOT NULL,
+        text_english TEXT NOT NULL,
+        tafsir TEXT,
+        juz INTEGER,
+        hizb INTEGER,
+        FOREIGN KEY (surah_number) REFERENCES surahs (number)
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_ayahs_surah ON ayahs(surah_number)');
+
     // Prayer times cache table
     await db.execute('''
       CREATE TABLE prayer_times_cache (
@@ -142,6 +175,110 @@ class DatabaseService {
         'CREATE INDEX idx_prayer_tracker_date ON prayer_tracker(date)',
       );
     }
+    if (oldVersion < 3) {
+      await db.execute('DROP TABLE IF EXISTS ayahs');
+      await db.execute('DROP TABLE IF EXISTS surahs');
+      
+      // Quran Surahs table
+      await db.execute('''
+        CREATE TABLE surahs (
+          number INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          englishName TEXT NOT NULL,
+          englishNameTranslation TEXT NOT NULL,
+          numberOfAyahs INTEGER NOT NULL,
+          revelationType TEXT NOT NULL
+        )
+      ''');
+
+      // Quran Ayahs table
+      await db.execute('''
+        CREATE TABLE ayahs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          surah_number INTEGER NOT NULL,
+          ayah_number INTEGER NOT NULL,
+          global_number INTEGER NOT NULL,
+          text_arabic TEXT NOT NULL,
+          text_english TEXT NOT NULL,
+          tafsir TEXT,
+          juz INTEGER,
+          hizb INTEGER,
+          FOREIGN KEY (surah_number) REFERENCES surahs (number)
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_ayahs_surah ON ayahs(surah_number)');
+    }
+  }
+
+  static Future<void> _seedQuranData(Database db) async {
+    try {
+      final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM surahs'));
+      if (count == 0) {
+        final String surahsStr = await rootBundle.loadString('assets/quran/surahs.json');
+        final List<dynamic> surahs = jsonDecode(surahsStr);
+        Batch batch = db.batch();
+        for (var s in surahs) {
+          batch.insert('surahs', {
+            'number': s['number'],
+            'name': s['name'],
+            'englishName': s['englishName'],
+            'englishNameTranslation': s['englishNameTranslation'],
+            'numberOfAyahs': s['numberOfAyahs'],
+            'revelationType': s['revelationType'],
+          });
+        }
+        await batch.commit(noResult: true);
+
+        final String ayahsStr = await rootBundle.loadString('assets/quran/quran_hafs.json');
+        final List<dynamic> quranData = jsonDecode(ayahsStr);
+        batch = db.batch();
+        for (var editions in quranData) {
+          final arabic = editions[0]['ayahs'];
+          final english = editions[1]['ayahs'];
+          final tafsir = editions.length > 2 ? editions[2]['ayahs'] : null;
+          
+          for (int i = 0; i < arabic.length; i++) {
+            final hizbQuarter = arabic[i]['hizbQuarter'] as int? ?? 1;
+            final calculatedHizb = ((hizbQuarter - 1) ~/ 4) + 1;
+            batch.insert('ayahs', {
+              'surah_number': editions[0]['number'],
+              'ayah_number': arabic[i]['numberInSurah'],
+              'global_number': arabic[i]['number'],
+              'text_arabic': arabic[i]['text'],
+              'text_english': english[i]['text'],
+              'tafsir': tafsir != null ? tafsir[i]['text'] : null,
+              'juz': arabic[i]['juz'],
+              'hizb': calculatedHizb,
+            });
+          }
+        }
+        await batch.commit(noResult: true);
+      }
+    } catch (e) {
+      print('Failed to seed Quran data: $e');
+    }
+  }
+
+  // ── Quran Data ─────────────────────────────────────────────
+  Future<List<Map<String, dynamic>>> getSurahs() async {
+    final db = _database!;
+    return await db.query('surahs', orderBy: 'number ASC');
+  }
+
+  Future<List<Map<String, dynamic>>> getAyahsForSurah(int surahNumber) async {
+    final db = _database!;
+    return await db.query('ayahs', where: 'surah_number = ?', whereArgs: [surahNumber], orderBy: 'ayah_number ASC');
+  }
+
+  Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
+    final db = _database!;
+    return await db.rawQuery('''
+      SELECT ayahs.*, surahs.name as surah_name, surahs.englishName as surah_englishName 
+      FROM ayahs 
+      JOIN surahs ON ayahs.surah_number = surahs.number 
+      WHERE ayahs.text_arabic LIKE ? OR ayahs.text_english LIKE ?
+      ORDER BY ayahs.surah_number ASC, ayahs.ayah_number ASC
+    ''', ['%$query%', '%$query%']);
   }
 
   // ── Prayer Times Cache ──────────────────────────────────────

@@ -5,10 +5,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:flutter/foundation.dart' show compute, debugPrint;
 
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
+import 'database_service.dart';
 
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
@@ -16,7 +18,7 @@ class ApiService {
   static final http.Client _client = http.Client();
 
   // Base URLs
-  static const String _quranBaseUrl = 'https://api.alquran.cloud/v1';
+  static const String _quranBaseUrl = 'https://raw.githubusercontent.com/Cancelllls/Islamic-App/main/database';
 
   // ─── Prayer Times ────────────────────────────────────────────────────────
   static Future<void> cachePrayerTimes(String key, PrayerTimeData data) async {
@@ -102,32 +104,6 @@ class ApiService {
     );
   }
 
-  static Future<Map<String, double>?> fetchCoordinatesByCity({
-    required String city,
-    required String country,
-  }) async {
-    try {
-      final uri = Uri.https('api.aladhan.com', '/v1/timingsByCity', {
-        'city': city,
-        'country': country,
-        'method': '2',
-      });
-      final response = await _client
-          .get(uri)
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final decoded =
-            await compute(_parseJson, response.body) as Map<String, dynamic>;
-        final meta = decoded['data']['meta'] as Map<String, dynamic>;
-        return {
-          'latitude': (meta['latitude'] as num).toDouble(),
-          'longitude': (meta['longitude'] as num).toDouble(),
-        };
-      }
-    } catch (_) {}
-    return null;
-  }
-
   // ─── Quran Data & Caching ────────────────────────────────────────────────
   static Future<void> migrateCacheToFiles() async {
     try {
@@ -184,57 +160,9 @@ class ApiService {
   }
 
   static Future<List<Surah>> fetchSurahList() async {
-    // Primary: AlQuran Cloud
-    try {
-      final response = await _client
-          .get(Uri.parse('$_quranBaseUrl/surah'))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final body = response.body;
-        await _cacheString('cached_surah_list', body);
-        final decoded = await compute(_parseJson, body) as Map<String, dynamic>;
-        return (decoded['data'] as List)
-            .map((e) => Surah.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (_) {}
-
-    // Fallback: Quran.com API (v4)
-    try {
-      final fallback = await _client
-          .get(Uri.https('api.quran.com', '/api/v4/chapters'))
-          .timeout(const Duration(seconds: 5));
-      if (fallback.statusCode == 200) {
-        final body = fallback.body;
-        await _cacheString('cached_surah_list_qurancom', body);
-        final decoded = await compute(_parseJson, body) as Map<String, dynamic>;
-        return (decoded['chapters'] as List)
-            .map((e) => Surah.fromQuranCom(e as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (_) {}
-
-    // Fallback to local cache
-    final cached = await _getCachedString('cached_surah_list');
-    if (cached != null) {
-      final decoded = await compute(_parseJson, cached) as Map<String, dynamic>;
-      return (decoded['data'] as List)
-          .map((e) => Surah.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-
-    final cachedQC = await _getCachedString('cached_surah_list_qurancom');
-    if (cachedQC != null) {
-      final decoded =
-          await compute(_parseJson, cachedQC) as Map<String, dynamic>;
-      return (decoded['chapters'] as List)
-          .map((e) => Surah.fromQuranCom(e as Map<String, dynamic>))
-          .toList();
-    }
-
-    throw Exception(
-      'Failed to fetch Surah list. No internet and no cached data.',
-    );
+    final db = await DatabaseService.getInstance();
+    final data = await db.getSurahs();
+    return data.map((e) => Surah.fromJson(e)).toList();
   }
 
   static Future<void> _injectTafsirIfCached(
@@ -266,126 +194,24 @@ class ApiService {
     int surahNumber, {
     String tafsirEdition = 'ar.muyassar',
   }) async {
-    List<Ayah>? ayahs;
-
-    // 1. Offline first: Try to get from local cache for specific Tafsir edition
-    try {
-      final cached = await _getCachedString(
-        'cached_surah_${surahNumber}_details_$tafsirEdition',
+    final db = await DatabaseService.getInstance();
+    final ayahsRaw = await db.getAyahsForSurah(surahNumber);
+    
+    final list = <Ayah>[];
+    for (var row in ayahsRaw) {
+      final ayah = Ayah(
+        number: row['global_number'] as int? ?? 0,
+        numberInSurah: row['ayah_number'] as int? ?? 0,
+        text: Ayah.cleanBasmalah(row['text_arabic'] as String? ?? '', row['ayah_number'] as int? ?? 0, row['global_number'] as int? ?? 0),
+        translation: row['text_english'] as String? ?? '',
+        juz: row['juz'] as int? ?? 0,
+        hizb: row['hizb'] as int? ?? 0,
+        tafseer: row['tafsir'] as String? ?? '',
       );
-      if (cached != null) {
-        final data = await compute(_parseJson, cached) as Map<String, dynamic>;
-        final editions = data['data'] as List<dynamic>;
-        final arabic = editions[0]['ayahs'] as List<dynamic>;
-        final english = editions[1]['ayahs'] as List<dynamic>;
-        final tafseer = editions.length > 2
-            ? editions[2]['ayahs'] as List<dynamic>?
-            : null;
-        final list = <Ayah>[];
-        for (int i = 0; i < arabic.length; i++) {
-          list.add(
-            Ayah.fromEditions(
-              arabic[i] as Map<String, dynamic>,
-              english[i] as Map<String, dynamic>,
-              tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
-            ),
-          );
-        }
-        ayahs = list;
-      }
-    } catch (_) {}
-
-    if (ayahs == null) {
-      try {
-        final cachedQC = await _getCachedString(
-          'cached_surah_${surahNumber}_details_qurancom',
-        );
-        if (cachedQC != null) {
-          final data =
-              await compute(_parseJson, cachedQC) as Map<String, dynamic>;
-          final verses = data['verses'] as List<dynamic>;
-          ayahs = verses
-              .map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>))
-              .toList();
-        }
-      } catch (_) {}
+      list.add(ayah);
     }
-
-    if (ayahs != null) {
-      await _injectTafsirIfCached(surahNumber, ayahs, tafsirEdition);
-      return ayahs;
-    }
-
-    // 2. Online fallback: Fetch from AlQuran Cloud
-    try {
-      final response = await _client
-          .get(
-            Uri.parse(
-              '$_quranBaseUrl/surah/$surahNumber/editions/quran-uthmani,en.sahih,$tafsirEdition',
-            ),
-          )
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final body = response.body;
-        await _cacheString(
-          'cached_surah_${surahNumber}_details_$tafsirEdition',
-          body,
-        );
-        final data = await compute(_parseJson, body) as Map<String, dynamic>;
-        final editions = data['data'] as List<dynamic>;
-        final arabic = editions[0]['ayahs'] as List<dynamic>;
-        final english = editions[1]['ayahs'] as List<dynamic>;
-        final tafseer = editions.length > 2
-            ? editions[2]['ayahs'] as List<dynamic>?
-            : null;
-        final list = <Ayah>[];
-        for (int i = 0; i < arabic.length; i++) {
-          list.add(
-            Ayah.fromEditions(
-              arabic[i] as Map<String, dynamic>,
-              english[i] as Map<String, dynamic>,
-              tafseer != null ? tafseer[i] as Map<String, dynamic> : null,
-            ),
-          );
-        }
-        ayahs = list;
-      }
-    } catch (_) {}
-
-    if (ayahs == null) {
-      // 3. Fallback: Fetch from Quran.com
-      try {
-        final uri = Uri.https(
-          'api.quran.com',
-          '/api/v4/verses/by_chapter/$surahNumber',
-          {'translations': '20', 'fields': 'text_uthmani', 'per_page': '500'},
-        );
-        final response = await _client
-            .get(uri)
-            .timeout(const Duration(seconds: 5));
-        if (response.statusCode == 200) {
-          final body = response.body;
-          await _cacheString(
-            'cached_surah_${surahNumber}_details_qurancom',
-            body,
-          );
-          final data = await compute(_parseJson, body) as Map<String, dynamic>;
-          final verses = data['verses'] as List<dynamic>;
-          ayahs = verses
-              .map((v) => Ayah.fromQuranCom(v as Map<String, dynamic>))
-              .toList();
-        }
-      } catch (_) {}
-    }
-
-    if (ayahs != null) {
-      await _injectTafsirIfCached(surahNumber, ayahs, tafsirEdition);
-      return ayahs;
-    }
-
-    throw Exception(
-      'Failed to load verses for Surah $surahNumber. No internet and no cached data.',
-    );
+    
+    return list;
   }
 
   // ─── Reverse Geocoding ───────────────────────────────────────────────────
@@ -394,48 +220,25 @@ class ApiService {
     double longitude,
   ) async {
     try {
-      final uri = Uri.https('nominatim.openstreetmap.org', '/reverse', {
-        'lat': latitude.toString(),
-        'lon': longitude.toString(),
-        'format': 'json',
-        'accept-language': 'en',
-      });
-      final response = await _client.get(
-        uri,
-        headers: {'User-Agent': 'AyaApp/1.0'},
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final address = data['address'] as Map<String, dynamic>?;
-        if (address != null) {
-          final neighbourhood =
-              address['neighbourhood'] ??
-              address['suburb'] ??
-              address['city_district'];
-          final cityOrTown =
-              address['city'] ??
-              address['town'] ??
-              address['village'] ??
-              address['county'] ??
-              address['state'];
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        final neighbourhood = place.subLocality ?? place.subAdministrativeArea;
+        final cityOrTown = place.locality ?? place.administrativeArea ?? 'Unknown City';
 
-          String exactLocation = '';
-          if (neighbourhood != null && cityOrTown != null) {
-            if (neighbourhood.toString().toLowerCase() !=
-                cityOrTown.toString().toLowerCase()) {
-              exactLocation =
-                  '${neighbourhood.toString()}, ${cityOrTown.toString()}';
-            } else {
-              exactLocation = cityOrTown.toString();
-            }
+        String exactLocation = '';
+        if (neighbourhood != null && neighbourhood.isNotEmpty && cityOrTown.isNotEmpty) {
+          if (neighbourhood.toLowerCase() != cityOrTown.toLowerCase()) {
+            exactLocation = '$neighbourhood, $cityOrTown';
           } else {
-            exactLocation = (neighbourhood ?? cityOrTown ?? 'Current Location')
-                .toString();
+            exactLocation = cityOrTown;
           }
-
-          final country = address['country'] ?? 'Unknown Country';
-          return {'city': exactLocation, 'country': country.toString()};
+        } else {
+          exactLocation = neighbourhood ?? cityOrTown;
         }
+
+        final country = place.country ?? 'Unknown Country';
+        return {'city': exactLocation, 'country': country};
       }
     } catch (_) {}
     return {'city': 'My Location', 'country': 'GPS'};
@@ -466,95 +269,6 @@ class ApiService {
     return null;
   }
 
-  static Future<Map<String, String>> fetchLocationByIP() async {
-    try {
-      final response = await _client
-          .get(Uri.parse('https://ipapi.co/json'))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final city = data['city'] as String? ?? 'Cairo';
-        final country = data['country_name'] as String? ?? 'Egypt';
-        final lat = double.parse((data['latitude'] ?? 30.0444).toString());
-        final lon = double.parse((data['longitude'] ?? 31.2357).toString());
-        return {
-          'city': city,
-          'country': country,
-          'latitude': lat.toString(),
-          'longitude': lon.toString(),
-        };
-      }
-    } catch (e) {
-      // ignore: avoid_print
-      print('IP-based location failed: $e');
-    }
-    return {
-      'city': 'Cairo',
-      'country': 'Egypt',
-      'latitude': '30.0444',
-      'longitude': '31.2357',
-    };
-  }
-
-  // ─── Monthly Calendar ─────────────────────────────────────────────────────
-  static Future<List<dynamic>> fetchMonthlyCalendar({
-    required double latitude,
-    required double longitude,
-    required int method,
-    required int school,
-    required int month,
-    required int year,
-  }) async {
-    try {
-      final uri = Uri.https('api.aladhan.com', '/v1/calendar', {
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-        'method': method.toString(),
-        'school': school.toString(),
-        'month': month.toString(),
-        'year': year.toString(),
-      });
-      final response = await _client
-          .get(uri)
-          .timeout(const Duration(seconds: 8));
-      if (response.statusCode == 200) {
-        final decoded =
-            await compute(_parseJson, response.body) as Map<String, dynamic>;
-        return decoded['data'] as List<dynamic>;
-      }
-    } catch (_) {}
-    return [];
-  }
-
-  static Future<List<dynamic>> fetchMonthlyCalendarByCity({
-    required String city,
-    required String country,
-    required int method,
-    required int school,
-    required int month,
-    required int year,
-  }) async {
-    try {
-      final uri = Uri.https('api.aladhan.com', '/v1/calendarByCity', {
-        'city': city,
-        'country': country,
-        'method': method.toString(),
-        'school': school.toString(),
-        'month': month.toString(),
-        'year': year.toString(),
-      });
-      final response = await _client
-          .get(uri)
-          .timeout(const Duration(seconds: 8));
-      if (response.statusCode == 200) {
-        final decoded =
-            await compute(_parseJson, response.body) as Map<String, dynamic>;
-        return decoded['data'] as List<dynamic>;
-      }
-    } catch (_) {}
-    return [];
-  }
-
   // ─── Audio URLs ────────────────────────────────────────────────────────
   static String buildAyahAudioUrl(
     int globalAyahNumber,
@@ -563,19 +277,14 @@ class ApiService {
     String reciter = 'ar.alafasy',
     String quranScriptType = 'hafs',
   }) {
-    if (quranScriptType == 'warsh') {
-      return 'https://everyayah.com/data/warsh/warsh_yassin_al_jazaery_64kbps/${surahNumber.toString().padLeft(3, '0')}${ayahNumberInSurah.toString().padLeft(3, '0')}.mp3';
-    } else if (quranScriptType == 'susi') {
-      return 'https://everyayah.com/data/Ali_Hajjaj_AlSuesy_128kbps/${surahNumber.toString().padLeft(3, '0')}${ayahNumberInSurah.toString().padLeft(3, '0')}.mp3';
-    }
-    return 'https://cdn.islamic.network/quran/audio/64/$reciter/$globalAyahNumber.mp3';
+    return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber/$ayahNumberInSurah.mp3';
   }
 
   static String buildSurahAudioUrl(
     int surahNumber, {
     String reciter = 'ar.alafasy',
   }) {
-    return 'https://cdn.islamic.network/quran/audio-surah/128/$reciter/$surahNumber.mp3';
+    return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber.mp3';
   }
 
   static String buildSurahAudioUrlForQiraat(
@@ -583,28 +292,6 @@ class ApiService {
     String quranScriptType = 'hafs',
     String reciter = 'ar.alafasy',
   }) {
-    String surahPadded = surahNumber.toString().padLeft(3, '0');
-    switch (quranScriptType) {
-      case 'warsh':
-        return 'https://server11.mp3quran.net/warsh/yassin/$surahPadded.mp3';
-      case 'qaloon':
-        return 'https://server11.mp3quran.net/qalon/trabulsi/$surahPadded.mp3';
-      case 'shuba':
-        return 'https://server13.mp3quran.net/husr/Rewayat-Sho-bah-A-n-Asim/$surahPadded.mp3';
-      case 'duri':
-        return 'https://server13.mp3quran.net/husr/Rewayat-Ad-Duri-A-n-Abi-Amr/$surahPadded.mp3';
-      case 'susi':
-        return 'https://server11.mp3quran.net/sosi/$surahPadded.mp3';
-      case 'bazzi':
-        return 'https://server14.mp3quran.net/bazzi/$surahPadded.mp3';
-      case 'qunbul':
-        return 'https://server14.mp3quran.net/qonbol/$surahPadded.mp3';
-      case 'hisham':
-        return 'https://server14.mp3quran.net/hisham/$surahPadded.mp3';
-      case 'ibn-dhakwan':
-        return 'https://server14.mp3quran.net/ibn_thakwan/$surahPadded.mp3';
-      default:
-        return buildSurahAudioUrl(surahNumber, reciter: reciter);
-    }
+    return buildSurahAudioUrl(surahNumber, reciter: reciter);
   }
 }

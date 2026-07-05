@@ -574,11 +574,7 @@ class _MainScaffoldState extends State<MainScaffold>
               (TranslationService.isArabic ? 'موقعي' : 'My Location');
           country = address['country'] ?? 'GPS';
         } else {
-          final ipLoc = await ApiService.fetchLocationByIP();
-          city = ipLoc['city']!;
-          country = ipLoc['country']!;
-          lat = double.parse(ipLoc['latitude']!);
-          lon = double.parse(ipLoc['longitude']!);
+          throw Exception('GPS position unavailable');
         }
 
         await widget.storage.setLocation(city, country, lat, lon, 'gps');

@@ -4,6 +4,7 @@ import '../models/quran_models.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import '../services/database_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -50,7 +51,9 @@ class _QuranScreenState extends State<QuranScreen> {
       _hasError = false;
     });
     try {
-      final list = await ApiService.fetchSurahList();
+      final db = await DatabaseService.getInstance();
+      final data = await db.getSurahs();
+      final list = data.map((s) => Surah.fromJson(s)).toList();
       setState(() {
         _surahList = list;
         _filteredSurahList = list;
@@ -88,26 +91,13 @@ class _QuranScreenState extends State<QuranScreen> {
     });
 
     try {
-      final edition = _isArabic(query) ? 'quran-simple-clean' : 'en.asad';
-      final encodedQuery = Uri.encodeComponent(query);
-      final url =
-          'http://api.alquran.cloud/v1/search/$encodedQuery/all/$edition';
-
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _ayahSearchResults = List<Map<String, dynamic>>.from(
-              data['data']['matches'] ?? [],
-            );
-            _isSearchingAyahs = false;
-          });
-        }
-      } else {
-        throw Exception('Failed to load search results');
+      final db = await DatabaseService.getInstance();
+      final results = await db.searchAyahs(query);
+      if (mounted) {
+        setState(() {
+          _ayahSearchResults = results;
+          _isSearchingAyahs = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -511,12 +501,11 @@ class _QuranScreenState extends State<QuranScreen> {
       itemCount: _ayahSearchResults.length,
       itemBuilder: (context, index) {
         final match = _ayahSearchResults[index];
-        final surahInfo = match['surah'];
-        final String surahName = surahInfo['name'] ?? '';
-        final String englishName = surahInfo['englishName'] ?? '';
-        final int numberInSurah = match['numberInSurah'] ?? 0;
-        final String text = match['text'] ?? '';
-        final int surahNumber = surahInfo['number'] ?? 1;
+        final String surahName = match['surah_name'] ?? '';
+        final String englishName = match['surah_englishName'] ?? '';
+        final int numberInSurah = match['ayah_number'] ?? 0;
+        final String text = _isArabic(_searchController.text) ? (match['text_arabic'] ?? '') : (match['text_english'] ?? '');
+        final int surahNumber = match['surah_number'] ?? 1;
 
         return Card(
           color: theme.cardColor,

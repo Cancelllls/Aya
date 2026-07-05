@@ -374,41 +374,14 @@ class QuranDownloadService extends ChangeNotifier {
     StorageService storage,
     String tafsirEdition,
   ) async {
-    if (_isDownloadingTafsir) return;
+    // Tafsir is now pre-packaged in the local SQLite database, no download needed.
     _isDownloadingTafsir = true;
-    _tafsirDownloadProgress = 0.0;
     notifyListeners();
-
-    int downloaded = 0;
-    final dir = await getApplicationDocumentsDirectory();
-    for (int i = 1; i <= 114; i++) {
-      if (!_isDownloadingTafsir) break;
-      bool hasCache = File(
-        '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
-      ).existsSync();
-      if (!hasCache && tafsirEdition == 'ar.muyassar') {
-        hasCache = File('${dir.path}/cached_tafsir_$i.json').existsSync();
-      }
-      if (!hasCache) {
-        try {
-          final url = 'https://api.alquran.cloud/v1/surah/$i/$tafsirEdition';
-          final response = await http
-              .get(Uri.parse(url))
-              .timeout(const Duration(seconds: 5));
-          if (response.statusCode == 200) {
-            final f = File(
-              '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
-            );
-            await f.writeAsString(response.body);
-          }
-        } catch (_) {}
-      }
-      downloaded++;
-      _tafsirDownloadProgress = downloaded / 114.0;
-      notifyListeners();
-    }
-
+    
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     _isDownloadingTafsir = false;
+    _tafsirDownloadProgress = 1.0;
     notifyListeners();
   }
 
@@ -418,34 +391,16 @@ class QuranDownloadService extends ChangeNotifier {
   }
 
   Future<int> getTafsirCountForEdition(String tafsirEdition) async {
-    final dir = await getApplicationDocumentsDirectory();
-    int count = 0;
-    for (int i = 1; i <= 114; i++) {
-      bool has = File(
-        '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
-      ).existsSync();
-      if (!has && tafsirEdition == 'ar.muyassar') {
-        has = File('${dir.path}/cached_tafsir_$i.json').existsSync();
-      }
-      if (has) count++;
-    }
-    return count;
+    // Return 114 since all surahs are locally embedded in the SQLite database
+    return 114;
   }
 
   Future<void> deleteAllTafsir(
     StorageService storage,
     String tafsirEdition,
   ) async {
+    // Tafsir is now embedded locally in the DB, so we can't delete it
     _isDownloadingTafsir = false;
-    final dir = await getApplicationDocumentsDirectory();
-    for (int i = 1; i <= 114; i++) {
-      final f1 = File('${dir.path}/cached_tafsir_${tafsirEdition}_$i.json');
-      if (f1.existsSync()) f1.deleteSync();
-      if (tafsirEdition == 'ar.muyassar') {
-        final f2 = File('${dir.path}/cached_tafsir_$i.json');
-        if (f2.existsSync()) f2.deleteSync();
-      }
-    }
     _tafsirDownloadProgress = 0.0;
     notifyListeners();
   }

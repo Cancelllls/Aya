@@ -11,7 +11,7 @@ class AdhanAudioService {
   static final AdhanAudioService instance = AdhanAudioService._();
 
   static const String _fpBase =
-      'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
+      'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/adhan';
 
   static const Map<String, String> fajrReciterUrls = {
     'mishary': '$_fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3',

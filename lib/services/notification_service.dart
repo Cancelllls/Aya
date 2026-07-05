@@ -21,6 +21,7 @@ import 'translation_service.dart';
 import 'quran_verses.dart';
 import 'adhan_audio_service.dart';
 import 'database_service.dart';
+import 'offline_prayer_service.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(
@@ -58,36 +59,49 @@ void backgroundPrayerTimesUpdateCallback() async {
     final storage = await StorageService.getInstance();
     final loc = storage.getLocation();
     if (loc['source'] == 'gps') {
-      Position? position = await ApiService.getBestLocation();
-      double lat;
-      double lng;
-      String city;
-      String country;
+      try {
+        Position? position = await ApiService.getBestLocation();
+        double lat;
+        double lng;
+        String city;
+        String country;
 
-      if (position != null) {
-        lat = position.latitude;
-        lng = position.longitude;
-        final cityCountry = await ApiService.reverseGeocode(lat, lng);
-        city = cityCountry['city'] ?? 'My Location';
-        country = cityCountry['country'] ?? 'GPS';
-      } else {
-        final ipLoc = await ApiService.fetchLocationByIP();
-        city = ipLoc['city']!;
-        country = ipLoc['country']!;
-        lat = double.parse(ipLoc['latitude']!);
-        lng = double.parse(ipLoc['longitude']!);
+        if (position != null) {
+          lat = position.latitude;
+          lng = position.longitude;
+          final cityCountry = await ApiService.reverseGeocode(lat, lng);
+          city = cityCountry['city'] ?? 'My Location';
+          country = cityCountry['country'] ?? 'GPS';
+        } else {
+          throw Exception('GPS position unavailable');
+        }
+
+        await storage.setLocation(city, country, lat, lng, 'gps');
+        final method = storage.getInt('calc_method', defaultValue: 2);
+        final school = storage.getInt('asr_method', defaultValue: 0);
+        final prayerData = await ApiService.fetchPrayerTimes(
+          latitude: lat,
+          longitude: lng,
+          method: method,
+          school: school,
+        );
+        await NotificationService().schedulePrayerAlarms(prayerData, storage);
+      } catch (e) {
+        // Fallback to offline prayer times when in deep Doze mode or network fails
+        double lat = loc['latitude'] as double? ?? 0.0;
+        double lng = loc['longitude'] as double? ?? 0.0;
+        if (lat != 0.0 && lng != 0.0) {
+          final method = storage.getInt('calc_method', defaultValue: 2);
+          final school = storage.getInt('asr_method', defaultValue: 0);
+          final offlineData = await OfflinePrayerService.getPrayerTimes(
+            latitude: lat,
+            longitude: lng,
+            method: method,
+            school: school,
+          );
+          await NotificationService().schedulePrayerAlarms(offlineData, storage);
+        }
       }
-
-      await storage.setLocation(city, country, lat, lng, 'gps');
-      final method = storage.getInt('calc_method', defaultValue: 2);
-      final school = storage.getInt('asr_method', defaultValue: 0);
-      final prayerData = await ApiService.fetchPrayerTimes(
-        latitude: lat,
-        longitude: lng,
-        method: method,
-        school: school,
-      );
-      await NotificationService().schedulePrayerAlarms(prayerData, storage);
     }
   } catch (e) {
     // ignore: avoid_print
@@ -570,6 +584,15 @@ class NotificationService {
     PrayerTimeData prayerData,
     StorageService storage,
   ) async {
+    // Validate that the new prayer data is valid before canceling existing alarms
+    final isValid = prayerData.fajr.isNotEmpty &&
+        prayerData.dhuhr.isNotEmpty &&
+        prayerData.asr.isNotEmpty &&
+        prayerData.maghrib.isNotEmpty &&
+        prayerData.isha.isNotEmpty;
+        
+    if (!isValid) return;
+
     // Phase 6.1: Batch cancel using Future.wait
     final List<Future<void>> cancelFutures = [];
     for (int i = 1; i <= 70; i++) {
