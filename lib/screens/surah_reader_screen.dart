@@ -470,6 +470,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     } else if (_quranScriptType == 'qaloon') {
       return TextStyle(fontFamily: 'Qalun', fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
     }
+    
+    final String selectedFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
+    if (selectedFont == 'font-scheherazade') {
+      return GoogleFonts.scheherazadeNew(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
+    }
     return GoogleFonts.amiri(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
   }
 
@@ -875,6 +880,53 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ),
                           SizedBox(height: 20),
                           // Reading mode selection now via TabBar.
+                          SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                TranslationService.isArabic ? 'الرواية' : "Qira'ah",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: theme.textTheme.bodyMedium?.color
+                                      ?.withOpacity(0.8),
+                                ),
+                              ),
+                              DropdownButton<String>(
+                                value: _quranScriptType,
+                                underline: SizedBox(),
+                                icon: Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Color(0xFFE5C158),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(value: 'hafs', child: Text('حفص عن عاصم (Hafs)')),
+                                  DropdownMenuItem(value: 'warsh', child: Text('ورش عن نافع (Warsh)')),
+                                  DropdownMenuItem(value: 'qaloon', child: Text('قالون عن نافع (Qalun)')),
+                                  DropdownMenuItem(value: 'shuba', child: Text('شعبة عن عاصم (Shuba)')),
+                                  DropdownMenuItem(value: 'duri', child: Text('الدوري عن أبي عمرو (Al-Duri)')),
+                                  DropdownMenuItem(value: 'susi', child: Text('السوسي عن أبي عمرو (As-Susi)')),
+                                  DropdownMenuItem(value: 'bazzi', child: Text('البزي عن ابن كثير (Al-Bazzi)')),
+                                  DropdownMenuItem(value: 'qunbul', child: Text('قنبل عن ابن كثير (Qunbul)')),
+                                  DropdownMenuItem(value: 'hisham', child: Text('هشام عن ابن عامر (Hisham)')),
+                                  DropdownMenuItem(value: 'ibn-dhakwan', child: Text('ابن ذكوان عن ابن عامر (Ibn Dhakwan)')),
+                                ],
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setModalState(() {
+                                      _quranScriptType = newValue;
+                                    });
+                                    setState(() {
+                                      _quranScriptType = newValue;
+                                    });
+                                    widget.storage.setString('quran_script_type', newValue);
+                                    _loadAyahs();
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
                           SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
