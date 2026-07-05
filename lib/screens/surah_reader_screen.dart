@@ -1237,8 +1237,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                           itemCount: _ayahList.length + 1,
                                           itemBuilder: (context, index) {
                                             if (index == 0) {
-                                              if (_currentSurah.number == 9 ||
-                                                  _currentSurah.number == 1) {
+                                              if (_currentSurah.number == 9) {
+                                                return SizedBox.shrink();
+                                              }
+                                              
+                                              bool hasBismillahEmbedded = false;
+                                              if (_ayahList.isNotEmpty) {
+                                                hasBismillahEmbedded = Ayah.startsWithBasmalah(_ayahList.first.text);
+                                              }
+                                              
+                                              if (hasBismillahEmbedded) {
                                                 return SizedBox.shrink();
                                               }
                                               return Container(

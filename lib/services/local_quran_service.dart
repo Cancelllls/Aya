@@ -33,11 +33,15 @@ class LocalQuranService {
       // Remove trailing digits if they are present in the text (like ١٢)
       final numRegex = RegExp(r'[٠-٩]+$');
       text = text.replaceAll(numRegex, '').trim();
+      
+      final globalAyahNum = row['id'] as int;
+      final numInSurah = row['aya_no'] as int;
+      text = Ayah.cleanBasmalah(text, numInSurah, globalAyahNum);
 
       ayahs.add(
         Ayah(
-          number: row['id'], // Global ayah number
-          numberInSurah: row['aya_no'],
+          number: globalAyahNum,
+          numberInSurah: numInSurah,
           text: text,
           translation: '', // No translation available for this exact mapping
           juz: row['jozz'],

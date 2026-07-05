@@ -387,7 +387,18 @@ class Ayah {
     this.tafseer = '',
   });
 
-  static String _cleanBasmalah(
+  static bool startsWithBasmalah(String text) {
+    String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
+    String stripDiacritics(String s) {
+      return s.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
+    }
+    final normalized = stripDiacritics(t);
+    final bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
+    final fullyNormalized = normalized.replaceAll('ٱ', 'ا'); // Normalize Alif Wasla
+    return fullyNormalized.startsWith(bismillahNoTashkeel);
+  }
+
+  static String cleanBasmalah(
     String text,
     int numberInSurah,
     int globalNumber,
@@ -396,17 +407,10 @@ class Ayah {
     // Do not clean Basmalah for Surah 1 (Al-Fatiha), which corresponds to global ayah numbers 1 to 7
     if (globalNumber >= 1 && globalNumber <= 7) return text;
     
-    String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
-    
-    String stripDiacritics(String s) {
-      return s.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
-    }
-    
-    final normalized = stripDiacritics(t);
-    final bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
-    final fullyNormalized = normalized.replaceAll('ٱ', 'ا'); // Normalize Alif Wasla
-    
-    if (fullyNormalized.startsWith(bismillahNoTashkeel)) {
+    if (startsWithBasmalah(text)) {
+      String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
+      final bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
+      
       int charsToSkip = bismillahNoTashkeel.length;
       int originalIndex = 0;
       int nonDiacriticCount = 0;
@@ -431,7 +435,7 @@ class Ayah {
         }
       }
     }
-    return t;
+    return text;
   }
 
   factory Ayah.fromEditions(
@@ -447,7 +451,7 @@ class Ayah {
     return Ayah(
       number: globalNum,
       numberInSurah: numInSurah,
-      text: _cleanBasmalah(rawText, numInSurah, globalNum),
+      text: cleanBasmalah(rawText, numInSurah, globalNum),
       translation: englishJson['text'] as String,
       juz: arabicJson['juz'] as int,
       hizb: calculatedHizb,
@@ -472,7 +476,7 @@ class Ayah {
     return Ayah(
       number: globalNum,
       numberInSurah: numInSurah,
-      text: _cleanBasmalah(rawText, numInSurah, globalNum),
+      text: cleanBasmalah(rawText, numInSurah, globalNum),
       translation: transText.isNotEmpty
           ? transText
           : (json['text_simple'] as String? ??
@@ -501,7 +505,7 @@ class Ayah {
     return Ayah(
       number: globalNum,
       numberInSurah: numInSurah,
-      text: _cleanBasmalah(rawText, numInSurah, globalNum),
+      text: cleanBasmalah(rawText, numInSurah, globalNum),
       translation: json['translation'] as String,
       juz: json['juz'] as int,
       hizb: json['hizb'] as int? ?? 0,
