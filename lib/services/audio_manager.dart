@@ -201,7 +201,7 @@ class AudioManager {
     int index,
   ) async {
     final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
-    if (!['hafs', 'warsh', 'susi'].contains(quranScriptType)) {
+    if (quranScriptType != 'hafs') {
       playSurah(surahNum, surahName, ayahs);
       return;
     }
@@ -352,7 +352,7 @@ class AudioManager {
           isLoading: false,
         );
       }
-    } else if (!['hafs', 'warsh', 'susi'].contains(quranScriptType)) {
+    } else if (quranScriptType != 'hafs') {
       _currentPlaylist = ayahs;
       _currentIndex = -1;
 

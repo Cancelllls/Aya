@@ -248,7 +248,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
   void _playAudioWithDisclaimer({int? ayahIndex}) {
-    final supportsAyahSync = ['hafs', 'warsh', 'susi'].contains(_quranScriptType);
+    final supportsAyahSync = _quranScriptType == 'hafs';
     final hideDisclaimer = widget.storage.getBool('hide_full_surah_disclaimer', defaultValue: false);
     
     if (supportsAyahSync || hideDisclaimer) {
