@@ -648,6 +648,29 @@ class NotificationService {
                 );
               } catch (_) {}
             }
+            final adhanAlarmId = notificationId + 4000;
+            if (Platform.isAndroid) {
+              try {
+                await AndroidAlarmManager.oneShotAt(
+                  scheduledDate,
+                  adhanAlarmId,
+                  backgroundAdhanCallback,
+                  exact: true,
+                  wakeup: true,
+                  alarmClock: true,
+                );
+              } catch (_) {
+                try {
+                  await AndroidAlarmManager.oneShotAt(
+                    scheduledDate,
+                    adhanAlarmId,
+                    backgroundAdhanCallback,
+                    exact: false,
+                    wakeup: true,
+                  );
+                } catch (_) {}
+              }
+            }
           }
 
           // Prayer Tracker Reminder (15 mins before next prayer)
@@ -819,6 +842,30 @@ class NotificationService {
                     payload: 'prayer_times',
                   );
                 } catch (_) {}
+              }
+              
+              final preAdhanAlarmId = notificationId + 3000;
+              if (Platform.isAndroid) {
+                try {
+                  await AndroidAlarmManager.oneShotAt(
+                    preAzanTime,
+                    preAdhanAlarmId,
+                    backgroundPreAdhanCallback,
+                    exact: true,
+                    wakeup: true,
+                    alarmClock: true,
+                  );
+                } catch (_) {
+                  try {
+                    await AndroidAlarmManager.oneShotAt(
+                      preAzanTime,
+                      preAdhanAlarmId,
+                      backgroundPreAdhanCallback,
+                      exact: false,
+                      wakeup: true,
+                    );
+                  } catch (_) {}
+                }
               }
             }
           }
