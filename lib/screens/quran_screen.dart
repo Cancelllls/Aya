@@ -8,7 +8,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'surah_reader_screen.dart';
-import 'qiraat_screen.dart';
 
 class QuranScreen extends StatefulWidget {
   final StorageService storage;
@@ -162,57 +161,6 @@ class _QuranScreenState extends State<QuranScreen> {
     final isDark = widget.storage.isDarkMode();
     return Column(
       children: [
-        // Qira'at Access Button
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const QiraatScreen()),
-              );
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5C158).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5C158).withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.record_voice_over, color: Color(0xFFE5C158)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          TranslationService.isArabic ? "تلاوات القراءات" : "Qira'at Recitations",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          TranslationService.isArabic ? "استمع لروايات ورش، قالون، والمزيد" : "Listen to Warsh, Qalun, and more",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    TranslationService.isArabic ? Icons.arrow_back_ios : Icons.arrow_forward_ios,
-                    size: 14,
-                    color: const Color(0xFFE5C158),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        
         // Search Bar Container
         Padding(
           padding: const EdgeInsets.all(16.0),

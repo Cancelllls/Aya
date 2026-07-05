@@ -1075,48 +1075,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       height: 1,
                       color: Theme.of(context).dividerColor.withOpacity(0.1),
                     ),
-                    ListTile(
-                      leading: Icon(
-                        Icons.text_format,
-                        color: Color(0xFFE5C158),
-                      ),
-                      title: Text(TranslationService.isArabic ? 'نوع الرسم القرآني (الرواية)' : "Quranic Script (Qira'at)"),
-                      subtitle: Text(
-                        TranslationService.isArabic ? 'اختر الرواية المناسبة لك' : 'Choose your preferred Qira\'ah',
-                      ),
-                      trailing: DropdownButton<String>(
-                        value: _quranScriptType,
-                        underline: SizedBox(),
-                        icon: Icon(
-                          Icons.arrow_drop_down,
-                          color: Color(0xFFE5C158),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'hafs', child: Text('حفص عن عاصم (Hafs)')),
-                          DropdownMenuItem(value: 'warsh', child: Text('ورش عن نافع (Warsh)')),
-                          DropdownMenuItem(value: 'qaloon', child: Text('قالون عن نافع (Qalun)')),
-                          DropdownMenuItem(value: 'shuba', child: Text('شعبة عن عاصم (Shuba)')),
-                          DropdownMenuItem(value: 'duri', child: Text('الدوري عن أبي عمرو (Al-Duri)')),
-                          DropdownMenuItem(value: 'susi', child: Text('السوسي عن أبي عمرو (As-Susi)')),
-                          DropdownMenuItem(value: 'bazzi', child: Text('البزي عن ابن كثير (Al-Bazzi)')),
-                          DropdownMenuItem(value: 'qunbul', child: Text('قنبل عن ابن كثير (Qunbul)')),
-                          DropdownMenuItem(value: 'hisham', child: Text('هشام عن ابن عامر (Hisham)')),
-                          DropdownMenuItem(value: 'ibn-dhakwan', child: Text('ابن ذكوان عن ابن عامر (Ibn Dhakwan)')),
-                        ],
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _quranScriptType = newValue;
-                            });
-                            widget.storage.setString('quran_script_type', newValue);
-                          }
-                        },
-                      ),
-                    ),
-                    Divider(
-                      height: 1,
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                    ),
+
                     ListTile(
                       title: Text(
                         TranslationService.isArabic

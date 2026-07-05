@@ -465,12 +465,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
   TextStyle _getArabicTextStyle(double fontSize, {double? height, Color? color, FontWeight? fontWeight, Color? backgroundColor}) {
-    if (_quranScriptType == 'warsh') {
-      return TextStyle(fontFamily: 'Warsh', fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
-    } else if (_quranScriptType == 'qaloon') {
-      return TextStyle(fontFamily: 'Qalun', fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
-    }
-    
     final String selectedFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
     if (selectedFont == 'font-scheherazade') {
       return GoogleFonts.scheherazadeNew(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);

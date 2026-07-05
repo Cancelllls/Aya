@@ -193,6 +193,12 @@ class AudioManager {
     List<Ayah> ayahs,
     int index,
   ) async {
+    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+    if (quranScriptType != 'hafs') {
+      playSurah(surahNum, surahName, ayahs);
+      return;
+    }
+
     _cancelCrossfade();
     _surahNum = surahNum;
     _surahName = surahName;
@@ -287,6 +293,8 @@ class AudioManager {
     final localFile = File(localPath);
     final isOffline = await localFile.exists();
 
+    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+
     if (isOffline) {
       _currentPlaylist = [];
       _currentIndex = -1;
@@ -317,6 +325,52 @@ class AudioManager {
           subtitle: TranslationService.isArabic
               ? "تلاوة السورة كاملة (محملة)"
               : "Full Surah Recitation (Offline)",
+          isLoading: false,
+        );
+      } catch (e) {
+        playState.value = AudioPlayState(
+          surahNum: surahNum,
+          ayahNum: 0,
+          isPlaying: false,
+          title: surahName,
+          subtitle: TranslationService.isArabic
+              ? "فشل تشغيل الصوت: $e"
+              : "Playback failed: $e",
+          isLoading: false,
+        );
+      }
+    } else if (quranScriptType != 'hafs') {
+      _currentPlaylist = ayahs;
+      _currentIndex = -1;
+
+      playState.value = AudioPlayState(
+        surahNum: surahNum,
+        ayahNum: 0,
+        isPlaying: false,
+        title: surahName,
+        subtitle: TranslationService.isArabic
+            ? "جاري تحميل التلاوة..."
+            : "Loading recitation...",
+        isLoading: true,
+      );
+
+      try {
+        await _playerA.stop();
+        await _playerB.stop();
+        await _playerA.setVolume(1.0);
+        await _playerB.setVolume(1.0);
+
+        final url = ApiService.buildSurahAudioUrlForQiraat(surahNum, quranScriptType: quranScriptType);
+        await activePlayer.play(UrlSource(url));
+
+        playState.value = AudioPlayState(
+          surahNum: surahNum,
+          ayahNum: 0,
+          isPlaying: true,
+          title: surahName,
+          subtitle: TranslationService.isArabic
+              ? "تلاوة السورة كاملة"
+              : "Full Surah Recitation",
           isLoading: false,
         );
       } catch (e) {

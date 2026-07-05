@@ -569,4 +569,34 @@ class ApiService {
   }) {
     return 'https://cdn.islamic.network/quran/audio-surah/128/$reciter/$surahNumber.mp3';
   }
+
+  static String buildSurahAudioUrlForQiraat(
+    int surahNumber, {
+    String quranScriptType = 'hafs',
+    String reciter = 'ar.alafasy',
+  }) {
+    String surahPadded = surahNumber.toString().padLeft(3, '0');
+    switch (quranScriptType) {
+      case 'warsh':
+        return 'https://server11.mp3quran.net/warsh/yassin/$surahPadded.mp3';
+      case 'qaloon':
+        return 'https://server11.mp3quran.net/qalon/trabulsi/$surahPadded.mp3';
+      case 'shuba':
+        return 'https://server13.mp3quran.net/husr/Rewayat-Sho-bah-A-n-Asim/$surahPadded.mp3';
+      case 'duri':
+        return 'https://server13.mp3quran.net/husr/Rewayat-Ad-Duri-A-n-Abi-Amr/$surahPadded.mp3';
+      case 'susi':
+        return 'https://server11.mp3quran.net/sosi/$surahPadded.mp3';
+      case 'bazzi':
+        return 'https://server14.mp3quran.net/bazzi/$surahPadded.mp3';
+      case 'qunbul':
+        return 'https://server14.mp3quran.net/qonbol/$surahPadded.mp3';
+      case 'hisham':
+        return 'https://server14.mp3quran.net/hisham/$surahPadded.mp3';
+      case 'ibn-dhakwan':
+        return 'https://server14.mp3quran.net/ibn_thakwan/$surahPadded.mp3';
+      default:
+        return buildSurahAudioUrl(surahNumber, reciter: reciter);
+    }
+  }
 }
