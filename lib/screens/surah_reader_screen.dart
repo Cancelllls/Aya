@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import '../models/quran_models.dart';
 import '../services/api_service.dart';
+import '../services/local_quran_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/audio_manager.dart';
@@ -39,6 +40,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   double _baseFontSizeMultiplier = 1.0;
   String _readingMode =
       'translation'; // 'translation', 'arabic_only', 'tafseer', 'continuous'
+  String _quranScriptType = 'hafs';
   bool _isBookmarked = false;
   int? _bookmarkedAyahNumber;
   int? _lastScrolledAyah;
@@ -74,7 +76,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _currentSurah = widget.surah;
     _readingMode = widget.storage.getString(
       'reading_mode',
-      defaultValue: 'continuous',
+      defaultValue: 'translation',
+    );
+    _quranScriptType = widget.storage.getString(
+      'quran_script_type',
+      defaultValue: 'hafs',
     );
     _hideContinuousBorders = widget.storage.getBool(
       'setting_hide_continuous_borders',
@@ -205,7 +211,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               ? 'التفسير غير متوفر حالياً لهذه الآية.'
                               : 'Tafseer is not available for this verse.'),
                     textDirection: TextDirection.rtl,
-                    style: GoogleFonts.amiri(fontSize: 18, height: 1.8),
+                    style: _getArabicTextStyle(18, height: 1.8),
                   ),
                 ),
               ),
@@ -248,10 +254,19 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         'default_tafsir',
         defaultValue: 'ar.muyassar',
       );
-      final list = await ApiService.fetchSurahDetails(
-        _currentSurah.number,
-        tafsirEdition: tafsirEdition,
-      );
+      
+      List<Ayah> list;
+      if (_quranScriptType == 'hafs') {
+        list = await ApiService.fetchSurahDetails(
+          _currentSurah.number,
+          tafsirEdition: tafsirEdition,
+        );
+      } else {
+        list = await LocalQuranService.getSurahAyahs(
+          _currentSurah.number,
+          _quranScriptType,
+        );
+      }
       setState(() {
         _ayahList = list;
         _isLoading = false;
@@ -447,6 +462,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     }
 
     startSearch(0);
+  }
+
+  TextStyle _getArabicTextStyle(double fontSize, {double? height, Color? color, FontWeight? fontWeight, Color? backgroundColor}) {
+    if (_quranScriptType == 'warsh') {
+      return TextStyle(fontFamily: 'Warsh', fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
+    } else if (_quranScriptType == 'qaloon') {
+      return TextStyle(fontFamily: 'Qalun', fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
+    }
+    return GoogleFonts.amiri(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
   }
 
   void _changeFontSize(double delta) {
@@ -1084,8 +1108,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                                     ),
                                                 child: Text(
                                                   "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                                  style: GoogleFonts.amiri(
-                                                    fontSize: 30,
+                                                  style: _getArabicTextStyle(30,
                                                     color: const Color(
                                                       0xFFE5C158,
                                                     ),
@@ -1276,8 +1299,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   ayah.text,
                   textDirection: TextDirection.rtl,
                   textAlign: TextAlign.justify,
-                  style: GoogleFonts.amiri(
-                    fontSize: 22 * _fontSizeMultiplier,
+                  style: _getArabicTextStyle(22 * _fontSizeMultiplier,
                     height: 2.1,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1307,8 +1329,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             ? 'التفسير غير متوفر حالياً لهذه الآية.'
                             : 'Tafseer is not available for this verse.'),
                   textDirection: TextDirection.rtl,
-                  style: GoogleFonts.amiri(
-                    fontSize: 16 * _fontSizeMultiplier,
+                  style: _getArabicTextStyle(16 * _fontSizeMultiplier,
                     height: 1.8,
                   ),
                 ),
@@ -1354,8 +1375,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Text(
                       "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                      style: GoogleFonts.amiri(
-                        fontSize: 30,
+                      style: _getArabicTextStyle(30,
                         color: const Color(0xFFE5C158),
                         fontWeight: FontWeight.bold,
                       ),
@@ -1399,8 +1419,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               TextSpan(
                 text: "${ayah.text} ",
                 recognizer: recognizer,
-                style: GoogleFonts.amiri(
-                  fontSize: 22 * _fontSizeMultiplier,
+                style: _getArabicTextStyle(22 * _fontSizeMultiplier,
                   height: 2.1,
                   color: isHighlighted
                       ? const Color(0xFFE5C158)
@@ -1420,8 +1439,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             spans.add(
               TextSpan(
                 text: " ﴿${ayah.numberInSurah}﴾ ",
-                style: GoogleFonts.amiri(
-                  fontSize: 20,
+                style: _getArabicTextStyle(20,
                   color: const Color(0xFFE5C158),
                   fontWeight: FontWeight.bold,
                 ),

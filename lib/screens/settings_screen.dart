@@ -35,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
   String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-scheherazade';
+  String _quranScriptType = 'hafs';
   String _reciter = 'ar.alafasy';
   String _tafsirEdition = 'ar.muyassar';
 
@@ -87,6 +88,10 @@ class _SettingsScreenState extends State<SettingsScreen>
     _quranFont = widget.storage.getString(
       'quran_font',
       defaultValue: 'font-scheherazade',
+    );
+    _quranScriptType = widget.storage.getString(
+      'quran_script_type',
+      defaultValue: 'hafs',
     );
     _reciter = widget.storage.getString(
       'default_reciter',
@@ -1064,6 +1069,50 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ],
                           onChanged: _changeFont,
                         ),
+                      ),
+                    ),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.text_format,
+                        color: Color(0xFFE5C158),
+                      ),
+                      title: Text(TranslationService.isArabic ? 'نوع الرسم القرآني (الرواية)' : "Quranic Script (Qira'at)"),
+                      subtitle: Text(
+                        TranslationService.isArabic ? 'حفص، ورش، قالون' : 'Hafs, Warsh, Qalun',
+                      ),
+                      trailing: DropdownButton<String>(
+                        value: _quranScriptType,
+                        underline: SizedBox(),
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color: Color(0xFFE5C158),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'hafs',
+                            child: Text('حفص عن عاصم (Hafs)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'warsh',
+                            child: Text('ورش عن نافع (Warsh)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'qaloon',
+                            child: Text('قالون عن نافع (Qalun)'),
+                          ),
+                        ],
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _quranScriptType = newValue;
+                            });
+                            widget.storage.setString('quran_script_type', newValue);
+                          }
+                        },
                       ),
                     ),
                     Divider(
