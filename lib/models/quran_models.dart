@@ -51,6 +51,21 @@ const List<TafsirEdition> availableTafsirs = [
   ),
 ];
 
+class ReciterInfo {
+  final String id;
+  final String nameAr;
+  final String nameEn;
+  const ReciterInfo(this.id, this.nameAr, this.nameEn);
+}
+
+const List<ReciterInfo> availableReciters = [
+  ReciterInfo('ar.alafasy', 'مشاري العفاسي', 'Mishary Alafasy'),
+  ReciterInfo('ar.abdurrahmaansudais', 'عبد الرحمن السديس', 'Abdurrahman As-Sudais'),
+  ReciterInfo('ar.mahermuaiqly', 'ماهر المعيقلي', 'Maher Al-Muaiqly'),
+  ReciterInfo('ar.saadalghamidi', 'سعد الغامدي', 'Saad Al-Ghamdi'),
+];
+
+
 class Surah {
   final int number;
   final String name;
@@ -59,7 +74,7 @@ class Surah {
   final int numberOfAyahs;
   final String revelationType;
 
-  Surah({
+  const Surah({
     required this.number,
     required this.name,
     required this.englishName,
