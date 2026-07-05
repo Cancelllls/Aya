@@ -998,17 +998,17 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   Icons.arrow_drop_down,
                                   color: Color(0xFFE5C158),
                                 ),
-                                items: const [
-                                  DropdownMenuItem(value: 'hafs', child: Text('حفص عن عاصم (Hafs)')),
-                                  DropdownMenuItem(value: 'warsh', child: Text('ورش عن نافع (Warsh)')),
-                                  DropdownMenuItem(value: 'qaloon', child: Text('قالون عن نافع (Qalun)')),
-                                  DropdownMenuItem(value: 'shuba', child: Text('شعبة عن عاصم (Shuba)')),
-                                  DropdownMenuItem(value: 'duri', child: Text('الدوري عن أبي عمرو (Al-Duri)')),
-                                  DropdownMenuItem(value: 'susi', child: Text('السوسي عن أبي عمرو (As-Susi)')),
-                                  DropdownMenuItem(value: 'bazzi', child: Text('البزي عن ابن كثير (Al-Bazzi)')),
-                                  DropdownMenuItem(value: 'qunbul', child: Text('قنبل عن ابن كثير (Qunbul)')),
-                                  DropdownMenuItem(value: 'hisham', child: Text('هشام عن ابن عامر (Hisham)')),
-                                  DropdownMenuItem(value: 'ibn-dhakwan', child: Text('ابن ذكوان عن ابن عامر (Ibn Dhakwan)')),
+                                items: [
+                                  DropdownMenuItem(value: 'hafs', child: Text(TranslationService.isArabic ? 'حفص عن عاصم' : 'Hafs A\'n Assem')),
+                                  DropdownMenuItem(value: 'warsh', child: Text(TranslationService.isArabic ? 'ورش عن نافع' : 'Warsh A\'n Nafi\'')),
+                                  DropdownMenuItem(value: 'qaloon', child: Text(TranslationService.isArabic ? 'قالون عن نافع' : 'Qalun A\'n Nafi\'')),
+                                  DropdownMenuItem(value: 'shuba', child: Text(TranslationService.isArabic ? 'شعبة عن عاصم' : 'Shuba A\'n Assem')),
+                                  DropdownMenuItem(value: 'duri', child: Text(TranslationService.isArabic ? 'الدوري عن أبي عمرو' : 'Al-Duri A\'n Abi Amr')),
+                                  DropdownMenuItem(value: 'susi', child: Text(TranslationService.isArabic ? 'السوسي عن أبي عمرو' : 'As-Susi A\'n Abi Amr')),
+                                  DropdownMenuItem(value: 'bazzi', child: Text(TranslationService.isArabic ? 'البزي عن ابن كثير' : 'Al-Bazzi A\'n Ibn Katheer')),
+                                  DropdownMenuItem(value: 'qunbul', child: Text(TranslationService.isArabic ? 'قنبل عن ابن كثير' : 'Qunbul A\'n Ibn Katheer')),
+                                  DropdownMenuItem(value: 'hisham', child: Text(TranslationService.isArabic ? 'هشام عن ابن عامر' : 'Hisham A\'n Ibn Amir')),
+                                  DropdownMenuItem(value: 'ibn-dhakwan', child: Text(TranslationService.isArabic ? 'ابن ذكوان عن ابن عامر' : 'Ibn Dhakwan A\'n Ibn Amir')),
                                 ],
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
