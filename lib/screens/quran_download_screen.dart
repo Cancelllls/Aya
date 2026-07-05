@@ -261,8 +261,8 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
             tabs: [
               Tab(
                 text: TranslationService.isArabic
-                    ? "تلاوات وقرآن"
-                    : "Quran & Recitations",
+                    ? "التلاوات الصوتية"
+                    : "Audio Recitations",
               ),
               Tab(
                 text: TranslationService.isArabic
