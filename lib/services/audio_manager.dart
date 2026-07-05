@@ -208,7 +208,8 @@ class AudioManager {
     int index,
   ) async {
     final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
-    if (quranScriptType != 'hafs') {
+    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    if (quranScriptType != 'hafs' || reciter.startsWith('mp3quran_server_')) {
       playSurah(surahNum, surahName, ayahs);
       return;
     }
@@ -236,10 +237,6 @@ class AudioManager {
       isLoading: true,
     );
 
-    final reciter = _storage.getString(
-      'default_reciter',
-      defaultValue: 'ar.alafasy',
-    );
     final url = ApiService.buildAyahAudioUrl(
       ayah.number,
       surahNum,
@@ -363,7 +360,7 @@ class AudioManager {
           isLoading: false,
         );
       }
-    } else if (quranScriptType != 'hafs') {
+    } else if (quranScriptType != 'hafs' || reciter.startsWith('mp3quran_server_')) {
       _currentPlaylist = ayahs;
       _currentIndex = -1;
 
