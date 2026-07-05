@@ -477,9 +477,8 @@ class NotificationService {
     tz.initializeTimeZones();
     try {
       // ponytail: YAGNI external dependency for this simple string check
-      const platform = MethodChannel('com.quran.aya/system');
       final String timeZoneName =
-          await platform.invokeMethod<String>('getTimeZoneName') ?? 'UTC';
+          await const MethodChannel('com.quran.aya/system').invokeMethod<String>('getTimeZoneName') ?? 'UTC';
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (_) {
       timezoneFallbackToUtc = true;
@@ -664,7 +663,6 @@ class NotificationService {
     );
 
     int id = 1;
-    final List<Future<void>> scheduleFutures = [];
 
     for (final entry in prayersToSchedule.entries) {
       final name = entry.key;

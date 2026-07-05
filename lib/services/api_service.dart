@@ -5,11 +5,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, debugPrint;
 
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
-import 'storage_service.dart';
 
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
@@ -149,7 +148,7 @@ class ApiService {
         }
       }
       if (migrated) {
-        print("Migrated large JSONs from SharedPreferences to Files.");
+        debugPrint("Migrated large JSONs from SharedPreferences to Files.");
       }
     } catch (_) {}
   }

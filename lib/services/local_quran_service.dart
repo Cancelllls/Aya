@@ -3,23 +3,27 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../models/quran_models.dart';
 
 class LocalQuranService {
-  static List<dynamic>? _warshData;
-  static List<dynamic>? _qaloonData;
+  static final Map<String, List<dynamic>> _data = {};
 
-  static Future<void> _loadData() async {
-    if (_warshData == null) {
-      final warshStr = await rootBundle.loadString('assets/quran/warsh.json');
-      _warshData = json.decode(warshStr);
-    }
-    if (_qaloonData == null) {
-      final qaloonStr = await rootBundle.loadString('assets/quran/qaloon.json');
-      _qaloonData = json.decode(qaloonStr);
+  static Future<void> _loadData(String scriptType) async {
+    if (!_data.containsKey(scriptType)) {
+      try {
+        final jsonStr = await rootBundle.loadString('assets/quran/$scriptType.json');
+        _data[scriptType] = json.decode(jsonStr);
+      } catch (e) {
+        // Fallback to warsh if not found
+        if (!_data.containsKey('warsh')) {
+          final warshStr = await rootBundle.loadString('assets/quran/warsh.json');
+          _data['warsh'] = json.decode(warshStr);
+        }
+        _data[scriptType] = _data['warsh']!;
+      }
     }
   }
 
   static Future<List<Ayah>> getSurahAyahs(int surahNumber, String scriptType) async {
-    await _loadData();
-    List<dynamic> dataToUse = scriptType == 'warsh' ? _warshData! : _qaloonData!;
+    await _loadData(scriptType);
+    List<dynamic> dataToUse = _data[scriptType]!;
 
     final surahData = dataToUse.where((row) => row['sura_no'] == surahNumber).toList();
     List<Ayah> ayahs = [];
