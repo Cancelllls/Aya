@@ -277,6 +277,9 @@ class ApiService {
     String reciter = 'ar.alafasy',
     String quranScriptType = 'hafs',
   }) {
+    if (reciter.startsWith('mp3quran_server_')) {
+      return ''; // Not supported
+    }
     return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber/$ayahNumberInSurah.mp3';
   }
 
@@ -284,6 +287,11 @@ class ApiService {
     int surahNumber, {
     String reciter = 'ar.alafasy',
   }) {
+    if (reciter.startsWith('mp3quran_server_')) {
+      final server = reciter.substring(16);
+      final formattedNumber = surahNumber.toString().padLeft(3, '0');
+      return server.endsWith('/') ? '$server$formattedNumber.mp3' : '$server/$formattedNumber.mp3';
+    }
     return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber.mp3';
   }
 

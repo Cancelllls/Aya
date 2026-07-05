@@ -1902,70 +1902,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(TranslationService.t('qari')),
-                      subtitle: Text(TranslationService.t('qari_sub')),
-                      trailing: SizedBox(
-                        width: 160,
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _reciter,
-                          underline: SizedBox(),
-                          dropdownColor: theme.cardColor,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'ar.alafasy',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "مشاري العفاسي"
-                                      : "Mishary Alafasy",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.abdurrahmaansudais',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "عبد الرحمن السديس"
-                                      : "Abdurrahman As-Sudais",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.mahermuaiqly',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "ماهر المعيقلي"
-                                      : "Maher Al-Muaiqly",
-                                ),
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ar.saadalghamidi',
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  TranslationService.isArabic
-                                      ? "سعد الغامدي"
-                                      : "Saad Al-Ghamdi",
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: _changeReciter,
-                        ),
-                      ),
-                    ),
-                    Divider(
-                      height: 1,
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                    ),
+
                     SwitchListTile(
                       title: Text(TranslationService.t('continuous_rec_label')),
                       subtitle: Text(

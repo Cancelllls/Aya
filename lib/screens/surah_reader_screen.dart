@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -53,10 +55,63 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   bool _isAutoScrollPaused = false;
   bool _hideContinuousBorders = false;
 
+  bool _isLoadingReciters = false;
+  List<dynamic> _dynamicReciters = [];
+
+
   final AutoScrollController _scrollController = AutoScrollController();
   final Map<int, GlobalKey> _ayahKeys = {};
   final Map<int, GlobalKey> _pageKeys = {};
   final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};
+
+  
+  Future<void> _fetchDynamicReciters(String scriptType) async {
+    if (scriptType == 'hafs') {
+      if (mounted) setState(() { _dynamicReciters = []; });
+      return;
+    }
+    
+    // Map script type to mp3quran riwayah id
+    int riwayahId = 1;
+    switch (scriptType) {
+      case 'warsh': riwayahId = 2; break;
+      case 'qaloon': riwayahId = 5; break;
+      case 'shuba': riwayahId = 15; break;
+      case 'duri': riwayahId = 13; break;
+      case 'susi': riwayahId = 7; break;
+      case 'bazzi': riwayahId = 4; break;
+      case 'qunbul': riwayahId = 6; break;
+      case 'hisham': riwayahId = 19; break;
+      case 'ibn-dhakwan': riwayahId = 16; break;
+    }
+
+    if (mounted) setState(() => _isLoadingReciters = true);
+    try {
+      final lang = TranslationService.isArabic ? 'ar' : 'eng';
+      final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId'));
+      if (res.statusCode == 200) {
+        final data = json.decode(utf8.decode(res.bodyBytes));
+        if (mounted) {
+          setState(() {
+            _dynamicReciters = data['reciters'] ?? [];
+            _isLoadingReciters = false;
+            
+            // Set first dynamic reciter as default if none selected or if current is invalid
+            final currentReciter = widget.storage.getString('default_reciter') ?? '';
+            if (!currentReciter.startsWith('mp3quran_server_') && _dynamicReciters.isNotEmpty) {
+              final moshaf = _dynamicReciters[0]['moshaf'] as List;
+              if (moshaf.isNotEmpty) {
+                final server = moshaf[0]['server'] as String;
+                widget.storage.setString('default_reciter', 'mp3quran_server_$server');
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingReciters = false);
+    }
+  }
 
   @override
   void initState() {
@@ -95,6 +150,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       defaultValue: 1.0,
     );
     _loadAyahs();
+    _fetchDynamicReciters(_quranScriptType);
     _checkBookmarkStatus();
     _loadAllSurahs();
     AudioManager.instance.playState.addListener(_onPlayStateChanged);
@@ -119,6 +175,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       _pageRecognizers.clear();
     });
     _loadAyahs();
+    _fetchDynamicReciters(_quranScriptType);
     _checkBookmarkStatus();
   }
 
@@ -252,7 +309,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     final hideDisclaimer = widget.storage.getBool('hide_full_surah_disclaimer', defaultValue: false);
     
     if (supportsAyahSync || hideDisclaimer) {
-      if (ayahIndex != null) {
+      if (ayahIndex != null && supportsAyahSync) {
         AudioManager.instance.playAyah(
           _currentSurah.number,
           _currentSurah.englishName,
@@ -326,7 +383,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                       await widget.storage.setBool('hide_full_surah_disclaimer', true);
                     }
                     if (context.mounted) Navigator.pop(context);
-                    if (ayahIndex != null) {
+                    if (ayahIndex != null && supportsAyahSync) {
                       AudioManager.instance.playAyah(
                         _currentSurah.number,
                         _currentSurah.englishName,
@@ -991,6 +1048,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       ?.withOpacity(0.8),
                                 ),
                               ),
+                              
                               DropdownButton<String>(
                                 value: _quranScriptType,
                                 underline: SizedBox(),
@@ -1019,10 +1077,88 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       _quranScriptType = newValue;
                                     });
                                     widget.storage.setString('quran_script_type', newValue);
+                                    
+                                    // Switch reciter
+                                    if (newValue == 'hafs') {
+                                      widget.storage.setString('default_reciter', 'ar.alafasy');
+                                    }
+                                    
+                                    _fetchDynamicReciters(newValue);
                                     _loadAyahs();
                                   }
                                 },
                               ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                TranslationService.isArabic ? 'القارئ' : 'Reciter',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                                ),
+                              ),
+                              if (_isLoadingReciters)
+                                const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158)),
+                                )
+                              else if (_quranScriptType == 'hafs')
+                                DropdownButton<String>(
+                                  value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
+                                  underline: SizedBox(),
+                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                  items: availableReciters.map((r) {
+                                    return DropdownMenuItem(
+                                      value: r.id,
+                                      child: Text(TranslationService.isArabic ? r.nameAr : r.nameEn),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setModalState(() {});
+                                      setState(() {});
+                                      widget.storage.setString('default_reciter', val);
+                                    }
+                                  }
+                                )
+                              else
+                                DropdownButton<String>(
+                                  value: (() {
+                                    final current = widget.storage.getString('default_reciter') ?? '';
+                                    if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
+                                    final serverCurrent = current.substring(16);
+                                    final match = _dynamicReciters.where((r) {
+                                      final moshaf = r['moshaf'] as List;
+                                      if (moshaf.isEmpty) return false;
+                                      return (moshaf[0]['server'] as String) == serverCurrent;
+                                    }).toList();
+                                    return match.isNotEmpty ? serverCurrent : null;
+                                  })(),
+                                  underline: SizedBox(),
+                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                  items: _dynamicReciters.map((r) {
+                                    final moshaf = r['moshaf'] as List;
+                                    if (moshaf.isEmpty) return null;
+                                    final server = moshaf[0]['server'] as String;
+                                    return DropdownMenuItem(
+                                      value: server,
+                                      child: Text(r['name'] as String),
+                                    );
+                                  }).whereType<DropdownMenuItem<String>>().toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setModalState(() {});
+                                      setState(() {});
+                                      widget.storage.setString('default_reciter', 'mp3quran_server_$val');
+                                    }
+                                  }
+                                ),
+
                             ],
                           ),
                           SizedBox(height: 20),
