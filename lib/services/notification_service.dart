@@ -130,9 +130,6 @@ void backgroundPreAdhanCallback(int id) async {
     if (alertMode == 'voice' || alertMode == 'vibrate_and_voice') {
       final isAr = TranslationService.currentLanguage == 'ar';
       final lang = isAr ? 'ar' : 'en';
-      final dir = await getApplicationDocumentsDirectory();
-      final localPath = '${dir.path}/pre_adhan_audio/pre_adhan_${lang}_v2.mp3';
-      final localFile = File(localPath);
       final player = AudioPlayer();
       await player.setAudioContext(
         AudioContext(
@@ -147,15 +144,12 @@ void backgroundPreAdhanCallback(int id) async {
           ),
         ),
       );
-      if (await localFile.exists()) {
-        await player.play(DeviceFileSource(localPath));
-      } else {
-        final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
-        if (urls != null) {
-          final url = urls[lang];
-          if (url != null) {
-            await player.play(UrlSource(url));
-          }
+      
+      final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
+      if (urls != null) {
+        final filename = urls[lang];
+        if (filename != null) {
+          await player.play(AssetSource('audio/adhan/$filename'));
         }
       }
 
@@ -207,14 +201,14 @@ void backgroundAdhanCallback(int id) async {
         defaultValue: isFajr ? 'mishary' : 'mishary',
       );
 
-      String url = '';
+      String filename = '';
 
       if (isFajr) {
-        url =
+        filename =
             AdhanAudioService.fajrReciterUrls[reciter] ??
             AdhanAudioService.fajrReciterUrls['mishary']!;
       } else {
-        url =
+        filename =
             AdhanAudioService.standardReciterUrls[reciter] ??
             AdhanAudioService.standardReciterUrls['mishary']!;
       }
@@ -258,24 +252,7 @@ void backgroundAdhanCallback(int id) async {
         if (!completer.isCompleted) completer.complete();
       });
 
-      // Try playing offline first
-      final dir = await getApplicationDocumentsDirectory();
-      final localPath =
-          '${dir.path}/adhan_audio/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
-      final localFile = File(localPath);
-      if (await localFile.exists()) {
-        await player.play(DeviceFileSource(localPath));
-      } else {
-        await player.play(UrlSource(url));
-        // Download it in the background for next time
-        try {
-          await localFile.parent.create(recursive: true);
-          final response = await http.get(Uri.parse(url));
-          if (response.statusCode == 200) {
-            await localFile.writeAsBytes(response.bodyBytes);
-          }
-        } catch (_) {}
-      }
+      await player.play(AssetSource('audio/adhan/$filename'));
 
       await completer.future;
     }
@@ -339,105 +316,6 @@ class NotificationService {
     }
   }
 
-  static Future<void> downloadAllAthanFiles() async {
-    final reciters = [
-      'mishary',
-      'abdul_basit',
-      'madinah',
-      'kazabri',
-      'riad',
-      'manssour',
-      'nakshabandi',
-      'maghriby',
-    ];
-    final client = http.Client();
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final folder = Directory('${dir.path}/adhan_audio');
-      if (!await folder.exists()) {
-        await folder.create(recursive: true);
-      }
-
-      for (final reciter in reciters) {
-        for (final isFajr in [true, false]) {
-          final localPath =
-              '${folder.path}/${reciter}_${isFajr ? 'fajr' : 'standard'}.mp3';
-          final localFile = File(localPath);
-          if (await localFile.exists()) {
-            continue;
-          }
-
-          String url = '';
-          const String fpBase =
-              'https://raw.githubusercontent.com/Five-Prayers/five-prayers-android/main/app/src/main/res/raw';
-          if (isFajr) {
-            switch (reciter) {
-              case 'mishary':
-                url = '$fpBase/adhan_fajr_meshary_al_fasy_kuwait.mp3';
-                break;
-              case 'abdul_basit':
-                url = '$fpBase/adhan_fajr_abdelbasset_abdessamad_egypte.mp3';
-                break;
-              case 'madinah':
-                url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
-                break;
-              case 'kazabri':
-                url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
-                break;
-              case 'riad':
-                url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
-                break;
-              case 'manssour':
-                url = '$fpBase/adhan_manssour_el_zahrani.mp3';
-                break;
-              case 'nakshabandi':
-                url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
-                break;
-              case 'maghriby':
-                url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
-                break;
-            }
-          } else {
-            switch (reciter) {
-              case 'mishary':
-                url = '$fpBase/adhan_meshary_al_fasy_kuwait.mp3';
-                break;
-              case 'abdul_basit':
-                url = '$fpBase/adhan_abdelbasset_abdessamad_egypte.mp3';
-                break;
-              case 'madinah':
-                url = '$fpBase/adhan_fajr_al_haram_el_madani_saoudia.mp3';
-                break;
-              case 'kazabri':
-                url = '$fpBase/adhan_omar_al_kazabri_morocco.mp3';
-                break;
-              case 'riad':
-                url = '$fpBase/adhan_riad_al_djazairi_algeria.mp3';
-                break;
-              case 'manssour':
-                url = '$fpBase/adhan_manssour_el_zahrani.mp3';
-                break;
-              case 'nakshabandi':
-                url = '$fpBase/adhan_sayed_al_nakshabandi_egypte.mp3';
-                break;
-              case 'maghriby':
-                url = '$fpBase/adhan_nurdin_hamza_al_maghriby_quds.mp3';
-                break;
-            }
-          }
-
-          try {
-            final response = await client.get(Uri.parse(url));
-            if (response.statusCode == 200) {
-              await localFile.writeAsBytes(response.bodyBytes);
-            }
-          } catch (_) {}
-        }
-      }
-    } finally {
-      client.close();
-    }
-  }
 
   Future<void> scheduleHijriEventReminder({
     required int id,

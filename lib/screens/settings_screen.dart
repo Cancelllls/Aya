@@ -301,7 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
       if (val == 'voice' || val == 'vibrate_and_voice') {
-        await _autoDownloadPreAdhanVoice();
+
       }
       await _rescheduleAlarms();
     }
@@ -314,7 +314,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('adhan_alert_mode', val);
       if (val == 'real_reciter' || val == 'vibrate_and_voice') {
-        await _autoDownloadReciterAudio(_adhanReciter);
+
       }
       await _rescheduleAlarms();
     }
@@ -326,107 +326,12 @@ class _SettingsScreenState extends State<SettingsScreen>
         _adhanReciter = val;
       });
       await widget.storage.setString('adhan_reciter', val);
-      await _autoDownloadReciterAudio(val);
+
       await _rescheduleAlarms();
 
       // Auto-play the newly selected reciter
       await AdhanAudioService.instance.stopPreview();
       await AdhanAudioService.instance.playPreview(val);
-    }
-  }
-
-  Future<void> _autoDownloadReciterAudio(String reciterId) async {
-    final isDownloaded = await AdhanAudioService.instance.isReciterDownloaded(
-      reciterId,
-    );
-    if (!isDownloaded) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  TranslationService.isArabic
-                      ? 'جاري تنزيل صوت المؤذن...'
-                      : 'Downloading reciter audio...',
-                ),
-              ],
-            ),
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-      final success = await AdhanAudioService.instance.downloadReciterAudio(
-        reciterId,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success
-                  ? (TranslationService.isArabic
-                        ? 'تم تنزيل صوت المؤذن ✓'
-                        : 'Reciter audio downloaded ✓')
-                  : (TranslationService.isArabic
-                        ? 'فشل التنزيل، سيتم التنزيل عند الأذان'
-                        : 'Download failed, will retry at athan time'),
-            ),
-            backgroundColor: success ? Colors.green : Colors.orangeAccent,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _autoDownloadPreAdhanVoice() async {
-    final isDownloaded = await AdhanAudioService.instance
-        .isPreAdhanDownloaded();
-    if (!isDownloaded) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  TranslationService.isArabic
-                      ? 'جاري تنزيل التنبيه الصوتي...'
-                      : 'Downloading pre-adhan voice alert...',
-                ),
-              ],
-            ),
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-      final success = await AdhanAudioService.instance.downloadPreAdhanVoice();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success
-                  ? (TranslationService.isArabic
-                        ? 'تم تنزيل التنبيه الصوتي ✓'
-                        : 'Pre-adhan voice alert downloaded ✓')
-                  : (TranslationService.isArabic
-                        ? 'فشل التنزيل، سيتم التنزيل عند التنبيه'
-                        : 'Download failed, will retry at alert time'),
-            ),
-            backgroundColor: success ? Colors.green : Colors.orangeAccent,
-          ),
-        );
-      }
     }
   }
 
@@ -2618,33 +2523,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _buildDownloadStatusIcon(String reciterId) {
-    return ValueListenableBuilder<Map<String, DownloadStatus>>(
-      valueListenable: AdhanAudioService.instance.downloadStates,
-      builder: (context, states, child) {
-        final status = states[reciterId] ?? DownloadStatus.notDownloaded;
-        switch (status) {
-          case DownloadStatus.downloaded:
-            return Icon(Icons.check_circle, color: Colors.green, size: 16);
-          case DownloadStatus.downloading:
-            return SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE5C158)),
-              ),
-            );
-          case DownloadStatus.notDownloaded:
-            return Icon(
-              Icons.cloud_download,
-              color: Colors.orangeAccent,
-              size: 16,
-            );
-        }
-      },
-    );
-  }
+
 
   Widget _buildSectionHeader(String title) {
     return Padding(

@@ -216,7 +216,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   void _finishOnboarding() async {
     await widget.storage.setBool('first_time_v2', false);
-    unawaited(NotificationService.downloadAllAthanFiles());
+
     widget.onComplete();
   }
 
