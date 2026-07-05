@@ -689,7 +689,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     return "$juzText • $hizbText";
   }
 
-  Widget _buildHizbDivider(int hizb) {
+  Widget _buildHizbDivider(int hizb, int juz) {
+    if (hizb == 0 && juz == 0) return const SizedBox.shrink();
+    
+    final text = hizb == 0 
+        ? "${TranslationService.t('juz')} $juz" 
+        : "${TranslationService.t('hizb')} $hizb";
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
       child: Row(
@@ -716,7 +721,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 ),
               ),
               child: Text(
-                "${TranslationService.t('hizb')} $hizb",
+                text,
                 style: TextStyle(
                   color: Color(0xFFE5C158),
                   fontWeight: FontWeight.bold,
@@ -1270,13 +1275,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                             final showHizbHeader =
                                                 index == 1 ||
                                                 (index > 1 &&
-                                                    ayah.hizb !=
-                                                        _ayahList[index - 2]
-                                                            .hizb);
+                                                    ayah.hizb != 0 && 
+                                                    ayah.hizb != _ayahList[index - 2].hizb) ||
+                                                (index > 1 &&
+                                                    ayah.hizb == 0 &&
+                                                    ayah.juz != _ayahList[index - 2].juz);
                                             return Column(
                                               children: [
                                                 if (showHizbHeader)
-                                                  _buildHizbDivider(ayah.hizb),
+                                                  _buildHizbDivider(ayah.hizb, ayah.juz),
                                                 _buildAyahCard(
                                                   ayah,
                                                   theme,
@@ -1591,14 +1598,20 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           }
 
           final int firstHizb = chunk.isNotEmpty ? chunk.first.hizb : 0;
+          final int firstJuz = chunk.isNotEmpty ? chunk.first.juz : 0;
+          
           final bool showHizbHeader =
               pageIndex == 0 ||
               (pageIndex > 0 &&
-                  firstHizb != _ayahList[(pageIndex * chunkSize) - 1].hizb);
+                  firstHizb != 0 &&
+                  firstHizb != _ayahList[(pageIndex * chunkSize) - 1].hizb) ||
+              (pageIndex > 0 &&
+                  firstHizb == 0 &&
+                  firstJuz != _ayahList[(pageIndex * chunkSize) - 1].juz);
 
           return Column(
             children: [
-              if (showHizbHeader && firstHizb > 0) _buildHizbDivider(firstHizb),
+              if (showHizbHeader && (firstHizb > 0 || firstJuz > 0)) _buildHizbDivider(firstHizb, firstJuz),
               Container(
                 key: key,
                 margin: EdgeInsets.symmetric(
