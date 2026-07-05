@@ -63,7 +63,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   final Map<int, GlobalKey> _ayahKeys = {};
   final Map<int, GlobalKey> _pageKeys = {};
   final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};
-
+  double? _horizontalDragStartX;
   
   Future<void> _fetchDynamicReciters(String scriptType) async {
     if (scriptType == 'hafs') {
@@ -1218,14 +1218,25 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
+        onHorizontalDragStart: (details) {
+          _horizontalDragStartX = details.globalPosition.dx;
+        },
         onHorizontalDragEnd: (details) {
           if (!_swipeSurahNavigation) return;
+          if (_horizontalDragStartX != null) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            if (_horizontalDragStartX! < 40 || _horizontalDragStartX! > screenWidth - 40) {
+              _horizontalDragStartX = null;
+              return; 
+            }
+          }
           if (details.primaryVelocity == null) return;
           if (details.primaryVelocity! > 150) {
             _goToNextSurah();
           } else if (details.primaryVelocity! < -150) {
             _goToPrevSurah();
           }
+          _horizontalDragStartX = null;
         },
         onScaleStart: (details) {
           _baseFontSizeMultiplier = _fontSizeMultiplier;

@@ -1053,14 +1053,15 @@ class _MainScaffoldState extends State<MainScaffold>
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 10.0,
+                              
+                              vertical: 6.0,
+                              horizontal: 12.0,
                             ),
                         child: Row(
                           children: [
                             Container(
-                              width: 40,
-                              height: 40,
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
@@ -1075,7 +1076,7 @@ class _MainScaffoldState extends State<MainScaffold>
                               child: const Icon(
                                 Icons.music_note,
                                 color: Colors.black,
-                                size: 20,
+                                size: 18,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -1103,27 +1104,115 @@ class _MainScaffoldState extends State<MainScaffold>
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                                  const SizedBox(height: 4),
+                                  ValueListenableBuilder<Duration>(
+                                    valueListenable: AudioManager.instance.durationNotifier,
+                                    builder: (context, duration, child) {
+                                      return ValueListenableBuilder<Duration>(
+                                        valueListenable: AudioManager.instance.positionNotifier,
+                                        builder: (context, position, child) {
+                                          final pos = position.inMilliseconds.toDouble();
+                                          final dur = duration.inMilliseconds.toDouble();
+                                          final maxVal = dur > 0 ? dur : 1.0;
+                                          final safePos = pos > maxVal ? maxVal : pos;
+                                          
+                                          String _format(Duration d) {
+                                            String twoDigits(int n) => n.toString().padLeft(2, "0");
+                                            String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
+                                            String twoDigitSeconds = twoDigits(d.inSeconds.remainder(60));
+                                            if (d.inHours > 0) return "${d.inHours}:$twoDigitMinutes:$twoDigitSeconds";
+                                            return "$twoDigitMinutes:$twoDigitSeconds";
+                                          }
+
+                                          return Row(
+                                            children: [
+                                              Text(
+                                                _format(position),
+                                                style: TextStyle(fontSize: 10, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                                              ),
+                                              Expanded(
+                                                child: SliderTheme(
+                                                  data: SliderTheme.of(context).copyWith(
+                                                    trackHeight: 2.0,
+                                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 4.0),
+                                                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 10.0),
+                                                  ),
+                                                  child: Slider(
+                                                    value: safePos,
+                                                    min: 0,
+                                                    max: maxVal,
+                                                    activeColor: const Color(0xFFE5C158),
+                                                    inactiveColor: const Color(0xFFE5C158).withOpacity(0.3),
+                                                    onChanged: (val) {
+                                                      AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
+                                                    },
+                                                    onChangeEnd: (val) {
+                                                      AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                _format(duration),
+                                                style: TextStyle(fontSize: 10, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
+                            
+                            IconButton(
+                              icon: Icon(
+                                Icons.replay_10,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                size: 22,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => AudioManager.instance.seekBy(const Duration(seconds: -10)),
+                            ),
+                            const SizedBox(width: 12),
                             IconButton(
                               icon: Icon(
                                 audioState.isPlaying
                                     ? Icons.pause
                                     : Icons.play_arrow,
                                 color: isDark ? const Color(0xFFE5C158) : theme.primaryColor,
+                                size: 26,
                               ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                               onPressed: () =>
                                   AudioManager.instance.togglePlayPause(),
                             ),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              icon: Icon(
+                                Icons.forward_10,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                size: 22,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => AudioManager.instance.seekBy(const Duration(seconds: 10)),
+                            ),
+                            const SizedBox(width: 12),
                             IconButton(
                               icon: Icon(
                                 Icons.close,
                                 size: 18,
                                 color: isDark ? Colors.white60 : Colors.black54,
                               ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                               onPressed: () => AudioManager.instance.stop(),
                             ),
+
                           ],
                         ),
                       ),

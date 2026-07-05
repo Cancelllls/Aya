@@ -54,6 +54,10 @@ class AudioManager {
   final ValueNotifier<AudioPlayState> playState = ValueNotifier(
     AudioPlayState(),
   );
+  
+  final ValueNotifier<Duration> positionNotifier = ValueNotifier(Duration.zero);
+  final ValueNotifier<Duration> durationNotifier = ValueNotifier(Duration.zero);
+
 
   List<Ayah> _currentPlaylist = [];
   int _currentIndex = -1;
@@ -110,10 +114,12 @@ class AudioManager {
     p.onDurationChanged.listen((d) {
       if (p == activePlayer) {
         _currentDuration = d;
+        durationNotifier.value = d;
       }
     });
 
     p.onPositionChanged.listen((pos) {
+      if (p == activePlayer) positionNotifier.value = pos;
       if (p != activePlayer || _isTransitioning) return;
 
       final dur = _currentDuration;
@@ -249,6 +255,8 @@ class AudioManager {
       await _playerB.stop();
       await _playerA.setVolume(1.0);
       await _playerB.setVolume(1.0);
+      positionNotifier.value = Duration.zero;
+      durationNotifier.value = Duration.zero;
 
       if (isOffline) {
         await activePlayer.play(DeviceFileSource(localPath));
@@ -328,6 +336,8 @@ class AudioManager {
         await _playerB.stop();
         await _playerA.setVolume(1.0);
         await _playerB.setVolume(1.0);
+      positionNotifier.value = Duration.zero;
+      durationNotifier.value = Duration.zero;
         await activePlayer.play(DeviceFileSource(localPath));
 
         playState.value = AudioPlayState(
@@ -372,6 +382,8 @@ class AudioManager {
         await _playerB.stop();
         await _playerA.setVolume(1.0);
         await _playerB.setVolume(1.0);
+      positionNotifier.value = Duration.zero;
+      durationNotifier.value = Duration.zero;
 
         final url = ApiService.buildSurahAudioUrlForQiraat(surahNum, quranScriptType: quranScriptType);
         await activePlayer.play(UrlSource(url));
@@ -563,13 +575,36 @@ class AudioManager {
     }
   }
 
+  Future<void> seekTo(Duration position) async {
+    await activePlayer.seek(position);
+  }
+
+  Future<void> seekBy(Duration offset) async {
+    final currentPos = await activePlayer.getCurrentPosition();
+    if (currentPos != null) {
+      var newPos = currentPos + offset;
+      if (newPos < Duration.zero) newPos = Duration.zero;
+      
+      final maxDur = await activePlayer.getDuration();
+      if (maxDur != null && newPos > maxDur) {
+        newPos = maxDur;
+      }
+      
+      await activePlayer.seek(newPos);
+    }
+  }
+
   void stop() async {
     _cancelCrossfade();
     await _playerA.stop();
     await _playerB.stop();
     await _playerA.setVolume(1.0);
     await _playerB.setVolume(1.0);
+      positionNotifier.value = Duration.zero;
+      durationNotifier.value = Duration.zero;
     playState.value = AudioPlayState();
+    positionNotifier.value = Duration.zero;
+    durationNotifier.value = Duration.zero;
     _currentPlaylist = [];
     _currentIndex = -1;
   }
