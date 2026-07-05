@@ -63,6 +63,19 @@ const List<ReciterInfo> availableReciters = [
   ReciterInfo('ar.abdurrahmaansudais', 'عبد الرحمن السديس', 'Abdurrahman As-Sudais'),
   ReciterInfo('ar.mahermuaiqly', 'ماهر المعيقلي', 'Maher Al-Muaiqly'),
   ReciterInfo('ar.saadalghamidi', 'سعد الغامدي', 'Saad Al-Ghamdi'),
+  ReciterInfo('ar.abdullahbasfar', 'عبد الله بصفر', 'Abdullah Basfar'),
+  ReciterInfo('ar.abdulsamad', 'عبدالباسط عبدالصمد', 'Abdul Samad'),
+  ReciterInfo('ar.shaatree', 'أبو بكر الشاطري', 'Abu Bakr Ash-Shaatree'),
+  ReciterInfo('ar.ahmedajamy', 'أحمد بن علي العجمي', 'Ahmed ibn Ali al-Ajamy'),
+  ReciterInfo('ar.hanirifai', 'هاني الرفاعي', 'Hani Rifai'),
+  ReciterInfo('ar.husary', 'محمود خليل الحصري', 'Husary'),
+  ReciterInfo('ar.husarymujawwad', 'محمود خليل الحصري (المجود)', 'Husary (Mujawwad)'),
+  ReciterInfo('ar.hudhaify', 'علي بن عبدالرحمن الحذيفي', 'Hudhaify'),
+  ReciterInfo('ar.ibrahimakhbar', 'إبراهيم الأخضر', 'Ibrahim Akhdar'),
+  ReciterInfo('ar.muhammadayyoub', 'محمد أيوب', 'Muhammad Ayyoub'),
+  ReciterInfo('ar.muhammadjibreel', 'محمد جبريل', 'Muhammad Jibreel'),
+  ReciterInfo('ar.saoodshuraym', 'سعود الشريم', 'Saood bin Ibraaheem Ash-Shuraym'),
+  ReciterInfo('ar.aymanswoaid', 'أيمن سويد', 'Ayman Sowaid'),
 ];
 
 
