@@ -1146,8 +1146,12 @@ class _MainScaffoldState extends State<MainScaffold>
                                                     onChanged: (val) {
                                                       AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
                                                     },
-                                                    onChangeEnd: (val) {
-                                                      AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
+                                                    onChangeStart: (val) {
+                                                      AudioManager.instance.isSeeking = true;
+                                                    },
+                                                    onChangeEnd: (val) async {
+                                                      await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
+                                                      AudioManager.instance.isSeeking = false;
                                                     },
                                                   ),
                                                 ),

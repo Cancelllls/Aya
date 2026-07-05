@@ -57,6 +57,7 @@ class AudioManager {
   
   final ValueNotifier<Duration> positionNotifier = ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> durationNotifier = ValueNotifier(Duration.zero);
+  bool isSeeking = false;
 
 
   List<Ayah> _currentPlaylist = [];
@@ -119,7 +120,7 @@ class AudioManager {
     });
 
     p.onPositionChanged.listen((pos) {
-      if (p == activePlayer) positionNotifier.value = pos;
+      if (p == activePlayer && !isSeeking) positionNotifier.value = pos;
       if (p != activePlayer || _isTransitioning) return;
 
       final dur = _currentDuration;
@@ -385,7 +386,7 @@ class AudioManager {
       positionNotifier.value = Duration.zero;
       durationNotifier.value = Duration.zero;
 
-        final url = ApiService.buildSurahAudioUrlForQiraat(surahNum, quranScriptType: quranScriptType);
+        final url = ApiService.buildSurahAudioUrlForQiraat(surahNum, quranScriptType: quranScriptType, reciter: reciter);
         await activePlayer.play(UrlSource(url));
 
         playState.value = AudioPlayState(
