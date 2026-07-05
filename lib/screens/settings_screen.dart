@@ -11,6 +11,7 @@ import 'quran_download_screen.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../services/adhan_audio_service.dart';
 import 'about_screen.dart';
+import 'qiraat_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final StorageService storage;
@@ -2149,6 +2150,35 @@ class _SettingsScreenState extends State<SettingsScreen>
                           MaterialPageRoute(
                             builder: (context) =>
                                 QuranDownloadScreen(storage: widget.storage),
+                          ),
+                        );
+                      },
+                    ),
+                    Divider(height: 1, color: (Theme.of(context).dividerColor).withOpacity(0.1)),
+                    ListTile(
+                      leading: Icon(
+                        Icons.record_voice_over,
+                        color: Color(0xFFE5C158),
+                      ),
+                      title: Text(TranslationService.isArabic ? 'تلاوات القراءات' : "Qira'at Recitations"),
+                      subtitle: Text(
+                        TranslationService.isArabic ? 'الاستماع للروايات المختلفة مثل ورش وقالون' : 'Listen to different readings like Warsh and Qalun',
+                      ),
+                      trailing: Icon(
+                        TranslationService.isArabic
+                            ? Icons.arrow_back_ios
+                            : Icons.arrow_forward_ios,
+                        size: 14,
+                        color:
+                            (Theme.of(context).textTheme.bodyMedium?.color ??
+                                    Colors.white)
+                                .withOpacity(0.3),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const QiraatScreen(),
                           ),
                         );
                       },
