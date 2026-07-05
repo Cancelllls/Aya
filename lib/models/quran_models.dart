@@ -397,34 +397,38 @@ class Ayah {
     if (globalNumber >= 1 && globalNumber <= 7) return text;
     
     String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
-    final basmalahs = [
-      "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
-      "بِسْمِ ٱللَّهِ ٱلرَّحْمَنِ ٱلرَّحِيمِ",
-      "بِسْمِ ٱللهِ ٱلرَّحْمَنِ ٱلرَّحِيمِ",
-      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ",
-      "بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ",
-      "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
-      "بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    ];
-    for (final basmalah in basmalahs) {
-      if (t.startsWith(basmalah)) {
-        if (t.trim() == basmalah) {
-          return t;
-        }
-        return t.substring(basmalah.length).trim();
-      }
+    
+    String stripDiacritics(String s) {
+      return s.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
     }
     
-    // Fallback: If it still contains Bismillah (maybe different diacritics)
-    if (t.contains('بِسْمِ') && t.contains('الرَّحِيمِ') && t.indexOf('الرَّحِيمِ') < 60) {
-      final idx = t.indexOf('الرَّحِيمِ') + 'الرَّحِيمِ'.length;
-      if (idx < t.length) {
-         final remainder = t.substring(idx).trim();
-         // Only strip if remainder has actual content to avoid returning empty text
-         if (remainder.isNotEmpty && remainder.length > 2) {
-             return remainder;
-         }
+    final normalized = stripDiacritics(t);
+    final bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
+    final fullyNormalized = normalized.replaceAll('ٱ', 'ا'); // Normalize Alif Wasla
+    
+    if (fullyNormalized.startsWith(bismillahNoTashkeel)) {
+      int charsToSkip = bismillahNoTashkeel.length;
+      int originalIndex = 0;
+      int nonDiacriticCount = 0;
+      
+      while (originalIndex < t.length && nonDiacriticCount < charsToSkip) {
+        if (!RegExp(r'[\u064B-\u065F\u0670]').hasMatch(t[originalIndex])) {
+          nonDiacriticCount++;
+        }
+        originalIndex++;
+      }
+      
+      // Consume trailing diacritics of the last skipped letter
+      while (originalIndex < t.length && RegExp(r'[\u064B-\u065F\u0670]').hasMatch(t[originalIndex])) {
+        originalIndex++;
+      }
+      
+      if (originalIndex < t.length) {
+        final remainder = t.substring(originalIndex).trim();
+        // Return remainder only if it's not empty, to prevent returning empty Ayahs
+        if (remainder.isNotEmpty && remainder.length >= 2) {
+           return remainder;
+        }
       }
     }
     return t;
