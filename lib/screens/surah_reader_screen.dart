@@ -1244,7 +1244,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         onScaleUpdate: (details) {
           if (details.scale == 1.0) return;
           setState(() {
-            _fontSizeMultiplier = (_baseFontSizeMultiplier * details.scale).clamp(0.5, 3.0);
+            double scaleDiff = details.scale - 1.0;
+            double adjustedScale = 1.0 + (scaleDiff * 2.5);
+            _fontSizeMultiplier = (_baseFontSizeMultiplier * adjustedScale).clamp(0.5, 3.0);
           });
         },
         onScaleEnd: (details) {
