@@ -280,7 +280,7 @@ class ApiService {
     if (reciter.startsWith('mp3quran_server_')) {
       return ''; // Not supported
     }
-    return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber/$ayahNumberInSurah.mp3';
+    return 'https://cdn.islamic.network/quran/audio/128/$reciter/$globalAyahNumber.mp3';
   }
 
   static String buildSurahAudioUrl(
