@@ -10,10 +10,11 @@ import '../widgets/grid_service_card.dart';
 import '../widgets/prayer_bar_card.dart';
 import '../widgets/quick_access_pill.dart';
 import '../services/notification_service.dart';
-import '../services/quran_verses.dart';
 import 'qibla_screen.dart';
+import '../services/quran_verses.dart';
 import 'tasbih_screen.dart';
 import 'prayer_tracker_screen.dart';
+import 'qiraat_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final StorageService storage;
@@ -827,6 +828,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ? 'جدول الصلوات'
                           : 'Prayer Calendar',
                       onTap: () => widget.onTabChange(2, subTab: 1),
+                    ),
+                    GridServiceCard(
+                      theme: theme,
+                      icon: Icons.record_voice_over,
+                      title: TranslationService.isArabic
+                          ? 'القراءات'
+                          : "Qira'at",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const QiraatScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
