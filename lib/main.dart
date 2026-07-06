@@ -551,6 +551,7 @@ class _MainScaffoldState extends State<MainScaffold>
           }
         });
 
+    _rescheduleAllAlarms();
     _fetchLocationOnOpen();
   }
 
