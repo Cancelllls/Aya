@@ -1116,71 +1116,71 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158)),
                                 )
                               else if (_quranScriptType == 'hafs')
-                                Expanded(
-                                  child: DropdownButton<String>(
-                                    value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
-                                    dropdownColor: theme.cardColor,
-                                    isExpanded: true,
-                                    alignment: AlignmentDirectional.centerEnd,
-                                    underline: SizedBox(),
-                                    icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                    items: availableReciters.map((r) {
-                                      return DropdownMenuItem(
-                                        value: r.id,
+                                DropdownButton<String>(
+                                  value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
+                                  dropdownColor: theme.cardColor,
+                                  alignment: AlignmentDirectional.centerEnd,
+                                  underline: SizedBox(),
+                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                  items: availableReciters.map((r) {
+                                    return DropdownMenuItem(
+                                      value: r.id,
+                                      child: Container(
+                                        constraints: BoxConstraints(maxWidth: 200),
                                         child: Text(
                                           TranslationService.isArabic ? r.nameAr : r.nameEn,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? val) {
-                                      if (val != null) {
-                                        setModalState(() {});
-                                        setState(() {});
-                                        widget.storage.setString('default_reciter', val);
-                                      }
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setModalState(() {});
+                                      setState(() {});
+                                      widget.storage.setString('default_reciter', val);
                                     }
-                                  )
+                                  }
                                 )
                               else
-                                Expanded(
-                                  child: DropdownButton<String>(
-                                    value: (() {
-                                      final current = widget.storage.getString('default_reciter') ?? '';
-                                      if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
-                                      final serverCurrent = current.substring(16);
-                                      final match = _dynamicReciters.where((r) {
-                                        final moshaf = r['moshaf'] as List;
-                                        if (moshaf.isEmpty) return false;
-                                        return (moshaf[0]['server'] as String) == serverCurrent;
-                                      }).toList();
-                                      return match.isNotEmpty ? serverCurrent : null;
-                                    })(),
-                                    dropdownColor: theme.cardColor,
-                                    isExpanded: true,
-                                    alignment: AlignmentDirectional.centerEnd,
-                                    underline: SizedBox(),
-                                    icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                    items: _dynamicReciters.map((r) {
+                                DropdownButton<String>(
+                                  value: (() {
+                                    final current = widget.storage.getString('default_reciter') ?? '';
+                                    if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
+                                    final serverCurrent = current.substring(16);
+                                    final match = _dynamicReciters.where((r) {
                                       final moshaf = r['moshaf'] as List;
-                                      if (moshaf.isEmpty) return null;
-                                      final server = moshaf[0]['server'] as String;
-                                      return DropdownMenuItem(
-                                        value: server,
+                                      if (moshaf.isEmpty) return false;
+                                      return (moshaf[0]['server'] as String) == serverCurrent;
+                                    }).toList();
+                                    return match.isNotEmpty ? serverCurrent : null;
+                                  })(),
+                                  dropdownColor: theme.cardColor,
+                                  alignment: AlignmentDirectional.centerEnd,
+                                  underline: SizedBox(),
+                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                  items: _dynamicReciters.map((r) {
+                                    final moshaf = r['moshaf'] as List;
+                                    if (moshaf.isEmpty) return null;
+                                    final server = moshaf[0]['server'] as String;
+                                    return DropdownMenuItem(
+                                      value: server,
+                                      child: Container(
+                                        constraints: BoxConstraints(maxWidth: 200),
                                         child: Text(
                                           r['name'] as String,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                      );
-                                    }).whereType<DropdownMenuItem<String>>().toList(),
-                                    onChanged: (String? val) {
-                                      if (val != null) {
-                                        setModalState(() {});
-                                        setState(() {});
-                                        widget.storage.setString('default_reciter', 'mp3quran_server_$val');
-                                      }
+                                      ),
+                                    );
+                                  }).whereType<DropdownMenuItem<String>>().toList(),
+                                  onChanged: (String? val) {
+                                    if (val != null) {
+                                      setModalState(() {});
+                                      setState(() {});
+                                      widget.storage.setString('default_reciter', 'mp3quran_server_$val');
                                     }
-                                  )
+                                  }
                                 ),
 
                             ],
