@@ -1058,6 +1058,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               
                               DropdownButton<String>(
                                 value: _quranScriptType,
+                                dropdownColor: theme.cardColor,
                                 underline: SizedBox(),
                                 icon: Icon(
                                   Icons.arrow_drop_down,
@@ -1118,6 +1119,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 Expanded(
                                   child: DropdownButton<String>(
                                     value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
+                                    dropdownColor: theme.cardColor,
                                     isExpanded: true,
                                     underline: SizedBox(),
                                     icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
@@ -1153,6 +1155,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       }).toList();
                                       return match.isNotEmpty ? serverCurrent : null;
                                     })(),
+                                    dropdownColor: theme.cardColor,
                                     isExpanded: true,
                                     underline: SizedBox(),
                                     icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),

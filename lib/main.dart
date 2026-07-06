@@ -117,6 +117,7 @@ class _AyaAppState extends State<AyaApp> {
           scaffoldBackgroundColor: const Color(0xFFFAF9F5),
           primaryColor: AppColors.teal,
           cardColor: Colors.white,
+          canvasColor: Colors.white,
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFFF1F5F9)),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(
@@ -166,6 +167,7 @@ class _AyaAppState extends State<AyaApp> {
           scaffoldBackgroundColor: const Color(0xFFF4ECD8),
           primaryColor: const Color(0xFF8C5A2B),
           cardColor: const Color(0xFFFDF6E3),
+          canvasColor: const Color(0xFFFDF6E3),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFFEBE0C5)),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(
@@ -217,6 +219,7 @@ class _AyaAppState extends State<AyaApp> {
           scaffoldBackgroundColor: Colors.black,
           primaryColor: AppColors.gold,
           cardColor: const Color(0xFF0D0D0D),
+          canvasColor: const Color(0xFF0D0D0D),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFF262626)),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(
@@ -268,6 +271,7 @@ class _AyaAppState extends State<AyaApp> {
           scaffoldBackgroundColor: const Color(0xFF0D1211),
           primaryColor: const Color(0xFF14B8A6),
           cardColor: const Color(0xFF161F1E),
+          canvasColor: const Color(0xFF161F1E),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFF233331)),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(
@@ -319,6 +323,7 @@ class _AyaAppState extends State<AyaApp> {
           scaffoldBackgroundColor: const Color(0xFFF2F6F4),
           primaryColor: AppColors.teal,
           cardColor: Colors.white,
+          canvasColor: Colors.white,
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFFE2E8F0)),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(
@@ -369,6 +374,7 @@ class _AyaAppState extends State<AyaApp> {
           scaffoldBackgroundColor: const Color(0xFF07090E),
           primaryColor: AppColors.teal,
           cardColor: const Color(0xFF111520),
+          canvasColor: const Color(0xFF111520),
           chipTheme: const ChipThemeData(backgroundColor: Color(0xFF1E293B)),
           textTheme: const TextTheme(
             bodyLarge: TextStyle(
