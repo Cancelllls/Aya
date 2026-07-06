@@ -436,6 +436,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           _currentSurah.number,
           _quranScriptType,
         );
+        final dbList = await ApiService.fetchSurahDetails(
+          _currentSurah.number,
+          tafsirEdition: tafsirEdition,
+        );
+        for (int i = 0; i < list.length; i++) {
+          if (i < dbList.length) {
+            list[i].translation = dbList[i].translation;
+            list[i].tafseer = dbList[i].tafseer;
+          }
+        }
       }
       setState(() {
         _ayahList = list;

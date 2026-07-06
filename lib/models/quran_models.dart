@@ -385,7 +385,7 @@ class Ayah {
   final int number;
   final int numberInSurah;
   final String text;
-  final String translation;
+  String translation;
   final int juz;
   final int hizb;
   String tafseer;
