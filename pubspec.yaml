@@ -88,6 +88,7 @@ flutter:
     - assets/audio/
     - assets/audio/adhan/
     - assets/quran/
+    - assets/hadith/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
