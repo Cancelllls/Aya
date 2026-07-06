@@ -378,7 +378,7 @@ class NotificationService {
         body: body,
         scheduledDate: tzDateTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
         payload: 'prayer_times',
       );
     } catch (_) {
@@ -624,7 +624,7 @@ class NotificationService {
                 : 'It is time for the $localizedName prayer.',
             scheduledDate: tzDateTime,
             notificationDetails: adhanNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.alarmClock,
             payload: 'prayer_times',
           );
         } catch (_) {
@@ -700,7 +700,7 @@ class NotificationService {
                     : '$preAdhanMins minutes remaining until $localizedName Athan.',
                 scheduledDate: tzPreDateTime,
                 notificationDetails: preDetails,
-                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                androidScheduleMode: AndroidScheduleMode.alarmClock,
                 payload: 'prayer_times',
               );
             } catch (_) {
@@ -871,7 +871,7 @@ class NotificationService {
               : 'Read your morning Adhkar to start your day with blessing.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.alarmClock,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_morning',
         );
@@ -914,7 +914,7 @@ class NotificationService {
               : 'It is time for evening Adhkar for peace and protection.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.alarmClock,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_evening',
         );
@@ -983,7 +983,7 @@ class NotificationService {
             body: verseBody,
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.alarmClock,
             payload: versePayload,
           );
         } catch (_) {
