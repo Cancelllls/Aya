@@ -1394,6 +1394,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       final scaffoldMessenger = ScaffoldMessenger.of(context);
                       await widget.storage.setBool(alertKey, !alertOn);
                       setState(() {});
+                      if (_prayerData != null) {
+                        await NotificationService().schedulePrayerAlarms(
+                          _prayerData!,
+                          widget.storage,
+                        );
+                      }
                       scaffoldMessenger.showSnackBar(
                         SnackBar(
                           content: Text(

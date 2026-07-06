@@ -222,6 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _prayerData = data;
         _isLoading = false;
       });
+      await NotificationService().schedulePrayerAlarms(data, widget.storage);
       _calculateNextPrayer();
     } catch (e) {
       if (mounted) {
