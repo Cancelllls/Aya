@@ -64,9 +64,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};
   double? _horizontalDragStartX;
   
-  Future<void> _fetchDynamicReciters(String scriptType) async {
+  Future<void> _fetchDynamicReciters(String scriptType, {StateSetter? modalSetState}) async {
     if (scriptType == 'hafs') {
       if (mounted) setState(() { _dynamicReciters = []; });
+      if (modalSetState != null) modalSetState(() {});
       return;
     }
     
@@ -84,7 +85,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       case 'ibn-dhakwan': riwayahId = 16; break;
     }
 
-    if (mounted) setState(() => _isLoadingReciters = true);
+    if (mounted) {
+      setState(() => _isLoadingReciters = true);
+      if (modalSetState != null) modalSetState(() {});
+    }
     try {
       final lang = TranslationService.isArabic ? 'ar' : 'eng';
       final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId'));
@@ -105,10 +109,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               }
             }
           });
+          if (modalSetState != null) modalSetState(() {});
         }
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoadingReciters = false);
+      if (mounted) {
+        setState(() => _isLoadingReciters = false);
+        if (modalSetState != null) modalSetState(() {});
+      }
     }
   }
 
@@ -1082,7 +1090,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       widget.storage.setString('default_reciter', 'ar.alafasy');
                                     }
                                     
-                                    _fetchDynamicReciters(newValue);
+                                    _fetchDynamicReciters(newValue, modalSetState: setModalState);
                                     _loadAyahs();
                                   }
                                 },
@@ -1107,55 +1115,67 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158)),
                                 )
                               else if (_quranScriptType == 'hafs')
-                                DropdownButton<String>(
-                                  value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
-                                  underline: SizedBox(),
-                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: availableReciters.map((r) {
-                                    return DropdownMenuItem(
-                                      value: r.id,
-                                      child: Text(TranslationService.isArabic ? r.nameAr : r.nameEn),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? val) {
-                                    if (val != null) {
-                                      setModalState(() {});
-                                      setState(() {});
-                                      widget.storage.setString('default_reciter', val);
+                                Expanded(
+                                  child: DropdownButton<String>(
+                                    value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
+                                    isExpanded: true,
+                                    underline: SizedBox(),
+                                    icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                    items: availableReciters.map((r) {
+                                      return DropdownMenuItem(
+                                        value: r.id,
+                                        child: Text(
+                                          TranslationService.isArabic ? r.nameAr : r.nameEn,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? val) {
+                                      if (val != null) {
+                                        setModalState(() {});
+                                        setState(() {});
+                                        widget.storage.setString('default_reciter', val);
+                                      }
                                     }
-                                  }
+                                  )
                                 )
                               else
-                                DropdownButton<String>(
-                                  value: (() {
-                                    final current = widget.storage.getString('default_reciter') ?? '';
-                                    if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
-                                    final serverCurrent = current.substring(16);
-                                    final match = _dynamicReciters.where((r) {
+                                Expanded(
+                                  child: DropdownButton<String>(
+                                    value: (() {
+                                      final current = widget.storage.getString('default_reciter') ?? '';
+                                      if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
+                                      final serverCurrent = current.substring(16);
+                                      final match = _dynamicReciters.where((r) {
+                                        final moshaf = r['moshaf'] as List;
+                                        if (moshaf.isEmpty) return false;
+                                        return (moshaf[0]['server'] as String) == serverCurrent;
+                                      }).toList();
+                                      return match.isNotEmpty ? serverCurrent : null;
+                                    })(),
+                                    isExpanded: true,
+                                    underline: SizedBox(),
+                                    icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                    items: _dynamicReciters.map((r) {
                                       final moshaf = r['moshaf'] as List;
-                                      if (moshaf.isEmpty) return false;
-                                      return (moshaf[0]['server'] as String) == serverCurrent;
-                                    }).toList();
-                                    return match.isNotEmpty ? serverCurrent : null;
-                                  })(),
-                                  underline: SizedBox(),
-                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: _dynamicReciters.map((r) {
-                                    final moshaf = r['moshaf'] as List;
-                                    if (moshaf.isEmpty) return null;
-                                    final server = moshaf[0]['server'] as String;
-                                    return DropdownMenuItem(
-                                      value: server,
-                                      child: Text(r['name'] as String),
-                                    );
-                                  }).whereType<DropdownMenuItem<String>>().toList(),
-                                  onChanged: (String? val) {
-                                    if (val != null) {
-                                      setModalState(() {});
-                                      setState(() {});
-                                      widget.storage.setString('default_reciter', 'mp3quran_server_$val');
+                                      if (moshaf.isEmpty) return null;
+                                      final server = moshaf[0]['server'] as String;
+                                      return DropdownMenuItem(
+                                        value: server,
+                                        child: Text(
+                                          r['name'] as String,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).whereType<DropdownMenuItem<String>>().toList(),
+                                    onChanged: (String? val) {
+                                      if (val != null) {
+                                        setModalState(() {});
+                                        setState(() {});
+                                        widget.storage.setString('default_reciter', 'mp3quran_server_$val');
+                                      }
                                     }
-                                  }
+                                  )
                                 ),
 
                             ],
