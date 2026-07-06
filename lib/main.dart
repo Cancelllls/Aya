@@ -12,6 +12,7 @@ import 'services/translation_service.dart';
 import 'services/notification_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/quran_screen.dart';
 import 'widgets/quick_access_pill.dart';
 import 'widgets/audio_player_overlay.dart';
 import 'screens/prayer_times_screen.dart';
@@ -1039,7 +1040,6 @@ class _MainScaffoldState extends State<MainScaffold>
                   isDark: isDark,
                   theme: theme,
                 ),
-              ),
 
                 // Focus Lock Screen Overlay
                 if (_isFocusOverlayShowing)

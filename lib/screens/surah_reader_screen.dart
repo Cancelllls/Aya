@@ -13,7 +13,6 @@ import '../services/local_quran_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/audio_manager.dart';
-import '../widgets/audio_player_overlay.dart';
 class SurahReaderScreen extends StatefulWidget {
   final Surah surah;
   final StorageService storage;
@@ -1266,7 +1265,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           children: [
                             Column(
                               children: [
-                                if (_readingMode != 'continuous')
+                                if (playState.title.isNotEmpty)
+                                  _buildTopMiniPlayer(theme, isDark, playState),
+                                if (_readingMode != 'continuous' && playState.title.isEmpty)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -1447,14 +1448,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             ),
                             if (_readingMode == 'continuous')
                               _buildAutoScrollFloatingControls(isDark),
-                            
-                            AudioPlayerOverlay(
-                              bottomPosition: _readingMode == 'continuous'
-                                  ? 90.0 + MediaQuery.of(context).padding.bottom
-                                  : 24.0 + MediaQuery.of(context).padding.bottom,
-                              isDark: isDark,
-                              theme: theme,
-                            ),
                           ],
                         );
                       },
@@ -2101,6 +2094,78 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTopMiniPlayer(ThemeData theme, bool isDark, AudioPlayState playState) {
+    return Container(
+      height: 40.0,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      decoration: BoxDecoration(
+        color: theme.appBarTheme.backgroundColor,
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFE5C158).withOpacity(0.15),
+            width: 1.0,
+          )
+        )
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(
+              playState.isPlaying ? Icons.pause : Icons.play_arrow,
+              color: const Color(0xFFE5C158),
+              size: 24,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => AudioManager.instance.togglePlayPause(),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ValueListenableBuilder<Duration>(
+              valueListenable: AudioManager.instance.durationNotifier,
+              builder: (context, duration, child) {
+                return ValueListenableBuilder<Duration>(
+                  valueListenable: AudioManager.instance.positionNotifier,
+                  builder: (context, position, child) {
+                    final pos = position.inMilliseconds.toDouble();
+                    final dur = duration.inMilliseconds.toDouble();
+                    final maxVal = dur > 0 ? dur : 1.0;
+                    final safePos = pos > maxVal ? maxVal : pos;
+
+                    return SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 2.0,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14.0),
+                      ),
+                      child: Slider(
+                        value: safePos,
+                        min: 0,
+                        max: maxVal,
+                        activeColor: const Color(0xFFE5C158),
+                        inactiveColor: const Color(0xFFE5C158).withOpacity(0.3),
+                        onChanged: (val) {
+                          AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
+                        },
+                        onChangeStart: (val) {
+                          AudioManager.instance.isSeeking = true;
+                        },
+                        onChangeEnd: (val) async {
+                          await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
+                          AudioManager.instance.isSeeking = false;
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
