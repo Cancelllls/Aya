@@ -243,46 +243,23 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     final overallProgress = downloadedCount / 114.0;
     final isDownloadingAll = QuranDownloadService.instance.isDownloadingAll;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: Text(
-            TranslationService.t('quran_downloads'),
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          backgroundColor: theme.appBarTheme.backgroundColor,
-          elevation: 0,
-          bottom: TabBar(
-            indicatorColor: const Color(0xFFE5C158),
-            labelColor: const Color(0xFFE5C158),
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color
-                ?.withOpacity(0.6),
-            tabs: [
-              Tab(
-                text: TranslationService.isArabic
-                    ? "التلاوات الصوتية"
-                    : "Audio Recitations",
-              ),
-              Tab(
-                text: TranslationService.isArabic
-                    ? "كتب الحديث"
-                    : "Hadith Books",
-              ),
-            ],
-          ),
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          TranslationService.t('quran_downloads'),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        body: TabBarView(
-          children: [
-            // Tab 1: Quran Downloads
-            _isLoadingList
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFE5C158)),
-                  )
-                : ListView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        elevation: 0,
+      ),
+      body: _isLoadingList
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+            )
+          : ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 8,
                     ),
@@ -523,161 +500,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       );
                     },
                   ),
-
-            // Tab 2: Hadith Books Downloads
-            ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: hadithBooks.length,
-              itemBuilder: (context, index) {
-                final book = hadithBooks[index];
-                final states =
-                    _hadithDownloadedStates[book.id] ??
-                    {'ara': false, 'eng': false};
-
-                Widget buildLangRow(String lang, String title) {
-                  final isDownloaded = states[lang] == true;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                      isDownloaded
-                          ? Row(
-                              children: [
-                                Text(
-                                  TranslationService.isArabic
-                                      ? "أوفلاين"
-                                      : "Offline",
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete,
-                                    color: Colors.redAccent,
-                                    size: 18,
-                                  ),
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        backgroundColor: theme.cardColor,
-                                        title: Text(
-                                          TranslationService.isArabic
-                                              ? "حذف كتاب الحديث؟"
-                                              : "Delete Hadith Book?",
-                                          style: TextStyle(
-                                            color: Colors.redAccent,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        content: Text(
-                                          TranslationService.isArabic
-                                              ? "هل أنت متأكد من حذف هذا الكتاب المخزن أوفلاين؟"
-                                              : "Are you sure you want to delete this cached offline book?",
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text(
-                                              TranslationService.t('cancel'),
-                                              style: TextStyle(
-                                                color:
-                                                    (Theme.of(context)
-                                                                .textTheme
-                                                                .bodyMedium
-                                                                ?.color ??
-                                                            Colors.white)
-                                                        .withOpacity(0.7),
-                                              ),
-                                            ),
-                                          ),
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
-                                            ),
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                              _deleteHadithBook(book.id, lang);
-                                            },
-                                            child: Text(
-                                              TranslationService.isArabic
-                                                  ? "حذف"
-                                                  : "Delete",
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            )
-                          : IconButton(
-                              icon: Icon(
-                                Icons.cloud_download,
-                                color: Color(0xFFE5C158),
-                                size: 18,
-                              ),
-                              onPressed: () =>
-                                  _downloadHadithBook(book.id, lang),
-                            ),
-                    ],
-                  );
-                }
-
-                return Card(
-                  color: theme.cardColor,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: const Color(0xFFE5C158).withOpacity(0.12),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          TranslationService.isArabic
-                              ? book.nameAr
-                              : book.nameEn,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "${book.totalHadiths} ${TranslationService.isArabic ? 'حديث شريف' : 'Hadiths'}",
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.5),
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        Divider(height: 1),
-                        buildLangRow('ara', 'عربي (Arabic)'),
-                        Divider(height: 1),
-                        buildLangRow('eng', 'English'),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1204,6 +1026,13 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
     for (final r in reciters) {
       counts[r['id']!] = await _countDownloadedSurahs(r['id']!);
     }
+
+    final isAr = TranslationService.isArabic;
+    reciters.sort((a, b) {
+      final nameA = isAr ? a['nameAr']! : a['nameEn']!;
+      final nameB = isAr ? b['nameAr']! : b['nameEn']!;
+      return nameA.compareTo(nameB);
+    });
 
     if (mounted) {
       setState(() {

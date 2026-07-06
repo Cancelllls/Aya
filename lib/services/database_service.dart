@@ -272,13 +272,25 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
     final db = _database!;
-    return await db.rawQuery('''
+    final queryClean = _stripTashkeel(query).toLowerCase();
+
+    final results = await db.rawQuery('''
       SELECT ayahs.*, surahs.name as surah_name, surahs.englishName as surah_englishName 
       FROM ayahs 
       JOIN surahs ON ayahs.surah_number = surahs.number 
-      WHERE ayahs.text_arabic LIKE ? OR ayahs.text_english LIKE ?
       ORDER BY ayahs.surah_number ASC, ayahs.ayah_number ASC
-    ''', ['%$query%', '%$query%']);
+    ''');
+
+    return results.where((row) {
+      final arabicClean = _stripTashkeel((row['text_arabic'] as String?) ?? '');
+      final english = (row['text_english'] as String?)?.toLowerCase() ?? '';
+      return arabicClean.contains(queryClean) || english.contains(queryClean);
+    }).toList();
+  }
+
+  String _stripTashkeel(String input) {
+    final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
+    return input.replaceAll(tashkeelRegex, '');
   }
 
   // ── Prayer Times Cache ──────────────────────────────────────

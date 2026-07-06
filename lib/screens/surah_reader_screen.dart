@@ -98,6 +98,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         if (mounted) {
           setState(() {
             _dynamicReciters = data['reciters'] ?? [];
+            _dynamicReciters.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
             _isLoadingReciters = false;
             
             // Set first dynamic reciter as default if none selected or if current is invalid
@@ -1215,11 +1216,24 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       );
                                     }).toList();
                                   },
-                                  onChanged: (String? val) {
+                                  onChanged: (String? val) async {
                                     if (val != null) {
+                                      final wasPlaying = AudioManager.instance.playState.value.isPlaying;
+                                      final ayahNum = AudioManager.instance.playState.value.ayahNum;
+                                      
+                                      AudioManager.instance.stop();
+                                      widget.storage.setString('default_reciter', 'mp3quran_server_$val');
+                                      
                                       setModalState(() {});
                                       setState(() {});
-                                      widget.storage.setString('default_reciter', 'mp3quran_server_$val');
+                                      
+                                      if (wasPlaying) {
+                                        Future.delayed(const Duration(milliseconds: 300), () {
+                                          if (mounted) {
+                                            _playAudioWithDisclaimer(ayahIndex: ayahNum > 0 ? ayahNum - 1 : null);
+                                          }
+                                        });
+                                      }
                                     }
                                   }
                                 ),
