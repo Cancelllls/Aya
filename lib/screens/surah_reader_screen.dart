@@ -13,7 +13,7 @@ import '../services/local_quran_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/audio_manager.dart';
-
+import '../widgets/audio_player_overlay.dart';
 class SurahReaderScreen extends StatefulWidget {
   final Surah surah;
   final StorageService storage;
@@ -1447,6 +1447,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             ),
                             if (_readingMode == 'continuous')
                               _buildAutoScrollFloatingControls(isDark),
+                            
+                            AudioPlayerOverlay(
+                              bottomPosition: _readingMode == 'continuous'
+                                  ? 90.0 + MediaQuery.of(context).padding.bottom
+                                  : 24.0 + MediaQuery.of(context).padding.bottom,
+                              isDark: isDark,
+                              theme: theme,
+                            ),
                           ],
                         );
                       },
