@@ -21,6 +21,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.app.PendingIntent
 
 class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEventListener {
     private val CHANNEL = "com.quran.aya/system"
@@ -93,6 +94,28 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
         
         val mc = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         channel = mc
+        
+        val adhanChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.adhan.app/alarm")
+        adhanChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "scheduleExactAlarm" -> {
+                    val timestamp = call.argument<Long>("timestamp")
+                    val id = call.argument<Int>("id")
+                    if (timestamp != null && id != null) {
+                        scheduleExactAlarm(timestamp, id)
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGS", "Missing timestamp or id", null)
+                    }
+                }
+                "openOemAutoStartSettings" -> {
+                    openOemAutoStartSettings()
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
         mc.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getAndroidSdkVersion" -> {
@@ -362,5 +385,61 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
             }
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    private fun scheduleExactAlarm(timestamp: Long, id: Int) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AdhanBroadcastReceiver::class.java).apply {
+            putExtra("ALARM_ID", id)
+        }
+        
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 
+            id, 
+            intent, 
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(timestamp, pendingIntent)
+        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+    }
+
+    private fun openOemAutoStartSettings() {
+        val intents = arrayOf(
+            Intent().setComponent(ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
+            Intent().setComponent(ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
+            Intent().setComponent(ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity")),
+            Intent().setComponent(ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")),
+            Intent().setComponent(ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")),
+            Intent().setComponent(ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")),
+            Intent().setComponent(ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")),
+            Intent().setComponent(ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")),
+            Intent().setComponent(ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")),
+            Intent().setComponent(ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")),
+            Intent().setComponent(ComponentName("com.samsung.android.lool", "com.samsung.android.sm.ui.battery.BatteryActivity")),
+            Intent().setComponent(ComponentName("com.htc.pitroad", "com.htc.pitroad.landingpage.HTCLandingPageActivity")),
+            Intent().setComponent(ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.MainActivity"))
+        )
+
+        for (intent in intents) {
+            try {
+                if (packageManager.resolveActivity(intent, 0) != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                    return
+                }
+            } catch (e: Exception) {
+                // Try next
+            }
+        }
+        
+        // Fallback to standard settings
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {}
     }
 }

@@ -36,7 +36,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool _bgLocationGranted = false;
   bool _exactAlarmGranted = false;
   bool _notifGranted = false;
-  bool _batteryIgnored = false;
   int _androidSdkVersion = 24;
 
   @override
@@ -83,12 +82,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
     final notifOk = await NotificationService().checkPermissions();
-    bool batteryOk = true;
-    try {
-      batteryOk =
-          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
-          true;
-    } catch (_) {}
     bool exactAlarmOk = true;
     try {
       exactAlarmOk =
@@ -100,7 +93,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         _locationGranted = locOk;
         _bgLocationGranted = bgLocOk;
         _notifGranted = notifOk;
-        _batteryIgnored = batteryOk;
         _exactAlarmGranted = exactAlarmOk;
       });
     }
@@ -131,12 +123,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     } catch (_) {}
   }
 
-  Future<void> _requestBattery() async {
-    try {
-      await _platform.invokeMethod('requestDisableBatteryOptimization');
-    } catch (_) {}
-  }
-
   Future<void> _requestExactAlarm() async {
     try {
       await _platform.invokeMethod('requestExactAlarmPermission');
@@ -150,7 +136,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         _locationGranted &&
         (!bgRequired || _bgLocationGranted) &&
         _notifGranted &&
-        _batteryIgnored &&
         (!alarmRequired || _exactAlarmGranted);
     if (allGood) {
       _finishOnboarding();
@@ -177,8 +162,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ),
         content: Text(
           TranslationService.isArabic
-              ? "تحذير: إذا واصلت بدون تفعيل صلاحيات الموقع، والتنبيهات، وحفظ البطارية، فقد لا يتم تشغيل الأذان في موعده بدقة في الخلفية أو عند قفل الهاتف. هل تود المتابعة على أي حال؟"
-              : "Warning: If you proceed without granting location, notifications, and battery optimization, Athan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
+              ? "تحذير: إذا واصلت بدون تفعيل صلاحيات الموقع والتنبيهات، فقد لا يتم تشغيل الأذان في موعده بدقة في الخلفية أو عند قفل الهاتف. هل تود المتابعة على أي حال؟"
+              : "Warning: If you proceed without granting location and notifications, Athan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
           style: TextStyle(height: 1.5, fontSize: 14),
         ),
         actions: [
@@ -570,18 +555,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     onRequest: _requestExactAlarm,
                   ),
                 ],
-                SizedBox(height: 10),
-                _buildPermissionItem(
-                  icon: Icons.battery_saver,
-                  title: TranslationService.isArabic
-                      ? "تجاهل تحسين البطارية"
-                      : "Ignore Battery Optimization",
-                  description: TranslationService.isArabic
-                      ? "لمنع نظام الأندرويد من إيقاف تنبيهات الأذان بالخلفية."
-                      : "Prevents Android from putting Athan alarms to sleep in background.",
-                  isGranted: _batteryIgnored,
-                  onRequest: _requestBattery,
-                ),
                 SizedBox(height: 8),
               ],
             ),
