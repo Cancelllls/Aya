@@ -28,8 +28,9 @@ Visually, Aya is built utilizing a state-of-the-art **Glassmorphism Design Syste
 
 ### 🛡️ "Immortal" Background Alarms
 Unlike standard apps that get killed when swiped away, Aya registers your Adhan using Android's highest-priority `setAlarmClock()` API (the same system your morning alarm uses). This ensures prayer notifications and Adhan audio fire **flawlessly and exactly on the minute**, surviving Doze mode and aggressive task killers.
+- Pure Native Kotlin integration for background execution.
 - Automatically handles `USE_EXACT_ALARM` permissions to silently grant maximum privileges on Android 13+.
-- Dual-path audio logic correctly identifies and plays specific reciters for **Fajr vs. Standard** prayers.
+- Dual-path audio logic correctly identifies and plays specific reciters for **Fajr vs. Standard** prayers, alongside **Pre-Adhan** alerts.
 
 ### 💎 UI/UX Pro Max Design
 - **True Glassmorphism:** Real-time blurred backdrops (`BackdropFilter`) combined with semi-transparent frosted cards.
@@ -41,20 +42,21 @@ Unlike standard apps that get killed when swiped away, Aya registers your Adhan 
 - **Auto-Bookmarking & Sync:** Automatically updates your last read position. The reader smoothly scrolls down the page in perfect synchronization with the streaming audio.
 - **Immersive Mode:** Auto-hides system status bars for a distraction-free, edge-to-edge reading experience.
 
-### 📚 Hadith Library & Explanations
-- Browse complete Hadith collections offline.
-- Features dynamic "Sahih" / "Daif" authenticity badges colored natively within the glassmorphic UI.
-- Gracefully handles missing scraping metadata with "Search Online" fallbacks.
+### 📚 Complete Offline Hadith Library
+- **Sahih al-Bukhari & Sahih Muslim:** Fully integrated natively into the app using compressed offline JSON datasets.
+- Available in both **Arabic and English**.
+- Zero loading screens, zero internet requirement—instant offline access to thousands of authentic narrations.
 
 ### 🧭 Precision Qibla & 📿 Custom Tasbih
 - **Live Qibla Tracking:** Smooth, high-refresh-rate compass utilizing native device magnetometers. Vibrates and flashes gold upon exact Kaaba alignment.
 - **Haptic Tasbih Builder:** Create your own custom Dhikr targets with satisfying haptic feedback loops.
+- **Daily Prayer Tracker:** Interactively log your prayers (Prayed/Missed) directly from your lock screen notifications, instantly syncing to your local SQLite database.
 
 ---
 
 ## 🏗 System Architecture
 
-The project conforms to a clean, layered architecture separating UI layout, state logic, and services:
+The project conforms to a clean, layered architecture separating UI layout, state logic, and native services:
 
 ```text
 lib/
@@ -71,6 +73,7 @@ lib/
 │   ├── api_service.dart       # REST client for prayer schedules
 │   ├── adhan_audio_service.dart # Background player controller & Five Prayers Integration
 │   ├── notification_service.dart # Invincible setAlarmClock cron workers
+│   ├── database_service.dart  # Local SQLite database for trackers and bookmarks
 │   ├── storage_service.dart   # Local preferences manager
 │   └── translation_service.dart # Arabic / English localization keys
 └── widgets/                   # Custom UI paint tools & components
@@ -83,11 +86,11 @@ lib/
 | Layer | Dependency | Description |
 |-------|-----------|-------------|
 | **Core** | `Flutter 3.x / Dart 3` | Native compilation, high performance |
-| **Alarms** | `android_alarm_manager_plus` | Patched to utilize `AndroidScheduleMode.alarmClock` |
+| **Alarms** | `Native Kotlin / MethodChannels` | Custom `BroadcastReceivers` using `setAlarmClock()` |
+| **Notifications** | `flutter_local_notifications` | Interactive backgrounds tasks & fullScreenIntents |
 | **Audio** | `audioplayers` | Background hardware playback for Adhan |
-| **Fonts** | `Google Fonts (Amiri, Inter)` | Classic Arabic Quranic script & modern clean UI |
+| **Database** | `sqflite` | Local offline storage for Trackers, Hadith & Bookmarks |
 | **Location** | `geolocator` | GPS coordinates extraction |
-| **Storage** | `shared_preferences` | Key-value settings cache |
 
 ---
 
