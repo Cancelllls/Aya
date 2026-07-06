@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -1117,13 +1118,14 @@ class _ReciterPickerSheet extends StatefulWidget {
 
 class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
   Map<String, int> _counts = {};
+  List<Map<String, String>> _allReciters = [];
   bool _loading = true;
   String? _downloading;
 
   @override
   void initState() {
     super.initState();
-    _loadCounts();
+    _fetchAndLoad();
     QuranDownloadService.instance.addListener(_onServiceUpdate);
   }
 
@@ -1137,18 +1139,75 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _loadCounts() async {
-    final Map<String, int> counts = {};
-    for (final r in availableReciters) {
+  Future<int> _countDownloadedSurahs(String reciter) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final reciterDir = Directory('${dir.path}/quran_audio/$reciter');
+      if (!await reciterDir.exists()) return 0;
+      final files = reciterDir.listSync();
       int count = 0;
-      for (int i = 1; i <= 114; i++) {
-        final downloaded = await QuranDownloadService.instance.isSurahDownloaded(i, r.id);
-        if (downloaded) count++;
+      for (var f in files) {
+        if (f.path.endsWith('.mp3')) count++;
       }
-      counts[r.id] = count;
+      return count > 114 ? 114 : count;
+    } catch (_) {
+      return 0;
     }
+  }
+
+  Future<void> _fetchAndLoad() async {
+    final List<Map<String, String>> reciters = [];
+    
+    // Add static reciters
+    for (final r in availableReciters) {
+      reciters.add({
+        'id': r.id,
+        'nameAr': r.nameAr,
+        'nameEn': r.nameEn,
+        'quraaAr': 'حفص عن عاصم',
+        'quraaEn': "Hafs A'n Assem",
+      });
+    }
+
+    // Fetch dynamic reciters
+    try {
+      final lang = TranslationService.isArabic ? 'ar' : 'eng';
+      final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang'));
+      if (res.statusCode == 200) {
+        final data = json.decode(utf8.decode(res.bodyBytes));
+        final list = data['reciters'] as List;
+        for (final r in list) {
+          final moshafs = r['moshaf'] as List;
+          for (final m in moshafs) {
+            final server = m['server'] as String;
+            final moshafName = m['name'] as String;
+            final reciterName = r['name'] as String;
+            
+            // Skip redundant server if it was already in static list somehow
+            if (!reciters.any((x) => x['id'] == 'mp3quran_server_$server')) {
+              reciters.add({
+                'id': 'mp3quran_server_$server',
+                'nameAr': reciterName,
+                'nameEn': reciterName,
+                'quraaAr': moshafName,
+                'quraaEn': moshafName,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore API errors, we still have static ones
+    }
+
+    final Map<String, int> counts = {};
+    for (final r in reciters) {
+      counts[r['id']!] = await _countDownloadedSurahs(r['id']!);
+    }
+
     if (mounted) {
       setState(() {
+        _allReciters = reciters;
         _counts = counts;
         _loading = false;
       });
@@ -1220,149 +1279,168 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
               child: CircularProgressIndicator(color: Color(0xFFE5C158)),
             )
           else
-            ...availableReciters.map((reciter) {
-              final count = _counts[reciter.id] ?? 0;
-              final isFull = count >= 114;
-              final isActive = reciter.id == widget.currentReciter;
-              final isThisDownloading = _downloading == reciter.id && isDownloading;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? const Color(0xFFE5C158).withOpacity(0.08)
-                      : theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isActive
-                        ? const Color(0xFFE5C158).withOpacity(0.5)
-                        : theme.dividerColor.withOpacity(0.15),
-                    width: isActive ? 1.5 : 1,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 2,
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: _allReciters.length,
+                itemBuilder: (context, index) {
+                  final reciter = _allReciters[index];
+                  final rId = reciter['id']!;
+                  final rName = isAr ? reciter['nameAr']! : reciter['nameEn']!;
+                  final rQuraa = isAr ? reciter['quraaAr']! : reciter['quraaEn']!;
+                  
+                  final count = _counts[rId] ?? 0;
+                  final isFull = count >= 114;
+                  final isActive = rId == widget.currentReciter;
+                  final isThisDownloading = _downloading == rId && isDownloading;
+                  
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? const Color(0xFFE5C158).withOpacity(0.08)
+                          : theme.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isActive
+                            ? const Color(0xFFE5C158).withOpacity(0.5)
+                            : theme.dividerColor.withOpacity(0.15),
+                        width: isActive ? 1.5 : 1,
                       ),
-                      leading: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: isFull
-                            ? Colors.green.withOpacity(0.15)
-                            : const Color(0xFFE5C158).withOpacity(0.1),
-                        child: Icon(
-                          isFull ? Icons.check_circle : Icons.person,
-                          size: 18,
-                          color: isFull ? Colors.green : const Color(0xFFE5C158),
-                        ),
-                      ),
-                      title: Text(
-                        isAr ? reciter.nameAr : reciter.nameEn,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      subtitle: Text(
-                        isFull
-                            ? (isAr
-                                  ? "✓ مكتمل (١١٤ سورة)"
-                                  : "✓ Complete (114 Surahs)")
-                            : count > 0
-                            ? (isAr
-                                  ? "جزئي · $count من ١١٤ سورة"
-                                  : "Partial · $count of 114 Surahs")
-                            : (isAr ? "غير محمّل" : "Not downloaded"),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isFull
-                              ? Colors.green
-                              : count > 0
-                              ? Colors.orange
-                              : theme.textTheme.bodyMedium?.color
-                                    ?.withOpacity(0.45),
-                        ),
-                      ),
-                      trailing: isThisDownloading
-                          ? SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: progress,
-                                    strokeWidth: 3,
-                                    color: const Color(0xFFE5C158),
-                                  ),
-                                  Text(
-                                    "${(progress * 100).toInt()}%",
-                                    style: const TextStyle(
-                                      fontSize: 8,
-                                      color: Color(0xFFE5C158),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 2,
+                          ),
+                          leading: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: isFull
+                                ? Colors.green.withOpacity(0.15)
+                                : const Color(0xFFE5C158).withOpacity(0.1),
+                            child: Icon(
+                              isFull ? Icons.check_circle : Icons.person,
+                              size: 18,
+                              color: isFull ? Colors.green : const Color(0xFFE5C158),
+                            ),
+                          ),
+                          title: Text(
+                            rName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                rQuraa,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            )
-                          : isFull
-                          ? GestureDetector(
-                              onTap: () async {
-                                await QuranDownloadService.instance
-                                    .deleteReciterCache(reciter.id);
-                                await _loadCounts();
-                              },
-                              child: const Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: Colors.redAccent,
+                              const SizedBox(height: 2),
+                              Text(
+                                isFull
+                                    ? (isAr ? "✓ مكتمل (١١٤ سورة)" : "✓ Complete (114 Surahs)")
+                                    : count > 0
+                                    ? (isAr ? "جزئي · $count من ١١٤ سورة" : "Partial · $count of 114 Surahs")
+                                    : (isAr ? "غير محمّل" : "Not downloaded"),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isFull
+                                      ? Colors.green
+                                      : count > 0
+                                      ? Colors.orange
+                                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.45),
+                                ),
                               ),
-                            )
-                          : GestureDetector(
-                              onTap: isDownloading
-                                  ? null
-                                  : () async {
-                                      widget.onReciterChanged(reciter.id);
-                                      setState(() => _downloading = reciter.id);
-                                      QuranDownloadService.instance
-                                          .downloadAll(reciter.id);
-                                      await _loadCounts();
-                                    },
-                              child: Icon(
-                                Icons.download_rounded,
-                                size: 22,
-                                color: isDownloading
-                                    ? theme.disabledColor
-                                    : const Color(0xFFE5C158),
+                            ],
+                          ),
+                          trailing: isThisDownloading
+                              ? SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        value: progress,
+                                        strokeWidth: 3,
+                                        color: const Color(0xFFE5C158),
+                                      ),
+                                      Text(
+                                        "${(progress * 100).toInt()}%",
+                                        style: const TextStyle(
+                                          fontSize: 8,
+                                          color: Color(0xFFE5C158),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : isFull
+                              ? GestureDetector(
+                                  onTap: () async {
+                                    await QuranDownloadService.instance.deleteReciterCache(rId);
+                                    _counts[rId] = await _countDownloadedSurahs(rId);
+                                    if (mounted) setState(() {});
+                                  },
+                                  child: const Icon(
+                                    Icons.delete_outline,
+                                    size: 20,
+                                    color: Colors.redAccent,
+                                  ),
+                                )
+                              : GestureDetector(
+                                  onTap: isDownloading
+                                      ? null
+                                      : () async {
+                                          widget.onReciterChanged(rId);
+                                          setState(() => _downloading = rId);
+                                          QuranDownloadService.instance.downloadAll(rId);
+                                          // Update count locally periodically or let listener handle it
+                                        },
+                                  child: Icon(
+                                    Icons.download_rounded,
+                                    size: 22,
+                                    color: isDownloading
+                                        ? theme.disabledColor
+                                        : const Color(0xFFE5C158),
+                                  ),
+                                ),
+                          onTap: () => widget.onReciterChanged(rId),
+                        ),
+                        if (isThisDownloading)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 14,
+                              right: 14,
+                              bottom: 8,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 4,
+                                backgroundColor: const Color(0xFFE5C158).withOpacity(0.15),
+                                color: const Color(0xFFE5C158),
                               ),
                             ),
-                      onTap: () => widget.onReciterChanged(reciter.id),
-                    ),
-                    if (isThisDownloading)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 14,
-                          right: 14,
-                          bottom: 8,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 4,
-                            backgroundColor: const Color(0xFFE5C158).withOpacity(0.15),
-                            color: const Color(0xFFE5C158),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            }),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           if (isDownloading)
             Padding(
               padding: const EdgeInsets.only(top: 4),
