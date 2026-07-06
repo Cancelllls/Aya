@@ -1119,18 +1119,26 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 DropdownButton<String>(
                                   value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
                                   dropdownColor: theme.cardColor,
-                                  alignment: AlignmentDirectional.centerEnd,
                                   underline: SizedBox(),
                                   icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: availableReciters.map((r) {
-                                    return DropdownMenuItem(
-                                      value: r.id,
-                                      child: Container(
-                                        constraints: BoxConstraints(maxWidth: 200),
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return availableReciters.map((r) {
+                                      return Container(
+                                        constraints: BoxConstraints(maxWidth: 160),
+                                        alignment: AlignmentDirectional.centerEnd,
                                         child: Text(
                                           TranslationService.isArabic ? r.nameAr : r.nameEn,
                                           overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
                                         ),
+                                      );
+                                    }).toList();
+                                  },
+                                  items: availableReciters.map((r) {
+                                    return DropdownMenuItem(
+                                      value: r.id,
+                                      child: Text(
+                                        TranslationService.isArabic ? r.nameAr : r.nameEn,
                                       ),
                                     );
                                   }).toList(),
@@ -1156,21 +1164,31 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     return match.isNotEmpty ? serverCurrent : null;
                                   })(),
                                   dropdownColor: theme.cardColor,
-                                  alignment: AlignmentDirectional.centerEnd,
                                   underline: SizedBox(),
                                   icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return _dynamicReciters.map((r) {
+                                      final moshaf = r['moshaf'] as List;
+                                      if (moshaf.isEmpty) return Container();
+                                      return Container(
+                                        constraints: BoxConstraints(maxWidth: 160),
+                                        alignment: AlignmentDirectional.centerEnd,
+                                        child: Text(
+                                          r['name'] as String,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
                                   items: _dynamicReciters.map((r) {
                                     final moshaf = r['moshaf'] as List;
                                     if (moshaf.isEmpty) return null;
                                     final server = moshaf[0]['server'] as String;
                                     return DropdownMenuItem(
                                       value: server,
-                                      child: Container(
-                                        constraints: BoxConstraints(maxWidth: 200),
-                                        child: Text(
-                                          r['name'] as String,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                      child: Text(
+                                        r['name'] as String,
                                       ),
                                     );
                                   }).whereType<DropdownMenuItem<String>>().toList(),

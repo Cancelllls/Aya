@@ -859,8 +859,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildMinimalStatItem(isAr ? 'صُليت' : 'Prayed', prayed, theme),
-            _buildMinimalStatItem(isAr ? 'فائتة' : 'Missed', missed, theme),
+            _buildMinimalStatItem(isAr ? 'صلوات صُليت' : 'Prayers Done', prayed, theme),
+            _buildMinimalStatItem(isAr ? 'صلوات فائتة' : 'Prayers Missed', missed, theme),
           ],
         ),
       ],
