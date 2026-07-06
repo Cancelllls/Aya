@@ -1514,7 +1514,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               ],
                             ),
                             if (_readingMode == 'continuous')
-                              _buildAutoScrollFloatingControls(isDark),
+                              _buildAutoScrollFloatingControls(isDark, playState),
                           ],
                         );
                       },
@@ -1906,7 +1906,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     );
   }
 
-  void _startAutoScroll() {
+  void _startAutoScroll({double? customSpeed}) {
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;
@@ -1914,25 +1914,29 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _isAutoScrolling = true;
     _isAutoScrollPaused = false;
 
-    double step = 20.0; // pixels per second
-    switch (_speedLevel) {
-      case 1:
-        step = 12.0;
-        break;
-      case 2:
-        step = 25.0;
-        break;
-      case 3:
-        step = 45.0;
-        break;
-      case 4:
-        step = 75.0;
-        break;
-      case 5:
-        step = 120.0;
-        break;
+    if (customSpeed != null) {
+      _scrollSpeed = customSpeed;
+    } else {
+      double step = 20.0; // pixels per second
+      switch (_speedLevel) {
+        case 1:
+          step = 12.0;
+          break;
+        case 2:
+          step = 25.0;
+          break;
+        case 3:
+          step = 45.0;
+          break;
+        case 4:
+          step = 75.0;
+          break;
+        case 5:
+          step = 120.0;
+          break;
+      }
+      _scrollSpeed = step;
     }
-    _scrollSpeed = step;
 
     if (_scrollController.hasClients) {
       final maxScroll = _scrollController.position.maxScrollExtent;
@@ -1960,6 +1964,38 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           });
     }
     setState(() {});
+  }
+
+  void _syncAutoScrollWithAudio() async {
+    final player = AudioManager.instance.activePlayer;
+    final duration = await player.getDuration();
+    final position = await player.getCurrentPosition();
+    
+    if (duration != null && position != null && _scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final remainingDistance = maxScroll - currentScroll;
+      
+      final remainingAudioMs = duration.inMilliseconds - position.inMilliseconds;
+      if (remainingAudioMs > 0 && remainingDistance > 0) {
+        final speed = remainingDistance / (remainingAudioMs / 1000.0);
+        _startAutoScroll(customSpeed: speed);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                TranslationService.isArabic
+                  ? 'تمت مزامنة التمرير التلقائي مع الصوت'
+                  : 'Auto-scroll synced with audio'
+              ),
+              duration: const Duration(seconds: 2),
+              backgroundColor: const Color(0xFFE5C158),
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _stopAutoScroll() {
@@ -2003,9 +2039,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     }
   }
 
-  Widget _buildAutoScrollFloatingControls(bool isDark) {
+  Widget _buildAutoScrollFloatingControls(bool isDark, AudioPlayState playState) {
     final double safeBottom = MediaQuery.of(context).padding.bottom;
     final double bottomOffset = 16.0 + safeBottom;
+
+    final quranScriptType = widget.storage.getString('quran_script_type', defaultValue: 'hafs');
+    final reciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    final isFullSurahAudio = quranScriptType != 'hafs' || reciter.startsWith('mp3quran_server_');
+    final isAudioActiveForThisSurah = playState.surahNum == _currentSurah.number;
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
@@ -2102,6 +2143,37 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 },
               ),
             ),
+            if (isFullSurahAudio && isAudioActiveForThisSurah) ...[
+              SizedBox(width: 6),
+              GestureDetector(
+                onTap: _syncAutoScrollWithAudio,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5C158).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFE5C158).withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.sync, size: 14, color: const Color(0xFFE5C158)),
+                      SizedBox(width: 4),
+                      Text(
+                        TranslationService.isArabic ? "مزامنة" : "Sync",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFE5C158),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             SizedBox(width: 6),
             // Custom compact speed pill control
             Container(
