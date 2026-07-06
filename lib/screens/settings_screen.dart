@@ -49,7 +49,6 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   // Permissions and wake lock
   bool _exactAlarmPermitted = true;
-  bool _batteryIgnored = true;
   bool _keepScreenAwake = false;
 
   // Focus lock
@@ -215,13 +214,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       final alarm =
           await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
           true;
-      final batteryOptimized =
-          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
-          false;
       setState(() {
         _exactAlarmPermitted = alarm;
-        _batteryIgnored =
-            batteryOptimized; // true means ignored (disabled), false means optimized (not ignored)
       });
     } catch (_) {}
   }
@@ -229,13 +223,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _requestExactAlarm() async {
     try {
       await _platform.invokeMethod('requestExactAlarmPermission');
-      Future.delayed(const Duration(seconds: 2), _checkPermissions);
-    } catch (_) {}
-  }
-
-  Future<void> _requestBatteryOptimization() async {
-    try {
-      await _platform.invokeMethod('requestDisableBatteryOptimization');
       Future.delayed(const Duration(seconds: 2), _checkPermissions);
     } catch (_) {}
   }
@@ -2110,54 +2097,6 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ],
                       ),
                       onTap: _exactAlarmPermitted ? null : _requestExactAlarm,
-                    ),
-                    Divider(
-                      height: 1,
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                    ),
-                    ListTile(
-                      title: Text(TranslationService.t('battery_optimization')),
-                      subtitle: Text(
-                        TranslationService.t('battery_optimization_sub'),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _batteryIgnored
-                                ? (TranslationService.isArabic
-                                      ? "متجاهل"
-                                      : "Ignored")
-                                : (TranslationService.isArabic
-                                      ? "إعداد مطلوب"
-                                      : "Setup Required"),
-                            style: TextStyle(
-                              color: _batteryIgnored
-                                  ? Colors.green
-                                  : const Color(0xFFE5C158),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            TranslationService.isArabic
-                                ? Icons.arrow_back_ios
-                                : Icons.arrow_forward_ios,
-                            size: 12,
-                            color: _batteryIgnored
-                                ? (Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium?.color ??
-                                          Colors.white)
-                                      .withOpacity(0.3)
-                                : const Color(0xFFE5C158),
-                          ),
-                        ],
-                      ),
-                      onTap: _batteryIgnored
-                          ? null
-                          : _requestBatteryOptimization,
                     ),
                   ],
                 ),

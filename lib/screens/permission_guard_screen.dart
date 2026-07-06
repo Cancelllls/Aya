@@ -26,7 +26,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
   bool _locationGranted = false;
   bool _bgLocationGranted = false;
   bool _notifGranted = false;
-  bool _batteryIgnored = false;
   bool _exactAlarmGranted = false;
   bool _checking = true;
   int _androidSdkVersion = 24;
@@ -74,13 +73,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
 
     final notifOk = await NotificationService().checkPermissions();
 
-    bool batteryOk = true;
-    try {
-      batteryOk =
-          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
-          true;
-    } catch (_) {}
-
     bool exactAlarmOk = true;
     try {
       exactAlarmOk =
@@ -93,7 +85,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
       _locationGranted = locOk;
       _bgLocationGranted = bgLocOk;
       _notifGranted = notifOk;
-      _batteryIgnored = batteryOk;
       _exactAlarmGranted = exactAlarmOk;
       _checking = false;
     });
@@ -104,7 +95,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
         locOk &&
         (!bgRequired || bgLocOk) &&
         notifOk &&
-        batteryOk &&
         (!alarmRequired || exactAlarmOk);
     if (allGood) widget.onPassed();
   }
@@ -135,12 +125,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
     } catch (_) {}
   }
 
-  Future<void> _requestBattery() async {
-    try {
-      await _platform.invokeMethod('requestDisableBatteryOptimization');
-    } catch (_) {}
-  }
-
   Future<void> _requestExactAlarm() async {
     try {
       await _platform.invokeMethod('requestExactAlarmPermission');
@@ -154,7 +138,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
         _locationGranted &&
         (!bgRequired || _bgLocationGranted) &&
         _notifGranted &&
-        _batteryIgnored &&
         (!alarmRequired || _exactAlarmGranted);
 
     if (allGood) {
@@ -317,18 +300,6 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                           : "Used to send sound and voice alerts on prayer times.",
                       isGranted: _notifGranted,
                       onRequest: _requestNotif,
-                    ),
-                    SizedBox(height: 12),
-                    _buildPermissionItem(
-                      icon: Icons.battery_saver,
-                      title: TranslationService.isArabic
-                          ? "تجاهل تحسين البطارية"
-                          : "Ignore Battery Optimization",
-                      description: TranslationService.isArabic
-                          ? "لمنع النظام من تعطيل تنبيهات الصلاة بالخلفية."
-                          : "Prevents Android from putting Athan alarms to sleep in background.",
-                      isGranted: _batteryIgnored,
-                      onRequest: _requestBattery,
                     ),
                     if (showExactAlarm) ...[
                       SizedBox(height: 12),

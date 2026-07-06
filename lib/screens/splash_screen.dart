@@ -68,15 +68,8 @@ class _SplashScreenState extends State<SplashScreen>
           gpsPerm == LocationPermission.always ||
           gpsPerm == LocationPermission.whileInUse;
       final notifOk = await NotificationService().checkPermissions();
-      bool batteryOk = true;
-      try {
-        const platform = MethodChannel('com.quran.aya/system');
-        batteryOk =
-            await platform.invokeMethod<bool>('checkBatteryOptimization') ??
-            true;
-      } catch (_) {}
 
-      final allGranted = gpsOk && notifOk && batteryOk;
+      final allGranted = gpsOk && notifOk;
       final isFirstTime = widget.storage.getBool(
         'first_time_v2',
         defaultValue: true,
