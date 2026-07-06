@@ -27,6 +27,7 @@ import 'offline_prayer_service.dart';
 void notificationTapBackground(
   NotificationResponse notificationResponse,
 ) async {
+  DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   if (notificationResponse.actionId == 'action_prayed' ||
       notificationResponse.actionId == 'action_missed') {
@@ -34,15 +35,24 @@ void notificationTapBackground(
     if (payload != null && payload.startsWith('tracker:')) {
       final parts = payload.split(':');
       if (parts.length >= 3) {
-        final dateStr = parts[1];
-        final prayerKey = parts[2];
-        final db = await DatabaseService.getInstance();
-        await db.updatePrayerTracker(
-          dateStr,
-          prayerKey,
-          notificationResponse.actionId == 'action_prayed' ? 1 : 0,
-        );
+        try {
+          final dateStr = parts[1];
+          final prayerKey = parts[2];
+          final db = await DatabaseService.getInstance();
+          await db.updatePrayerTracker(
+            dateStr,
+            prayerKey,
+            notificationResponse.actionId == 'action_prayed' ? 1 : 0,
+          );
+        } catch (e) {
+          // Ignore
+        }
       }
+    }
+    // Force cancel the notification
+    if (notificationResponse.id != null) {
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin.cancel(id: notificationResponse.id!);
     }
   } else if (notificationResponse.actionId == 'action_stop_adhan') {
     final sendPort = IsolateNameServer.lookupPortByName('adhan_stop_port');
@@ -442,15 +452,22 @@ class NotificationService {
           if (payload != null && payload.startsWith('tracker:')) {
             final parts = payload.split(':');
             if (parts.length >= 3) {
-              final dateStr = parts[1];
-              final prayerKey = parts[2];
-              final db = await DatabaseService.getInstance();
-              await db.updatePrayerTracker(
-                dateStr,
-                prayerKey,
-                response.actionId == 'action_prayed' ? 1 : 0,
-              );
+              try {
+                final dateStr = parts[1];
+                final prayerKey = parts[2];
+                final db = await DatabaseService.getInstance();
+                await db.updatePrayerTracker(
+                  dateStr,
+                  prayerKey,
+                  response.actionId == 'action_prayed' ? 1 : 0,
+                );
+              } catch (e) {
+                // Ignore
+              }
             }
+          }
+          if (response.id != null) {
+            await _notificationsPlugin.cancel(id: response.id!);
           }
         }
         selectNotificationStream.add(response.payload);
