@@ -1053,8 +1053,7 @@ class _MainScaffoldState extends State<MainScaffold>
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              
-                              vertical: 6.0,
+                              vertical: 4.0,
                               horizontal: 12.0,
                             ),
                         child: Column(
@@ -1161,7 +1160,7 @@ class _MainScaffoldState extends State<MainScaffold>
 
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
                         ValueListenableBuilder<Duration>(
                           valueListenable: AudioManager.instance.durationNotifier,
                           builder: (context, duration, child) {
@@ -1190,10 +1189,12 @@ class _MainScaffoldState extends State<MainScaffold>
                                         style: TextStyle(fontSize: 10, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
                                       ),
                                       Expanded(
-                                        child: SliderTheme(
-                                          data: SliderTheme.of(context).copyWith(
-                                            trackHeight: 3.0,
-                                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                                        child: SizedBox(
+                                          height: 28,
+                                          child: SliderTheme(
+                                            data: SliderTheme.of(context).copyWith(
+                                              trackHeight: 3.0,
+                                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
                                             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14.0),
                                           ),
                                           child: Slider(
@@ -1213,6 +1214,7 @@ class _MainScaffoldState extends State<MainScaffold>
                                               AudioManager.instance.isSeeking = false;
                                             },
                                           ),
+                                        ),
                                         ),
                                       ),
                                       Text(
