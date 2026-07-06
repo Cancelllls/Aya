@@ -72,6 +72,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   rename: ^3.1.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -123,3 +124,9 @@ flutter:
     - family: Qalun
       fonts:
         - asset: assets/fonts/qaloon.10.ttf
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  remove_alpha_ios: true
