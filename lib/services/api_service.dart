@@ -223,19 +223,45 @@ class ApiService {
       List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        final neighbourhood = place.subLocality ?? place.subAdministrativeArea;
-        final cityOrTown = place.locality ?? place.administrativeArea ?? 'Unknown City';
-
-        String exactLocation = '';
-        if (neighbourhood != null && neighbourhood.isNotEmpty && cityOrTown.isNotEmpty) {
-          if (neighbourhood.toLowerCase() != cityOrTown.toLowerCase()) {
-            exactLocation = '$neighbourhood, $cityOrTown';
-          } else {
-            exactLocation = cityOrTown;
-          }
-        } else {
-          exactLocation = neighbourhood ?? cityOrTown;
+        
+        List<String> parts = [];
+        
+        if (place.street != null && place.street!.isNotEmpty) {
+          parts.add(place.street!);
+        } else if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+          parts.add(place.thoroughfare!);
+        } else if (place.name != null && place.name!.isNotEmpty && !place.name!.contains('+')) {
+          parts.add(place.name!);
         }
+
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          parts.add(place.subLocality!);
+        }
+        
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          parts.add(place.locality!);
+        } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+          parts.add(place.subAdministrativeArea!);
+        } else if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          parts.add(place.administrativeArea!);
+        }
+
+        List<String> uniqueParts = [];
+        for (var p in parts) {
+          bool isSubset = uniqueParts.any((u) => u.contains(p) || p.contains(u));
+          if (!uniqueParts.contains(p) && (!isSubset || uniqueParts.isEmpty)) {
+            uniqueParts.add(p);
+          } else if (isSubset) {
+            // Prefer the longer, more descriptive one if they are subsets
+            int idx = uniqueParts.indexWhere((u) => u.contains(p) || p.contains(u));
+            if (idx != -1 && p.length > uniqueParts[idx].length) {
+              uniqueParts[idx] = p;
+            }
+          }
+        }
+
+        String exactLocation = uniqueParts.take(2).join(', ');
+        if (exactLocation.isEmpty) exactLocation = 'Unknown Location';
 
         final country = place.country ?? 'Unknown Country';
         return {'city': exactLocation, 'country': country};

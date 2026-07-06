@@ -63,6 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   // New settings options
   bool _use24hFormat = false;
   bool _swipeSurahNavigation = true;
+  int _firstDayOfWeek = 1;
   String _preAdhanAlertMode = 'vibrate'; // vibrate vs voice
   int _preAdhanDuration = 10; // minutes before adhan
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
@@ -149,6 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       'todays_verse_reminder',
       defaultValue: true,
     );
+    _firstDayOfWeek = widget.storage.getInt('first_day_of_week', defaultValue: 1);
 
     _use24hFormat = widget.storage.getBool(
       'use_24h_format',
@@ -269,6 +271,13 @@ class _SettingsScreenState extends State<SettingsScreen>
       _swipeSurahNavigation = val;
     });
     await widget.storage.setBool('swipe_surah_navigation', val);
+  }
+
+  Future<void> _changeFirstDayOfWeek(int? val) async {
+    if (val != null) {
+      setState(() => _firstDayOfWeek = val);
+      await widget.storage.setInt('first_day_of_week', val);
+    }
   }
 
   Future<void> _changePreAdhanDuration(int? val) async {
@@ -1353,6 +1362,51 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ),
                           ],
                           onChanged: _changeAsrMethod,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+
+          // Section App Preferences
+          _buildSectionHeader(
+            TranslationService.isArabic ? "تفضيلات التطبيق" : "App Preferences",
+          ),
+          Card(
+            color: theme.cardColor.withOpacity(0.7),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(TranslationService.isArabic ? "أول أيام الأسبوع" : "First Day of the Week"),
+                      subtitle: Text(TranslationService.isArabic ? "يوم بداية الأسبوع لمتتبع الصلاة" : "Start day for the prayer tracker"),
+                      trailing: SizedBox(
+                        width: 160,
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _firstDayOfWeek,
+                          underline: SizedBox(),
+                          dropdownColor: theme.cardColor,
+                          items: [
+                            DropdownMenuItem(value: 1, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "الاثنين" : "Monday"))),
+                            DropdownMenuItem(value: 6, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "السبت" : "Saturday"))),
+                            DropdownMenuItem(value: 7, child: Align(alignment: AlignmentDirectional.centerStart, child: Text(TranslationService.isArabic ? "الأحد" : "Sunday"))),
+                          ],
+                          onChanged: _changeFirstDayOfWeek,
                         ),
                       ),
                     ),

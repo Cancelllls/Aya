@@ -31,6 +31,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   bool _isLoading = true;
   int _selectedYear = DateTime.now().year;
   PrayerTimeData? _selectedDatePrayerTimes;
+  int _firstDayOfWeek = 1;
 
   final List<String> _prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
   final List<String> _prayersAr = [
@@ -110,7 +111,11 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     final monthStart = DateTime(now.year, now.month, 1);
     final monthEnd = DateTime(now.year, now.month + 1, 0);
 
-    final currentWeekStart = now.subtract(Duration(days: now.weekday - 1));
+    final storage = await StorageService.getInstance();
+    _firstDayOfWeek = storage.getInt('first_day_of_week', defaultValue: 1);
+    int daysToSubtract = (now.weekday - _firstDayOfWeek) % 7;
+    if (daysToSubtract < 0) daysToSubtract += 7;
+    final currentWeekStart = now.subtract(Duration(days: daysToSubtract));
     final currentWeekEnd = currentWeekStart.add(const Duration(days: 6));
 
     final yearlyList = await db.getPrayerTrackerRange(
@@ -173,14 +178,13 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       }
     }
 
-    int daysInPeriod = DateTime.now().difference(start).inDays;
+    int daysInPeriod = DateTime.now().difference(start).inDays + 1;
     if (daysInPeriod < 0) daysInPeriod = 0;
     int maxDays = end.difference(start).inDays + 1;
     final validDays = daysInPeriod > maxDays ? maxDays : daysInPeriod;
     int expectedTotal = validDays * 5;
 
     int total = expectedTotal;
-    if (prayed > total) total = prayed;
 
     missed = total - prayed;
     if (missed < 0) missed = 0;
@@ -221,7 +225,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     final yearEnd = DateTime(_selectedYear, 12, 31);
     final monthStart = DateTime(now.year, now.month, 1);
     final monthEnd = DateTime(now.year, now.month + 1, 0);
-    final currentWeekStart = now.subtract(Duration(days: now.weekday - 1));
+    int daysToSubtract = (now.weekday - _firstDayOfWeek) % 7;
+    if (daysToSubtract < 0) daysToSubtract += 7;
+    final currentWeekStart = now.subtract(Duration(days: daysToSubtract));
     final currentWeekEnd = currentWeekStart.add(const Duration(days: 6));
 
     final list = _trackerData.values.toList();
@@ -355,7 +361,13 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+            children: (() {
+              final baseEn = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+              final baseAr = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
+              final base = TranslationService.isArabic ? baseAr : baseEn;
+              final rotate = _firstDayOfWeek - 1;
+              return [...base.sublist(rotate), ...base.sublist(0, rotate)];
+            })()
                 .map(
                   (d) => SizedBox(
                     width: 30,
@@ -387,13 +399,16 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
             ),
-            itemCount: days.length + (firstDayWeekday - 1),
+            itemCount: days.length + ((days.first.weekday - _firstDayOfWeek) % 7 < 0 ? (days.first.weekday - _firstDayOfWeek) % 7 + 7 : (days.first.weekday - _firstDayOfWeek) % 7),
             itemBuilder: (context, index) {
-              if (index < firstDayWeekday - 1) {
+              int emptySlots = (days.first.weekday - _firstDayOfWeek) % 7;
+              if (emptySlots < 0) emptySlots += 7;
+
+              if (index < emptySlots) {
                 return SizedBox.shrink();
               }
 
-              final date = days[index - (firstDayWeekday - 1)];
+              final date = days[index - emptySlots];
               final dateStr = _formatDate(date);
               final dayData = _trackerData[dateStr] ?? {};
 
@@ -516,6 +531,29 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: theme.scaffoldBackgroundColor,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const Spacer(),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    side: BorderSide(color: theme.primaryColor.withOpacity(0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () {
+                    setState(() => _selectedDate = DateTime.now());
+                    _loadPrayerTimesForSelectedDate();
+                  },
+                  child: Text(
+                    isAr ? 'اليوم' : 'TODAY',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: theme.primaryColor,
                     ),
                   ),
                 ),

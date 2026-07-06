@@ -1137,6 +1137,20 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       ),
                                     );
                                   }).toList(),
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return availableReciters.map((r) {
+                                      return Transform.translate(
+                                        offset: Offset(TranslationService.isArabic ? 8 : -8, 0),
+                                        child: Align(
+                                          alignment: AlignmentDirectional.centerStart,
+                                          child: Text(
+                                            TranslationService.isArabic ? r.nameAr : r.nameEn,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
                                   onChanged: (String? val) {
                                     if (val != null) {
                                       setModalState(() {});
@@ -1177,6 +1191,22 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       ),
                                     );
                                   }).whereType<DropdownMenuItem<String>>().toList(),
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return _dynamicReciters.map((r) {
+                                      final moshaf = r['moshaf'] as List;
+                                      if (moshaf.isEmpty) return SizedBox.shrink();
+                                      return Transform.translate(
+                                        offset: Offset(TranslationService.isArabic ? 8 : -8, 0),
+                                        child: Align(
+                                          alignment: AlignmentDirectional.centerStart,
+                                          child: Text(
+                                            r['name'] as String,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
                                   onChanged: (String? val) {
                                     if (val != null) {
                                       setModalState(() {});
