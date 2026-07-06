@@ -173,11 +173,14 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       }
     }
 
-    int daysInPeriod = DateTime.now().difference(start).inDays + 1;
+    int daysInPeriod = DateTime.now().difference(start).inDays;
     if (daysInPeriod < 0) daysInPeriod = 0;
     int maxDays = end.difference(start).inDays + 1;
     final validDays = daysInPeriod > maxDays ? maxDays : daysInPeriod;
-    final total = validDays * 5;
+    int expectedTotal = validDays * 5;
+
+    int total = expectedTotal;
+    if (prayed > total) total = prayed;
 
     missed = total - prayed;
     if (missed < 0) missed = 0;

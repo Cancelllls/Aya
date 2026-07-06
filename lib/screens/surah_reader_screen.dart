@@ -1056,45 +1056,49 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 ),
                               ),
                               
-                              DropdownButton<String>(
-                                value: _quranScriptType,
-                                dropdownColor: theme.cardColor,
-                                underline: SizedBox(),
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Color(0xFFE5C158),
-                                ),
-                                items: [
-                                  DropdownMenuItem(value: 'hafs', child: Text(TranslationService.isArabic ? 'حفص عن عاصم' : 'Hafs A\'n Assem')),
-                                  DropdownMenuItem(value: 'warsh', child: Text(TranslationService.isArabic ? 'ورش عن نافع' : 'Warsh A\'n Nafi\'')),
-                                  DropdownMenuItem(value: 'qaloon', child: Text(TranslationService.isArabic ? 'قالون عن نافع' : 'Qalun A\'n Nafi\'')),
-                                  DropdownMenuItem(value: 'shuba', child: Text(TranslationService.isArabic ? 'شعبة عن عاصم' : 'Shuba A\'n Assem')),
-                                  DropdownMenuItem(value: 'duri', child: Text(TranslationService.isArabic ? 'الدوري عن أبي عمرو' : 'Al-Duri A\'n Abi Amr')),
-                                  DropdownMenuItem(value: 'susi', child: Text(TranslationService.isArabic ? 'السوسي عن أبي عمرو' : 'As-Susi A\'n Abi Amr')),
-                                  DropdownMenuItem(value: 'bazzi', child: Text(TranslationService.isArabic ? 'البزي عن ابن كثير' : 'Al-Bazzi A\'n Ibn Katheer')),
-                                  DropdownMenuItem(value: 'qunbul', child: Text(TranslationService.isArabic ? 'قنبل عن ابن كثير' : 'Qunbul A\'n Ibn Katheer')),
-                                  DropdownMenuItem(value: 'hisham', child: Text(TranslationService.isArabic ? 'هشام عن ابن عامر' : 'Hisham A\'n Ibn Amir')),
-                                  DropdownMenuItem(value: 'ibn-dhakwan', child: Text(TranslationService.isArabic ? 'ابن ذكوان عن ابن عامر' : 'Ibn Dhakwan A\'n Ibn Amir')),
-                                ],
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setModalState(() {
-                                      _quranScriptType = newValue;
-                                    });
-                                    setState(() {
-                                      _quranScriptType = newValue;
-                                    });
-                                    widget.storage.setString('quran_script_type', newValue);
-                                    
-                                    // Switch reciter
-                                    if (newValue == 'hafs') {
-                                      widget.storage.setString('default_reciter', 'ar.alafasy');
+                              Container(
+                                width: 170,
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: _quranScriptType,
+                                  dropdownColor: theme.cardColor,
+                                  underline: SizedBox(),
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Color(0xFFE5C158),
+                                  ),
+                                  items: [
+                                    DropdownMenuItem(value: 'hafs', child: Text(TranslationService.isArabic ? 'حفص عن عاصم' : 'Hafs A\'n Assem', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'warsh', child: Text(TranslationService.isArabic ? 'ورش عن نافع' : 'Warsh A\'n Nafi\'', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'qaloon', child: Text(TranslationService.isArabic ? 'قالون عن نافع' : 'Qalun A\'n Nafi\'', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'shuba', child: Text(TranslationService.isArabic ? 'شعبة عن عاصم' : 'Shuba A\'n Assem', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'duri', child: Text(TranslationService.isArabic ? 'الدوري عن أبي عمرو' : 'Al-Duri A\'n Abi Amr', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'susi', child: Text(TranslationService.isArabic ? 'السوسي عن أبي عمرو' : 'As-Susi A\'n Abi Amr', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'bazzi', child: Text(TranslationService.isArabic ? 'البزي عن ابن كثير' : 'Al-Bazzi A\'n Ibn Katheer', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'qunbul', child: Text(TranslationService.isArabic ? 'قنبل عن ابن كثير' : 'Qunbul A\'n Ibn Katheer', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'hisham', child: Text(TranslationService.isArabic ? 'هشام عن ابن عامر' : 'Hisham A\'n Ibn Amir', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(value: 'ibn-dhakwan', child: Text(TranslationService.isArabic ? 'ابن ذكوان عن ابن عامر' : 'Ibn Dhakwan A\'n Ibn Amir', overflow: TextOverflow.ellipsis)),
+                                  ],
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setModalState(() {
+                                        _quranScriptType = newValue;
+                                      });
+                                      setState(() {
+                                        _quranScriptType = newValue;
+                                      });
+                                      widget.storage.setString('quran_script_type', newValue);
+                                      
+                                      // Switch reciter
+                                      if (newValue == 'hafs') {
+                                        widget.storage.setString('default_reciter', 'ar.alafasy');
+                                      }
+                                      
+                                      _fetchDynamicReciters(newValue, modalSetState: setModalState);
+                                      _loadAyahs();
                                     }
-                                    
-                                    _fetchDynamicReciters(newValue, modalSetState: setModalState);
-                                    _loadAyahs();
-                                  }
-                                },
+                                  },
+                                ),
                               ),
                             ],
                           ),
@@ -1116,29 +1120,20 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158)),
                                 )
                               else if (_quranScriptType == 'hafs')
-                                DropdownButton<String>(
+                              Container(
+                                width: 170,
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
                                   value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
                                   dropdownColor: theme.cardColor,
                                   underline: SizedBox(),
                                   icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return availableReciters.map((r) {
-                                      return Container(
-                                        constraints: BoxConstraints(maxWidth: 160),
-                                        alignment: AlignmentDirectional.centerEnd,
-                                        child: Text(
-                                          TranslationService.isArabic ? r.nameAr : r.nameEn,
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
                                   items: availableReciters.map((r) {
                                     return DropdownMenuItem(
                                       value: r.id,
                                       child: Text(
                                         TranslationService.isArabic ? r.nameAr : r.nameEn,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     );
                                   }).toList(),
@@ -1149,9 +1144,13 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       widget.storage.setString('default_reciter', val);
                                     }
                                   }
-                                )
+                                ),
+                              )
                               else
-                                DropdownButton<String>(
+                              Container(
+                                width: 170,
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
                                   value: (() {
                                     final current = widget.storage.getString('default_reciter') ?? '';
                                     if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
@@ -1166,21 +1165,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   dropdownColor: theme.cardColor,
                                   underline: SizedBox(),
                                   icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return _dynamicReciters.map((r) {
-                                      final moshaf = r['moshaf'] as List;
-                                      if (moshaf.isEmpty) return Container();
-                                      return Container(
-                                        constraints: BoxConstraints(maxWidth: 160),
-                                        alignment: AlignmentDirectional.centerEnd,
-                                        child: Text(
-                                          r['name'] as String,
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
                                   items: _dynamicReciters.map((r) {
                                     final moshaf = r['moshaf'] as List;
                                     if (moshaf.isEmpty) return null;
@@ -1189,6 +1173,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       value: server,
                                       child: Text(
                                         r['name'] as String,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     );
                                   }).whereType<DropdownMenuItem<String>>().toList(),
@@ -1200,6 +1185,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     }
                                   }
                                 ),
+                              ),
 
                             ],
                           ),

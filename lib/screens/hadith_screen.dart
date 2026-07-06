@@ -146,12 +146,12 @@ class _HadithScreenState extends State<HadithScreen> {
     });
 
     final bookId = _selectedBook.id;
-    final downloaded = await isBookDownloaded(bookId, _displayLang);
+    final isBukhariOrMuslim = bookId == 'bukhari' || bookId == 'muslim';
 
-    if (downloaded) {
+    if (isBukhariOrMuslim) {
       try {
-        final path = await _getLocalPath(bookId, _displayLang);
-        final data = jsonDecode(await File(path).readAsString());
+        final jsonString = await DefaultAssetBundle.of(context).loadString('assets/hadith/$_displayLang-$bookId.json');
+        final data = jsonDecode(jsonString);
         final List<dynamic> hadiths = data['hadiths'] ?? [];
 
         final List<dynamic> list = [];
@@ -182,9 +182,11 @@ class _HadithScreenState extends State<HadithScreen> {
         }
         return;
       } catch (e) {
-        // Fallback to online if reading files fails
+        // Fallback to online
       }
     }
+
+    final downloaded = await isBookDownloaded(bookId, _displayLang);
 
     // Online Fetch API
     try {
