@@ -1121,6 +1121,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
                                     dropdownColor: theme.cardColor,
                                     isExpanded: true,
+                                    alignment: AlignmentDirectional.centerEnd,
                                     underline: SizedBox(),
                                     icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
                                     items: availableReciters.map((r) {
@@ -1157,6 +1158,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     })(),
                                     dropdownColor: theme.cardColor,
                                     isExpanded: true,
+                                    alignment: AlignmentDirectional.centerEnd,
                                     underline: SizedBox(),
                                     icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
                                     items: _dynamicReciters.map((r) {
