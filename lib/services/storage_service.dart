@@ -303,6 +303,46 @@ class StorageService {
   }
 
   Future<bool> remove(String key) async {
-    return await prefs.remove(key);
+    return await prefs.remove(key) ?? false;
+  }
+
+  // --- Last Read Position ---
+  Future<void> saveLastReadPosition(int surahNum, int ayahNum) async {
+    await setInt('last_read_surah', surahNum);
+    await setInt('last_read_ayah', ayahNum);
+  }
+
+  Map<String, int>? getLastReadPosition() {
+    final surahNum = prefs.getInt('last_read_surah');
+    final ayahNum = prefs.getInt('last_read_ayah');
+    if (surahNum != null && ayahNum != null) {
+      return {'surah': surahNum, 'ayah': ayahNum};
+    }
+    return null;
+  }
+
+  // --- Last Audio Position ---
+  Future<void> saveLastAudioPosition(int surahNum, int ayahNum, String reciter) async {
+    await setInt('last_audio_surah', surahNum);
+    await setInt('last_audio_ayah', ayahNum);
+    await setString('last_audio_reciter', reciter);
+  }
+
+  Future<void> saveLastAudioTimestamp(int positionMs) async {
+    await setInt('last_audio_timestamp_ms', positionMs);
+  }
+
+  Map<String, dynamic>? getLastAudioPosition() {
+    final surahNum = prefs.getInt('last_audio_surah');
+    final ayahNum = prefs.getInt('last_audio_ayah');
+    final reciter = prefs.getString('last_audio_reciter');
+    if (surahNum != null && ayahNum != null && reciter != null) {
+      return {'surah': surahNum, 'ayah': ayahNum, 'reciter': reciter};
+    }
+    return null;
+  }
+
+  int? getLastAudioTimestamp() {
+    return prefs.getInt('last_audio_timestamp_ms');
   }
 }

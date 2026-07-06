@@ -8,6 +8,7 @@ import '../models/quran_models.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import 'translation_service.dart';
+import 'local_quran_service.dart';
 
 class AudioPlayState {
   final int surahNum;
@@ -70,6 +71,19 @@ class AudioManager {
     _storage = storage;
     _setupPlayer(_playerA);
     _setupPlayer(_playerB);
+
+    final lastAudio = _storage.getLastAudioPosition();
+    if (lastAudio != null) {
+      _surahNum = lastAudio['surah'];
+      playState.value = AudioPlayState(
+        surahNum: lastAudio['surah'],
+        ayahNum: lastAudio['ayah'],
+        isPlaying: false,
+        title: "Surah ${lastAudio['surah']}",
+        subtitle: "Paused",
+        isLoading: false,
+      );
+    }
   }
 
   void _setupPlayer(AudioPlayer p) {
@@ -225,6 +239,8 @@ class AudioManager {
     _isTransitioning = false;
 
     final ayah = _currentPlaylist[_currentIndex];
+    
+    _storage.saveLastAudioPosition(surahNum, ayah.numberInSurah, reciter);
 
     playState.value = AudioPlayState(
       surahNum: surahNum,
@@ -560,6 +576,10 @@ class AudioManager {
 
   void togglePlayPause() async {
     if (activePlayer.state == PlayerState.playing) {
+      final pos = await activePlayer.getCurrentPosition();
+      if (pos != null) {
+        _storage.saveLastAudioTimestamp(pos.inMilliseconds);
+      }
       await activePlayer.pause();
       if (_isTransitioning) {
         await inactivePlayer.pause();
@@ -569,6 +589,22 @@ class AudioManager {
       await activePlayer.resume();
       if (_isTransitioning) {
         await inactivePlayer.resume();
+      }
+    } else if (_currentPlaylist.isEmpty && playState.value.surahNum > 0) {
+      // Cold start resume
+      final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+      final ayahs = await LocalQuranService.getSurahAyahs(playState.value.surahNum, quranScriptType);
+      final startIndex = ayahs.indexWhere((a) => a.numberInSurah == playState.value.ayahNum);
+      if (startIndex != -1) {
+        playAyah(playState.value.surahNum, playState.value.title, ayahs, startIndex);
+        
+        // Seek to last timestamp if we have it
+        final lastTimestampMs = _storage.getLastAudioTimestamp();
+        if (lastTimestampMs != null && lastTimestampMs > 0) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            seekTo(Duration(milliseconds: lastTimestampMs));
+          });
+        }
       }
     }
   }
@@ -593,6 +629,10 @@ class AudioManager {
   }
 
   void stop() async {
+    final pos = await activePlayer.getCurrentPosition();
+    if (pos != null) {
+      _storage.saveLastAudioTimestamp(pos.inMilliseconds);
+    }
     _cancelCrossfade();
     await _playerA.stop();
     await _playerB.stop();

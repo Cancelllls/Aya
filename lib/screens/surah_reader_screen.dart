@@ -7,6 +7,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import '../models/quran_models.dart';
 import '../services/api_service.dart';
 import '../services/local_quran_service.dart';
@@ -444,6 +445,13 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToAyah(widget.initialAyahNumber!);
         });
+      } else {
+        final lastPos = widget.storage.getLastReadPosition();
+        if (lastPos != null && lastPos['surah'] == _currentSurah.number) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToAyah(lastPos['ayah']!);
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1528,9 +1536,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         playState.ayahNum == ayah.numberInSurah;
     final isHighlighted = isBookmarked || isPlaying;
 
-    return Container(
-      key: key,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    return VisibilityDetector(
+      key: Key('ayah_${ayah.numberInSurah}'),
+      onVisibilityChanged: (info) {
+        if (info.visibleFraction > 0.5) {
+          widget.storage.saveLastReadPosition(_currentSurah.number, ayah.numberInSurah);
+        }
+      },
+      child: Container(
+        key: key,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: isPlaying
             // ignore: deprecated_member_use
@@ -1697,7 +1712,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildContinuousLayout(AudioPlayState playState) {
@@ -1821,8 +1836,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           return Column(
             children: [
               if (showHizbHeader && (firstHizb > 0 || firstJuz > 0)) _buildHizbDivider(firstHizb, firstJuz),
-              Container(
-                key: key,
+              VisibilityDetector(
+                key: Key('chunk_$pageIndex'),
+                onVisibilityChanged: (info) {
+                  if (info.visibleFraction > 0.5 && chunk.isNotEmpty) {
+                    widget.storage.saveLastReadPosition(_currentSurah.number, chunk.first.numberInSurah);
+                  }
+                },
+                child: Container(
+                  key: key,
                 margin: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: _hideContinuousBorders ? 2 : 8,
@@ -1875,6 +1897,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                     textAlign: TextAlign.justify,
                   ),
                 ),
+              ),
               ),
             ],
           );
