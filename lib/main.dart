@@ -1032,8 +1032,8 @@ class _MainScaffoldState extends State<MainScaffold>
                 ),
                 AudioPlayerOverlay(
                   bottomPosition: bottomNavbarStyle == 'floating'
-                      ? 82.0 + MediaQuery.of(context).padding.bottom
-                      : 8.0,
+                      ? 76.0 + MediaQuery.of(context).padding.bottom
+                      : 0.0,
                   isDark: isDark,
                   theme: theme,
                 ),

@@ -75,11 +75,12 @@ class AudioManager {
     final lastAudio = _storage.getLastAudioPosition();
     if (lastAudio != null) {
       _surahNum = lastAudio['surah'];
+      _surahName = lastAudio['surahName'];
       playState.value = AudioPlayState(
         surahNum: lastAudio['surah'],
         ayahNum: lastAudio['ayah'],
         isPlaying: false,
-        title: "Surah ${lastAudio['surah']}",
+        title: _surahName,
         subtitle: "Paused",
         isLoading: false,
       );
@@ -240,7 +241,7 @@ class AudioManager {
 
     final ayah = _currentPlaylist[_currentIndex];
     
-    _storage.saveLastAudioPosition(surahNum, ayah.numberInSurah, reciter);
+    _storage.saveLastAudioPosition(surahNum, ayah.numberInSurah, reciter, surahName);
 
     playState.value = AudioPlayState(
       surahNum: surahNum,
@@ -324,6 +325,7 @@ class AudioManager {
       'default_reciter',
       defaultValue: 'ar.alafasy',
     );
+    _storage.saveLastAudioPosition(surahNum, 0, reciter, surahName);
     final localPath = await _getLocalSurahPath(surahNum, reciter);
     final localFile = File(localPath);
     final isOffline = await localFile.exists();

@@ -466,7 +466,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         });
       } else {
         final lastAyahInSurah = widget.storage.getLastReadAyahForSurah(_currentSurah.number);
-        if (lastAyahInSurah != null) {
+        if (lastAyahInSurah != null && lastAyahInSurah > 2) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _scrollToAyah(lastAyahInSurah);
           });
