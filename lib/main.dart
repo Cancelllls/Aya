@@ -1030,13 +1030,16 @@ class _MainScaffoldState extends State<MainScaffold>
                   index: _currentTab,
                   children: screens,
                 ),
-                AudioPlayerOverlay(
-                  bottomPosition: bottomNavbarStyle == 'floating'
-                      ? 76.0 + MediaQuery.of(context).padding.bottom
-                      : 0.0,
-                  isDark: isDark,
-                  theme: theme,
-                ),
+                if (_currentTab == 1)
+                  AudioPlayerOverlay(
+                    bottomPosition: bottomNavbarStyle == 'floating'
+                        ? kBottomNavigationBarHeight + 16.0 + 5.0
+                        : kBottomNavigationBarHeight +
+                            MediaQuery.of(context).padding.bottom +
+                            8.0,
+                    isDark: isDark,
+                    theme: theme,
+                  ),
 
                 // Focus Lock Screen Overlay
                 if (_isFocusOverlayShowing)
