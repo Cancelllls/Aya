@@ -471,10 +471,24 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       if (index == 1) {
                         String reciterName = '';
                         try {
-                          final reciterData = _allReciters.firstWhere((r) => r['id'] == _reciter);
-                          reciterName = TranslationService.isArabic ? reciterData['nameAr']! : reciterData['nameEn']!;
-                          final moshafName = TranslationService.isArabic ? reciterData['quraaAr']! : reciterData['quraaEn']!;
-                          reciterName = '$reciterName ($moshafName)';
+                          final isAr = TranslationService.isArabic;
+                          final data = isAr ? recitersDataAr : recitersDataEn;
+                          final list = data['reciters'] as List;
+                          bool found = false;
+                          for (final r in list) {
+                            final moshafs = r['moshaf'] as List;
+                            for (final m in moshafs) {
+                              if ('mp3quran_server_${m['server']}' == _reciter) {
+                                reciterName = '${r['name']} (${m['name']})';
+                                found = true;
+                                break;
+                              }
+                            }
+                            if (found) break;
+                          }
+                          if (!found) {
+                            reciterName = TranslationService.isArabic ? 'تلاوة غير معروفة' : 'Unknown Reciter';
+                          }
                         } catch (e) {
                           reciterName = TranslationService.isArabic ? 'تلاوة غير معروفة' : 'Unknown Reciter';
                         }

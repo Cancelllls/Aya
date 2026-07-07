@@ -322,6 +322,10 @@ class StorageService {
     return null;
   }
 
+  int? getLastReadAyahForSurah(int surahNum) {
+    return prefs.getInt('last_read_ayah_surah_$surahNum');
+  }
+
   // --- Last Audio Position ---
   Future<void> saveLastAudioPosition(int surahNum, int ayahNum, String reciter) async {
     await setInt('last_audio_surah', surahNum);
