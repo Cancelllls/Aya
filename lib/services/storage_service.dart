@@ -310,6 +310,7 @@ class StorageService {
   Future<void> saveLastReadPosition(int surahNum, int ayahNum) async {
     await setInt('last_read_surah', surahNum);
     await setInt('last_read_ayah', ayahNum);
+    await setInt('last_read_ayah_surah_$surahNum', ayahNum);
   }
 
   Map<String, int>? getLastReadPosition() {

@@ -297,7 +297,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
       if (val == 'voice' || val == 'vibrate_and_voice') {
-
+        await AdhanAudioService.instance.stopPreview();
+        await AdhanAudioService.instance.playPreAdhanPreview(TranslationService.currentLanguage);
       }
       await _rescheduleAlarms();
     }
@@ -1547,64 +1548,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
-                    if (_preAdhanAlertMode == 'voice' ||
-                        _preAdhanAlertMode == 'vibrate_and_voice') ...[
-                      Divider(
-                        height: 1,
-                        color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      ),
-                      ListTile(
-                        title: Text(
-                          TranslationService.isArabic
-                              ? "معاينة التنبيه الصوتي"
-                              : "Voice Alert Preview",
-                        ),
-                        subtitle: Text(
-                          TranslationService.isArabic
-                              ? "تشغيل معاينة لصوت التنبيه"
-                              : "Play a preview of the voice alert",
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                _isPreAdhanPreviewPlaying
-                                    ? Icons.stop
-                                    : Icons.play_arrow,
-                              ),
-                              onPressed: () async {
-                                if (_isPreAdhanPreviewPlaying) {
-                                  await AdhanAudioService.instance
-                                      .stopPreview();
-                                  setState(
-                                    () => _isPreAdhanPreviewPlaying = false,
-                                  );
-                                } else {
-                                  setState(
-                                    () => _isPreAdhanPreviewPlaying = true,
-                                  );
-                                  final lang =
-                                      TranslationService.currentLanguage;
-                                  await AdhanAudioService.instance
-                                      .playPreAdhanPreview(lang);
-                                  Future.delayed(
-                                    const Duration(seconds: 8),
-                                    () {
-                                      if (mounted)
-                                        setState(
-                                          () =>
-                                              _isPreAdhanPreviewPlaying = false,
-                                        );
-                                    },
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+
                     Divider(
                       height: 1,
                       color: Theme.of(context).dividerColor.withOpacity(0.1),

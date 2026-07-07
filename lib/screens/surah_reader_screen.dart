@@ -11,6 +11,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import '../models/quran_models.dart';
 import '../services/api_service.dart';
 import '../services/local_quran_service.dart';
+import '../data/reciters_data.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/audio_manager.dart';
@@ -91,28 +92,35 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       if (modalSetState != null) modalSetState(() {});
     }
     try {
-      final lang = TranslationService.isArabic ? 'ar' : 'eng';
-      final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId'));
-      if (res.statusCode == 200) {
-        final data = json.decode(utf8.decode(res.bodyBytes));
-        if (mounted) {
-          setState(() {
-            _dynamicReciters = data['reciters'] ?? [];
-            _dynamicReciters.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
-            _isLoadingReciters = false;
-            
-            // Set first dynamic reciter as default if none selected or if current is invalid
-            final currentReciter = widget.storage.getString('default_reciter') ?? '';
-            if (!currentReciter.startsWith('mp3quran_server_') && _dynamicReciters.isNotEmpty) {
-              final moshaf = _dynamicReciters[0]['moshaf'] as List;
-              if (moshaf.isNotEmpty) {
-                final server = moshaf[0]['server'] as String;
-                widget.storage.setString('default_reciter', 'mp3quran_server_$server');
-              }
+      final isAr = TranslationService.isArabic;
+      final data = isAr ? recitersDataAr : recitersDataEn;
+      final allReciters = data['reciters'] as List;
+      
+      final filteredReciters = allReciters.map((r) {
+        // Deep copy the reciter to avoid mutating the constant
+        final newR = Map<String, dynamic>.from(r);
+        final moshafs = (newR['moshaf'] as List).cast<Map<String, dynamic>>();
+        newR['moshaf'] = moshafs.where((m) => m['rewaya_id'] == riwayahId).toList();
+        return newR;
+      }).where((r) => (r['moshaf'] as List).isNotEmpty).toList();
+
+      if (mounted) {
+        setState(() {
+          _dynamicReciters = filteredReciters;
+          _dynamicReciters.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+          _isLoadingReciters = false;
+          
+          // Set first dynamic reciter as default if none selected or if current is invalid
+          final currentReciter = widget.storage.getString('default_reciter') ?? '';
+          if (!currentReciter.startsWith('mp3quran_server_') && _dynamicReciters.isNotEmpty) {
+            final moshaf = _dynamicReciters[0]['moshaf'] as List;
+            if (moshaf.isNotEmpty) {
+              final server = moshaf[0]['server'] as String;
+              widget.storage.setString('default_reciter', 'mp3quran_server_$server');
             }
-          });
-          if (modalSetState != null) modalSetState(() {});
-        }
+          }
+        });
+        if (modalSetState != null) modalSetState(() {});
       }
     } catch (e) {
       if (mounted) {
@@ -457,10 +465,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           _scrollToAyah(widget.initialAyahNumber!);
         });
       } else {
-        final lastPos = widget.storage.getLastReadPosition();
-        if (lastPos != null && lastPos['surah'] == _currentSurah.number) {
+        final lastAyahInSurah = widget.storage.getLastReadAyahForSurah(_currentSurah.number);
+        if (lastAyahInSurah != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToAyah(lastPos['ayah']!);
+            _scrollToAyah(lastAyahInSurah);
           });
         }
       }
@@ -2005,19 +2013,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         final speed = remainingDistance / (remainingAudioMs / 1000.0);
         _startAutoScroll(customSpeed: speed);
         
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                TranslationService.isArabic
-                  ? 'تمت مزامنة التمرير التلقائي مع الصوت'
-                  : 'Auto-scroll synced with audio'
-              ),
-              duration: const Duration(seconds: 2),
-              backgroundColor: const Color(0xFFE5C158),
-            ),
-          );
-        }
+        // Removed snackbar as requested by user
       }
     }
   }

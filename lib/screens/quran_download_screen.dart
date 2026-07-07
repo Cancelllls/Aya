@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../data/reciters_data.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/quran_models.dart';
 import '../services/api_service.dart';
@@ -263,7 +264,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    itemCount: _surahList.length + 1,
+                    itemCount: _surahList.length + 2,
                     itemBuilder: (context, index) {
                       if (index == 0) {
                         return Container(
@@ -466,8 +467,68 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                           ),
                         );
                       }
+                      
+                      if (index == 1) {
+                        String reciterName = '';
+                        try {
+                          final reciterData = _allReciters.firstWhere((r) => r['id'] == _reciter);
+                          reciterName = TranslationService.isArabic ? reciterData['nameAr']! : reciterData['nameEn']!;
+                          final moshafName = TranslationService.isArabic ? reciterData['quraaAr']! : reciterData['quraaEn']!;
+                          reciterName = '$reciterName ($moshafName)';
+                        } catch (e) {
+                          reciterName = TranslationService.isArabic ? 'تلاوة غير معروفة' : 'Unknown Reciter';
+                        }
+                        
+                        return Card(
+                          color: const Color(0xFFE5C158).withOpacity(0.15),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: const Color(0xFFE5C158).withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.mic,
+                                  color: Color(0xFFE5C158),
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        TranslationService.isArabic ? 'القارئ الحالي' : 'Current Reciter',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        reciterName,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFE5C158),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
 
-                      final surah = _surahList[index - 1];
+                      final surah = _surahList[index - 2];
                       final state = QuranDownloadService.instance.getState(
                         surah.number,
                       );
@@ -993,33 +1054,30 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
 
     // Fetch dynamic reciters
     try {
-      final lang = TranslationService.isArabic ? 'ar' : 'eng';
-      final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang'));
-      if (res.statusCode == 200) {
-        final data = json.decode(utf8.decode(res.bodyBytes));
-        final list = data['reciters'] as List;
-        for (final r in list) {
-          final moshafs = r['moshaf'] as List;
-          for (final m in moshafs) {
-            final server = m['server'] as String;
-            final moshafName = m['name'] as String;
-            final reciterName = r['name'] as String;
-            
-            // Skip redundant server if it was already in static list somehow
-            if (!reciters.any((x) => x['id'] == 'mp3quran_server_$server')) {
-              reciters.add({
-                'id': 'mp3quran_server_$server',
-                'nameAr': reciterName,
-                'nameEn': reciterName,
-                'quraaAr': moshafName,
-                'quraaEn': moshafName,
-              });
-            }
+      final isAr = TranslationService.isArabic;
+      final data = isAr ? recitersDataAr : recitersDataEn;
+      final list = data['reciters'] as List;
+      for (final r in list) {
+        final moshafs = r['moshaf'] as List;
+        for (final m in moshafs) {
+          final server = m['server'] as String;
+          final moshafName = m['name'] as String;
+          final reciterName = r['name'] as String;
+          
+          // Skip redundant server if it was already in static list somehow
+          if (!reciters.any((x) => x['id'] == 'mp3quran_server_$server')) {
+            reciters.add({
+              'id': 'mp3quran_server_$server',
+              'nameAr': reciterName,
+              'nameEn': reciterName,
+              'quraaAr': moshafName,
+              'quraaEn': moshafName,
+            });
           }
         }
       }
     } catch (e) {
-      // Ignore API errors, we still have static ones
+      // Ignore errors, we still have static ones
     }
 
     final Map<String, int> counts = {};
