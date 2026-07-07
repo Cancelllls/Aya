@@ -536,6 +536,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                     ],
                                   ),
                                 ),
+                                IconButton(
+                                  icon: const Icon(Icons.download, color: Color(0xFFE5C158)),
+                                  onPressed: () {
+                                    QuranDownloadService.instance.downloadAll(_reciter);
+                                  },
+                                  tooltip: TranslationService.isArabic ? 'تحميل الكل' : 'Download All',
+                                ),
                               ],
                             ),
                           ),
@@ -1264,30 +1271,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                               ),
                             ],
                           ),
-                          trailing: isThisDownloading
-                              ? SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      CircularProgressIndicator(
-                                        value: progress,
-                                        strokeWidth: 3,
-                                        color: const Color(0xFFE5C158),
-                                      ),
-                                      Text(
-                                        "${(progress * 100).toInt()}%",
-                                        style: const TextStyle(
-                                          fontSize: 8,
-                                          color: Color(0xFFE5C158),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : isFull
+                          trailing: isFull
                               ? GestureDetector(
                                   onTap: () async {
                                     await QuranDownloadService.instance.deleteReciterCache(rId);
@@ -1300,24 +1284,11 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                                     color: Colors.redAccent,
                                   ),
                                 )
-                              : GestureDetector(
-                                  onTap: isDownloading
-                                      ? null
-                                      : () async {
-                                          widget.onReciterChanged(rId);
-                                          setState(() => _downloading = rId);
-                                          QuranDownloadService.instance.downloadAll(rId);
-                                          // Update count locally periodically or let listener handle it
-                                        },
-                                  child: Icon(
-                                    Icons.download_rounded,
-                                    size: 22,
-                                    color: isDownloading
-                                        ? theme.disabledColor
-                                        : const Color(0xFFE5C158),
-                                  ),
-                                ),
-                          onTap: () => widget.onReciterChanged(rId),
+                              : null,
+                          onTap: () {
+                            widget.onReciterChanged(rId);
+                            Navigator.of(context).pop();
+                          },
                         ),
                         if (isThisDownloading)
                           Padding(

@@ -1547,6 +1547,33 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             ),
                             if (_readingMode == 'continuous')
                               _buildAutoScrollFloatingControls(isDark, playState),
+                            if (playState.isPlaying && playState.surahNum != 0 && playState.surahNum != _currentSurah.number)
+                              Positioned(
+                                top: 16,
+                                left: 16,
+                                right: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0,2))],
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.music_note, color: Colors.white, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        TranslationService.isArabic 
+                                          ? 'يتم الآن تشغيل سورة أخرى'
+                                          : 'Playing a different Surah',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         );
                       },
@@ -2005,15 +2032,23 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     
     if (duration != null && position != null && _scrollController.hasClients) {
       final maxScroll = _scrollController.position.maxScrollExtent;
-      final currentScroll = _scrollController.position.pixels;
-      final remainingDistance = maxScroll - currentScroll;
       
+      // Calculate target scroll position based on audio progress
+      double progress = position.inMilliseconds / duration.inMilliseconds;
+      if (progress < 0) progress = 0;
+      if (progress > 1) progress = 1;
+      
+      final targetScrollPixels = maxScroll * progress;
+      
+      // Pull user to correct position
+      _scrollController.jumpTo(targetScrollPixels);
+      
+      final remainingDistance = maxScroll - targetScrollPixels;
       final remainingAudioMs = duration.inMilliseconds - position.inMilliseconds;
+      
       if (remainingAudioMs > 0 && remainingDistance > 0) {
         final speed = remainingDistance / (remainingAudioMs / 1000.0);
         _startAutoScroll(customSpeed: speed);
-        
-        // Removed snackbar as requested by user
       }
     }
   }

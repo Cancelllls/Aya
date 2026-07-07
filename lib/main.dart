@@ -1026,19 +1026,9 @@ class _MainScaffoldState extends State<MainScaffold>
 
             return Stack(
               children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeInOut,
-                  switchOutCurve: Curves.easeInOut,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  child: KeyedSubtree(
-                    key: ValueKey<String>(
-                      '$_currentTab-$_azkarInitialTab-$_prayerInitialTab-$_hadithInitialNumber-$_hadithInitialBookId',
-                    ),
-                    child: screens[_currentTab],
-                  ),
+                IndexedStack(
+                  index: _currentTab,
+                  children: screens,
                 ),
                 AudioPlayerOverlay(
                   bottomPosition: bottomNavbarStyle == 'floating'
