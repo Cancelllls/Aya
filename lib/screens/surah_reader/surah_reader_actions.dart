@@ -65,9 +65,11 @@ extension SurahReaderActions on _SurahReaderScreenState {
 
   void _scrollToAyah(int ayahNum) {
       if (!mounted) return;
+      
+      final currentSequence = ++_scrollToAyahSequence;
   
       void performSearch(int attempt, double currentGuess) {
-        if (!mounted) return;
+        if (!mounted || _scrollToAyahSequence != currentSequence) return;
   
         if (!_scrollController.hasClients) {
           if (attempt < 20) {
@@ -130,7 +132,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
       }
   
       void startSearch(int attempt) {
-        if (!mounted) return;
+        if (!mounted || _scrollToAyahSequence != currentSequence) return;
         if (!_scrollController.hasClients) {
           if (attempt < 20) {
             Future.delayed(

@@ -81,6 +81,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   final Map<int, GlobalKey> _pageKeys = {};
   final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};
   double? _horizontalDragStartX;
+  int _scrollToAyahSequence = 0;
 
   @override
   void initState() {

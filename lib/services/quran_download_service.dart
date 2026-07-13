@@ -77,7 +77,7 @@ class QuranDownloadService extends ChangeNotifier {
 
   Future<String> getLocalSurahPath(int surahNum, String reciter) async {
     final dir = await getApplicationDocumentsDirectory();
-    final fileName = QdcAudioService.getQdcReciterId(reciter) != null ? 'surah_${surahNum}_qdc.mp3' : 'surah_$surahNum.mp3';
+    final fileName = QdcAudioService.getQdcReciterId(reciter) != null ? 'surah_${surahNum}_qdc_v2.mp3' : 'surah_$surahNum.mp3';
     return '${dir.path}/quran_audio/$reciter/$fileName';
   }
 

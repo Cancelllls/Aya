@@ -573,7 +573,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
                               AudioManager.instance.seekToAyahInSplitMode(targetAyah);
                             } else {
                               await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
-                              AudioManager.instance.isSeeking = false;
+                              Future.delayed(const Duration(milliseconds: 800), () {
+                                AudioManager.instance.isSeeking = false;
+                              });
                             }
                           },
                         ),

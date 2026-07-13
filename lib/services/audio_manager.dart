@@ -115,7 +115,8 @@ class AudioManager {
     });
 
     p.onPositionChanged.listen((pos) {
-      if (!isSeeking) positionNotifier.value = pos;
+      if (isSeeking) return;
+      positionNotifier.value = pos;
       
       // Handle timestamp syncing
       if (isTimestampSyncMode && _currentTimestamps != null) {
@@ -222,7 +223,7 @@ class AudioManager {
     }
     
     final dir = await getApplicationDocumentsDirectory();
-    final fileName = isTimestampSyncMode ? 'surah_${surahNum}_qdc.mp3' : 'surah_$surahNum.mp3';
+    final fileName = isTimestampSyncMode ? 'surah_${surahNum}_qdc_v2.mp3' : 'surah_$surahNum.mp3';
     final localPath = '${dir.path}/quran_audio/$reciter/$fileName';
     final isOffline = await File(localPath).exists();
 
