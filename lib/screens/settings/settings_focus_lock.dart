@@ -223,7 +223,7 @@ extension SettingsFocusLockSection on _SettingsScreenState {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AboutScreen()),
+                  MaterialPageRoute(builder: (context) => AboutScreen()),
                 );
               },
             ),

@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import '../services/database_service.dart';
 import 'hadith_explanation_screen.dart';
 
 class HadithBook {

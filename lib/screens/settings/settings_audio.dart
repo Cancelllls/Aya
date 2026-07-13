@@ -147,7 +147,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const QiraatScreen(),
+                            builder: (context) => QiraatScreen(),
                           ),
                         );
                       },

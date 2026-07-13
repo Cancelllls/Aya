@@ -7,11 +7,11 @@ import '../../services/translation_service.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../models/prayer_models.dart';
-import 'quran_download_screen.dart';
+import '../quran_download_screen.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../../services/adhan_audio_service.dart';
-import 'about_screen.dart';
-import 'qiraat_screen.dart';
+import '../about_screen.dart';
+import '../qiraat_screen.dart';
 
 part 'settings_appearance.dart';
 part 'settings_language.dart';
