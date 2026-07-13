@@ -79,20 +79,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       'ara': await db.isHadithBookDownloaded(bookId, 'ara'),
       'eng': await db.isHadithBookDownloaded(bookId, 'eng'),
     };
-  };
-  }/hadiths/ara_$bookId.json';
-    final pathEn = '${dir.path}/hadiths/eng_$bookId.json';
-    return {
-      'ara': await File(pathAr).exists(),
-      'eng': await File(pathEn).exists(),
-    };
   }
 
   Future<void> _deleteHadithBook(String bookId, String lang) async {
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/hadiths/${lang}_$bookId.json');
-      if (await file.exists()) await file.delete();
+      final db = await DatabaseService.getInstance();
+      await db.deleteHadithBook(bookId, lang);
       await _checkHadithStates();
     } catch (_) {}
   }

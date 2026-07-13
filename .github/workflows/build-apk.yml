@@ -44,3 +44,12 @@ jobs:
           git add releases/app-release.apk
           git commit -m "Auto-build arm64 APK [skip ci]" || echo "No changes to commit"
           git push
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
