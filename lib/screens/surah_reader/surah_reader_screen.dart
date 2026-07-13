@@ -181,7 +181,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
 
 
-  void _navigateToSurah(int nextSurahNum, bool isSwipeRight) {
+  void _navigateToSurahWithAnimation(int nextSurahNum, bool isSwipeRight) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => SurahReaderScreen(

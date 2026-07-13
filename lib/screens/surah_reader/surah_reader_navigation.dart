@@ -23,7 +23,7 @@ extension SurahReaderNavigation on _SurahReaderScreenState {
       );
       if (currentIdx != -1 && currentIdx < _allSurahs.length - 1) {
         _slideDirection = 1;
-        _navigateToSurah(_allSurahs[currentIdx + 1]);
+        _navigateToSurahWithAnimation(_allSurahs[currentIdx + 1].number, true);
       }
     }
 
@@ -34,7 +34,7 @@ extension SurahReaderNavigation on _SurahReaderScreenState {
       );
       if (currentIdx != -1 && currentIdx > 0) {
         _slideDirection = -1;
-        _navigateToSurah(_allSurahs[currentIdx - 1]);
+        _navigateToSurahWithAnimation(_allSurahs[currentIdx - 1].number, false);
       }
     }
 }

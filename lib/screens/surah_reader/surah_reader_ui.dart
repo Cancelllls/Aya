@@ -123,7 +123,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
             widget.storage.saveLastReadPosition(_currentSurah.number, ayah.numberInSurah);
           }
         },
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
           key: key,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
@@ -154,7 +156,8 @@ extension SurahReaderUi on _SurahReaderScreenState {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
             decoration: BoxDecoration(
               border: BorderDirectional(
                 start: BorderSide(
