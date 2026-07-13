@@ -8,7 +8,8 @@ import '../services/database_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'surah_reader_screen.dart';
+import '../widgets/surah_list_tile.dart';
+import 'surah_reader/surah_reader_screen.dart';
 
 class QuranScreen extends StatefulWidget {
   final StorageService storage;

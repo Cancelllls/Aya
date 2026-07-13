@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/api_service.dart';
-import 'surah_reader_screen.dart';
+import 'package:quran/quran.dart' as quran;
+import 'surah_reader/surah_reader_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
   final StorageService storage;

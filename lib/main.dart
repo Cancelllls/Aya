@@ -19,7 +19,7 @@ import 'screens/prayer_times_screen.dart';
 import 'screens/azkar_screen.dart';
 import 'screens/hadith_screen.dart';
 import 'screens/settings/settings_screen.dart';
-import 'screens/surah_reader_screen.dart';
+import 'screens/surah_reader/surah_reader_screen.dart';
 import 'screens/quran_download_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/bookmarks_screen.dart';
