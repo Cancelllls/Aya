@@ -9,6 +9,7 @@ import 'api_service.dart';
 import 'storage_service.dart';
 import 'translation_service.dart';
 import 'local_quran_service.dart';
+import '../models/offline_surahs.dart';
 
 class AudioPlayState {
   final int surahNum;
@@ -76,12 +77,19 @@ class AudioManager {
     if (lastAudio != null) {
       _surahNum = lastAudio['surah'];
       _surahName = lastAudio['surahName'];
+      if (_surahName.startsWith("Surah ") || _surahName.trim().isEmpty) {
+        try {
+          _surahName = TranslationService.isArabic 
+            ? allOfflineSurahs[_surahNum - 1].name 
+            : allOfflineSurahs[_surahNum - 1].englishName;
+        } catch (_) {}
+      }
       playState.value = AudioPlayState(
         surahNum: lastAudio['surah'],
         ayahNum: lastAudio['ayah'],
         isPlaying: false,
         title: _surahName,
-        subtitle: "Paused",
+        subtitle: TranslationService.isArabic ? "متوقف مؤقتاً" : "Paused",
         isLoading: false,
       );
     }
@@ -392,6 +400,8 @@ class AudioManager {
             : "Loading recitation...",
         isLoading: true,
       );
+
+      _storage.saveLastAudioPosition(surahNum, 0, reciter, surahName);
 
       try {
         await _playerA.stop();

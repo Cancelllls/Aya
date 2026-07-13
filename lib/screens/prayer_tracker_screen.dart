@@ -15,7 +15,7 @@ class PrayerTrackerScreen extends StatefulWidget {
 }
 
 class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   DateTime _selectedMonth = DateTime(
     DateTime.now().year,
@@ -52,9 +52,24 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
     _loadPrayerTimesForSelectedDate();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadData();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPrayerTimesForSelectedDate() async {

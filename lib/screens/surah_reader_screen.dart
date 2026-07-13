@@ -1180,9 +1180,22 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   },
                                   onChanged: (String? val) {
                                     if (val != null) {
+                                      final wasPlaying = AudioManager.instance.playState.value.isPlaying;
+                                      final ayahNum = AudioManager.instance.playState.value.ayahNum;
+                                      
+                                      AudioManager.instance.stop();
+                                      widget.storage.setString('default_reciter', val);
+                                      
                                       setModalState(() {});
                                       setState(() {});
-                                      widget.storage.setString('default_reciter', val);
+                                      
+                                      if (wasPlaying) {
+                                        Future.delayed(const Duration(milliseconds: 300), () {
+                                          if (mounted) {
+                                            _playAudioWithDisclaimer(ayahIndex: ayahNum > 0 ? ayahNum - 1 : null);
+                                          }
+                                        });
+                                      }
                                     }
                                   }
                                 ),

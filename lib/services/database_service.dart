@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 3;
+  static const int _version = 4;
 
   DatabaseService._();
 
@@ -51,6 +51,7 @@ class DatabaseService {
         ayah_number INTEGER NOT NULL,
         global_number INTEGER NOT NULL,
         text_arabic TEXT NOT NULL,
+        text_arabic_clean TEXT NOT NULL,
         text_english TEXT NOT NULL,
         tafsir TEXT,
         juz INTEGER,
@@ -159,6 +160,26 @@ class DatabaseService {
     int oldVersion,
     int newVersion,
   ) async {
+    if (oldVersion < 4) {
+      // Add text_arabic_clean column if it doesn't exist
+      try {
+        await db.execute('ALTER TABLE ayahs ADD COLUMN text_arabic_clean TEXT DEFAULT ""');
+        // We could populate it, but a quick re-seed might be better, or we can just update it
+        final List<Map<String, dynamic>> allAyahs = await db.query('ayahs', columns: ['id', 'text_arabic']);
+        Batch batch = db.batch();
+        for (var row in allAyahs) {
+          batch.update(
+            'ayahs',
+            {'text_arabic_clean': _stripTashkeel(row['text_arabic'] as String? ?? '').toLowerCase()},
+            where: 'id = ?',
+            whereArgs: [row['id']]
+          );
+        }
+        await batch.commit(noResult: true);
+      } catch (e) {
+        // column might already exist
+      }
+    }
     if (oldVersion < 2) {
       await db.execute('''
         CREATE TABLE prayer_tracker (
@@ -245,6 +266,7 @@ class DatabaseService {
               'ayah_number': arabic[i]['numberInSurah'],
               'global_number': arabic[i]['number'],
               'text_arabic': arabic[i]['text'],
+              'text_arabic_clean': _stripTashkeel(arabic[i]['text']).toLowerCase(),
               'text_english': english[i]['text'],
               'tafsir': tafsir != null ? tafsir[i]['text'] : null,
               'juz': arabic[i]['juz'],
@@ -273,22 +295,21 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
     final db = _database!;
     final queryClean = _stripTashkeel(query).toLowerCase();
+    final searchPattern = '%$queryClean%';
 
     final results = await db.rawQuery('''
       SELECT ayahs.*, surahs.name as surah_name, surahs.englishName as surah_englishName 
       FROM ayahs 
       JOIN surahs ON ayahs.surah_number = surahs.number 
+      WHERE ayahs.text_arabic_clean LIKE ? OR LOWER(ayahs.text_english) LIKE ?
       ORDER BY ayahs.surah_number ASC, ayahs.ayah_number ASC
-    ''');
+    ''', [searchPattern, searchPattern]);
 
-    return results.where((row) {
-      final arabicClean = _stripTashkeel((row['text_arabic'] as String?) ?? '');
-      final english = (row['text_english'] as String?)?.toLowerCase() ?? '';
-      return arabicClean.contains(queryClean) || english.contains(queryClean);
-    }).toList();
+    return results;
   }
 
-  String _stripTashkeel(String input) {
+
+  static String _stripTashkeel(String input) {
     final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
     return input.replaceAll(tashkeelRegex, '');
   }
