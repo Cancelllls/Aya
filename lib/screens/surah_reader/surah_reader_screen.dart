@@ -11,6 +11,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import '../../models/quran_models.dart';
 import '../../services/api_service.dart';
 import '../../services/local_quran_service.dart';
+import '../../models/offline_surahs.dart';
 import '../../data/reciters_data.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
