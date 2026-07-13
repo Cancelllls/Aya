@@ -70,6 +70,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                       height: 1,
                       color: Theme.of(context).dividerColor.withOpacity(0.1),
                     ),
+                    if (_preAdhanDuration > 0)
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -84,6 +85,17 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                           underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
+                            DropdownMenuItem(
+                              value: 'off',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "إيقاف"
+                                      : "Off",
+                                ),
+                              ),
+                            ),
                             DropdownMenuItem(
                               value: 'silent',
                               child: Align(
@@ -138,6 +150,11 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                       height: 1,
                       color: Theme.of(context).dividerColor.withOpacity(0.1),
                     ),
+                    if (_preAdhanDuration > 0)
+                      Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
                     ListTile(
                       title: Text(
                         TranslationService.isArabic
@@ -157,6 +174,17 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                           underline: SizedBox(),
                           dropdownColor: theme.cardColor,
                           items: [
+                            DropdownMenuItem(
+                              value: 'off',
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  TranslationService.isArabic
+                                      ? "إيقاف"
+                                      : "Off",
+                                ),
+                              ),
+                            ),
                             DropdownMenuItem(
                               value: 'silent',
                               child: Align(

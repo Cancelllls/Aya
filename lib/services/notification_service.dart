@@ -131,7 +131,7 @@ void backgroundPreAdhanCallback(int id) async {
     );
     const platform = MethodChannel('com.quran.aya/system');
 
-    if (alertMode == 'silent') {
+    if (alertMode == 'silent' || alertMode == 'off') {
       return;
     }
 
@@ -630,22 +630,7 @@ class NotificationService {
         final notificationId = id + (dayOffset * 10);
 
         // === ADHAN NOTIFICATION (sound played by Android OS natively) ===
-        try {
-          await _notificationsPlugin.zonedSchedule(
-            id: notificationId,
-            title: isAr
-                ? 'حان الآن موعد صلاة $localizedName'
-                : 'Time for $localizedName',
-            body: isAr
-                ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
-                : 'It is time for the $localizedName prayer.',
-            scheduledDate: tzDateTime,
-            notificationDetails: adhanNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.alarmClock,
-            payload: 'prayer_times',
-          );
-        } catch (_) {
-          // Fallback: inexact if exact alarm permission revoked
+        if (adhanMode != 'off') {
           try {
             await _notificationsPlugin.zonedSchedule(
               id: notificationId,
@@ -657,14 +642,31 @@ class NotificationService {
                   : 'It is time for the $localizedName prayer.',
               scheduledDate: tzDateTime,
               notificationDetails: adhanNotificationDetails,
-              androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+              androidScheduleMode: AndroidScheduleMode.alarmClock,
               payload: 'prayer_times',
             );
-          } catch (_) {}
+          } catch (_) {
+            // Fallback: inexact if exact alarm permission revoked
+            try {
+              await _notificationsPlugin.zonedSchedule(
+                id: notificationId,
+                title: isAr
+                    ? 'حان الآن موعد صلاة $localizedName'
+                    : 'Time for $localizedName',
+                body: isAr
+                    ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
+                    : 'It is time for the $localizedName prayer.',
+                scheduledDate: tzDateTime,
+                notificationDetails: adhanNotificationDetails,
+                androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+                payload: 'prayer_times',
+              );
+            } catch (_) {}
+          }
         }
 
         // === PRE-ADHAN NOTIFICATION ===
-        if (preAdhanMins > 0) {
+        if (preAdhanMins > 0 && preAdhanAlertMode != 'off') {
           final preAzanTime = scheduledDate.subtract(
             Duration(minutes: preAdhanMins),
           );

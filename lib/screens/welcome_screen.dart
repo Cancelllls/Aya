@@ -208,6 +208,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void _finishOnboarding() async {
     await widget.storage.setBool('first_time_v2', false);
 
+    if (!_wantAdhan) {
+      await widget.storage.setString('pre_adhan_alert_mode', 'off');
+      await widget.storage.setString('adhan_alert_mode', 'off');
+      await widget.storage.setBool('morning_azkar_reminder', false);
+      await widget.storage.setBool('evening_azkar_reminder', false);
+      await widget.storage.setBool('todays_verse_reminder', false);
+    }
+
     widget.onComplete();
   }
 
