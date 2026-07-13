@@ -73,69 +73,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   final Map<int, GlobalKey> _pageKeys = {};
   final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};
   double? _horizontalDragStartX;
-) async {
-    if (scriptType == 'hafs') {
-      if (mounted) setState(() { _dynamicReciters = []; });
-      if (modalSetState != null) modalSetState(() {});
-      return;
-    }
-    
-    // Map script type to mp3quran riwayah id
-    int riwayahId = 1;
-    switch (scriptType) {
-      case 'warsh': riwayahId = 2; break;
-      case 'qaloon': riwayahId = 5; break;
-      case 'shuba': riwayahId = 15; break;
-      case 'duri': riwayahId = 13; break;
-      case 'susi': riwayahId = 7; break;
-      case 'bazzi': riwayahId = 4; break;
-      case 'qunbul': riwayahId = 6; break;
-      case 'hisham': riwayahId = 19; break;
-      case 'ibn-dhakwan': riwayahId = 16; break;
-    }
-
-    if (mounted) {
-      setState(() => _isLoadingReciters = true);
-      if (modalSetState != null) modalSetState(() {});
-    }
-    try {
-      final isAr = TranslationService.isArabic;
-      final data = isAr ? recitersDataAr : recitersDataEn;
-      final allReciters = data['reciters'] as List;
-      
-      final filteredReciters = allReciters.map((r) {
-        // Deep copy the reciter to avoid mutating the constant
-        final newR = Map<String, dynamic>.from(r);
-        final moshafs = (newR['moshaf'] as List).cast<Map<String, dynamic>>();
-        newR['moshaf'] = moshafs.where((m) => m['rewaya_id'] == riwayahId).toList();
-        return newR;
-      }).where((r) => (r['moshaf'] as List).isNotEmpty).toList();
-
-      if (mounted) {
-        setState(() {
-          _dynamicReciters = filteredReciters;
-          _dynamicReciters.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
-          _isLoadingReciters = false;
-          
-          // Set first dynamic reciter as default if none selected or if current is invalid
-          final currentReciter = widget.storage.getString('default_reciter') ?? '';
-          if (!currentReciter.startsWith('mp3quran_server_') && _dynamicReciters.isNotEmpty) {
-            final moshaf = _dynamicReciters[0]['moshaf'] as List;
-            if (moshaf.isNotEmpty) {
-              final server = moshaf[0]['server'] as String;
-              widget.storage.setString('default_reciter', 'mp3quran_server_$server');
-            }
-          }
-        });
-        if (modalSetState != null) modalSetState(() {});
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingReciters = false);
-        if (modalSetState != null) modalSetState(() {});
-      }
-    }
-  }
 
   @override
   void initState() {
@@ -202,109 +139,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
 
-) {
-    final supportsAyahSync = _quranScriptType == 'hafs';
-    final hideDisclaimer = widget.storage.getBool('hide_full_surah_disclaimer', defaultValue: false);
-    
-    if (supportsAyahSync || hideDisclaimer) {
-      if (ayahIndex != null && supportsAyahSync) {
-        AudioManager.instance.playAyah(
-          _currentSurah.number,
-          _currentSurah.englishName,
-          _ayahList,
-          ayahIndex,
-        );
-      } else {
-        AudioManager.instance.playSurah(
-          _currentSurah.number,
-          _currentSurah.englishName,
-          _ayahList,
-        );
-      }
-      return;
-    }
-    
-    bool dontShowAgain = false;
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Theme.of(context).cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(
-                TranslationService.isArabic ? 'تنبيه' : 'Notice',
-                style: TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationService.isArabic
-                        ? 'هذه الرواية لا تدعم التزامن آية بآية وسيتم تشغيل السورة كاملة.'
-                        : 'This Rewayah does not support Ayah-by-Ayah synchronization. The full Surah will be played.',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: dontShowAgain,
-                        onChanged: (val) {
-                          setState(() {
-                            dontShowAgain = val ?? false;
-                          });
-                        },
-                        activeColor: Color(0xFFE5C158),
-                      ),
-                      Expanded(
-                        child: Text(
-                          TranslationService.isArabic ? 'لا تظهر هذه الرسالة مرة أخرى' : 'Do not show this again',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(TranslationService.isArabic ? 'إلغاء' : 'Cancel', style: TextStyle(color: Colors.grey)),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    if (dontShowAgain) {
-                      await widget.storage.setBool('hide_full_surah_disclaimer', true);
-                    }
-                    if (context.mounted) Navigator.pop(context);
-                    if (ayahIndex != null && supportsAyahSync) {
-                      AudioManager.instance.playAyah(
-                        _currentSurah.number,
-                        _currentSurah.englishName,
-                        _ayahList,
-                        ayahIndex,
-                      );
-                    } else {
-                      AudioManager.instance.playSurah(
-                        _currentSurah.number,
-                        _currentSurah.englishName,
-                        _ayahList,
-                      );
-                    }
-                  },
-                  child: Text(TranslationService.isArabic ? 'تشغيل' : 'Play', style: TextStyle(color: Color(0xFFE5C158))),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+
 
 
   TextStyle _getArabicTextStyle(double fontSize, {double? height, Color? color, FontWeight? fontWeight, Color? backgroundColor}) {
@@ -348,13 +183,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => SurahReaderScreen(
-          surahNum: nextSurahNum,
-          surahName: TranslationService.isArabic 
-              ? allOfflineSurahs[nextSurahNum - 1].name
-              : allOfflineSurahs[nextSurahNum - 1].englishName,
-          totalAyahs: allOfflineSurahs[nextSurahNum - 1].numberOfAyahs,
+          surah: _allSurahs.isNotEmpty ? _allSurahs[nextSurahNum - 1] : Surah(
+            number: nextSurahNum,
+            name: allOfflineSurahs[nextSurahNum - 1].name,
+            englishName: allOfflineSurahs[nextSurahNum - 1].englishName,
+            englishNameTranslation: '',
+            numberOfAyahs: allOfflineSurahs[nextSurahNum - 1].numberOfAyahs,
+            revelationType: '',
+          ),
           storage: widget.storage,
-          onThemeChanged: widget.onThemeChanged,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           final slideDir = isSwipeRight ? -1.0 : 1.0;
@@ -643,7 +480,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   dropdownColor: theme.cardColor,
                                   underline: SizedBox(),
                                   icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: (List.from(availableReciters)..sort((a,b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map((r) {
+                                  items: (List.from(availableReciters)..sort((a,b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map<DropdownMenuItem<String>>((r) {
                                     return DropdownMenuItem(
                                       value: r.id,
                                       child: Text(

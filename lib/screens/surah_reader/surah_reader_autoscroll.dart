@@ -2,7 +2,69 @@ part of 'surah_reader_screen.dart';
 
 extension SurahReaderAutoscroll on _SurahReaderScreenState {
 
-  void _startAutoScroll({double? customSpeed}
+  void _startAutoScroll({double? customSpeed}) {
+    _ticker?.stop();
+    _ticker?.dispose();
+    _ticker = null;
+
+    _isAutoScrolling = true;
+    _isAutoScrollPaused = false;
+
+    if (customSpeed != null) {
+      _scrollSpeed = customSpeed;
+    } else {
+      double step = 20.0; // pixels per second
+      switch (_speedLevel) {
+        case 1:
+          step = 12.0;
+          break;
+        case 2:
+          step = 25.0;
+          break;
+        case 3:
+          step = 45.0;
+          break;
+        case 4:
+          step = 75.0;
+          break;
+        case 5:
+          step = 120.0;
+          break;
+      }
+      _scrollSpeed = step;
+    }
+
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final remaining = maxScroll - currentScroll;
+      if (remaining <= 0) {
+        _stopAutoScroll();
+        return;
+      }
+
+      final durationMs = (remaining / _scrollSpeed * 1000).toInt();
+      _scrollController
+          .animateTo(
+            maxScroll,
+            duration: Duration(milliseconds: durationMs),
+            curve: Curves.linear,
+          )
+          .then((_) {
+            if (_isAutoScrolling &&
+                !_isAutoScrollPaused &&
+                _scrollController.hasClients &&
+                _scrollController.position.pixels >= maxScroll - 1) {
+              _stopAutoScroll();
+            }
+          });
+    }
+    // We cannot call setState here directly, but we can call it if we wrap it, or just ignore it if it's not needed, but wait!
+    // extension on _SurahReaderScreenState does not have setState.
+    // I can just omit setState since we don't have access to it, or pass it.
+    // In fact, wait, extensions DO NOT have `setState`.
+    // Let me just replace the broken header.
+
 
   void _syncAutoScrollWithAudio() async {
       final player = AudioManager.instance.activePlayer;
