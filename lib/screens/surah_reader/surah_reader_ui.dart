@@ -129,7 +129,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
         decoration: BoxDecoration(
           color: isPlaying
               // ignore: deprecated_member_use
-              ? const Color(0xFFE5C158).withOpacity(0.06)
+              ? const Color(0xFFE5C158).withOpacity(isDark ? 0.18 : 0.12)
               : theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -137,7 +137,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 ? const Color(0xFFE5C158)
                 // ignore: deprecated_member_use
                 : const Color(0xFFE5C158).withOpacity(0.12),
-            width: isHighlighted ? 1.8 : 1.0,
+            width: isHighlighted ? 2.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
@@ -381,10 +381,10 @@ extension SurahReaderUi on _SurahReaderScreenState {
                     fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
                     backgroundColor: isPlaying
                         // ignore: deprecated_member_use
-                        ? const Color(0xFFE5C158).withOpacity(0.18)
+                        ? const Color(0xFFE5C158).withOpacity(0.3)
                         : isBookmarked
                         // ignore: deprecated_member_use
-                        ? const Color(0xFFE5C158).withOpacity(0.1)
+                        ? const Color(0xFFE5C158).withOpacity(0.15)
                         : null,
                   ),
                 ),

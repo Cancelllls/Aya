@@ -48,6 +48,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
   List<Ayah> _ayahList = [];
   bool _isLoading = true;
+  int _slideDirection = 1;
   double _fontSizeMultiplier = 1.0;
   double _baseFontSizeMultiplier = 1.0;
   String _readingMode =
@@ -689,13 +690,32 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         onScaleEnd: (details) {
           widget.storage.setDouble('setting_quran_font_size_multiplier', _fontSizeMultiplier);
         },
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFFE5C158)),
-              )
-            : Column(
-                children: [
-                  Expanded(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            // Determine slide direction based on some logic, or just a default slide.
+            // A simple fade and slight slide:
+            final offsetAnimation = Tween<Offset>(
+              begin: Offset(_slideDirection.toDouble(), 0.0), // slides from right or left
+              end: Offset.zero,
+            ).animate(animation);
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          child: _isLoading
+              ? Center(
+                  key: const ValueKey('loading'),
+                  child: const CircularProgressIndicator(color: Color(0xFFE5C158)),
+                )
+              : Column(
+                  key: ValueKey(_currentSurah.number),
+                  children: [
+                    Expanded(
                     child: ValueListenableBuilder<AudioPlayState>(
                       valueListenable: AudioManager.instance.playState,
                       builder: (context, playState, child) {

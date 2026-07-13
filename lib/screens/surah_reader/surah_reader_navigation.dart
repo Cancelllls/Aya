@@ -22,6 +22,7 @@ extension SurahReaderNavigation on _SurahReaderScreenState {
         (s) => s.number == _currentSurah.number,
       );
       if (currentIdx != -1 && currentIdx < _allSurahs.length - 1) {
+        _slideDirection = 1;
         _navigateToSurah(_allSurahs[currentIdx + 1]);
       }
     }
@@ -32,6 +33,7 @@ extension SurahReaderNavigation on _SurahReaderScreenState {
         (s) => s.number == _currentSurah.number,
       );
       if (currentIdx != -1 && currentIdx > 0) {
+        _slideDirection = -1;
         _navigateToSurah(_allSurahs[currentIdx - 1]);
       }
     }
