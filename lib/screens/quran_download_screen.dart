@@ -11,6 +11,7 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/quran_download_service.dart';
 import '../models/offline_surahs.dart';
+import '../services/database_service.dart';
 import 'hadith_screen.dart';
 
 class QuranDownloadScreen extends StatefulWidget {
