@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _themePreset = 'dark';
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
   String _bottomNavbarStyle = 'solid';
-  String _quranFont = 'font-scheherazade';
+  String _quranFont = 'font-amiri';
   String _quranScriptType = 'hafs';
   String _reciter = 'ar.alafasy';
   String _tafsirEdition = 'ar.muyassar';
@@ -92,11 +92,11 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
     _bottomNavbarStyle = widget.storage.getString(
       'bottom_navbar_style',
-      defaultValue: 'solid',
+      defaultValue: 'floating',
     );
     _quranFont = widget.storage.getString(
       'quran_font',
-      defaultValue: 'font-scheherazade',
+      defaultValue: 'font-amiri',
     );
     _quranScriptType = widget.storage.getString(
       'quran_script_type',
@@ -737,7 +737,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
                 setState(() {
                   _themePreset = 'dark';
-                  _quranFont = 'font-scheherazade';
+                  _quranFont = 'font-amiri';
                   _reciter = 'ar.alafasy';
                   _tafsirEdition = 'ar.muyassar';
                   _calcMethod = 2;

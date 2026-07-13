@@ -32,6 +32,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   static const _platform = MethodChannel('com.quran.aya/system');
 
+  bool _wantAdhan = true;
   bool _locationGranted = false;
   bool _bgLocationGranted = false;
   bool _exactAlarmGranted = false;
@@ -130,6 +131,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   void _onProceedClick() {
+    if (!_wantAdhan) {
+      _finishOnboarding();
+      return;
+    }
+
     final bgRequired = _androidSdkVersion >= 29;
     final alarmRequired = _androidSdkVersion >= 31;
     final allGood =
@@ -494,6 +500,34 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 24),
+          CheckboxListTile(
+            title: Text(
+              TranslationService.isArabic
+                  ? "أريد استلام تنبيهات الأذان والأذكار"
+                  : "I want to receive Adhan and Notification alerts",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            value: _wantAdhan,
+            activeColor: Color(0xFFE5C158),
+            checkColor: Colors.black,
+            onChanged: (val) {
+              setState(() {
+                _wantAdhan = val ?? true;
+              });
+            },
+          ),
+          if (!_wantAdhan)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                TranslationService.isArabic
+                    ? "لن يتم طلب الصلاحيات الآن. يمكنك تفعيل الأذان لاحقاً من الإعدادات."
+                    : "Permissions won't be requested. You can enable Adhan later from Settings.",
+                style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          if (_wantAdhan)
           Expanded(
             child: ListView(
               shrinkWrap: true,

@@ -84,14 +84,7 @@ class AudioManager {
             : allOfflineSurahs[_surahNum - 1].englishName;
         } catch (_) {}
       }
-      playState.value = AudioPlayState(
-        surahNum: lastAudio['surah'],
-        ayahNum: lastAudio['ayah'],
-        isPlaying: false,
-        title: _surahName,
-        subtitle: TranslationService.isArabic ? "متوقف مؤقتاً" : "Paused",
-        isLoading: false,
-      );
+// Audio player overlay hidden on app start by user request
     }
   }
 

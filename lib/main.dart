@@ -855,7 +855,7 @@ class _MainScaffoldState extends State<MainScaffold>
     final theme = Theme.of(context);
     final bottomNavbarStyle = widget.storage.getString(
       'bottom_navbar_style',
-      defaultValue: 'solid',
+      defaultValue: 'floating',
     );
 
     // Screens list mapping

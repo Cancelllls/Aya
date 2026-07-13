@@ -126,26 +126,7 @@ class _SplashScreenState extends State<SplashScreen>
         );
       }
 
-      if (isFirstTime) {
-        navigateToDestination();
-      } else {
-        if (allGranted) {
-          navigateToDestination();
-        } else {
-          if (!mounted) return;
-          unawaited(
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PermissionGuardScreen(
-                  storage: widget.storage,
-                  onPassed: navigateToDestination,
-                ),
-              ),
-            ),
-          );
-        }
-      }
+      navigateToDestination();
     });
   }
 

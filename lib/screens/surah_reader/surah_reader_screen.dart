@@ -308,7 +308,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
 
   TextStyle _getArabicTextStyle(double fontSize, {double? height, Color? color, FontWeight? fontWeight, Color? backgroundColor}) {
-    final String selectedFont = widget.storage.getString('quran_font', defaultValue: 'font-scheherazade');
+    final String selectedFont = widget.storage.getString('quran_font', defaultValue: 'font-amiri');
     if (selectedFont == 'font-scheherazade') {
       return GoogleFonts.scheherazadeNew(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
     }
@@ -342,6 +342,35 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     return "$juzText • $hizbText";
   }
 
+
+
+  void _navigateToSurah(int nextSurahNum, bool isSwipeRight) {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => SurahReaderScreen(
+          surahNum: nextSurahNum,
+          surahName: TranslationService.isArabic 
+              ? allOfflineSurahs[nextSurahNum - 1].name
+              : allOfflineSurahs[nextSurahNum - 1].englishName,
+          totalAyahs: allOfflineSurahs[nextSurahNum - 1].numberOfAyahs,
+          storage: widget.storage,
+          onThemeChanged: widget.onThemeChanged,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final slideDir = isSwipeRight ? -1.0 : 1.0;
+          var begin = Offset(slideDir, 0.0);
+          var end = Offset.zero;
+          var curve = Curves.easeInOut;
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: Duration(milliseconds: 300),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -614,7 +643,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   dropdownColor: theme.cardColor,
                                   underline: SizedBox(),
                                   icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: availableReciters.map((r) {
+                                  items: (List.from(availableReciters)..sort((a,b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map((r) {
                                     return DropdownMenuItem(
                                       value: r.id,
                                       child: Text(
@@ -624,7 +653,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     );
                                   }).toList(),
                                   selectedItemBuilder: (BuildContext context) {
-                                    return availableReciters.map((r) {
+                                    return (List.from(availableReciters)..sort((a,b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map((r) {
                                       return Transform.translate(
                                         offset: Offset(TranslationService.isArabic ? 8 : -8, 0),
                                         child: Align(
