@@ -50,13 +50,17 @@ class QdcAudioService {
       try {
         final content = await cacheFile.readAsString();
         final Map<String, dynamic> decoded = jsonDecode(content);
-        Map<int, List<dynamic>> ayahTimestamps = {};
-        decoded.forEach((key, value) {
-          if (key != 'audio_url') {
-            ayahTimestamps[int.parse(key)] = value;
-          }
-        });
-        return ayahTimestamps;
+        if (!decoded.containsKey('audio_url')) {
+          await cacheFile.delete();
+        } else {
+          Map<int, List<dynamic>> ayahTimestamps = {};
+          decoded.forEach((key, value) {
+            if (key != 'audio_url') {
+              ayahTimestamps[int.parse(key)] = value;
+            }
+          });
+          return ayahTimestamps;
+        }
       } catch (_) {}
     }
 

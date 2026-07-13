@@ -222,7 +222,8 @@ class AudioManager {
     }
     
     final dir = await getApplicationDocumentsDirectory();
-    final localPath = '${dir.path}/quran_audio/$reciter/surah_$surahNum.mp3';
+    final fileName = isTimestampSyncMode ? 'surah_${surahNum}_qdc.mp3' : 'surah_$surahNum.mp3';
+    final localPath = '${dir.path}/quran_audio/$reciter/$fileName';
     final isOffline = await File(localPath).exists();
 
     playState.value = AudioPlayState(
