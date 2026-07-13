@@ -94,7 +94,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _currentSurah = widget.surah;
     _readingMode = widget.storage.getString(
       'reading_mode',
-      defaultValue: 'translation',
+      defaultValue: 'continuous',
     );
     _quranScriptType = widget.storage.getString(
       'quran_script_type',
