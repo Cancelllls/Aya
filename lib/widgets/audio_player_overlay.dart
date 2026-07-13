@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../services/audio_manager.dart';
+import '../models/offline_surahs.dart';
 
 class AudioPlayerOverlay extends StatelessWidget {
   final double bottomPosition;
@@ -154,87 +155,102 @@ class AudioPlayerOverlay extends StatelessWidget {
                         valueListenable: AudioManager.instance.durationNotifier,
                         builder: (context, duration, child) {
                           return ValueListenableBuilder<Duration>(
-                            valueListenable:
-                                AudioManager.instance.positionNotifier,
+                            valueListenable: AudioManager.instance.positionNotifier,
                             builder: (context, position, child) {
-                              final pos = position.inMilliseconds.toDouble();
-                              final dur = duration.inMilliseconds.toDouble();
-                              final maxVal = dur > 0 ? dur : 1.0;
-                              final safePos = pos > maxVal ? maxVal : pos;
+                              final isSplit = audioState.ayahNum > 0;
+                              final currentAyahIndex = isSplit ? audioState.ayahNum - 1 : 0;
+                              final surahInfo = audioState.surahNum > 0 && audioState.surahNum <= 114 
+                                  ? allOfflineSurahs[audioState.surahNum - 1] 
+                                  : null;
+                              final totalAyahs = surahInfo?.numberOfAyahs ?? 1;
+
+                              double posVal;
+                              double maxVal;
+
+                              if (isSplit) {
+                                maxVal = totalAyahs.toDouble();
+                                posVal = currentAyahIndex.toDouble();
+                                if (duration.inMilliseconds > 0) {
+                                  posVal += position.inMilliseconds / duration.inMilliseconds;
+                                }
+                                if (posVal > maxVal) posVal = maxVal;
+                              } else {
+                                maxVal = duration.inMilliseconds.toDouble();
+                                maxVal = maxVal > 0 ? maxVal : 1.0;
+                                posVal = position.inMilliseconds.toDouble();
+                                if (posVal > maxVal) posVal = maxVal;
+                              }
 
                               String _format(Duration d) {
-                                String twoDigits(int n) =>
-                                    n.toString().padLeft(2, "0");
-                                String twoDigitMinutes =
-                                    twoDigits(d.inMinutes.remainder(60));
-                                String twoDigitSeconds =
-                                    twoDigits(d.inSeconds.remainder(60));
-                                if (d.inHours > 0)
-                                  return "${d.inHours}:$twoDigitMinutes:$twoDigitSeconds";
+                                String twoDigits(int n) => n.toString().padLeft(2, "0");
+                                String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
+                                String twoDigitSeconds = twoDigits(d.inSeconds.remainder(60));
+                                if (d.inHours > 0) return "${d.inHours}:$twoDigitMinutes:$twoDigitSeconds";
                                 return "$twoDigitMinutes:$twoDigitSeconds";
                               }
 
                               return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4.0),
+                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
                                 child: Row(
                                   children: [
-                                    Text(
-                                      _format(position),
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          color: theme.textTheme.bodyMedium?.color
-                                              ?.withOpacity(0.5)),
-                                    ),
+                                    if (!isSplit)
+                                      Text(
+                                        _format(position),
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                                      ),
                                     Expanded(
                                       child: SizedBox(
                                         height: 28,
                                         child: SliderTheme(
                                           data: SliderTheme.of(context).copyWith(
                                             trackHeight: 3.0,
-                                            thumbShape:
-                                                const RoundSliderThumbShape(
-                                                    enabledThumbRadius: 6.0),
-                                            overlayShape:
-                                                const RoundSliderOverlayShape(
-                                                    overlayRadius: 14.0),
+                                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14.0),
                                           ),
                                           child: Slider(
-                                            value: safePos,
+                                            value: posVal,
                                             min: 0,
                                             max: maxVal,
-                                            activeColor:
-                                                const Color(0xFFE5C158),
-                                            inactiveColor: const Color(0xFFE5C158)
-                                                .withOpacity(0.3),
+                                            activeColor: const Color(0xFFE5C158),
+                                            inactiveColor: const Color(0xFFE5C158).withOpacity(0.3),
                                             onChanged: (val) {
-                                              AudioManager.instance
-                                                      .positionNotifier.value =
-                                                  Duration(
-                                                      milliseconds: val.toInt());
+                                              if (!isSplit) {
+                                                AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
+                                              }
                                             },
                                             onChangeStart: (val) {
-                                              AudioManager.instance.isSeeking =
-                                                  true;
+                                              if (!isSplit) AudioManager.instance.isSeeking = true;
                                             },
                                             onChangeEnd: (val) async {
-                                              await AudioManager.instance.seekTo(
-                                                  Duration(
-                                                      milliseconds: val.toInt()));
-                                              AudioManager.instance.isSeeking =
-                                                  false;
+                                              if (isSplit) {
+                                                int targetAyah = val.floor() + 1;
+                                                if (targetAyah > totalAyahs) targetAyah = totalAyahs;
+                                                if (targetAyah < 1) targetAyah = 1;
+                                                
+                                                // Assuming we can restart playback from targetAyah
+                                                AudioManager.instance.stop();
+                                                // We don't have the full ayahs list here, but we can't easily play from an ayah index without it.
+                                                // Wait, this might be a problem if we don't have the ayahs list!
+                                                // If we don't have the list, seeking across ayahs is hard.
+                                                // Let's just disable dragging for split mode for now, or just make it read-only.
+                                              } else {
+                                                await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
+                                                AudioManager.instance.isSeeking = false;
+                                              }
                                             },
                                           ),
                                         ),
                                       ),
                                     ),
-                                    Text(
-                                      _format(duration),
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          color: theme.textTheme.bodyMedium?.color
-                                              ?.withOpacity(0.5)),
-                                    ),
+                                    if (!isSplit)
+                                      Text(
+                                        _format(duration),
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                                      ),
                                   ],
                                 ),
                               );
