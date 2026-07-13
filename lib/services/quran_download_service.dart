@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
+import 'qdc_audio_service.dart';
 
 enum DownloadStatus { notDownloaded, downloading, downloaded, error }
 
@@ -197,6 +198,11 @@ class QuranDownloadService extends ChangeNotifier {
         if (await tempFile.exists()) {
           await tempFile.rename(localPath);
         }
+
+        // Cache timestamps for offline syncing if supported
+        try {
+          await QdcAudioService.fetchSurahTimestamps(surahNum, reciter);
+        } catch (_) {}
 
         _downloadStates[surahNum] = SurahDownloadState(
           surahNum: surahNum,
