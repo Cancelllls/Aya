@@ -4,6 +4,8 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/api_service.dart';
 import 'surah_reader/surah_reader_screen.dart';
+import 'surah_reader/surah_pager_screen.dart';
+import 'surah_reader/surah_pager_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
   final StorageService storage;
@@ -73,8 +75,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SurahReaderScreen(
-              surah: surah,
+            builder: (context) => SurahPagerScreen(
+              initialSurah: surah,
               storage: widget.storage,
               initialAyahNumber: ayahNum,
             ),

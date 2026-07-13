@@ -9,6 +9,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'surah_reader/surah_reader_screen.dart';
+import 'surah_reader/surah_pager_screen.dart';
+import 'surah_reader/surah_pager_screen.dart';
 
 class QuranScreen extends StatefulWidget {
   final StorageService storage;
@@ -456,7 +458,7 @@ class _QuranScreenState extends State<QuranScreen> {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  SurahReaderScreen(surah: surah, storage: widget.storage),
+                  SurahPagerScreen(initialSurah: surah, storage: widget.storage),
             ),
           );
         },
@@ -556,7 +558,7 @@ class _QuranScreenState extends State<QuranScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => SurahReaderScreen(
+                    builder: (context) => SurahPagerScreen(
                       surah: targetSurah!,
                       storage: widget.storage,
                       initialAyahNumber: numberInSurah,

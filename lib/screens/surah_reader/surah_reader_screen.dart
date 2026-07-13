@@ -28,12 +28,18 @@ class SurahReaderScreen extends StatefulWidget {
   final Surah surah;
   final StorageService storage;
   final int? initialAyahNumber;
+  final bool isInsidePager;
+  final VoidCallback? onGoToNext;
+  final VoidCallback? onGoToPrev;
 
   const SurahReaderScreen({
     super.key,
     required this.surah,
     required this.storage,
     this.initialAyahNumber,
+    this.isInsidePager = false,
+    this.onGoToNext,
+    this.onGoToPrev,
   });
 
   @override
@@ -656,10 +662,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onHorizontalDragStart: (details) {
+        onHorizontalDragStart: widget.isInsidePager ? null : (details) {
           _horizontalDragStartX = details.globalPosition.dx;
         },
-        onHorizontalDragEnd: (details) {
+        onHorizontalDragEnd: widget.isInsidePager ? null : (details) {
           if (!_swipeSurahNavigation) return;
           if (_horizontalDragStartX != null) {
             final screenWidth = MediaQuery.of(context).size.width;
