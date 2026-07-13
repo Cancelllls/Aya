@@ -76,8 +76,8 @@ class AudioManager {
 
   void _setupPlayer(AudioPlayer p) {
     p.setAudioContext(
-      const AudioContext(
-        android: AudioContextAndroid(
+      AudioContext(
+        android: const AudioContextAndroid(
           isSpeakerphoneOn: true,
           stayAwake: true,
           contentType: AndroidContentType.music,

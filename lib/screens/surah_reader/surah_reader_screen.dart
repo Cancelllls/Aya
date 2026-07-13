@@ -940,7 +940,13 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   ),
                 ],
               ),
-      ),
-    );
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+);
   }
 }
