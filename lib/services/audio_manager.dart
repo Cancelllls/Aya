@@ -54,7 +54,7 @@ class AudioManager {
   
   // QDC Timestamps for the current Surah
   Map<int, List<dynamic>>? _currentTimestamps;
-  bool _isTimestampSyncMode = false;
+  bool isTimestampSyncMode = false;
 
   void init(StorageService storage) {
     _storage = storage;
@@ -101,7 +101,7 @@ class AudioManager {
         ayahNum: currentAyah,
         isPlaying: isPlaying,
         title: _surahName,
-        subtitle: _isTimestampSyncMode
+        subtitle: isTimestampSyncMode
             ? (TranslationService.isArabic
                   ? "الآية $currentAyah"
                   : "Ayah $currentAyah")
@@ -118,7 +118,7 @@ class AudioManager {
       if (!isSeeking) positionNotifier.value = pos;
       
       // Handle timestamp syncing
-      if (_isTimestampSyncMode && _currentTimestamps != null) {
+      if (isTimestampSyncMode && _currentTimestamps != null) {
         int posMs = pos.inMilliseconds;
         
         // Find which ayah we are in
@@ -161,7 +161,7 @@ class AudioManager {
   }
 
   void seekToAyahInSplitMode(int targetAyahNum) {
-    if (_isTimestampSyncMode && _currentTimestamps != null) {
+    if (isTimestampSyncMode && _currentTimestamps != null) {
       if (_currentTimestamps!.containsKey(targetAyahNum)) {
         int startMs = _currentTimestamps![targetAyahNum]![0];
         seekTo(Duration(milliseconds: startMs));
@@ -191,9 +191,9 @@ class AudioManager {
     final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
     
     // Check if we can sync timestamps
-    _isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
+    isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
     
-    if (_isTimestampSyncMode) {
+    if (isTimestampSyncMode) {
       playState.value = AudioPlayState(
         surahNum: surahNum,
         ayahNum: initialAyahNum,
@@ -206,14 +206,20 @@ class AudioManager {
       _currentTimestamps = await QdcAudioService.fetchSurahTimestamps(surahNum, reciter);
       
       if (_currentTimestamps == null) {
-        _isTimestampSyncMode = false; // fallback
+        isTimestampSyncMode = false; // fallback
       }
     }
 
     _surahNum = surahNum;
     _surahName = surahName;
     
-    final url = ApiService.buildSurahAudioUrl(surahNum, reciter: reciter);
+    String url = ApiService.buildSurahAudioUrl(surahNum, reciter: reciter);
+    if (isTimestampSyncMode) {
+      final qdcUrl = await QdcAudioService.getAudioUrl(surahNum, reciter);
+      if (qdcUrl != null) {
+        url = qdcUrl;
+      }
+    }
     
     final dir = await getApplicationDocumentsDirectory();
     final localPath = '${dir.path}/quran_audio/$reciter/surah_$surahNum.mp3';
@@ -221,10 +227,10 @@ class AudioManager {
 
     playState.value = AudioPlayState(
       surahNum: surahNum,
-      ayahNum: _isTimestampSyncMode ? initialAyahNum : 0,
+      ayahNum: isTimestampSyncMode ? initialAyahNum : 0,
       isPlaying: true,
       title: surahName,
-      subtitle: _isTimestampSyncMode ? "Syncing Ayah..." : "Full Surah Recitation",
+      subtitle: isTimestampSyncMode ? "Syncing Ayah..." : "Full Surah Recitation",
       isLoading: false,
     );
 
@@ -237,7 +243,7 @@ class AudioManager {
         await _player.play(UrlSource(url));
       }
       
-      if (_isTimestampSyncMode && initialAyahNum > 1 && _currentTimestamps != null) {
+      if (isTimestampSyncMode && initialAyahNum > 1 && _currentTimestamps != null) {
         if (_currentTimestamps!.containsKey(initialAyahNum)) {
           int startMs = _currentTimestamps![initialAyahNum]![0];
           await _player.seek(Duration(milliseconds: startMs));
@@ -282,7 +288,7 @@ class AudioManager {
     } else if (state == PlayerState.paused) {
       await _player.resume();
     } else if (state == PlayerState.completed || state == PlayerState.stopped) {
-      if (_isTimestampSyncMode && _currentTimestamps != null) {
+      if (isTimestampSyncMode && _currentTimestamps != null) {
         int startAyah = playState.value.ayahNum > 0 ? playState.value.ayahNum : 1;
         playSurahWithSync(_surahNum, _surahName, initialAyahNum: startAyah);
       } else {

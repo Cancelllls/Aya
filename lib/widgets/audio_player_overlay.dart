@@ -157,7 +157,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                           return ValueListenableBuilder<Duration>(
                             valueListenable: AudioManager.instance.positionNotifier,
                             builder: (context, position, child) {
-                              final isSplit = audioState.ayahNum > 0;
+                              final isSplit = audioState.ayahNum > 0 && !AudioManager.instance.isTimestampSyncMode;
                               final currentAyahIndex = isSplit ? audioState.ayahNum - 1 : 0;
                               final surahInfo = audioState.surahNum > 0 && audioState.surahNum <= 114 
                                   ? allOfflineSurahs[audioState.surahNum - 1] 
@@ -174,11 +174,13 @@ class AudioPlayerOverlay extends StatelessWidget {
                                   posVal += position.inMilliseconds / duration.inMilliseconds;
                                 }
                                 if (posVal > maxVal) posVal = maxVal;
+                                if (posVal < 0) posVal = 0;
                               } else {
                                 maxVal = duration.inMilliseconds.toDouble();
                                 maxVal = maxVal > 0 ? maxVal : 1.0;
                                 posVal = position.inMilliseconds.toDouble();
                                 if (posVal > maxVal) posVal = maxVal;
+                                if (posVal < 0) posVal = 0;
                               }
 
                               String _format(Duration d) {

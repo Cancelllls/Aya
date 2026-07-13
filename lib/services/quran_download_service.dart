@@ -152,7 +152,14 @@ class QuranDownloadService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = ApiService.buildSurahAudioUrl(surahNum, reciter: reciter);
+      String url = ApiService.buildSurahAudioUrl(surahNum, reciter: reciter);
+      if (QdcAudioService.getQdcReciterId(reciter) != null) {
+        await QdcAudioService.fetchSurahTimestamps(surahNum, reciter);
+        final qdcUrl = await QdcAudioService.getAudioUrl(surahNum, reciter);
+        if (qdcUrl != null) {
+          url = qdcUrl;
+        }
+      }
       final localPath = await getLocalSurahPath(surahNum, reciter);
       final tempPath = '$localPath.tmp';
 

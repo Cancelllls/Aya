@@ -519,7 +519,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   return ValueListenableBuilder<Duration>(
                     valueListenable: AudioManager.instance.positionNotifier,
                     builder: (context, position, child) {
-                      final isSplit = playState.ayahNum > 0;
+                      final isSplit = playState.ayahNum > 0 && !AudioManager.instance.isTimestampSyncMode;
                       final currentAyahIndex = isSplit ? playState.ayahNum - 1 : 0;
                       final totalAyahs = _currentSurah.numberOfAyahs;
                       
@@ -533,11 +533,13 @@ extension SurahReaderUi on _SurahReaderScreenState {
                           posVal += position.inMilliseconds / duration.inMilliseconds;
                         }
                         if (posVal > maxVal) posVal = maxVal;
+                        if (posVal < 0) posVal = 0;
                       } else {
                         maxVal = duration.inMilliseconds.toDouble();
                         maxVal = maxVal > 0 ? maxVal : 1.0;
                         posVal = position.inMilliseconds.toDouble();
                         if (posVal > maxVal) posVal = maxVal;
+                        if (posVal < 0) posVal = 0;
                       }
   
                       return SliderTheme(

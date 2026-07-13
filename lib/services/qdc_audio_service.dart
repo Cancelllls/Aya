@@ -24,6 +24,21 @@ class QdcAudioService {
     return _qdcReciterMap[reciter];
   }
 
+  static Future<String?> getAudioUrl(int surahNum, String reciter) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final cacheFile = File('${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json');
+    if (await cacheFile.exists()) {
+      try {
+        final content = await cacheFile.readAsString();
+        final Map<String, dynamic> decoded = jsonDecode(content);
+        if (decoded.containsKey('audio_url')) {
+          return decoded['audio_url'] as String;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
   static Future<Map<int, List<dynamic>>?> fetchSurahTimestamps(int surahNum, String reciter) async {
     final qdcId = getQdcReciterId(reciter);
     if (qdcId == null) return null;
@@ -37,7 +52,9 @@ class QdcAudioService {
         final Map<String, dynamic> decoded = jsonDecode(content);
         Map<int, List<dynamic>> ayahTimestamps = {};
         decoded.forEach((key, value) {
-          ayahTimestamps[int.parse(key)] = value;
+          if (key != 'audio_url') {
+            ayahTimestamps[int.parse(key)] = value;
+          }
         });
         return ayahTimestamps;
       } catch (_) {}
@@ -63,6 +80,10 @@ class QdcAudioService {
           final times = [t['timestamp_from'], t['timestamp_to']];
           ayahTimestamps[ayahNum] = times;
           toCache[ayahNum.toString()] = times;
+        }
+        
+        if (audioFiles[0].containsKey('audio_url')) {
+          toCache['audio_url'] = audioFiles[0]['audio_url'];
         }
         
         try {
