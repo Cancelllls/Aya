@@ -223,9 +223,12 @@ class AudioManager {
     List<Ayah> ayahs,
     int index,
   ) async {
-    playSurah(surahNum, surahName, ayahs);
-    return;
-
+    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    if (quranScriptType != 'hafs' || reciter.startsWith('mp3quran_server_')) {
+      playSurah(surahNum, surahName, ayahs);
+      return;
+    }
 
     _cancelCrossfade();
     _surahNum = surahNum;
