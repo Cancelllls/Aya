@@ -115,7 +115,7 @@ extension SurahReaderData on _SurahReaderScreenState {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _scrollToAyah(widget.initialAyahNumber!);
           });
-        } else {
+        } else if (!widget.isInsidePager) {
           final lastAyahInSurah = widget.storage.getLastReadAyahForSurah(_currentSurah.number);
           if (lastAyahInSurah != null && lastAyahInSurah > 2) {
             WidgetsBinding.instance.addPostFrameCallback((_) {

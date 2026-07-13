@@ -151,24 +151,6 @@ class AudioManager {
           if (autoBookmark) {
             _storage.addBookmark(_surahNum, _surahName, detectedAyah);
           }
-          
-          // Option 1 Implementation: Periodic Auto-Seek Syncing
-          // To mitigate VBR drift in long files (e.g., after Ayah 100 in Al-Baqarah),
-          // we force a micro-seek precisely to the start of the new Ayah when we detect a boundary cross.
-          // This snaps the player back into alignment.
-          if (!isSeeking && _currentTimestamps!.containsKey(detectedAyah)) {
-            int targetMs = _currentTimestamps![detectedAyah]![0];
-            // Only force seek if it's drifting noticeably (e.g., > 100ms)
-            if ((posMs - targetMs).abs() > 100) {
-              isSeeking = true;
-              _player.seek(Duration(milliseconds: targetMs)).then((_) {
-                // Allow a tiny delay before unlocking seeking
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  isSeeking = false;
-                });
-              });
-            }
-          }
         }
       }
     });
