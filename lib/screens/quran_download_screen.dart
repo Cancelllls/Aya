@@ -74,8 +74,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   }
 
   Future<Map<String, bool>> _getHadithBookDownloadState(String bookId) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final pathAr = '${dir.path}/hadiths/ara_$bookId.json';
+    final db = await DatabaseService.getInstance();
+    return {
+      'ara': await db.isHadithBookDownloaded(bookId, 'ara'),
+      'eng': await db.isHadithBookDownloaded(bookId, 'eng'),
+    };
+  };
+  }/hadiths/ara_$bookId.json';
     final pathEn = '${dir.path}/hadiths/eng_$bookId.json';
     return {
       'ara': await File(pathAr).exists(),
@@ -110,11 +115,11 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       final res = await http.get(Uri.parse(url));
 
       if (res.statusCode == 200) {
-        final dir = await getApplicationDocumentsDirectory();
-        final path = '${dir.path}/hadiths/${lang}_$bookId.json';
-
-        await File(path).parent.create(recursive: true);
-        await File(path).writeAsString(res.body);
+        final decoded = jsonDecode(res.body);
+        final hadiths = decoded['hadiths'] as List<dynamic>;
+        
+        final db = await DatabaseService.getInstance();
+        await db.insertHadithBook(bookId, lang, hadiths);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

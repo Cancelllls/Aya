@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 4;
+  static const int _version = 5;
 
   DatabaseService._();
 
@@ -138,6 +138,31 @@ class DatabaseService {
       'CREATE INDEX idx_monthly_date ON monthly_prayer_cache(year, month)',
     );
 
+    // Hadith books table
+    await db.execute('''
+      CREATE TABLE hadith_books (
+        book_id TEXT PRIMARY KEY,
+        lang TEXT NOT NULL,
+        downloaded_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Hadiths table
+    await db.execute('''
+      CREATE TABLE hadiths (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id TEXT NOT NULL,
+        hadith_number INTEGER,
+        arabic TEXT NOT NULL,
+        english TEXT NOT NULL,
+        search_arabic TEXT NOT NULL,
+        search_english TEXT NOT NULL,
+        grades TEXT NOT NULL,
+        FOREIGN KEY(book_id) REFERENCES hadith_books(book_id)
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
+
     // Prayer Tracker
     await db.execute('''
       CREATE TABLE prayer_tracker (
@@ -177,9 +202,39 @@ class DatabaseService {
         }
         await batch.commit(noResult: true);
       } catch (e) {
-        // column might already exist
+        print("Error during v4 upgrade: $e");
       }
     }
+
+    if (oldVersion < 5) {
+      try {
+        await db.execute('''
+          CREATE TABLE hadith_books (
+            book_id TEXT PRIMARY KEY,
+            lang TEXT NOT NULL,
+            downloaded_at INTEGER NOT NULL
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE hadiths (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            book_id TEXT NOT NULL,
+            hadith_number INTEGER,
+            arabic TEXT NOT NULL,
+            english TEXT NOT NULL,
+            search_arabic TEXT NOT NULL,
+            search_english TEXT NOT NULL,
+            grades TEXT NOT NULL,
+            FOREIGN KEY(book_id) REFERENCES hadith_books(book_id)
+          )
+        ''');
+        await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
+      } catch (e) {
+        print("Error during v5 upgrade: $e");
+      }
+    }
+
     if (oldVersion < 2) {
       await db.execute('''
         CREATE TABLE prayer_tracker (
@@ -550,5 +605,110 @@ class DatabaseService {
       whereArgs: [startDate, endDate],
       orderBy: 'date ASC',
     );
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // Hadith Database Methods
+  // ---------------------------------------------------------------------------
+
+  
+  Future<bool> isHadithBookDownloaded(String bookId, String lang) async {
+    final db = await _database;
+    if (db == null) return false;
+    final dbBookId = '${lang}_$bookId';
+    final res = await db.query('hadith_books', where: 'book_id = ?', whereArgs: [dbBookId]);
+    return res.isNotEmpty;
+  }
+Future<void> insertHadithBook(String bookId, String lang, List<dynamic> hadiths) async {
+    final db = await _database;
+    if (db == null) return;
+    
+    final dbBookId = '${lang}_$bookId';
+
+    await db.transaction((txn) async {
+      await txn.insert(
+        'hadith_books',
+        {
+          'book_id': dbBookId,
+          'lang': lang,
+          'downloaded_at': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
+
+      final batch = txn.batch();
+      for (var h in hadiths) {
+        batch.insert('hadiths', {
+          'book_id': dbBookId,
+          'hadith_number': h['hadithnumber'] ?? 0,
+          'arabic': lang == 'ara' ? (h['text'] ?? '') : '',
+          'english': lang == 'eng' ? (h['text'] ?? '') : '',
+          'search_arabic': lang == 'ara' ? _stripTashkeel((h['text'] ?? '').toString()).toLowerCase() : '',
+          'search_english': lang == 'eng' ? (h['text'] ?? '').toString().toLowerCase() : '',
+          'grades': jsonEncode(h['grades'] ?? []),
+        });
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  Future<void> deleteHadithBook(String bookId, String lang) async {
+    final db = await _database;
+    if (db == null) return;
+    final dbBookId = '${lang}_$bookId';
+
+    await db.transaction((txn) async {
+      await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
+      await txn.delete('hadith_books', where: 'book_id = ?', whereArgs: [dbBookId]);
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getHadiths(String bookId, String lang, int limit, int offset) async {
+    final db = await _database;
+    if (db == null) return [];
+    final dbBookId = '${lang}_$bookId';
+
+    return await db.query(
+      'hadiths',
+      where: 'book_id = ?',
+      whereArgs: [dbBookId],
+      orderBy: 'hadith_number ASC',
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> searchHadiths(String bookId, String lang, String query, int limit, int offset) async {
+    final db = await _database;
+    if (db == null) return [];
+    final dbBookId = '${lang}_$bookId';
+
+    final cleanQuery = _stripTashkeel(query).toLowerCase();
+    final searchPattern = '%$cleanQuery%';
+    
+    final intQuery = int.tryParse(query);
+
+    if (intQuery != null) {
+      return await db.query(
+        'hadiths',
+        where: 'book_id = ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
+        whereArgs: [dbBookId, intQuery, searchPattern, searchPattern],
+        orderBy: 'hadith_number ASC',
+        limit: limit,
+        offset: offset,
+      );
+    } else {
+      return await db.query(
+        'hadiths',
+        where: 'book_id = ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
+        whereArgs: [dbBookId, searchPattern, searchPattern],
+        orderBy: 'hadith_number ASC',
+        limit: limit,
+        offset: offset,
+      );
+    }
   }
 }

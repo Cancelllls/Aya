@@ -139,6 +139,7 @@ class _HadithScreenState extends State<HadithScreen> {
   }
 
   Future<void> _loadSelectedBookData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = '';
@@ -146,82 +147,62 @@ class _HadithScreenState extends State<HadithScreen> {
     });
 
     final bookId = _selectedBook.id;
+    final db = await DatabaseService.getInstance();
+    
+    // Check if downloaded
+    bool isDownloaded = await db.isHadithBookDownloaded(bookId, _displayLang);
+    
+    // If not downloaded but it is bundled in assets
     final isBukhariOrMuslim = bookId == 'bukhari' || bookId == 'muslim';
-
-    if (isBukhariOrMuslim) {
+    if (!isDownloaded && isBukhariOrMuslim) {
       try {
         final jsonString = await DefaultAssetBundle.of(context).loadString('assets/hadith/$_displayLang-$bookId.json');
         final data = jsonDecode(jsonString);
         final List<dynamic> hadiths = data['hadiths'] ?? [];
-
-        final List<dynamic> list = [];
-        for (int i = 0; i < hadiths.length; i++) {
-          final h = hadiths[i];
-          final text = h['text'] ?? '';
-          if (text.toString().trim().isEmpty) continue;
-          list.add({
-            'number': h['hadithnumber'] ?? (i + 1),
-            'arabic': _displayLang == 'ara' ? text : '',
-            'searchArText': _displayLang == 'ara'
-                ? _normalizeArabic(text.toString()).toLowerCase()
-                : '',
-            'searchEnText': _displayLang == 'eng'
-                ? text.toString().toLowerCase()
-                : '',
-            'english': _displayLang == 'eng' ? text : '',
-            'grades': h['grades'] ?? [],
-          });
-        }
-
-        if (mounted) {
-          setState(() {
-            _hadithList = list;
-            _isOffline = true;
-            _isLoading = false;
-          });
-        }
-        return;
+        await db.insertHadithBook(bookId, _displayLang, hadiths);
+        isDownloaded = true;
       } catch (e) {
-        // Fallback to online
+        print("Failed to seed bundled hadith: $e");
       }
     }
 
-    final downloaded = await isBookDownloaded(bookId, _displayLang);
+    if (isDownloaded) {
+      final results = await db.getHadiths(bookId, _displayLang, 7500, 0); // Load all for now to keep pagination logic intact
+      if (mounted) {
+        setState(() {
+          _hadithList = results.map((e) => {
+            'number': e['hadith_number'],
+            'arabic': e['arabic'],
+            'english': e['english'],
+            'searchArText': e['search_arabic'],
+            'searchEnText': e['search_english'],
+            'grades': jsonDecode(e['grades'] ?? '[]')
+          }).toList();
+          _isOffline = true;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
 
     // Online Fetch API
     try {
-      final url =
-          'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$_displayLang-$bookId.min.json';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 10));
+      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$_displayLang-$bookId.min.json';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         final List<dynamic> rawHadiths = decoded['hadiths'] ?? [];
-        final List<dynamic> list = rawHadiths
-            .map((h) {
-              return {
-                'number': h['hadithnumber'] ?? 0,
-                'arabic': _displayLang == 'ara' ? (h['text'] ?? '') : '',
-                'searchArText': _displayLang == 'ara'
-                    ? _normalizeArabic(
-                        (h['text'] ?? '').toString(),
-                      ).toLowerCase()
-                    : '',
-                'searchEnText': _displayLang == 'eng'
-                    ? (h['text'] ?? '').toString().toLowerCase()
-                    : '',
-                'english': _displayLang == 'eng' ? (h['text'] ?? '') : '',
-                'grades': h['grades'] ?? [],
-              };
-            })
-            .where(
-              (h) =>
-                  (h['arabic'] as String).trim().isNotEmpty ||
-                  (h['english'] as String).trim().isNotEmpty,
-            )
-            .toList();
+        final List<dynamic> list = rawHadiths.map((h) {
+          return {
+            'number': h['hadithnumber'] ?? 0,
+            'arabic': _displayLang == 'ara' ? (h['text'] ?? '') : '',
+            'searchArText': _displayLang == 'ara' ? _normalizeArabic((h['text'] ?? '').toString()).toLowerCase() : '',
+            'searchEnText': _displayLang == 'eng' ? (h['text'] ?? '').toString().toLowerCase() : '',
+            'english': _displayLang == 'eng' ? (h['text'] ?? '') : '',
+            'grades': h['grades'] ?? [],
+          };
+        }).where((h) => (h['arabic'] as String).trim().isNotEmpty || (h['english'] as String).trim().isNotEmpty).toList();
 
         if (mounted) {
           setState(() {
@@ -236,9 +217,7 @@ class _HadithScreenState extends State<HadithScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = TranslationService.isArabic
-              ? "فشل في تحميل الأحاديث الشريفة. الرجاء التحقق من الاتصال بالإنترنت."
-              : "Failed to load Hadiths. Please check your internet connection.";
+          _error = TranslationService.isArabic ? "فشل في تحميل الأحاديث الشريفة. الرجاء التحقق من الاتصال بالإنترنت." : "Failed to load Hadiths. Please check your internet connection.";
           _isLoading = false;
         });
       }
@@ -246,31 +225,20 @@ class _HadithScreenState extends State<HadithScreen> {
   }
 
   Future<void> _downloadEntireBook() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     final bookId = _selectedBook.id;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final url =
-          'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$_displayLang-$bookId.min.json';
-
+      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$_displayLang-$bookId.min.json';
       final res = await http.get(Uri.parse(url));
-
       if (res.statusCode == 200) {
-        final path = await _getLocalPath(bookId, _displayLang);
-
-        await File(path).parent.create(recursive: true);
-        await File(path).writeAsString(res.body);
-
+        final decoded = jsonDecode(res.body);
+        final hadiths = decoded['hadiths'] as List<dynamic>;
+        final db = await DatabaseService.getInstance();
+        await db.insertHadithBook(bookId, _displayLang, hadiths);
         messenger.showSnackBar(
           SnackBar(
-            content: Text(
-              TranslationService.isArabic
-                  ? "تم تحميل الكتاب كاملاً بنجاح!"
-                  : "Book downloaded successfully!",
-            ),
+            content: Text(TranslationService.isArabic ? "تم تحميل الكتاب كاملاً بنجاح!" : "Book downloaded successfully!"),
             backgroundColor: const Color(0xFFE5C158),
           ),
         );
@@ -282,11 +250,7 @@ class _HadithScreenState extends State<HadithScreen> {
       setState(() => _isLoading = false);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "فشل تحميل الكتاب. حاول مجدداً."
-                : "Download failed. Try again.",
-          ),
+          content: Text(TranslationService.isArabic ? "فشل تحميل الكتاب. حاول مجدداً." : "Download failed. Try again."),
           backgroundColor: Colors.redAccent,
         ),
       );
