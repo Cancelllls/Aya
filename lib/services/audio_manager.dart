@@ -217,6 +217,14 @@ class AudioManager {
     } catch (_) {}
   }
 
+  void seekToAyahInSplitMode(int targetAyahNum) {
+    if (_currentPlaylist.isEmpty) return;
+    int index = targetAyahNum - 1;
+    if (index >= 0 && index < _currentPlaylist.length) {
+      playAyah(_surahNum, _surahName, _currentPlaylist, index);
+    }
+  }
+
   void playAyah(
     int surahNum,
     String surahName,

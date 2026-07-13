@@ -519,10 +519,26 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   return ValueListenableBuilder<Duration>(
                     valueListenable: AudioManager.instance.positionNotifier,
                     builder: (context, position, child) {
-                      final pos = position.inMilliseconds.toDouble();
-                      final dur = duration.inMilliseconds.toDouble();
-                      final maxVal = dur > 0 ? dur : 1.0;
-                      final safePos = pos > maxVal ? maxVal : pos;
+                      final isSplit = playState.ayahNum > 0;
+                      final currentAyahIndex = isSplit ? playState.ayahNum - 1 : 0;
+                      final totalAyahs = _currentSurah.numberOfAyahs;
+                      
+                      double posVal;
+                      double maxVal;
+
+                      if (isSplit) {
+                        maxVal = totalAyahs.toDouble();
+                        posVal = currentAyahIndex.toDouble();
+                        if (duration.inMilliseconds > 0) {
+                          posVal += position.inMilliseconds / duration.inMilliseconds;
+                        }
+                        if (posVal > maxVal) posVal = maxVal;
+                      } else {
+                        maxVal = duration.inMilliseconds.toDouble();
+                        maxVal = maxVal > 0 ? maxVal : 1.0;
+                        posVal = position.inMilliseconds.toDouble();
+                        if (posVal > maxVal) posVal = maxVal;
+                      }
   
                       return SliderTheme(
                         data: SliderTheme.of(context).copyWith(
@@ -531,20 +547,29 @@ extension SurahReaderUi on _SurahReaderScreenState {
                           overlayShape: const RoundSliderOverlayShape(overlayRadius: 14.0),
                         ),
                         child: Slider(
-                          value: safePos,
+                          value: posVal,
                           min: 0,
                           max: maxVal,
                           activeColor: const Color(0xFFE5C158),
                           inactiveColor: const Color(0xFFE5C158).withOpacity(0.3),
                           onChanged: (val) {
-                            AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
+                            if (!isSplit) {
+                              AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
+                            }
                           },
                           onChangeStart: (val) {
-                            AudioManager.instance.isSeeking = true;
+                            if (!isSplit) AudioManager.instance.isSeeking = true;
                           },
                           onChangeEnd: (val) async {
-                            await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
-                            AudioManager.instance.isSeeking = false;
+                            if (isSplit) {
+                              int targetAyah = val.floor() + 1;
+                              if (targetAyah > totalAyahs) targetAyah = totalAyahs;
+                              if (targetAyah < 1) targetAyah = 1;
+                              AudioManager.instance.seekToAyahInSplitMode(targetAyah);
+                            } else {
+                              await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
+                              AudioManager.instance.isSeeking = false;
+                            }
                           },
                         ),
                       );

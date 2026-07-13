@@ -229,12 +229,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                                                 if (targetAyah > totalAyahs) targetAyah = totalAyahs;
                                                 if (targetAyah < 1) targetAyah = 1;
                                                 
-                                                // Assuming we can restart playback from targetAyah
-                                                AudioManager.instance.stop();
-                                                // We don't have the full ayahs list here, but we can't easily play from an ayah index without it.
-                                                // Wait, this might be a problem if we don't have the ayahs list!
-                                                // If we don't have the list, seeking across ayahs is hard.
-                                                // Let's just disable dragging for split mode for now, or just make it read-only.
+                                                AudioManager.instance.seekToAyahInSplitMode(targetAyah);
                                               } else {
                                                 await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
                                                 AudioManager.instance.isSeeking = false;
