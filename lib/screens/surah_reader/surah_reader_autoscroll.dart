@@ -65,6 +65,7 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
     // In fact, wait, extensions DO NOT have `setState`.
     // Let me just replace the broken header.
 
+  }
 
   void _syncAutoScrollWithAudio() async {
       final player = AudioManager.instance.activePlayer;
