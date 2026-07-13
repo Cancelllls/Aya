@@ -559,7 +559,7 @@ class _QuranScreenState extends State<QuranScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => SurahPagerScreen(
-                      surah: targetSurah!,
+                      initialSurah: targetSurah!,
                       storage: widget.storage,
                       initialAyahNumber: numberInSurah,
                     ),
