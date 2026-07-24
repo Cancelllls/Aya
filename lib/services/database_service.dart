@@ -188,16 +188,25 @@ class DatabaseService {
     if (oldVersion < 4) {
       // Add text_arabic_clean column if it doesn't exist
       try {
-        await db.execute('ALTER TABLE ayahs ADD COLUMN text_arabic_clean TEXT DEFAULT ""');
+        await db.execute(
+          'ALTER TABLE ayahs ADD COLUMN text_arabic_clean TEXT DEFAULT ""',
+        );
         // We could populate it, but a quick re-seed might be better, or we can just update it
-        final List<Map<String, dynamic>> allAyahs = await db.query('ayahs', columns: ['id', 'text_arabic']);
+        final List<Map<String, dynamic>> allAyahs = await db.query(
+          'ayahs',
+          columns: ['id', 'text_arabic'],
+        );
         Batch batch = db.batch();
         for (var row in allAyahs) {
           batch.update(
             'ayahs',
-            {'text_arabic_clean': _stripTashkeel(row['text_arabic'] as String? ?? '').toLowerCase()},
+            {
+              'text_arabic_clean': _stripTashkeel(
+                row['text_arabic'] as String? ?? '',
+              ).toLowerCase(),
+            },
             where: 'id = ?',
-            whereArgs: [row['id']]
+            whereArgs: [row['id']],
           );
         }
         await batch.commit(noResult: true);
@@ -254,7 +263,7 @@ class DatabaseService {
     if (oldVersion < 3) {
       await db.execute('DROP TABLE IF EXISTS ayahs');
       await db.execute('DROP TABLE IF EXISTS surahs');
-      
+
       // Quran Surahs table
       await db.execute('''
         CREATE TABLE surahs (
@@ -288,9 +297,13 @@ class DatabaseService {
 
   static Future<void> _seedQuranData(Database db) async {
     try {
-      final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM surahs'));
+      final count = Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM surahs'),
+      );
       if (count == 0) {
-        final String surahsStr = await rootBundle.loadString('assets/quran/surahs.json');
+        final String surahsStr = await rootBundle.loadString(
+          'assets/quran/surahs.json',
+        );
         final List<dynamic> surahs = jsonDecode(surahsStr);
         Batch batch = db.batch();
         for (var s in surahs) {
@@ -305,14 +318,16 @@ class DatabaseService {
         }
         await batch.commit(noResult: true);
 
-        final String ayahsStr = await rootBundle.loadString('assets/quran/quran_hafs.json');
+        final String ayahsStr = await rootBundle.loadString(
+          'assets/quran/quran_hafs.json',
+        );
         final List<dynamic> quranData = jsonDecode(ayahsStr);
         batch = db.batch();
         for (var editions in quranData) {
           final arabic = editions[0]['ayahs'];
           final english = editions[1]['ayahs'];
           final tafsir = editions.length > 2 ? editions[2]['ayahs'] : null;
-          
+
           for (int i = 0; i < arabic.length; i++) {
             final hizbQuarter = arabic[i]['hizbQuarter'] as int? ?? 1;
             final calculatedHizb = ((hizbQuarter - 1) ~/ 4) + 1;
@@ -321,7 +336,9 @@ class DatabaseService {
               'ayah_number': arabic[i]['numberInSurah'],
               'global_number': arabic[i]['number'],
               'text_arabic': arabic[i]['text'],
-              'text_arabic_clean': _stripTashkeel(arabic[i]['text']).toLowerCase(),
+              'text_arabic_clean': _stripTashkeel(
+                arabic[i]['text'],
+              ).toLowerCase(),
               'text_english': english[i]['text'],
               'tafsir': tafsir != null ? tafsir[i]['text'] : null,
               'juz': arabic[i]['juz'],
@@ -344,7 +361,12 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> getAyahsForSurah(int surahNumber) async {
     final db = _database!;
-    return await db.query('ayahs', where: 'surah_number = ?', whereArgs: [surahNumber], orderBy: 'ayah_number ASC');
+    return await db.query(
+      'ayahs',
+      where: 'surah_number = ?',
+      whereArgs: [surahNumber],
+      orderBy: 'ayah_number ASC',
+    );
   }
 
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
@@ -352,17 +374,19 @@ class DatabaseService {
     final queryClean = _stripTashkeel(query).toLowerCase();
     final searchPattern = '%$queryClean%';
 
-    final results = await db.rawQuery('''
+    final results = await db.rawQuery(
+      '''
       SELECT ayahs.*, surahs.name as surah_name, surahs.englishName as surah_englishName 
       FROM ayahs 
       JOIN surahs ON ayahs.surah_number = surahs.number 
       WHERE ayahs.text_arabic_clean LIKE ? OR LOWER(ayahs.text_english) LIKE ?
       ORDER BY ayahs.surah_number ASC, ayahs.ayah_number ASC
-    ''', [searchPattern, searchPattern]);
+    ''',
+      [searchPattern, searchPattern],
+    );
 
     return results;
   }
-
 
   static String _stripTashkeel(String input) {
     final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
@@ -607,35 +631,38 @@ class DatabaseService {
     );
   }
 
-
   // ---------------------------------------------------------------------------
   // Hadith Database Methods
   // ---------------------------------------------------------------------------
 
-  
   Future<bool> isHadithBookDownloaded(String bookId, String lang) async {
-    final db = await _database;
+    final db = _database;
     if (db == null) return false;
     final dbBookId = '${lang}_$bookId';
-    final res = await db.query('hadith_books', where: 'book_id = ?', whereArgs: [dbBookId]);
+    final res = await db.query(
+      'hadith_books',
+      where: 'book_id = ?',
+      whereArgs: [dbBookId],
+    );
     return res.isNotEmpty;
   }
-Future<void> insertHadithBook(String bookId, String lang, List<dynamic> hadiths) async {
-    final db = await _database;
+
+  Future<void> insertHadithBook(
+    String bookId,
+    String lang,
+    List<dynamic> hadiths,
+  ) async {
+    final db = _database;
     if (db == null) return;
-    
+
     final dbBookId = '${lang}_$bookId';
 
     await db.transaction((txn) async {
-      await txn.insert(
-        'hadith_books',
-        {
-          'book_id': dbBookId,
-          'lang': lang,
-          'downloaded_at': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('hadith_books', {
+        'book_id': dbBookId,
+        'lang': lang,
+        'downloaded_at': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
 
@@ -646,8 +673,12 @@ Future<void> insertHadithBook(String bookId, String lang, List<dynamic> hadiths)
           'hadith_number': h['hadithnumber'] ?? 0,
           'arabic': lang == 'ara' ? (h['text'] ?? '') : '',
           'english': lang == 'eng' ? (h['text'] ?? '') : '',
-          'search_arabic': lang == 'ara' ? _stripTashkeel((h['text'] ?? '').toString()).toLowerCase() : '',
-          'search_english': lang == 'eng' ? (h['text'] ?? '').toString().toLowerCase() : '',
+          'search_arabic': lang == 'ara'
+              ? _stripTashkeel((h['text'] ?? '').toString()).toLowerCase()
+              : '',
+          'search_english': lang == 'eng'
+              ? (h['text'] ?? '').toString().toLowerCase()
+              : '',
           'grades': jsonEncode(h['grades'] ?? []),
         });
       }
@@ -656,18 +687,27 @@ Future<void> insertHadithBook(String bookId, String lang, List<dynamic> hadiths)
   }
 
   Future<void> deleteHadithBook(String bookId, String lang) async {
-    final db = await _database;
+    final db = _database;
     if (db == null) return;
     final dbBookId = '${lang}_$bookId';
 
     await db.transaction((txn) async {
       await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
-      await txn.delete('hadith_books', where: 'book_id = ?', whereArgs: [dbBookId]);
+      await txn.delete(
+        'hadith_books',
+        where: 'book_id = ?',
+        whereArgs: [dbBookId],
+      );
     });
   }
 
-  Future<List<Map<String, dynamic>>> getHadiths(String bookId, String lang, int limit, int offset) async {
-    final db = await _database;
+  Future<List<Map<String, dynamic>>> getHadiths(
+    String bookId,
+    String lang,
+    int limit,
+    int offset,
+  ) async {
+    final db = _database;
     if (db == null) return [];
     final dbBookId = '${lang}_$bookId';
 
@@ -681,20 +721,27 @@ Future<void> insertHadithBook(String bookId, String lang, List<dynamic> hadiths)
     );
   }
 
-  Future<List<Map<String, dynamic>>> searchHadiths(String bookId, String lang, String query, int limit, int offset) async {
-    final db = await _database;
+  Future<List<Map<String, dynamic>>> searchHadiths(
+    String bookId,
+    String lang,
+    String query,
+    int limit,
+    int offset,
+  ) async {
+    final db = _database;
     if (db == null) return [];
     final dbBookId = '${lang}_$bookId';
 
     final cleanQuery = _stripTashkeel(query).toLowerCase();
     final searchPattern = '%$cleanQuery%';
-    
+
     final intQuery = int.tryParse(query);
 
     if (intQuery != null) {
       return await db.query(
         'hadiths',
-        where: 'book_id = ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
+        where:
+            'book_id = ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
         whereArgs: [dbBookId, intQuery, searchPattern, searchPattern],
         orderBy: 'hadith_number ASC',
         limit: limit,
@@ -703,7 +750,8 @@ Future<void> insertHadithBook(String bookId, String lang, List<dynamic> hadiths)
     } else {
       return await db.query(
         'hadiths',
-        where: 'book_id = ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
+        where:
+            'book_id = ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
         whereArgs: [dbBookId, searchPattern, searchPattern],
         orderBy: 'hadith_number ASC',
         limit: limit,

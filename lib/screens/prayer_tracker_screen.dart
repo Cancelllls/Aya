@@ -5,10 +5,9 @@ import '../services/storage_service.dart';
 import '../services/offline_prayer_service.dart';
 import '../models/prayer_models.dart';
 import '../services/translation_service.dart';
-import '../theme/app_colors.dart';
 
 class PrayerTrackerScreen extends StatefulWidget {
-  const PrayerTrackerScreen({Key? key}) : super(key: key);
+  const PrayerTrackerScreen({super.key});
 
   @override
   _PrayerTrackerScreenState createState() => _PrayerTrackerScreenState();
@@ -27,7 +26,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     DateTime.now().month,
     DateTime.now().day,
   );
-  Map<String, Map<String, dynamic>> _trackerData = {};
+  final Map<String, Map<String, dynamic>> _trackerData = {};
   bool _isLoading = true;
   int _selectedYear = DateTime.now().year;
   PrayerTimeData? _selectedDatePrayerTimes;
@@ -43,7 +42,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   ];
   final List<String> _prayersEn = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
-  Map<String, Map<String, int>> _stats = {
+  final Map<String, Map<String, int>> _stats = {
     'weekly': {'prayed': 0, 'missed': 0, 'total': 0},
     'monthly': {'prayed': 0, 'missed': 0, 'total': 0},
     'yearly': {'prayed': 0, 'missed': 0, 'total': 0},
@@ -186,10 +185,11 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     for (var item in list) {
       for (var p in _prayers) {
         final val = item[p] as int? ?? 0;
-        if (val == 1)
+        if (val == 1) {
           prayed++;
-        else
+        } else {
           missed++;
+        }
       }
     }
 
@@ -281,7 +281,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       appBar: AppBar(
         title: Text(
           isAr ? 'متتبع الصلوات' : 'Prayer Tracker',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -346,7 +346,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               ),
               Text(
                 monthStr.toUpperCase(),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.0,
@@ -376,33 +376,38 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: (() {
-              final baseEn = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-              final baseAr = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
-              final base = TranslationService.isArabic ? baseAr : baseEn;
-              final rotate = _firstDayOfWeek - 1;
-              return [...base.sublist(rotate), ...base.sublist(0, rotate)];
-            })()
-                .map(
-                  (d) => SizedBox(
-                    width: 30,
-                    child: Text(
-                      d,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
-                          0.4,
+            children:
+                (() {
+                      final baseEn = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                      final baseAr = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
+                      final base = TranslationService.isArabic
+                          ? baseAr
+                          : baseEn;
+                      final rotate = _firstDayOfWeek - 1;
+                      return [
+                        ...base.sublist(rotate),
+                        ...base.sublist(0, rotate),
+                      ];
+                    })()
+                    .map(
+                      (d) => SizedBox(
+                        width: 30,
+                        child: Text(
+                          d,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withOpacity(0.4),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                )
-                .toList(),
+                    )
+                    .toList(),
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
 
         // Calendar Grid
         Expanded(
@@ -414,13 +419,17 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
             ),
-            itemCount: days.length + ((days.first.weekday - _firstDayOfWeek) % 7 < 0 ? (days.first.weekday - _firstDayOfWeek) % 7 + 7 : (days.first.weekday - _firstDayOfWeek) % 7),
+            itemCount:
+                days.length +
+                ((days.first.weekday - _firstDayOfWeek) % 7 < 0
+                    ? (days.first.weekday - _firstDayOfWeek) % 7 + 7
+                    : (days.first.weekday - _firstDayOfWeek) % 7),
             itemBuilder: (context, index) {
               int emptySlots = (days.first.weekday - _firstDayOfWeek) % 7;
               if (emptySlots < 0) emptySlots += 7;
 
               if (index < emptySlots) {
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               }
 
               final date = days[index - emptySlots];
@@ -553,11 +562,18 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 const Spacer(),
                 TextButton(
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    side: BorderSide(color: theme.primaryColor.withOpacity(0.5)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    side: BorderSide(
+                      color: theme.primaryColor.withOpacity(0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () {
                     setState(() => _selectedDate = DateTime.now());
@@ -575,7 +591,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               ],
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           ..._prayers.asMap().entries.map((e) {
             final idx = e.key;
             final pKey = e.value;
@@ -612,7 +628,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               theme,
               supposedTime,
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -644,7 +660,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                   ? theme.primaryColor
                   : theme.textTheme.bodyMedium?.color?.withOpacity(0.2),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 prayerName,
@@ -695,7 +711,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               ),
               Text(
                 '$_selectedYear',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
@@ -741,7 +757,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                     ),
                     child: Text(
                       monthStr.toUpperCase(),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.0,
@@ -760,7 +776,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                     itemCount: daysInMonth + (firstDayWeekday - 1),
                     itemBuilder: (context, dayIndex) {
                       if (dayIndex < firstDayWeekday - 1) {
-                        return SizedBox.shrink();
+                        return const SizedBox.shrink();
                       }
 
                       final day = dayIndex - (firstDayWeekday - 1) + 1;
@@ -819,7 +835,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                       );
                     },
                   ),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                 ],
               );
             },
@@ -839,14 +855,14 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           isAr,
           theme,
         ),
-        SizedBox(height: 32),
+        const SizedBox(height: 32),
         _buildMinimalistStatCard(
           'monthly',
           isAr ? 'هذا الشهر' : 'This Month',
           isAr,
           theme,
         ),
-        SizedBox(height: 32),
+        const SizedBox(height: 32),
         _buildMinimalistStatCard(
           'yearly',
           isAr ? 'هذا العام' : 'This Year',
@@ -865,7 +881,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   ) {
     final data = _stats[period]!;
     final total = data['total']!;
-    if (total == 0) return SizedBox.shrink();
+    if (total == 0) return const SizedBox.shrink();
 
     final prayed = data['prayed']!;
     final missed = data['missed']!;
@@ -897,7 +913,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             ),
           ],
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         ClipRRect(
           borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
@@ -911,12 +927,20 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             minHeight: 4,
           ),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildMinimalStatItem(isAr ? 'صلوات صُليت' : 'Prayers Done', prayed, theme),
-            _buildMinimalStatItem(isAr ? 'صلوات فائتة' : 'Prayers Missed', missed, theme),
+            _buildMinimalStatItem(
+              isAr ? 'صلوات صُليت' : 'Prayers Done',
+              prayed,
+              theme,
+            ),
+            _buildMinimalStatItem(
+              isAr ? 'صلوات فائتة' : 'Prayers Missed',
+              missed,
+              theme,
+            ),
           ],
         ),
       ],
@@ -935,7 +959,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
             color: theme.textTheme.bodyLarge?.color,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           label.toUpperCase(),
           style: TextStyle(
@@ -965,7 +989,7 @@ class PrayerPiePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double sweepAngle = 2 * 3.141592653589793 / 5;
+    const double sweepAngle = 2 * 3.141592653589793 / 5;
     final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height);
 
     for (int i = 0; i < 5; i++) {

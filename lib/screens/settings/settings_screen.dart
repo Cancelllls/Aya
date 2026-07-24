@@ -78,8 +78,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
-  bool _isPreviewPlaying = false;
-  bool _isPreAdhanPreviewPlaying = false;
+  final bool _isPreviewPlaying = false;
+  final bool _isPreAdhanPreviewPlaying = false;
 
   @override
   void initState() {
@@ -159,7 +159,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       'todays_verse_reminder',
       defaultValue: true,
     );
-    _firstDayOfWeek = widget.storage.getInt('first_day_of_week', defaultValue: 1);
+    _firstDayOfWeek = widget.storage.getInt(
+      'first_day_of_week',
+      defaultValue: 1,
+    );
 
     _use24hFormat = widget.storage.getBool(
       'use_24h_format',
@@ -307,7 +310,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       await widget.storage.setString('pre_adhan_alert_mode', val);
       if (val == 'voice' || val == 'vibrate_and_voice') {
         await AdhanAudioService.instance.stopPreview();
-        await AdhanAudioService.instance.playPreAdhanPreview(TranslationService.currentLanguage);
+        await AdhanAudioService.instance.playPreAdhanPreview(
+          TranslationService.currentLanguage,
+        );
       }
       await _rescheduleAlarms();
     }
@@ -319,9 +324,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         _adhanAlertMode = val;
       });
       await widget.storage.setString('adhan_alert_mode', val);
-      if (val == 'real_reciter' || val == 'vibrate_and_voice') {
-
-      }
+      if (val == 'real_reciter' || val == 'vibrate_and_voice') {}
       await _rescheduleAlarms();
     }
   }
@@ -480,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ? "دعم وتطوير التطبيق"
                     : "Support Project & Development",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -490,9 +493,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
                         : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, height: 1.4),
+                    style: const TextStyle(fontSize: 13, height: 1.4),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
                     final productId = 'support_donation_${val.toInt()}';
                     final product = productMap[productId];
@@ -518,7 +521,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           TranslationService.isArabic
                               ? "دعم بقيمة $displayPrice"
                               : "Support $displayPrice",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     );
@@ -656,7 +659,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           backgroundColor: Theme.of(context).cardColor,
           title: Text(
             "${TranslationService.t('reset_settings')}?",
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -787,7 +790,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       appBar: AppBar(
         title: Text(
           TranslationService.t('settings'),
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -796,7 +799,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         children: [
-                    ..._buildAppearanceSection(theme),
+          ..._buildAppearanceSection(theme),
           ..._buildLanguageSection(theme),
           ..._buildCalculationsSection(theme),
           ..._buildAppPreferencesSection(theme),
@@ -804,23 +807,23 @@ class _SettingsScreenState extends State<SettingsScreen>
           ..._buildAudioSection(theme),
           ..._buildPermissionsSection(theme),
           ..._buildFocusLockSection(theme),
-          SizedBox(height: 40),
+          const SizedBox(height: 40),
 
           // App info credits
           Center(
             child: Column(
               children: [
-                Icon(Icons.mosque, color: Color(0xFFE5C158), size: 48),
-                SizedBox(height: 12),
+                const Icon(Icons.mosque, color: Color(0xFFE5C158), size: 48),
+                const SizedBox(height: 12),
                 Text(
                   TranslationService.t('app_title').toUpperCase(),
-                  style: TextStyle(
+                  style: const TextStyle(
                     letterSpacing: 4,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   TranslationService.t('version_premium'),
                   style: TextStyle(
@@ -828,7 +831,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     fontSize: 11,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   TranslationService.t('bless_journey'),
                   style: TextStyle(
@@ -848,8 +851,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-
-
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsetsDirectional.only(
@@ -859,7 +860,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       ),
       child: Text(
         title.toUpperCase(),
-        style: TextStyle(
+        style: const TextStyle(
           color: Color(0xFF0F766E),
           fontSize: 11,
           fontWeight: FontWeight.bold,

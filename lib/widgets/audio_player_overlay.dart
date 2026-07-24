@@ -9,11 +9,11 @@ class AudioPlayerOverlay extends StatelessWidget {
   final ThemeData theme;
 
   const AudioPlayerOverlay({
-    Key? key,
+    super.key,
     required this.bottomPosition,
     required this.isDark,
     required this.theme,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +55,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                             height: 36,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFFE5C158),
-                                  Color(0xFFB45309),
-                                ],
+                                colors: [Color(0xFFE5C158), Color(0xFFB45309)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -106,8 +103,9 @@ class AudioPlayerOverlay extends StatelessWidget {
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            onPressed: () => AudioManager.instance
-                                .seekBy(const Duration(seconds: -10)),
+                            onPressed: () => AudioManager.instance.seekBy(
+                              const Duration(seconds: -10),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           IconButton(
@@ -134,8 +132,9 @@ class AudioPlayerOverlay extends StatelessWidget {
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            onPressed: () => AudioManager.instance
-                                .seekBy(const Duration(seconds: 10)),
+                            onPressed: () => AudioManager.instance.seekBy(
+                              const Duration(seconds: 10),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           IconButton(
@@ -155,12 +154,19 @@ class AudioPlayerOverlay extends StatelessWidget {
                         valueListenable: AudioManager.instance.durationNotifier,
                         builder: (context, duration, child) {
                           return ValueListenableBuilder<Duration>(
-                            valueListenable: AudioManager.instance.positionNotifier,
+                            valueListenable:
+                                AudioManager.instance.positionNotifier,
                             builder: (context, position, child) {
-                              final isSplit = audioState.ayahNum > 0 && !AudioManager.instance.isTimestampSyncMode;
-                              final currentAyahIndex = isSplit ? audioState.ayahNum - 1 : 0;
-                              final surahInfo = audioState.surahNum > 0 && audioState.surahNum <= 114 
-                                  ? allOfflineSurahs[audioState.surahNum - 1] 
+                              final isSplit =
+                                  audioState.ayahNum > 0 &&
+                                  !AudioManager.instance.isTimestampSyncMode;
+                              final currentAyahIndex = isSplit
+                                  ? audioState.ayahNum - 1
+                                  : 0;
+                              final surahInfo =
+                                  audioState.surahNum > 0 &&
+                                      audioState.surahNum <= 114
+                                  ? allOfflineSurahs[audioState.surahNum - 1]
                                   : null;
                               final totalAyahs = surahInfo?.numberOfAyahs ?? 1;
 
@@ -171,7 +177,9 @@ class AudioPlayerOverlay extends StatelessWidget {
                                 maxVal = totalAyahs.toDouble();
                                 posVal = currentAyahIndex.toDouble();
                                 if (duration.inMilliseconds > 0) {
-                                  posVal += position.inMilliseconds / duration.inMilliseconds;
+                                  posVal +=
+                                      position.inMilliseconds /
+                                      duration.inMilliseconds;
                                 }
                                 if (posVal > maxVal) posVal = maxVal;
                                 if (posVal < 0) posVal = 0;
@@ -183,24 +191,37 @@ class AudioPlayerOverlay extends StatelessWidget {
                                 if (posVal < 0) posVal = 0;
                               }
 
-                              String _format(Duration d) {
-                                String twoDigits(int n) => n.toString().padLeft(2, "0");
-                                String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
-                                String twoDigitSeconds = twoDigits(d.inSeconds.remainder(60));
-                                if (d.inHours > 0) return "${d.inHours}:$twoDigitMinutes:$twoDigitSeconds";
+                              String format(Duration d) {
+                                String twoDigits(int n) =>
+                                    n.toString().padLeft(2, "0");
+                                String twoDigitMinutes = twoDigits(
+                                  d.inMinutes.remainder(60),
+                                );
+                                String twoDigitSeconds = twoDigits(
+                                  d.inSeconds.remainder(60),
+                                );
+                                if (d.inHours > 0)
+                                  return "${d.inHours}:$twoDigitMinutes:$twoDigitSeconds";
                                 return "$twoDigitMinutes:$twoDigitSeconds";
                               }
 
                               return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
                                 child: Row(
                                   children: [
                                     if (!isSplit)
                                       Text(
-                                        _format(position),
+                                        format(position),
                                         style: TextStyle(
-                                            fontSize: 10,
-                                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                                          fontSize: 10,
+                                          color: theme
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withOpacity(0.5),
+                                        ),
                                       ),
                                     Expanded(
                                       child: SizedBox(
@@ -208,33 +229,67 @@ class AudioPlayerOverlay extends StatelessWidget {
                                         child: SliderTheme(
                                           data: SliderTheme.of(context).copyWith(
                                             trackHeight: 3.0,
-                                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
-                                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14.0),
+                                            thumbShape:
+                                                const RoundSliderThumbShape(
+                                                  enabledThumbRadius: 6.0,
+                                                ),
+                                            overlayShape:
+                                                const RoundSliderOverlayShape(
+                                                  overlayRadius: 14.0,
+                                                ),
                                           ),
                                           child: Slider(
                                             value: posVal,
                                             min: 0,
                                             max: maxVal,
-                                            activeColor: const Color(0xFFE5C158),
-                                            inactiveColor: const Color(0xFFE5C158).withOpacity(0.3),
+                                            activeColor: const Color(
+                                              0xFFE5C158,
+                                            ),
+                                            inactiveColor: const Color(
+                                              0xFFE5C158,
+                                            ).withOpacity(0.3),
                                             onChanged: (val) {
                                               if (!isSplit) {
-                                                AudioManager.instance.positionNotifier.value = Duration(milliseconds: val.toInt());
+                                                AudioManager
+                                                    .instance
+                                                    .positionNotifier
+                                                    .value = Duration(
+                                                  milliseconds: val.toInt(),
+                                                );
                                               }
                                             },
                                             onChangeStart: (val) {
-                                              if (!isSplit) AudioManager.instance.isSeeking = true;
+                                              if (!isSplit)
+                                                AudioManager
+                                                        .instance
+                                                        .isSeeking =
+                                                    true;
                                             },
                                             onChangeEnd: (val) async {
                                               if (isSplit) {
-                                                int targetAyah = val.floor() + 1;
-                                                if (targetAyah > totalAyahs) targetAyah = totalAyahs;
-                                                if (targetAyah < 1) targetAyah = 1;
-                                                
-                                                AudioManager.instance.seekToAyahInSplitMode(targetAyah);
+                                                int targetAyah =
+                                                    val.floor() + 1;
+                                                if (targetAyah > totalAyahs)
+                                                  targetAyah = totalAyahs;
+                                                if (targetAyah < 1)
+                                                  targetAyah = 1;
+
+                                                AudioManager.instance
+                                                    .seekToAyahInSplitMode(
+                                                      targetAyah,
+                                                    );
                                               } else {
-                                                await AudioManager.instance.seekTo(Duration(milliseconds: val.toInt()));
-                                                AudioManager.instance.isSeeking = false;
+                                                await AudioManager.instance
+                                                    .seekTo(
+                                                      Duration(
+                                                        milliseconds: val
+                                                            .toInt(),
+                                                      ),
+                                                    );
+                                                AudioManager
+                                                        .instance
+                                                        .isSeeking =
+                                                    false;
                                               }
                                             },
                                           ),
@@ -243,10 +298,15 @@ class AudioPlayerOverlay extends StatelessWidget {
                                     ),
                                     if (!isSplit)
                                       Text(
-                                        _format(duration),
+                                        format(duration),
                                         style: TextStyle(
-                                            fontSize: 10,
-                                            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5)),
+                                          fontSize: 10,
+                                          color: theme
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withOpacity(0.5),
+                                        ),
                                       ),
                                   ],
                                 ),

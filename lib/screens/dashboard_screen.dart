@@ -529,7 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             // Header Welcome Box
             WelcomeHeader(isDark: isDark, randomVerse: _randomVerse),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             if (NotificationService.timezoneFallbackToUtc) ...[
               Container(
@@ -542,8 +542,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                    SizedBox(width: 12),
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         TranslationService.isArabic
@@ -561,7 +564,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
 
             // Live Countdown Card
@@ -585,15 +588,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: 40),
-                        SizedBox(height: 12),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           TranslationService.isArabic
                               ? "فشل في تحميل مواقيت الصلاة"
                               : "Failed to load prayer times",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFE5C158),
@@ -640,14 +647,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           child: Text(
                             TranslationService.t('live_countdown'),
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Color(0xFF10B981),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
                           "${TranslationService.t('time_until')} ${TranslationService.t(_nextPrayerName.toLowerCase())}",
                           style: TextStyle(
@@ -657,10 +664,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           _formatDuration(_nextPrayerCountdown),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFFE5C158),
                             fontSize: 42,
                             fontWeight: FontWeight.w800,
@@ -668,9 +675,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontFeatures: [FontFeature.tabularFigures()],
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Divider(color: theme.dividerColor),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
@@ -694,14 +701,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Quick Actions Title
             Text(
               TranslationService.t('quick_actions'),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             // Quick Actions Grid/List
             Column(
@@ -714,7 +721,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? bookmarks.first
                         : <String, dynamic>{};
 
-                    return QuickAccessPill(theme: theme,
+                    return QuickAccessPill(
+                      theme: theme,
                       icon: Icons.bookmark_outline,
                       title: TranslationService.t('continue_reading'),
                       subtitle: lastBookmark.isEmpty
@@ -739,7 +747,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -833,7 +841,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Today's schedule Title
             Row(
@@ -841,7 +849,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   TranslationService.t('today_schedule'),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Flexible(
                   child: Container(
@@ -870,11 +881,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             // Horizontal Prayer Grid
             _isLoading
-                ? SizedBox.shrink()
+                ? const SizedBox.shrink()
                 : SizedBox(
                     height: 120,
                     child: ListView(
@@ -926,7 +937,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-            SizedBox(height: 85),
+            const SizedBox(height: 85),
           ],
         ),
       ),
@@ -944,15 +955,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             letterSpacing: 0.5,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           _formatTime(value),
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
-
 }
 
 extension ColorsExtension on Colors {

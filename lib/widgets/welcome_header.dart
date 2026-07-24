@@ -7,11 +7,10 @@ class WelcomeHeader extends StatelessWidget {
   final PredefinedVerse _randomVerse;
 
   const WelcomeHeader({
-    Key? key,
+    super.key,
     required this.isDark,
     required PredefinedVerse randomVerse,
-  })  : _randomVerse = randomVerse,
-        super(key: key);
+  }) : _randomVerse = randomVerse;
 
   @override
   Widget build(BuildContext context) {

@@ -153,14 +153,14 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-            SizedBox(width: 8),
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 TranslationService.isArabic
                     ? "صلاحيات غير مكتملة"
                     : "Permissions Incomplete",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -169,7 +169,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
           TranslationService.isArabic
               ? "تحذير: بدون الصلاحيات المطلوبة، قد لا يعمل الأذان بدقة في الخلفية. هل تود المتابعة على أي حال؟"
               : "Warning: Without the required permissions, Athan alarms may not work accurately in the background. Proceed anyway?",
-          style: TextStyle(height: 1.5, fontSize: 14),
+          style: const TextStyle(height: 1.5, fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -218,7 +218,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -231,7 +231,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                   size: 64,
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 TranslationService.isArabic
                     ? "صلاحيات النظام المطلوبة"
@@ -243,7 +243,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 TranslationService.isArabic
                     ? "يتطلب تطبيق آية الصلاحيات التالية للعمل بشكل صحيح وتشغيل الأذان في وقته التلقائي بالخلفية."
@@ -255,7 +255,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               Expanded(
                 child: ListView(
@@ -272,7 +272,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                       onRequest: _requestLocation,
                     ),
                     if (showBgLocation) ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       _buildPermissionItem(
                         icon: Icons.location_searching,
                         title: TranslationService.isArabic
@@ -289,7 +289,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                             : "Requires location permission first",
                       ),
                     ],
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     _buildPermissionItem(
                       icon: Icons.notifications_active,
                       title: TranslationService.isArabic
@@ -302,7 +302,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                       onRequest: _requestNotif,
                     ),
                     if (showExactAlarm) ...[
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       _buildPermissionItem(
                         icon: Icons.access_alarm,
                         title: TranslationService.isArabic
@@ -315,7 +315,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                         onRequest: _requestExactAlarm,
                       ),
                     ],
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -334,10 +334,10 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                               color: theme.primaryColor,
                             ),
                           )
-                        : Icon(Icons.refresh, size: 16),
+                        : const Icon(Icons.refresh, size: 16),
                     label: Text(
                       TranslationService.isArabic ? "إعادة فحص" : "Re-Check",
-                      style: TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   ElevatedButton(
@@ -353,7 +353,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      textStyle: TextStyle(fontWeight: FontWeight.bold),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     onPressed: _onProceedClick,
                     child: Text(
@@ -404,17 +404,20 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                 size: 24,
               ),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     textAlign: TextAlign.start,
                   ),
-                  SizedBox(height: 3),
+                  const SizedBox(height: 3),
                   Text(
                     requiresPrior && priorLabel != null
                         ? priorLabel
@@ -434,9 +437,9 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                 ],
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             isGranted
-                ? Icon(Icons.check_circle, color: Colors.green)
+                ? const Icon(Icons.check_circle, color: Colors.green)
                 : TextButton(
                     style: TextButton.styleFrom(
                       foregroundColor: theme.primaryColor,
@@ -445,7 +448,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                     onPressed: requiresPrior ? null : onRequest,
                     child: Text(
                       TranslationService.isArabic ? "تفعيل" : "Enable",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
           ],

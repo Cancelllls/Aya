@@ -3,12 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import '../models/quran_models.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import 'translation_service.dart';
-import 'local_quran_service.dart';
 import '../models/offline_surahs.dart';
 import 'qdc_audio_service.dart';
 
@@ -42,7 +40,7 @@ class AudioManager {
   final ValueNotifier<AudioPlayState> playState = ValueNotifier(
     AudioPlayState(),
   );
-  
+
   final ValueNotifier<Duration> positionNotifier = ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> durationNotifier = ValueNotifier(Duration.zero);
   bool isSeeking = false;
@@ -51,7 +49,7 @@ class AudioManager {
   int _surahNum = 0;
   String _surahName = '';
   late StorageService _storage;
-  
+
   // QDC Timestamps for the current Surah
   Map<int, List<dynamic>>? _currentTimestamps;
   bool isTimestampSyncMode = false;
@@ -66,9 +64,9 @@ class AudioManager {
       _surahName = lastAudio['surahName'];
       if (_surahName.startsWith("Surah ") || _surahName.trim().isEmpty) {
         try {
-          _surahName = TranslationService.isArabic 
-            ? allOfflineSurahs[_surahNum - 1].name 
-            : allOfflineSurahs[_surahNum - 1].englishName;
+          _surahName = TranslationService.isArabic
+              ? allOfflineSurahs[_surahNum - 1].name
+              : allOfflineSurahs[_surahNum - 1].englishName;
         } catch (_) {}
       }
     }
@@ -93,9 +91,9 @@ class AudioManager {
 
     p.onPlayerStateChanged.listen((state) {
       final isPlaying = state == PlayerState.playing;
-      
+
       int currentAyah = playState.value.ayahNum;
-      
+
       playState.value = AudioPlayState(
         surahNum: _surahNum,
         ayahNum: currentAyah,
@@ -117,11 +115,11 @@ class AudioManager {
     p.onPositionChanged.listen((pos) {
       if (isSeeking) return;
       positionNotifier.value = pos;
-      
+
       // Handle timestamp syncing
       if (isTimestampSyncMode && _currentTimestamps != null) {
         int posMs = pos.inMilliseconds;
-        
+
         // Find which ayah we are in
         int detectedAyah = 0;
         for (var entry in _currentTimestamps!.entries) {
@@ -132,7 +130,7 @@ class AudioManager {
             break;
           }
         }
-        
+
         if (detectedAyah > 0 && detectedAyah != playState.value.ayahNum) {
           playState.value = AudioPlayState(
             surahNum: _surahNum,
@@ -140,11 +138,11 @@ class AudioManager {
             isPlaying: playState.value.isPlaying,
             title: _surahName,
             subtitle: TranslationService.isArabic
-                  ? "الآية $detectedAyah"
-                  : "Ayah $detectedAyah",
+                ? "الآية $detectedAyah"
+                : "Ayah $detectedAyah",
             isLoading: false,
           );
-          
+
           final autoBookmark = _storage.getBool(
             'setting_auto_bookmark',
             defaultValue: true,
@@ -179,7 +177,7 @@ class AudioManager {
     _surahNum = surahNum;
     _surahName = surahName;
     _currentPlaylist = ayahs;
-    
+
     int initialAyahNum = 1;
     if (index >= 0 && index < ayahs.length) {
       initialAyahNum = ayahs[index].numberInSurah;
@@ -188,12 +186,19 @@ class AudioManager {
     playSurahWithSync(surahNum, surahName, initialAyahNum: initialAyahNum);
   }
 
-  void playSurahWithSync(int surahNum, String surahName, {int initialAyahNum = 0}) async {
-    final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
-    
+  void playSurahWithSync(
+    int surahNum,
+    String surahName, {
+    int initialAyahNum = 0,
+  }) async {
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
+
     // Check if we can sync timestamps
     isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
-    
+
     if (isTimestampSyncMode) {
       playState.value = AudioPlayState(
         surahNum: surahNum,
@@ -203,9 +208,12 @@ class AudioManager {
         subtitle: 'Loading Timestamps...',
         isLoading: true,
       );
-      
-      _currentTimestamps = await QdcAudioService.fetchSurahTimestamps(surahNum, reciter);
-      
+
+      _currentTimestamps = await QdcAudioService.fetchSurahTimestamps(
+        surahNum,
+        reciter,
+      );
+
       if (_currentTimestamps == null) {
         isTimestampSyncMode = false; // fallback
       }
@@ -213,7 +221,7 @@ class AudioManager {
 
     _surahNum = surahNum;
     _surahName = surahName;
-    
+
     String url = ApiService.buildSurahAudioUrl(surahNum, reciter: reciter);
     if (isTimestampSyncMode) {
       final qdcUrl = await QdcAudioService.getAudioUrl(surahNum, reciter);
@@ -221,9 +229,11 @@ class AudioManager {
         url = qdcUrl;
       }
     }
-    
+
     final dir = await getApplicationDocumentsDirectory();
-    final fileName = isTimestampSyncMode ? 'surah_${surahNum}_qdc_v2.mp3' : 'surah_$surahNum.mp3';
+    final fileName = isTimestampSyncMode
+        ? 'surah_${surahNum}_qdc_v2.mp3'
+        : 'surah_$surahNum.mp3';
     final localPath = '${dir.path}/quran_audio/$reciter/$fileName';
     final isOffline = await File(localPath).exists();
 
@@ -232,7 +242,9 @@ class AudioManager {
       ayahNum: isTimestampSyncMode ? initialAyahNum : 0,
       isPlaying: true,
       title: surahName,
-      subtitle: isTimestampSyncMode ? "Syncing Ayah..." : "Full Surah Recitation",
+      subtitle: isTimestampSyncMode
+          ? "Syncing Ayah..."
+          : "Full Surah Recitation",
       isLoading: false,
     );
 
@@ -244,8 +256,10 @@ class AudioManager {
       } else {
         await _player.play(UrlSource(url));
       }
-      
-      if (isTimestampSyncMode && initialAyahNum > 1 && _currentTimestamps != null) {
+
+      if (isTimestampSyncMode &&
+          initialAyahNum > 1 &&
+          _currentTimestamps != null) {
         if (_currentTimestamps!.containsKey(initialAyahNum)) {
           int startMs = _currentTimestamps![initialAyahNum]![0];
           await _player.seek(Duration(milliseconds: startMs));
@@ -253,7 +267,7 @@ class AudioManager {
       }
     } catch (_) {}
   }
-  
+
   void playSurah(int surahNum, String surahName, List<Ayah> ayahs) async {
     playSurahWithSync(surahNum, surahName);
   }
@@ -291,13 +305,19 @@ class AudioManager {
       await _player.resume();
     } else if (state == PlayerState.completed || state == PlayerState.stopped) {
       if (isTimestampSyncMode && _currentTimestamps != null) {
-        int startAyah = playState.value.ayahNum > 0 ? playState.value.ayahNum : 1;
+        int startAyah = playState.value.ayahNum > 0
+            ? playState.value.ayahNum
+            : 1;
         playSurahWithSync(_surahNum, _surahName, initialAyahNum: startAyah);
       } else {
-        final reciter = _storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+        final reciter = _storage.getString(
+          'default_reciter',
+          defaultValue: 'ar.alafasy',
+        );
         final url = ApiService.buildSurahAudioUrl(_surahNum, reciter: reciter);
         final dir = await getApplicationDocumentsDirectory();
-        final localPath = '${dir.path}/quran_audio/$reciter/surah_$_surahNum.mp3';
+        final localPath =
+            '${dir.path}/quran_audio/$reciter/surah_$_surahNum.mp3';
         if (await File(localPath).exists()) {
           await _player.play(DeviceFileSource(localPath));
         } else {
@@ -316,12 +336,12 @@ class AudioManager {
     if (currentPos != null) {
       var newPos = currentPos + offset;
       if (newPos < Duration.zero) newPos = Duration.zero;
-      
+
       final maxDur = await _player.getDuration();
       if (maxDur != null && newPos > maxDur) {
         newPos = maxDur;
       }
-      
+
       await _player.seek(newPos);
     }
   }

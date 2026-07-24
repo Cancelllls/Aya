@@ -6,13 +6,16 @@ class AdhanNativeController {
 
   final MethodChannel _channel = const MethodChannel('com.adhan.app/alarm');
 
-  Future<void> schedulePrayerAlarm({required int id, required DateTime time}) async {
+  Future<void> schedulePrayerAlarm({
+    required int id,
+    required DateTime time,
+  }) async {
     try {
       await _channel.invokeMethod('scheduleExactAlarm', {
         'id': id,
         'timestamp': time.millisecondsSinceEpoch,
       });
-    } on PlatformException catch (e) {
+    } on PlatformException {
       print("Failed to schedule native alarm: '\${e.message}'.");
     }
   }
@@ -20,7 +23,7 @@ class AdhanNativeController {
   Future<void> requestOemAutostart() async {
     try {
       await _channel.invokeMethod('openOemAutoStartSettings');
-    } on PlatformException catch (e) {
+    } on PlatformException {
       print("Failed to open OEM autostart settings: '\${e.message}'.");
     }
   }

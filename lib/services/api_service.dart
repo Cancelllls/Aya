@@ -18,7 +18,8 @@ class ApiService {
   static final http.Client _client = http.Client();
 
   // Base URLs
-  static const String _quranBaseUrl = 'https://raw.githubusercontent.com/Cancelllls/Islamic-App/main/database';
+  static const String _quranBaseUrl =
+      'https://raw.githubusercontent.com/Cancelllls/Islamic-App/main/database';
 
   // ─── Prayer Times ────────────────────────────────────────────────────────
   static Future<void> cachePrayerTimes(String key, PrayerTimeData data) async {
@@ -196,13 +197,17 @@ class ApiService {
   }) async {
     final db = await DatabaseService.getInstance();
     final ayahsRaw = await db.getAyahsForSurah(surahNumber);
-    
+
     final list = <Ayah>[];
     for (var row in ayahsRaw) {
       final ayah = Ayah(
         number: row['global_number'] as int? ?? 0,
         numberInSurah: row['ayah_number'] as int? ?? 0,
-        text: Ayah.cleanBasmalah(row['text_arabic'] as String? ?? '', row['ayah_number'] as int? ?? 0, row['global_number'] as int? ?? 0),
+        text: Ayah.cleanBasmalah(
+          row['text_arabic'] as String? ?? '',
+          row['ayah_number'] as int? ?? 0,
+          row['global_number'] as int? ?? 0,
+        ),
         translation: row['text_english'] as String? ?? '',
         juz: row['juz'] as int? ?? 0,
         hizb: row['hizb'] as int? ?? 0,
@@ -210,7 +215,7 @@ class ApiService {
       );
       list.add(ayah);
     }
-    
+
     return list;
   }
 
@@ -220,40 +225,52 @@ class ApiService {
     double longitude,
   ) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        
+
         List<String> parts = [];
-        
+
         if (place.street != null && place.street!.isNotEmpty) {
           parts.add(place.street!);
-        } else if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+        } else if (place.thoroughfare != null &&
+            place.thoroughfare!.isNotEmpty) {
           parts.add(place.thoroughfare!);
-        } else if (place.name != null && place.name!.isNotEmpty && !place.name!.contains('+')) {
+        } else if (place.name != null &&
+            place.name!.isNotEmpty &&
+            !place.name!.contains('+')) {
           parts.add(place.name!);
         }
 
         if (place.subLocality != null && place.subLocality!.isNotEmpty) {
           parts.add(place.subLocality!);
         }
-        
+
         if (place.locality != null && place.locality!.isNotEmpty) {
           parts.add(place.locality!);
-        } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+        } else if (place.subAdministrativeArea != null &&
+            place.subAdministrativeArea!.isNotEmpty) {
           parts.add(place.subAdministrativeArea!);
-        } else if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+        } else if (place.administrativeArea != null &&
+            place.administrativeArea!.isNotEmpty) {
           parts.add(place.administrativeArea!);
         }
 
         List<String> uniqueParts = [];
         for (var p in parts) {
-          bool isSubset = uniqueParts.any((u) => u.contains(p) || p.contains(u));
+          bool isSubset = uniqueParts.any(
+            (u) => u.contains(p) || p.contains(u),
+          );
           if (!uniqueParts.contains(p) && (!isSubset || uniqueParts.isEmpty)) {
             uniqueParts.add(p);
           } else if (isSubset) {
             // Prefer the longer, more descriptive one if they are subsets
-            int idx = uniqueParts.indexWhere((u) => u.contains(p) || p.contains(u));
+            int idx = uniqueParts.indexWhere(
+              (u) => u.contains(p) || p.contains(u),
+            );
             if (idx != -1 && p.length > uniqueParts[idx].length) {
               uniqueParts[idx] = p;
             }
@@ -316,7 +333,9 @@ class ApiService {
     if (reciter.startsWith('mp3quran_server_')) {
       final server = reciter.substring(16);
       final formattedNumber = surahNumber.toString().padLeft(3, '0');
-      return server.endsWith('/') ? '$server$formattedNumber.mp3' : '$server/$formattedNumber.mp3';
+      return server.endsWith('/')
+          ? '$server$formattedNumber.mp3'
+          : '$server/$formattedNumber.mp3';
     }
     return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber.mp3';
   }

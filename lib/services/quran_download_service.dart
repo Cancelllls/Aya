@@ -77,7 +77,9 @@ class QuranDownloadService extends ChangeNotifier {
 
   Future<String> getLocalSurahPath(int surahNum, String reciter) async {
     final dir = await getApplicationDocumentsDirectory();
-    final fileName = QdcAudioService.getQdcReciterId(reciter) != null ? 'surah_${surahNum}_qdc_v2.mp3' : 'surah_$surahNum.mp3';
+    final fileName = QdcAudioService.getQdcReciterId(reciter) != null
+        ? 'surah_${surahNum}_qdc_v2.mp3'
+        : 'surah_$surahNum.mp3';
     return '${dir.path}/quran_audio/$reciter/$fileName';
   }
 
@@ -391,9 +393,9 @@ class QuranDownloadService extends ChangeNotifier {
     // Tafsir is now pre-packaged in the local SQLite database, no download needed.
     _isDownloadingTafsir = true;
     notifyListeners();
-    
+
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     _isDownloadingTafsir = false;
     _tafsirDownloadProgress = 1.0;
     notifyListeners();

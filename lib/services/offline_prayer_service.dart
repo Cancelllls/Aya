@@ -137,7 +137,7 @@ class OfflinePrayerService {
           "Sunset": pData.sunset,
           "Maghrib": pData.maghrib,
           "Isha": pData.isha,
-          "Imsak": pData.imsak
+          "Imsak": pData.imsak,
         },
         "date": {
           "readable": pData.gregorianDate,

@@ -327,7 +327,12 @@ class StorageService {
   }
 
   // --- Last Audio Position ---
-  Future<void> saveLastAudioPosition(int surahNum, int ayahNum, String reciter, String surahName) async {
+  Future<void> saveLastAudioPosition(
+    int surahNum,
+    int ayahNum,
+    String reciter,
+    String surahName,
+  ) async {
     await setInt('last_audio_surah', surahNum);
     await setInt('last_audio_ayah', ayahNum);
     await setString('last_audio_reciter', reciter);
@@ -342,9 +347,15 @@ class StorageService {
     final surahNum = prefs.getInt('last_audio_surah');
     final ayahNum = prefs.getInt('last_audio_ayah');
     final reciter = prefs.getString('last_audio_reciter');
-    final surahName = prefs.getString('last_audio_surah_name') ?? "Surah $surahNum";
+    final surahName =
+        prefs.getString('last_audio_surah_name') ?? "Surah $surahNum";
     if (surahNum != null && ayahNum != null && reciter != null) {
-      return {'surah': surahNum, 'ayah': ayahNum, 'reciter': reciter, 'surahName': surahName};
+      return {
+        'surah': surahNum,
+        'ayah': ayahNum,
+        'reciter': reciter,
+        'surahName': surahName,
+      };
     }
     return null;
   }

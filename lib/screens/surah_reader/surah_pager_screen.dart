@@ -10,11 +10,11 @@ class SurahPagerScreen extends StatefulWidget {
   final int? initialAyahNumber;
 
   const SurahPagerScreen({
-    Key? key,
+    super.key,
     required this.initialSurah,
     required this.storage,
     this.initialAyahNumber,
-  }) : super(key: key);
+  });
 
   @override
   _SurahPagerScreenState createState() => _SurahPagerScreenState();
@@ -31,7 +31,9 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     // If we want Surah 2 to be on the "left" of Surah 1 (swiping right to go to Surah 2),
     // we might need to invert the index or rely on Directionality.
     // Assuming standard LTR index mapping for now: index 0 is Al-Fatihah.
-    _pageController = PageController(initialPage: widget.initialSurah.number - 1);
+    _pageController = PageController(
+      initialPage: widget.initialSurah.number - 1,
+    );
   }
 
   @override
@@ -62,16 +64,26 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
         return SurahReaderScreen(
           surah: surah,
           storage: widget.storage,
-          initialAyahNumber: surahNum == widget.initialSurah.number ? widget.initialAyahNumber : null,
+          initialAyahNumber: surahNum == widget.initialSurah.number
+              ? widget.initialAyahNumber
+              : null,
           isInsidePager: true,
           onGoToNext: () {
             if (index < 113) {
-              _pageController.animateToPage(index + 1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+              _pageController.animateToPage(
+                index + 1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
             }
           },
           onGoToPrev: () {
             if (index > 0) {
-              _pageController.animateToPage(index - 1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+              _pageController.animateToPage(
+                index - 1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
             }
           },
         );

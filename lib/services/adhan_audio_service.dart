@@ -102,4 +102,3 @@ class AdhanAudioService {
     return ''; // Not needed anymore
   }
 }
-

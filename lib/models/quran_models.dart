@@ -60,7 +60,11 @@ class ReciterInfo {
 
 const List<ReciterInfo> availableReciters = [
   ReciterInfo('ar.alafasy', 'مشاري العفاسي', 'Mishary Alafasy'),
-  ReciterInfo('ar.abdurrahmaansudais', 'عبد الرحمن السديس', 'Abdurrahman As-Sudais'),
+  ReciterInfo(
+    'ar.abdurrahmaansudais',
+    'عبد الرحمن السديس',
+    'Abdurrahman As-Sudais',
+  ),
   ReciterInfo('ar.mahermuaiqly', 'ماهر المعيقلي', 'Maher Al-Muaiqly'),
   ReciterInfo('ar.saadalghamidi', 'سعد الغامدي', 'Saad Al-Ghamdi'),
   ReciterInfo('ar.abdullahbasfar', 'عبد الله بصفر', 'Abdullah Basfar'),
@@ -69,15 +73,22 @@ const List<ReciterInfo> availableReciters = [
   ReciterInfo('ar.ahmedajamy', 'أحمد بن علي العجمي', 'Ahmed ibn Ali al-Ajamy'),
   ReciterInfo('ar.hanirifai', 'هاني الرفاعي', 'Hani Rifai'),
   ReciterInfo('ar.husary', 'محمود خليل الحصري', 'Husary'),
-  ReciterInfo('ar.husarymujawwad', 'محمود خليل الحصري (المجود)', 'Husary (Mujawwad)'),
+  ReciterInfo(
+    'ar.husarymujawwad',
+    'محمود خليل الحصري (المجود)',
+    'Husary (Mujawwad)',
+  ),
   ReciterInfo('ar.hudhaify', 'علي بن عبدالرحمن الحذيفي', 'Hudhaify'),
   ReciterInfo('ar.ibrahimakhbar', 'إبراهيم الأخضر', 'Ibrahim Akhdar'),
   ReciterInfo('ar.muhammadayyoub', 'محمد أيوب', 'Muhammad Ayyoub'),
   ReciterInfo('ar.muhammadjibreel', 'محمد جبريل', 'Muhammad Jibreel'),
-  ReciterInfo('ar.saoodshuraym', 'سعود الشريم', 'Saood bin Ibraaheem Ash-Shuraym'),
+  ReciterInfo(
+    'ar.saoodshuraym',
+    'سعود الشريم',
+    'Saood bin Ibraaheem Ash-Shuraym',
+  ),
   ReciterInfo('ar.aymanswoaid', 'أيمن سويد', 'Ayman Sowaid'),
 ];
-
 
 class Surah {
   final int number;
@@ -401,13 +412,20 @@ class Ayah {
   });
 
   static bool startsWithBasmalah(String text) {
-    String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
+    String t = text.replaceAll(
+      RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'),
+      '',
+    );
     String stripDiacritics(String s) {
       return s.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
     }
+
     final normalized = stripDiacritics(t);
-    final bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
-    final fullyNormalized = normalized.replaceAll('ٱ', 'ا'); // Normalize Alif Wasla
+    const bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
+    final fullyNormalized = normalized.replaceAll(
+      'ٱ',
+      'ا',
+    ); // Normalize Alif Wasla
     return fullyNormalized.startsWith(bismillahNoTashkeel);
   }
 
@@ -419,32 +437,36 @@ class Ayah {
     if (numberInSurah != 1) return text;
     // Do not clean Basmalah for Surah 1 (Al-Fatiha), which corresponds to global ayah numbers 1 to 7
     if (globalNumber >= 1 && globalNumber <= 7) return text;
-    
+
     if (startsWithBasmalah(text)) {
-      String t = text.replaceAll(RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'), '');
-      final bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
-      
+      String t = text.replaceAll(
+        RegExp(r'^[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\s]+'),
+        '',
+      );
+      const bismillahNoTashkeel = "بسم الله الرحمن الرحيم";
+
       int charsToSkip = bismillahNoTashkeel.length;
       int originalIndex = 0;
       int nonDiacriticCount = 0;
-      
+
       while (originalIndex < t.length && nonDiacriticCount < charsToSkip) {
         if (!RegExp(r'[\u064B-\u065F\u0670]').hasMatch(t[originalIndex])) {
           nonDiacriticCount++;
         }
         originalIndex++;
       }
-      
+
       // Consume trailing diacritics of the last skipped letter
-      while (originalIndex < t.length && RegExp(r'[\u064B-\u065F\u0670]').hasMatch(t[originalIndex])) {
+      while (originalIndex < t.length &&
+          RegExp(r'[\u064B-\u065F\u0670]').hasMatch(t[originalIndex])) {
         originalIndex++;
       }
-      
+
       if (originalIndex < t.length) {
         final remainder = t.substring(originalIndex).trim();
         // Return remainder only if it's not empty, to prevent returning empty Ayahs
         if (remainder.isNotEmpty && remainder.length >= 2) {
-           return remainder;
+          return remainder;
         }
       }
     }

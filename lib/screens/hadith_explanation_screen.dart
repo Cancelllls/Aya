@@ -1,7 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as html_parser;
 import 'package:dorar_hadith/dorar_hadith.dart';
 import 'package:translator/translator.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -188,7 +185,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     Icon(
                       Icons.search_off_rounded,
                       size: 64,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3),
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.3,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -197,7 +196,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                           : "No explanation found in our database.",
                       style: TextStyle(
                         fontSize: 16,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.7,
+                        ),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -206,7 +207,10 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE5C158),
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -214,14 +218,31 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                       ),
                       icon: const Icon(Icons.travel_explore),
                       label: Text(
-                        TranslationService.isArabic ? "ابحث عن الشرح عبر الإنترنت" : "Search Online",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        TranslationService.isArabic
+                            ? "ابحث عن الشرح عبر الإنترنت"
+                            : "Search Online",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                       onPressed: () async {
-                        final q = Uri.encodeComponent(widget.query + (widget.isSharh ? (TranslationService.isArabic ? " شرح حديث" : " hadith explanation") : ""));
-                        final url = Uri.parse("https://www.google.com/search?q=$q");
+                        final q = Uri.encodeComponent(
+                          widget.query +
+                              (widget.isSharh
+                                  ? (TranslationService.isArabic
+                                        ? " شرح حديث"
+                                        : " hadith explanation")
+                                  : ""),
+                        );
+                        final url = Uri.parse(
+                          "https://www.google.com/search?q=$q",
+                        );
                         if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
                         }
                       },
                     ),
@@ -303,7 +324,11 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                         // 3. Grading Details (Linked Box)
                         if ((item['grading'] ?? '').isNotEmpty) ...[
                           const SizedBox(height: 16),
-                          _buildBeautifulGrading(item['grading']!, theme, widget.displayLang),
+                          _buildBeautifulGrading(
+                            item['grading']!,
+                            theme,
+                            widget.displayLang,
+                          ),
                         ],
                       ],
                     ),
@@ -314,7 +339,11 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
     );
   }
 
-  Widget _buildBeautifulGrading(String grading, ThemeData theme, String displayLang) {
+  Widget _buildBeautifulGrading(
+    String grading,
+    ThemeData theme,
+    String displayLang,
+  ) {
     if (grading.trim().isEmpty) return const SizedBox();
 
     final Map<String, String> parsed = {};
@@ -347,13 +376,17 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
             color: theme.textTheme.bodyMedium?.color,
           ),
           textAlign: TextAlign.start,
-          textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+          textDirection: displayLang == 'eng'
+              ? TextDirection.ltr
+              : TextDirection.rtl,
         ),
       );
     }
 
     return Directionality(
-      textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+      textDirection: displayLang == 'eng'
+          ? TextDirection.ltr
+          : TextDirection.rtl,
       child: Container(
         decoration: BoxDecoration(
           color: theme.primaryColor.withOpacity(0.03),
@@ -364,16 +397,22 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: parsed.entries.map((e) {
-            final isGrade = e.key.contains('حكم') || e.key.toLowerCase().contains('grade');
+            final isGrade =
+                e.key.contains('حكم') || e.key.toLowerCase().contains('grade');
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: isGrade ? const Color(0xFFE5C158).withOpacity(0.2) : theme.primaryColor.withOpacity(0.1),
+                      color: isGrade
+                          ? const Color(0xFFE5C158).withOpacity(0.2)
+                          : theme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -381,7 +420,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: isGrade ? const Color(0xFFE5C158) : theme.primaryColor,
+                        color: isGrade
+                            ? const Color(0xFFE5C158)
+                            : theme.primaryColor,
                       ),
                     ),
                   ),
@@ -393,7 +434,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                         e.value,
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: isGrade ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isGrade
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: theme.textTheme.bodyLarge?.color,
                           height: 1.4,
                         ),

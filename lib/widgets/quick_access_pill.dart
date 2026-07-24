@@ -9,13 +9,13 @@ class QuickAccessPill extends StatelessWidget {
   final VoidCallback onTap;
 
   const QuickAccessPill({
-    Key? key,
+    super.key,
     required this.theme,
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +61,9 @@ class QuickAccessPill extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.6,
+                        ),
                       ),
                     ),
                   ],

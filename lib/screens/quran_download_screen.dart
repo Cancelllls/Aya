@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import '../data/reciters_data.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/quran_models.dart';
-import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/quran_download_service.dart';
@@ -110,7 +109,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
         final hadiths = decoded['hadiths'] as List<dynamic>;
-        
+
         final db = await DatabaseService.getInstance();
         await db.insertHadithBook(bookId, lang, hadiths);
 
@@ -183,7 +182,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
           TranslationService.isArabic
               ? "حذف جميع التحميلات؟"
               : "Delete all downloads?",
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFFE5C158),
             fontWeight: FontWeight.bold,
           ),
@@ -247,7 +246,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       appBar: AppBar(
         title: Text(
           TranslationService.t('quran_downloads'),
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -258,328 +257,331 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
             )
           : ListView.builder(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: _surahList.length + 2,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFE5C158).withOpacity(0.2),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).shadowColor.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    itemCount: _surahList.length + 2,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFE5C158).withOpacity(0.2),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).shadowColor.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-
-
-
-
-                              // --- QURAN AUDIO RECITATIONS SECTION ---
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        TranslationService.isArabic
-                                            ? "التلاوات الصوتية للسور"
-                                            : "Surah Audio Recitations",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFFE5C158),
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        TranslationService.isArabic
-                                            ? "تم تحميل تلاوة $downloadedCount من ١١٤ سورة"
-                                            : "Downloaded $downloadedCount of 114 Surah recitations",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.color
-                                              ?.withOpacity(0.6),
-                                        ),
-                                      ),
-                                      Text(
-                                        TranslationService.isArabic
-                                            ? "المساحة المستهلكة: ${_totalSpaceMB.toStringAsFixed(1)} ميجابايت"
-                                            : "Space used: ${_totalSpaceMB.toStringAsFixed(1)} MB",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.color
-                                              ?.withOpacity(0.5),
-                                        ),
-                                      ),
-                                    ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- QURAN AUDIO RECITATIONS SECTION ---
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  TranslationService.isArabic
+                                      ? "التلاوات الصوتية للسور"
+                                      : "Surah Audio Recitations",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Color(0xFFE5C158),
                                   ),
-                                  if (isDownloadingAll)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFFE5C158,
-                                        ).withOpacity(0.12),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        "تحميل الكل...",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFFE5C158),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: LinearProgressIndicator(
-                                  value: overallProgress,
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).dividerColor.withOpacity(0.12),
-                                  color: const Color(0xFFE5C158),
-                                  minHeight: 6,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  TranslationService.isArabic
+                                      ? "تم تحميل تلاوة $downloadedCount من ١١٤ سورة"
+                                      : "Downloaded $downloadedCount of 114 Surah recitations",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.textTheme.bodyMedium?.color
+                                        ?.withOpacity(0.6),
+                                  ),
+                                ),
+                                Text(
+                                  TranslationService.isArabic
+                                      ? "المساحة المستهلكة: ${_totalSpaceMB.toStringAsFixed(1)} ميجابايت"
+                                      : "Space used: ${_totalSpaceMB.toStringAsFixed(1)} MB",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.textTheme.bodyMedium?.color
+                                        ?.withOpacity(0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isDownloadingAll)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFE5C158,
+                                  ).withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  "تحميل الكل...",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE5C158),
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment: TranslationService.isArabic
-                                    ? MainAxisAlignment.start
-                                    : MainAxisAlignment.end,
-                                children: [
-                                  if (isDownloadingAll)
-                                    TextButton.icon(
-                                      icon: Icon(
-                                        Icons.cancel,
-                                        size: 14,
-                                        color: Colors.redAccent,
-                                      ),
-                                      label: Text(
-                                        TranslationService.isArabic
-                                            ? "إلغاء تحميل الكل"
-                                            : "Cancel All Downloads",
-                                        style: TextStyle(
-                                          color: Colors.redAccent,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                      onPressed: () => QuranDownloadService
-                                          .instance
-                                          .cancelAll(),
-                                    )
-                                  else
-                                    TextButton.icon(
-                                      icon: Icon(
-                                        Icons.library_music_outlined,
-                                        size: 14,
-                                        color: Color(0xFFE5C158),
-                                      ),
-                                      label: Text(
-                                        TranslationService.isArabic
-                                            ? "اختر وحمّل تلاوة"
-                                            : "Choose & Download",
-                                        style: TextStyle(
-                                          color: Color(0xFFE5C158),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      onPressed: () async {
-                                        await showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          backgroundColor: Colors.transparent,
-                                          builder: (ctx) => _ReciterPickerSheet(
-                                            storage: widget.storage,
-                                            currentReciter: _reciter,
-                                            onReciterChanged: (id) {
-                                              setState(() => _reciter = id);
-                                              widget.storage.setString('default_reciter', id);
-                                              QuranDownloadService.instance.calculateCounts(widget.storage);
-                                              QuranDownloadService.instance.initStates(_reciter);
-                                            },
-                                          ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: overallProgress,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).dividerColor.withOpacity(0.12),
+                            color: const Color(0xFFE5C158),
+                            minHeight: 6,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: TranslationService.isArabic
+                              ? MainAxisAlignment.start
+                              : MainAxisAlignment.end,
+                          children: [
+                            if (isDownloadingAll)
+                              TextButton.icon(
+                                icon: const Icon(
+                                  Icons.cancel,
+                                  size: 14,
+                                  color: Colors.redAccent,
+                                ),
+                                label: Text(
+                                  TranslationService.isArabic
+                                      ? "إلغاء تحميل الكل"
+                                      : "Cancel All Downloads",
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                onPressed: () =>
+                                    QuranDownloadService.instance.cancelAll(),
+                              )
+                            else
+                              TextButton.icon(
+                                icon: const Icon(
+                                  Icons.library_music_outlined,
+                                  size: 14,
+                                  color: Color(0xFFE5C158),
+                                ),
+                                label: Text(
+                                  TranslationService.isArabic
+                                      ? "اختر وحمّل تلاوة"
+                                      : "Choose & Download",
+                                  style: const TextStyle(
+                                    color: Color(0xFFE5C158),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  await showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (ctx) => _ReciterPickerSheet(
+                                      storage: widget.storage,
+                                      currentReciter: _reciter,
+                                      onReciterChanged: (id) {
+                                        setState(() => _reciter = id);
+                                        widget.storage.setString(
+                                          'default_reciter',
+                                          id,
                                         );
-                                        QuranDownloadService.instance.calculateCounts(widget.storage);
-                                        await _updateTotalSpace();
+                                        QuranDownloadService.instance
+                                            .calculateCounts(widget.storage);
+                                        QuranDownloadService.instance
+                                            .initStates(_reciter);
                                       },
                                     ),
-                                  if (downloadedCount > 0 &&
-                                      !isDownloadingAll) ...[
-                                    SizedBox(width: 12),
-                                    TextButton.icon(
-                                      icon: Icon(
-                                        Icons.delete_sweep,
-                                        size: 14,
-                                        color: Colors.redAccent,
-                                      ),
-                                      label: Text(
-                                        TranslationService.isArabic
-                                            ? "حذف التلاوات"
-                                            : "Delete All Audio",
-                                        style: TextStyle(
-                                          color: Colors.redAccent,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                      onPressed: _confirmDeleteAll,
-                                    ),
-                                  ],
-                                ],
+                                  );
+                                  QuranDownloadService.instance.calculateCounts(
+                                    widget.storage,
+                                  );
+                                  await _updateTotalSpace();
+                                },
                               ),
-                            ],
-                          ),
-                        );
-                      }
-                      
-                      if (index == 1) {
-                        String reciterName = '';
-                        try {
-                          final isAr = TranslationService.isArabic;
-                          final data = isAr ? recitersDataAr : recitersDataEn;
-                          final list = data['reciters'] as List;
-                          bool found = false;
-                          for (final r in list) {
-                            final moshafs = r['moshaf'] as List;
-                            for (final m in moshafs) {
-                              if ('mp3quran_server_${m['server']}' == _reciter) {
-                                reciterName = '${r['name']} (${m['name']})';
-                                found = true;
-                                break;
-                              }
-                            }
-                            if (found) break;
-                          }
-                          if (!found) {
-                            reciterName = TranslationService.isArabic ? 'تلاوة غير معروفة' : 'Unknown Reciter';
-                          }
-                        } catch (e) {
-                          reciterName = TranslationService.isArabic ? 'تلاوة غير معروفة' : 'Unknown Reciter';
-                        }
-                        
-                        return Card(
-                          color: const Color(0xFFE5C158).withOpacity(0.15),
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(
-                              color: const Color(0xFFE5C158).withOpacity(0.5),
-                              width: 1,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.mic,
-                                  color: Color(0xFFE5C158),
-                                  size: 28,
+                            if (downloadedCount > 0 && !isDownloadingAll) ...[
+                              const SizedBox(width: 12),
+                              TextButton.icon(
+                                icon: const Icon(
+                                  Icons.delete_sweep,
+                                  size: 14,
+                                  color: Colors.redAccent,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        TranslationService.isArabic ? 'القارئ الحالي' : 'Current Reciter',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        reciterName,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFFE5C158),
-                                        ),
-                                      ),
-                                    ],
+                                label: Text(
+                                  TranslationService.isArabic
+                                      ? "حذف التلاوات"
+                                      : "Delete All Audio",
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 11,
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.download, color: Color(0xFFE5C158)),
-                                  onPressed: () {
-                                    QuranDownloadService.instance.downloadAll(_reciter);
-                                  },
-                                  tooltip: TranslationService.isArabic ? 'تحميل الكل' : 'Download All',
+                                onPressed: _confirmDeleteAll,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (index == 1) {
+                  String reciterName = '';
+                  try {
+                    final isAr = TranslationService.isArabic;
+                    final data = isAr ? recitersDataAr : recitersDataEn;
+                    final list = data['reciters'] as List;
+                    bool found = false;
+                    for (final r in list) {
+                      final moshafs = r['moshaf'] as List;
+                      for (final m in moshafs) {
+                        if ('mp3quran_server_${m['server']}' == _reciter) {
+                          reciterName = '${r['name']} (${m['name']})';
+                          found = true;
+                          break;
+                        }
+                      }
+                      if (found) break;
+                    }
+                    if (!found) {
+                      reciterName = TranslationService.isArabic
+                          ? 'تلاوة غير معروفة'
+                          : 'Unknown Reciter';
+                    }
+                  } catch (e) {
+                    reciterName = TranslationService.isArabic
+                        ? 'تلاوة غير معروفة'
+                        : 'Unknown Reciter';
+                  }
+
+                  return Card(
+                    color: const Color(0xFFE5C158).withOpacity(0.15),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: const Color(0xFFE5C158).withOpacity(0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.mic,
+                            color: Color(0xFFE5C158),
+                            size: 28,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  TranslationService.isArabic
+                                      ? 'القارئ الحالي'
+                                      : 'Current Reciter',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.textTheme.bodyMedium?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  reciterName,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFE5C158),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      }
-
-                      final surah = _surahList[index - 2];
-                      final state = QuranDownloadService.instance.getState(
-                        surah.number,
-                      );
-
-                      return Card(
-                        color: theme.cardColor,
-                        margin: const EdgeInsets.only(bottom: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          title: Text(
-                            "${surah.number}. ${surah.name}",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            "${surah.englishName} • ${surah.numberOfAyahs} ${TranslationService.isArabic ? 'آية' : 'verses'} • ${TranslationService.t('juz')} ${surah.startingJuz} • ${TranslationService.t('hizb')} ${surah.startingHizb}",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.5),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.download,
+                              color: Color(0xFFE5C158),
                             ),
+                            onPressed: () {
+                              QuranDownloadService.instance.downloadAll(
+                                _reciter,
+                              );
+                            },
+                            tooltip: TranslationService.isArabic
+                                ? 'تحميل الكل'
+                                : 'Download All',
                           ),
-                          trailing: _buildTrailing(surah.number, state),
-                        ),
-                      );
-                    },
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final surah = _surahList[index - 2];
+                final state = QuranDownloadService.instance.getState(
+                  surah.number,
+                );
+
+                return Card(
+                  color: theme.cardColor,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    title: Text(
+                      "${surah.number}. ${surah.name}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      "${surah.englishName} • ${surah.numberOfAyahs} ${TranslationService.isArabic ? 'آية' : 'verses'} • ${TranslationService.t('juz')} ${surah.startingJuz} • ${TranslationService.t('hizb')} ${surah.startingHizb}",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.5,
+                        ),
+                      ),
+                    ),
+                    trailing: _buildTrailing(surah.number, state),
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -596,16 +598,16 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
             ),
             child: Text(
               TranslationService.t('downloaded'),
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.green,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           IconButton(
-            icon: Icon(Icons.delete, color: Colors.redAccent, size: 20),
+            icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
             onPressed: () {
               showDialog(
                 context: context,
@@ -613,7 +615,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                   backgroundColor: Theme.of(context).cardColor,
                   title: Text(
                     TranslationService.t('delete'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.redAccent,
                       fontWeight: FontWeight.bold,
                     ),
@@ -666,12 +668,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
               backgroundColor: Theme.of(context).dividerColor.withOpacity(0.12),
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Text(
             "${(state.progress * 100).toInt()}%",
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           IconButton(
             icon: Icon(
               Icons.cancel,
@@ -688,7 +690,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       );
     } else {
       return IconButton(
-        icon: Icon(Icons.cloud_download, color: Color(0xFFE5C158)),
+        icon: const Icon(Icons.cloud_download, color: Color(0xFFE5C158)),
         onPressed: () =>
             QuranDownloadService.instance.downloadSurah(surahNum, _reciter),
       );
@@ -740,11 +742,12 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
       counts[t.identifier] = await QuranDownloadService.instance
           .getTafsirCountForEdition(t.identifier);
     }
-    if (mounted)
+    if (mounted) {
       setState(() {
         _counts = counts;
         _loading = false;
       });
+    }
   }
 
   @override
@@ -779,10 +782,10 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
           const SizedBox(height: 16),
           Text(
             isAr ? "اختر تفسيراً للتحميل" : "Choose a Tafsir to Download",
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: const Color(0xFFE5C158),
+              color: Color(0xFFE5C158),
             ),
           ),
           const SizedBox(height: 4),
@@ -1059,7 +1062,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
 
   Future<void> _fetchAndLoad() async {
     final List<Map<String, String>> reciters = [];
-    
+
     // Add static reciters
     for (final r in availableReciters) {
       reciters.add({
@@ -1082,7 +1085,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
           final server = m['server'] as String;
           final moshafName = m['name'] as String;
           final reciterName = r['name'] as String;
-          
+
           // Skip redundant server if it was already in static list somehow
           if (!reciters.any((x) => x['id'] == 'mp3quran_server_$server')) {
             reciters.add({
@@ -1130,8 +1133,10 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
       final states = QuranDownloadService.instance.downloadStates;
       double p = 0;
       for (int i = 1; i <= 114; i++) {
-        if (states[i]?.status == DownloadStatus.downloaded) p += 1.0;
-        else if (states[i]?.status == DownloadStatus.downloading) p += states[i]?.progress ?? 0;
+        if (states[i]?.status == DownloadStatus.downloaded) {
+          p += 1.0;
+        } else if (states[i]?.status == DownloadStatus.downloading)
+          p += states[i]?.progress ?? 0;
       }
       progress = p / 114.0;
     }
@@ -1161,10 +1166,10 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
           const SizedBox(height: 16),
           Text(
             isAr ? "اختر مقرئاً للتحميل" : "Choose a Reciter to Download",
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: const Color(0xFFE5C158),
+              color: Color(0xFFE5C158),
             ),
           ),
           const SizedBox(height: 4),
@@ -1193,13 +1198,16 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                   final reciter = _allReciters[index];
                   final rId = reciter['id']!;
                   final rName = isAr ? reciter['nameAr']! : reciter['nameEn']!;
-                  final rQuraa = isAr ? reciter['quraaAr']! : reciter['quraaEn']!;
-                  
+                  final rQuraa = isAr
+                      ? reciter['quraaAr']!
+                      : reciter['quraaEn']!;
+
                   final count = _counts[rId] ?? 0;
                   final isFull = count >= 114;
                   final isActive = rId == widget.currentReciter;
-                  final isThisDownloading = _downloading == rId && isDownloading;
-                  
+                  final isThisDownloading =
+                      _downloading == rId && isDownloading;
+
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
@@ -1229,7 +1237,9 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                             child: Icon(
                               isFull ? Icons.check_circle : Icons.person,
                               size: 18,
-                              color: isFull ? Colors.green : const Color(0xFFE5C158),
+                              color: isFull
+                                  ? Colors.green
+                                  : const Color(0xFFE5C158),
                             ),
                           ),
                           title: Text(
@@ -1247,16 +1257,21 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                                 rQuraa,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                  color: theme.textTheme.bodyMedium?.color
+                                      ?.withOpacity(0.7),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 isFull
-                                    ? (isAr ? "✓ مكتمل (١١٤ سورة)" : "✓ Complete (114 Surahs)")
+                                    ? (isAr
+                                          ? "✓ مكتمل (١١٤ سورة)"
+                                          : "✓ Complete (114 Surahs)")
                                     : count > 0
-                                    ? (isAr ? "جزئي · $count من ١١٤ سورة" : "Partial · $count of 114 Surahs")
+                                    ? (isAr
+                                          ? "جزئي · $count من ١١٤ سورة"
+                                          : "Partial · $count of 114 Surahs")
                                     : (isAr ? "غير محمّل" : "Not downloaded"),
                                 style: TextStyle(
                                   fontSize: 10,
@@ -1264,7 +1279,8 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                                       ? Colors.green
                                       : count > 0
                                       ? Colors.orange
-                                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.45),
+                                      : theme.textTheme.bodyMedium?.color
+                                            ?.withOpacity(0.45),
                                 ),
                               ),
                             ],
@@ -1272,8 +1288,11 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                           trailing: isFull
                               ? GestureDetector(
                                   onTap: () async {
-                                    await QuranDownloadService.instance.deleteReciterCache(rId);
-                                    _counts[rId] = await _countDownloadedSurahs(rId);
+                                    await QuranDownloadService.instance
+                                        .deleteReciterCache(rId);
+                                    _counts[rId] = await _countDownloadedSurahs(
+                                      rId,
+                                    );
                                     if (mounted) setState(() {});
                                   },
                                   child: const Icon(
@@ -1300,7 +1319,9 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                               child: LinearProgressIndicator(
                                 value: progress,
                                 minHeight: 4,
-                                backgroundColor: const Color(0xFFE5C158).withOpacity(0.15),
+                                backgroundColor: const Color(
+                                  0xFFE5C158,
+                                ).withOpacity(0.15),
                                 color: const Color(0xFFE5C158),
                               ),
                             ),

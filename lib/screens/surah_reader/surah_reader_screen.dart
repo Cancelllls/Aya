@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -24,6 +22,7 @@ part 'surah_reader_autoscroll.dart';
 part 'surah_reader_navigation.dart';
 part 'surah_reader_data.dart';
 part 'surah_reader_actions.dart';
+
 class SurahReaderScreen extends StatefulWidget {
   final Surah surah;
   final StorageService storage;
@@ -75,7 +74,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   bool _isLoadingReciters = false;
   List<dynamic> _dynamicReciters = [];
 
-
   final AutoScrollController _scrollController = AutoScrollController();
   final Map<int, GlobalKey> _ayahKeys = {};
   final Map<int, GlobalKey> _pageKeys = {};
@@ -126,8 +124,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     AudioManager.instance.playState.addListener(_onPlayStateChanged);
   }
 
-
-
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(
@@ -147,18 +143,34 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     super.dispose();
   }
 
-
-
-
-
-  TextStyle _getArabicTextStyle(double fontSize, {double? height, Color? color, FontWeight? fontWeight, Color? backgroundColor}) {
-    final String selectedFont = widget.storage.getString('quran_font', defaultValue: 'font-amiri');
+  TextStyle _getArabicTextStyle(
+    double fontSize, {
+    double? height,
+    Color? color,
+    FontWeight? fontWeight,
+    Color? backgroundColor,
+  }) {
+    final String selectedFont = widget.storage.getString(
+      'quran_font',
+      defaultValue: 'font-amiri',
+    );
     if (selectedFont == 'font-scheherazade') {
-      return GoogleFonts.scheherazadeNew(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
+      return GoogleFonts.scheherazadeNew(
+        fontSize: fontSize,
+        height: height,
+        color: color,
+        fontWeight: fontWeight,
+        backgroundColor: backgroundColor,
+      );
     }
-    return GoogleFonts.amiri(fontSize: fontSize, height: height, color: color, fontWeight: fontWeight, backgroundColor: backgroundColor);
+    return GoogleFonts.amiri(
+      fontSize: fontSize,
+      height: height,
+      color: color,
+      fontWeight: fontWeight,
+      backgroundColor: backgroundColor,
+    );
   }
-
 
   String _getHizbRangeText() {
     if (_ayahList.isEmpty) {
@@ -186,34 +198,40 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     return "$juzText • $hizbText";
   }
 
-
-
   void _navigateToSurahWithAnimation(int nextSurahNum, bool isSwipeRight) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => SurahReaderScreen(
-          surah: _allSurahs.isNotEmpty ? _allSurahs[nextSurahNum - 1] : Surah(
-            number: nextSurahNum,
-            name: allOfflineSurahs[nextSurahNum - 1].name,
-            englishName: allOfflineSurahs[nextSurahNum - 1].englishName,
-            englishNameTranslation: '',
-            numberOfAyahs: allOfflineSurahs[nextSurahNum - 1].numberOfAyahs,
-            revelationType: '',
-          ),
-          storage: widget.storage,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            SurahReaderScreen(
+              surah: _allSurahs.isNotEmpty
+                  ? _allSurahs[nextSurahNum - 1]
+                  : Surah(
+                      number: nextSurahNum,
+                      name: allOfflineSurahs[nextSurahNum - 1].name,
+                      englishName:
+                          allOfflineSurahs[nextSurahNum - 1].englishName,
+                      englishNameTranslation: '',
+                      numberOfAyahs:
+                          allOfflineSurahs[nextSurahNum - 1].numberOfAyahs,
+                      revelationType: '',
+                    ),
+              storage: widget.storage,
+            ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           final slideDir = isSwipeRight ? -1.0 : 1.0;
           var begin = Offset(slideDir, 0.0);
           var end = Offset.zero;
           var curve = Curves.easeInOut;
-          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
           );
         },
-        transitionDuration: Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
@@ -231,7 +249,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           children: [
             Text(
               _currentSurah.englishName,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               "${_currentSurah.name} • ${_getHizbRangeText()}",
@@ -281,7 +299,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Theme.of(context).disabledColor,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic
                           ? "المصحف المتصل"
@@ -308,7 +326,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Theme.of(context).disabledColor,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic
                           ? "العربية فقط"
@@ -335,7 +353,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Theme.of(context).disabledColor,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic ? "الترجمة" : "Translation",
                       style: TextStyle(
@@ -360,7 +378,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           ? const Color(0xFFE5C158)
                           : Theme.of(context).disabledColor,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       TranslationService.isArabic ? "التفسير" : "Tafsir",
                       style: TextStyle(
@@ -378,7 +396,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ],
           ),
           IconButton(
-            icon: Icon(Icons.text_fields),
+            icon: const Icon(Icons.text_fields),
             onPressed: () {
               showModalBottomSheet(
                 context: context,
@@ -396,19 +414,21 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                         children: [
                           Text(
                             TranslationService.t('reading_settings'),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           // Reading mode selection now via TabBar.
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                TranslationService.isArabic ? 'الرواية' : "Qira'ah",
+                                TranslationService.isArabic
+                                    ? 'الرواية'
+                                    : "Qira'ah",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
@@ -416,29 +436,109 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       ?.withOpacity(0.8),
                                 ),
                               ),
-                              
-                              Container(
+
+                              SizedBox(
                                 width: 170,
                                 child: DropdownButton<String>(
                                   isExpanded: true,
                                   value: _quranScriptType,
                                   dropdownColor: theme.cardColor,
-                                  underline: SizedBox(),
-                                  icon: Icon(
+                                  underline: const SizedBox(),
+                                  icon: const Icon(
                                     Icons.arrow_drop_down,
                                     color: Color(0xFFE5C158),
                                   ),
                                   items: [
-                                    DropdownMenuItem(value: 'hafs', child: Text(TranslationService.isArabic ? 'حفص عن عاصم' : 'Hafs A\'n Assem', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'warsh', child: Text(TranslationService.isArabic ? 'ورش عن نافع' : 'Warsh A\'n Nafi\'', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'qaloon', child: Text(TranslationService.isArabic ? 'قالون عن نافع' : 'Qalun A\'n Nafi\'', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'shuba', child: Text(TranslationService.isArabic ? 'شعبة عن عاصم' : 'Shuba A\'n Assem', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'duri', child: Text(TranslationService.isArabic ? 'الدوري عن أبي عمرو' : 'Al-Duri A\'n Abi Amr', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'susi', child: Text(TranslationService.isArabic ? 'السوسي عن أبي عمرو' : 'As-Susi A\'n Abi Amr', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'bazzi', child: Text(TranslationService.isArabic ? 'البزي عن ابن كثير' : 'Al-Bazzi A\'n Ibn Katheer', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'qunbul', child: Text(TranslationService.isArabic ? 'قنبل عن ابن كثير' : 'Qunbul A\'n Ibn Katheer', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'hisham', child: Text(TranslationService.isArabic ? 'هشام عن ابن عامر' : 'Hisham A\'n Ibn Amir', overflow: TextOverflow.ellipsis)),
-                                    DropdownMenuItem(value: 'ibn-dhakwan', child: Text(TranslationService.isArabic ? 'ابن ذكوان عن ابن عامر' : 'Ibn Dhakwan A\'n Ibn Amir', overflow: TextOverflow.ellipsis)),
+                                    DropdownMenuItem(
+                                      value: 'hafs',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'حفص عن عاصم'
+                                            : 'Hafs A\'n Assem',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'warsh',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'ورش عن نافع'
+                                            : 'Warsh A\'n Nafi\'',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'qaloon',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'قالون عن نافع'
+                                            : 'Qalun A\'n Nafi\'',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'shuba',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'شعبة عن عاصم'
+                                            : 'Shuba A\'n Assem',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'duri',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'الدوري عن أبي عمرو'
+                                            : 'Al-Duri A\'n Abi Amr',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'susi',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'السوسي عن أبي عمرو'
+                                            : 'As-Susi A\'n Abi Amr',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'bazzi',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'البزي عن ابن كثير'
+                                            : 'Al-Bazzi A\'n Ibn Katheer',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'qunbul',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'قنبل عن ابن كثير'
+                                            : 'Qunbul A\'n Ibn Katheer',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'hisham',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'هشام عن ابن عامر'
+                                            : 'Hisham A\'n Ibn Amir',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'ibn-dhakwan',
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? 'ابن ذكوان عن ابن عامر'
+                                            : 'Ibn Dhakwan A\'n Ibn Amir',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
                                   ],
                                   onChanged: (String? newValue) {
                                     if (newValue != null) {
@@ -448,14 +548,23 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       setState(() {
                                         _quranScriptType = newValue;
                                       });
-                                      widget.storage.setString('quran_script_type', newValue);
-                                      
+                                      widget.storage.setString(
+                                        'quran_script_type',
+                                        newValue,
+                                      );
+
                                       // Switch reciter
                                       if (newValue == 'hafs') {
-                                        widget.storage.setString('default_reciter', 'ar.alafasy');
+                                        widget.storage.setString(
+                                          'default_reciter',
+                                          'ar.alafasy',
+                                        );
                                       }
-                                      
-                                      _fetchDynamicReciters(newValue, modalSetState: setModalState);
+
+                                      _fetchDynamicReciters(
+                                        newValue,
+                                        modalSetState: setModalState,
+                                      );
                                       _loadAyahs();
                                     }
                                   },
@@ -463,150 +572,266 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               ),
                             ],
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                TranslationService.isArabic ? 'القارئ' : 'Reciter',
+                                TranslationService.isArabic
+                                    ? 'القارئ'
+                                    : 'Reciter',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                                  color: theme.textTheme.bodyMedium?.color
+                                      ?.withOpacity(0.8),
                                 ),
                               ),
                               if (_isLoadingReciters)
                                 const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158)),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFFE5C158),
+                                  ),
                                 )
                               else if (_quranScriptType == 'hafs')
-                              Container(
-                                width: 170,
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  value: widget.storage.getString('default_reciter') ?? 'ar.alafasy',
-                                  dropdownColor: theme.cardColor,
-                                  underline: SizedBox(),
-                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: (List.from(availableReciters)..sort((a,b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map<DropdownMenuItem<String>>((r) {
-                                    return DropdownMenuItem(
-                                      value: r.id,
-                                      child: Text(
-                                        TranslationService.isArabic ? r.nameAr : r.nameEn,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return (List.from(availableReciters)..sort((a,b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map((r) {
-                                      return Transform.translate(
-                                        offset: Offset(TranslationService.isArabic ? 8 : -8, 0),
-                                        child: Align(
-                                          alignment: AlignmentDirectional.centerStart,
-                                          child: Text(
-                                            TranslationService.isArabic ? r.nameAr : r.nameEn,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  onChanged: (String? val) {
-                                    if (val != null) {
-                                      final wasPlaying = AudioManager.instance.playState.value.isPlaying;
-                                      final ayahNum = AudioManager.instance.playState.value.ayahNum;
-                                      
-                                      AudioManager.instance.stop();
-                                      widget.storage.setString('default_reciter', val);
-                                      
-                                      setModalState(() {});
-                                      setState(() {});
-                                      
-                                      if (wasPlaying) {
-                                        Future.delayed(const Duration(milliseconds: 300), () {
-                                          if (mounted) {
-                                            _playAudioWithDisclaimer(ayahIndex: ayahNum > 0 ? ayahNum - 1 : null);
-                                          }
-                                        });
-                                      }
-                                    }
-                                  }
-                                ),
-                              )
-                              else
-                              Container(
-                                width: 170,
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  value: (() {
-                                    final current = widget.storage.getString('default_reciter') ?? '';
-                                    if (!current.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null;
-                                    final serverCurrent = current.substring(16);
-                                    final match = _dynamicReciters.where((r) {
-                                      final moshaf = r['moshaf'] as List;
-                                      if (moshaf.isEmpty) return false;
-                                      return (moshaf[0]['server'] as String) == serverCurrent;
-                                    }).toList();
-                                    return match.isNotEmpty ? serverCurrent : null;
-                                  })(),
-                                  dropdownColor: theme.cardColor,
-                                  underline: SizedBox(),
-                                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
-                                  items: _dynamicReciters.map((r) {
-                                    final moshaf = r['moshaf'] as List;
-                                    if (moshaf.isEmpty) return null;
-                                    final server = moshaf[0]['server'] as String;
-                                    return DropdownMenuItem(
-                                      value: server,
-                                      child: Text(
-                                        r['name'] as String,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).whereType<DropdownMenuItem<String>>().toList(),
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return _dynamicReciters.map((r) {
-                                      final moshaf = r['moshaf'] as List;
-                                      if (moshaf.isEmpty) return SizedBox.shrink();
-                                      return Transform.translate(
-                                        offset: Offset(TranslationService.isArabic ? 8 : -8, 0),
-                                        child: Align(
-                                          alignment: AlignmentDirectional.centerStart,
-                                          child: Text(
-                                            r['name'] as String,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  onChanged: (String? val) async {
-                                    if (val != null) {
-                                      final wasPlaying = AudioManager.instance.playState.value.isPlaying;
-                                      final ayahNum = AudioManager.instance.playState.value.ayahNum;
-                                      
-                                      AudioManager.instance.stop();
-                                      widget.storage.setString('default_reciter', 'mp3quran_server_$val');
-                                      
-                                      setModalState(() {});
-                                      setState(() {});
-                                      
-                                      if (wasPlaying) {
-                                        Future.delayed(const Duration(milliseconds: 300), () {
-                                          if (mounted) {
-                                            _playAudioWithDisclaimer(ayahIndex: ayahNum > 0 ? ayahNum - 1 : null);
-                                          }
-                                        });
-                                      }
-                                    }
-                                  }
-                                ),
-                              ),
+                                SizedBox(
+                                  width: 170,
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    value:
+                                        widget.storage.getString(
+                                          'default_reciter',
+                                        ) ??
+                                        'ar.alafasy',
+                                    dropdownColor: theme.cardColor,
+                                    underline: const SizedBox(),
+                                    icon: const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Color(0xFFE5C158),
+                                    ),
+                                    items:
+                                        (List.from(availableReciters)..sort(
+                                              (a, b) =>
+                                                  TranslationService.isArabic
+                                                  ? a.nameAr.compareTo(b.nameAr)
+                                                  : a.nameEn.compareTo(
+                                                      b.nameEn,
+                                                    ),
+                                            ))
+                                            .map<DropdownMenuItem<String>>((r) {
+                                              return DropdownMenuItem(
+                                                value: r.id,
+                                                child: Text(
+                                                  TranslationService.isArabic
+                                                      ? r.nameAr
+                                                      : r.nameEn,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              );
+                                            })
+                                            .toList(),
+                                    selectedItemBuilder:
+                                        (BuildContext context) {
+                                          return (List.from(
+                                                availableReciters,
+                                              )..sort(
+                                                (a, b) =>
+                                                    TranslationService.isArabic
+                                                    ? a.nameAr.compareTo(
+                                                        b.nameAr,
+                                                      )
+                                                    : a.nameEn.compareTo(
+                                                        b.nameEn,
+                                                      ),
+                                              ))
+                                              .map((r) {
+                                                return Transform.translate(
+                                                  offset: Offset(
+                                                    TranslationService.isArabic
+                                                        ? 8
+                                                        : -8,
+                                                    0,
+                                                  ),
+                                                  child: Align(
+                                                    alignment:
+                                                        AlignmentDirectional
+                                                            .centerStart,
+                                                    child: Text(
+                                                      TranslationService
+                                                              .isArabic
+                                                          ? r.nameAr
+                                                          : r.nameEn,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                );
+                                              })
+                                              .toList();
+                                        },
+                                    onChanged: (String? val) {
+                                      if (val != null) {
+                                        final wasPlaying = AudioManager
+                                            .instance
+                                            .playState
+                                            .value
+                                            .isPlaying;
+                                        final ayahNum = AudioManager
+                                            .instance
+                                            .playState
+                                            .value
+                                            .ayahNum;
 
+                                        AudioManager.instance.stop();
+                                        widget.storage.setString(
+                                          'default_reciter',
+                                          val,
+                                        );
+
+                                        setModalState(() {});
+                                        setState(() {});
+
+                                        if (wasPlaying) {
+                                          Future.delayed(
+                                            const Duration(milliseconds: 300),
+                                            () {
+                                              if (mounted) {
+                                                _playAudioWithDisclaimer(
+                                                  ayahIndex: ayahNum > 0
+                                                      ? ayahNum - 1
+                                                      : null,
+                                                );
+                                              }
+                                            },
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                )
+                              else
+                                SizedBox(
+                                  width: 170,
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    value: (() {
+                                      final current =
+                                          widget.storage.getString(
+                                            'default_reciter',
+                                          ) ??
+                                          '';
+                                      if (!current.startsWith(
+                                            'mp3quran_server_',
+                                          ) ||
+                                          _dynamicReciters.isEmpty)
+                                        return null;
+                                      final serverCurrent = current.substring(
+                                        16,
+                                      );
+                                      final match = _dynamicReciters.where((r) {
+                                        final moshaf = r['moshaf'] as List;
+                                        if (moshaf.isEmpty) return false;
+                                        return (moshaf[0]['server']
+                                                as String) ==
+                                            serverCurrent;
+                                      }).toList();
+                                      return match.isNotEmpty
+                                          ? serverCurrent
+                                          : null;
+                                    })(),
+                                    dropdownColor: theme.cardColor,
+                                    underline: const SizedBox(),
+                                    icon: const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Color(0xFFE5C158),
+                                    ),
+                                    items: _dynamicReciters
+                                        .map((r) {
+                                          final moshaf = r['moshaf'] as List;
+                                          if (moshaf.isEmpty) return null;
+                                          final server =
+                                              moshaf[0]['server'] as String;
+                                          return DropdownMenuItem(
+                                            value: server,
+                                            child: Text(
+                                              r['name'] as String,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          );
+                                        })
+                                        .whereType<DropdownMenuItem<String>>()
+                                        .toList(),
+                                    selectedItemBuilder:
+                                        (BuildContext context) {
+                                          return _dynamicReciters.map((r) {
+                                            final moshaf = r['moshaf'] as List;
+                                            if (moshaf.isEmpty)
+                                              return const SizedBox.shrink();
+                                            return Transform.translate(
+                                              offset: Offset(
+                                                TranslationService.isArabic
+                                                    ? 8
+                                                    : -8,
+                                                0,
+                                              ),
+                                              child: Align(
+                                                alignment: AlignmentDirectional
+                                                    .centerStart,
+                                                child: Text(
+                                                  r['name'] as String,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList();
+                                        },
+                                    onChanged: (String? val) async {
+                                      if (val != null) {
+                                        final wasPlaying = AudioManager
+                                            .instance
+                                            .playState
+                                            .value
+                                            .isPlaying;
+                                        final ayahNum = AudioManager
+                                            .instance
+                                            .playState
+                                            .value
+                                            .ayahNum;
+
+                                        AudioManager.instance.stop();
+                                        widget.storage.setString(
+                                          'default_reciter',
+                                          'mp3quran_server_$val',
+                                        );
+
+                                        setModalState(() {});
+                                        setState(() {});
+
+                                        if (wasPlaying) {
+                                          Future.delayed(
+                                            const Duration(milliseconds: 300),
+                                            () {
+                                              if (mounted) {
+                                                _playAudioWithDisclaimer(
+                                                  ayahIndex: ayahNum > 0
+                                                      ? ayahNum - 1
+                                                      : null,
+                                                );
+                                              }
+                                            },
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ),
                             ],
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -622,7 +847,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               Row(
                                 children: [
                                   IconButton(
-                                    icon: Icon(
+                                    icon: const Icon(
                                       Icons.remove_circle_outline,
                                       color: Color(0xFFE5C158),
                                     ),
@@ -633,12 +858,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   ),
                                   Text(
                                     "${(_fontSizeMultiplier * 100).toInt()}%",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   IconButton(
-                                    icon: Icon(
+                                    icon: const Icon(
                                       Icons.add_circle_outline,
                                       color: Color(0xFFE5C158),
                                     ),
@@ -663,26 +888,31 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onHorizontalDragStart: widget.isInsidePager ? null : (details) {
-          _horizontalDragStartX = details.globalPosition.dx;
-        },
-        onHorizontalDragEnd: widget.isInsidePager ? null : (details) {
-          if (!_swipeSurahNavigation) return;
-          if (_horizontalDragStartX != null) {
-            final screenWidth = MediaQuery.of(context).size.width;
-            if (_horizontalDragStartX! < 40 || _horizontalDragStartX! > screenWidth - 40) {
-              _horizontalDragStartX = null;
-              return; 
-            }
-          }
-          if (details.primaryVelocity == null) return;
-          if (details.primaryVelocity! > 150) {
-            _goToNextSurah();
-          } else if (details.primaryVelocity! < -150) {
-            _goToPrevSurah();
-          }
-          _horizontalDragStartX = null;
-        },
+        onHorizontalDragStart: widget.isInsidePager
+            ? null
+            : (details) {
+                _horizontalDragStartX = details.globalPosition.dx;
+              },
+        onHorizontalDragEnd: widget.isInsidePager
+            ? null
+            : (details) {
+                if (!_swipeSurahNavigation) return;
+                if (_horizontalDragStartX != null) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  if (_horizontalDragStartX! < 40 ||
+                      _horizontalDragStartX! > screenWidth - 40) {
+                    _horizontalDragStartX = null;
+                    return;
+                  }
+                }
+                if (details.primaryVelocity == null) return;
+                if (details.primaryVelocity! > 150) {
+                  _goToNextSurah();
+                } else if (details.primaryVelocity! < -150) {
+                  _goToPrevSurah();
+                }
+                _horizontalDragStartX = null;
+              },
         onScaleStart: (details) {
           _baseFontSizeMultiplier = _fontSizeMultiplier;
         },
@@ -691,11 +921,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           setState(() {
             double scaleDiff = details.scale - 1.0;
             double adjustedScale = 1.0 + (scaleDiff * 2.5);
-            _fontSizeMultiplier = (_baseFontSizeMultiplier * adjustedScale).clamp(0.5, 3.0);
+            _fontSizeMultiplier = (_baseFontSizeMultiplier * adjustedScale)
+                .clamp(0.5, 3.0);
           });
         },
         onScaleEnd: (details) {
-          widget.storage.setDouble('setting_quran_font_size_multiplier', _fontSizeMultiplier);
+          widget.storage.setDouble(
+            'setting_quran_font_size_multiplier',
+            _fontSizeMultiplier,
+          );
         },
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -703,252 +937,302 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             // Determine slide direction based on some logic, or just a default slide.
             // A simple fade and slight slide:
             final offsetAnimation = Tween<Offset>(
-              begin: Offset(_slideDirection.toDouble(), 0.0), // slides from right or left
+              begin: Offset(
+                _slideDirection.toDouble(),
+                0.0,
+              ), // slides from right or left
               end: Offset.zero,
             ).animate(animation);
             return SlideTransition(
               position: offsetAnimation,
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
+              child: FadeTransition(opacity: animation, child: child),
             );
           },
           child: _isLoading
-              ? Center(
-                  key: const ValueKey('loading'),
-                  child: const CircularProgressIndicator(color: Color(0xFFE5C158)),
+              ? const Center(
+                  key: ValueKey('loading'),
+                  child: CircularProgressIndicator(color: Color(0xFFE5C158)),
                 )
               : Column(
                   key: ValueKey(_currentSurah.number),
                   children: [
                     Expanded(
-                    child: ValueListenableBuilder<AudioPlayState>(
-                      valueListenable: AudioManager.instance.playState,
-                      builder: (context, playState, child) {
-                        return Stack(
-                          children: [
-                            Column(
-                              children: [
-                                if (playState.title.isNotEmpty)
-                                  _buildTopMiniPlayer(theme, isDark, playState),
-                                if (_readingMode != 'continuous' && playState.title.isEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
+                      child: ValueListenableBuilder<AudioPlayState>(
+                        valueListenable: AudioManager.instance.playState,
+                        builder: (context, playState, child) {
+                          return Stack(
+                            children: [
+                              Column(
+                                children: [
+                                  if (playState.title.isNotEmpty)
+                                    _buildTopMiniPlayer(
+                                      theme,
+                                      isDark,
+                                      playState,
                                     ),
-                                    color: theme.cardColor,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.volume_up,
-                                          color: Color(0xFFE5C158),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Text(
-                                          TranslationService.t(
-                                            'listen_full_surah',
+                                  if (_readingMode != 'continuous' &&
+                                      playState.title.isEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      color: theme.cardColor,
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.volume_up,
+                                            color: Color(0xFFE5C158),
                                           ),
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFFE5C158,
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            TranslationService.t(
+                                              'listen_full_surah',
                                             ),
-                                            foregroundColor: Colors.black,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 4,
-                                            ),
-                                            textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
                                             ),
                                           ),
-                                          icon:
-                                              (playState.isLoading &&
-                                                  playState.surahNum ==
-                                                      _currentSurah.number &&
-                                                  playState.ayahNum == 0)
-                                              ? SizedBox(
-                                                  width: 12,
-                                                  height: 12,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        color: Colors.black,
-                                                      ),
-                                                )
-                                              : (playState.isPlaying &&
-                                                    playState.surahNum ==
-                                                        _currentSurah.number)
-                                              ? Icon(Icons.pause, size: 16)
-                                              : Icon(
-                                                  Icons.play_arrow,
-                                                  size: 16,
-                                                ),
-                                          label: Text(
-                                            (playState.isLoading &&
+                                          const Spacer(),
+                                          ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFFE5C158,
+                                              ),
+                                              foregroundColor: Colors.black,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 4,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            icon:
+                                                (playState.isLoading &&
                                                     playState.surahNum ==
                                                         _currentSurah.number &&
                                                     playState.ayahNum == 0)
-                                                ? (TranslationService.isArabic
-                                                      ? 'تحميل...'
-                                                      : 'Loading...')
+                                                ? const SizedBox(
+                                                    width: 12,
+                                                    height: 12,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.black,
+                                                        ),
+                                                  )
                                                 : (playState.isPlaying &&
                                                       playState.surahNum ==
                                                           _currentSurah.number)
-                                                ? (TranslationService.isArabic
-                                                      ? 'إيقاف'
-                                                      : 'Pause')
-                                                : TranslationService.t('play'),
+                                                ? const Icon(
+                                                    Icons.pause,
+                                                    size: 16,
+                                                  )
+                                                : const Icon(
+                                                    Icons.play_arrow,
+                                                    size: 16,
+                                                  ),
+                                            label: Text(
+                                              (playState.isLoading &&
+                                                      playState.surahNum ==
+                                                          _currentSurah
+                                                              .number &&
+                                                      playState.ayahNum == 0)
+                                                  ? (TranslationService.isArabic
+                                                        ? 'تحميل...'
+                                                        : 'Loading...')
+                                                  : (playState.isPlaying &&
+                                                        playState.surahNum ==
+                                                            _currentSurah
+                                                                .number)
+                                                  ? (TranslationService.isArabic
+                                                        ? 'إيقاف'
+                                                        : 'Pause')
+                                                  : TranslationService.t(
+                                                      'play',
+                                                    ),
+                                            ),
+                                            onPressed: () {
+                                              if (playState.isPlaying &&
+                                                  playState.surahNum ==
+                                                      _currentSurah.number) {
+                                                AudioManager.instance
+                                                    .togglePlayPause();
+                                              } else {
+                                                _playAudioWithDisclaimer();
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      TranslationService
+                                                              .isArabic
+                                                          ? 'جاري تشغيل سورة ${_currentSurah.name}...'
+                                                          : 'Streaming Surah ${_currentSurah.englishName}...',
+                                                    ),
+                                                    duration: const Duration(
+                                                      seconds: 2,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
                                           ),
-                                          onPressed: () {
-                                            if (playState.isPlaying &&
-                                                playState.surahNum ==
-                                                    _currentSurah.number) {
-                                              AudioManager.instance
-                                                  .togglePlayPause();
-                                            } else {
-                                              _playAudioWithDisclaimer();
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    TranslationService.isArabic
-                                                        ? 'جاري تشغيل سورة ${_currentSurah.name}...'
-                                                        : 'Streaming Surah ${_currentSurah.englishName}...',
+                                        ],
+                                      ),
+                                    ),
+                                  Expanded(
+                                    child: _readingMode == 'continuous'
+                                        ? _buildContinuousLayout(playState)
+                                        : ListView.builder(
+                                            controller: _scrollController,
+                                            physics:
+                                                const BouncingScrollPhysics(),
+                                            padding: EdgeInsets.only(
+                                              top: 8,
+                                              bottom:
+                                                  16.0 +
+                                                  MediaQuery.of(
+                                                    context,
+                                                  ).padding.bottom +
+                                                  58.0 +
+                                                  16.0,
+                                            ),
+                                            itemCount: _ayahList.length + 1,
+                                            itemBuilder: (context, index) {
+                                              if (index == 0) {
+                                                if (_currentSurah.number == 9) {
+                                                  return const SizedBox.shrink();
+                                                }
+
+                                                bool hasBismillahEmbedded =
+                                                    false;
+                                                if (_ayahList.isNotEmpty) {
+                                                  hasBismillahEmbedded =
+                                                      Ayah.startsWithBasmalah(
+                                                        _ayahList.first.text,
+                                                      );
+                                                }
+
+                                                if (hasBismillahEmbedded) {
+                                                  return const SizedBox.shrink();
+                                                }
+                                                return Container(
+                                                  alignment: Alignment.center,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 24,
+                                                      ),
+                                                  child: Text(
+                                                    "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                                                    style: _getArabicTextStyle(
+                                                      30,
+                                                      color: const Color(
+                                                        0xFFE5C158,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                                   ),
-                                                  duration: const Duration(
-                                                    seconds: 2,
+                                                );
+                                              }
+                                              final ayah = _ayahList[index - 1];
+                                              final showHizbHeader =
+                                                  index == 1 ||
+                                                  (index > 1 &&
+                                                      ayah.hizb != 0 &&
+                                                      ayah.hizb !=
+                                                          _ayahList[index - 2]
+                                                              .hizb) ||
+                                                  (index > 1 &&
+                                                      ayah.hizb == 0 &&
+                                                      ayah.juz !=
+                                                          _ayahList[index - 2]
+                                                              .juz);
+                                              return Column(
+                                                children: [
+                                                  if (showHizbHeader)
+                                                    _buildHizbDivider(
+                                                      ayah.hizb,
+                                                      ayah.juz,
+                                                    ),
+                                                  _buildAyahCard(
+                                                    ayah,
+                                                    theme,
+                                                    playState,
                                                   ),
-                                                ),
+                                                ],
                                               );
-                                            }
-                                          },
+                                            },
+                                          ),
+                                  ),
+                                ],
+                              ),
+                              if (_readingMode == 'continuous')
+                                _buildAutoScrollFloatingControls(
+                                  isDark,
+                                  playState,
+                                ),
+                              if (playState.isPlaying &&
+                                  playState.surahNum != 0 &&
+                                  playState.surahNum != _currentSurah.number)
+                                Positioned(
+                                  top: 16,
+                                  left: 16,
+                                  right: 16,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.withOpacity(0.9),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.black26,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.music_note,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          TranslationService.isArabic
+                                              ? 'يتم الآن تشغيل سورة أخرى'
+                                              : 'Playing a different Surah',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                Expanded(
-                                  child: _readingMode == 'continuous'
-                                      ? _buildContinuousLayout(playState)
-                                      : ListView.builder(
-                                          controller: _scrollController,
-                                          physics:
-                                              const BouncingScrollPhysics(),
-                                          padding: EdgeInsets.only(
-                                            top: 8,
-                                            bottom:
-                                                16.0 +
-                                                MediaQuery.of(
-                                                  context,
-                                                ).padding.bottom +
-                                                58.0 +
-                                                16.0,
-                                          ),
-                                          itemCount: _ayahList.length + 1,
-                                          itemBuilder: (context, index) {
-                                            if (index == 0) {
-                                              if (_currentSurah.number == 9) {
-                                                return SizedBox.shrink();
-                                              }
-                                              
-                                              bool hasBismillahEmbedded = false;
-                                              if (_ayahList.isNotEmpty) {
-                                                hasBismillahEmbedded = Ayah.startsWithBasmalah(_ayahList.first.text);
-                                              }
-                                              
-                                              if (hasBismillahEmbedded) {
-                                                return SizedBox.shrink();
-                                              }
-                                              return Container(
-                                                alignment: Alignment.center,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 24,
-                                                    ),
-                                                child: Text(
-                                                  "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                                  style: _getArabicTextStyle(30,
-                                                    color: const Color(
-                                                      0xFFE5C158,
-                                                    ),
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                            final ayah = _ayahList[index - 1];
-                                            final showHizbHeader =
-                                                index == 1 ||
-                                                (index > 1 &&
-                                                    ayah.hizb != 0 && 
-                                                    ayah.hizb != _ayahList[index - 2].hizb) ||
-                                                (index > 1 &&
-                                                    ayah.hizb == 0 &&
-                                                    ayah.juz != _ayahList[index - 2].juz);
-                                            return Column(
-                                              children: [
-                                                if (showHizbHeader)
-                                                  _buildHizbDivider(ayah.hizb, ayah.juz),
-                                                _buildAyahCard(
-                                                  ayah,
-                                                  theme,
-                                                  playState,
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        ),
                                 ),
-                              ],
-                            ),
-                            if (_readingMode == 'continuous')
-                              _buildAutoScrollFloatingControls(isDark, playState),
-                            if (playState.isPlaying && playState.surahNum != 0 && playState.surahNum != _currentSurah.number)
-                              Positioned(
-                                top: 16,
-                                left: 16,
-                                right: 16,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0,2))],
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.music_note, color: Colors.white, size: 18),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        TranslationService.isArabic 
-                                          ? 'يتم الآن تشغيل سورة أخرى'
-                                          : 'Playing a different Surah',
-                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
+                            ],
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+                  ],
+                ),
+        ),
+      ),
+    );
   }
 }

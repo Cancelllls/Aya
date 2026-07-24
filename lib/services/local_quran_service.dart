@@ -8,12 +8,16 @@ class LocalQuranService {
   static Future<void> _loadData(String scriptType) async {
     if (!_data.containsKey(scriptType)) {
       try {
-        final jsonStr = await rootBundle.loadString('assets/quran/$scriptType.json');
+        final jsonStr = await rootBundle.loadString(
+          'assets/quran/$scriptType.json',
+        );
         _data[scriptType] = json.decode(jsonStr);
       } catch (e) {
         // Fallback to warsh if not found
         if (!_data.containsKey('warsh')) {
-          final warshStr = await rootBundle.loadString('assets/quran/warsh.json');
+          final warshStr = await rootBundle.loadString(
+            'assets/quran/warsh.json',
+          );
           _data['warsh'] = json.decode(warshStr);
         }
         _data[scriptType] = _data['warsh']!;
@@ -21,11 +25,16 @@ class LocalQuranService {
     }
   }
 
-  static Future<List<Ayah>> getSurahAyahs(int surahNumber, String scriptType) async {
+  static Future<List<Ayah>> getSurahAyahs(
+    int surahNumber,
+    String scriptType,
+  ) async {
     await _loadData(scriptType);
     List<dynamic> dataToUse = _data[scriptType]!;
 
-    final surahData = dataToUse.where((row) => row['sura_no'] == surahNumber).toList();
+    final surahData = dataToUse
+        .where((row) => row['sura_no'] == surahNumber)
+        .toList();
     List<Ayah> ayahs = [];
 
     for (var row in surahData) {
@@ -33,7 +42,7 @@ class LocalQuranService {
       // Remove trailing digits if they are present in the text (like ١٢)
       final numRegex = RegExp(r'[٠-٩]+$');
       text = text.replaceAll(numRegex, '').trim();
-      
+
       final globalAyahNum = row['id'] as int;
       final numInSurah = row['aya_no'] as int;
       text = Ayah.cleanBasmalah(text, numInSurah, globalAyahNum);

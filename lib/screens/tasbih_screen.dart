@@ -215,7 +215,7 @@ class _TasbihScreenState extends State<TasbihScreen>
             TranslationService.isArabic
                 ? "إعادة تعيين العداد؟"
                 : "Reset Counter?",
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -295,7 +295,7 @@ class _TasbihScreenState extends State<TasbihScreen>
           backgroundColor: theme.cardColor,
           title: Text(
             TranslationService.t('add_custom_dhikr'),
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -310,7 +310,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                     labelText: TranslationService.t('dhikr_name'),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextField(
                   controller: arabicController,
                   textDirection: TextDirection.rtl,
@@ -318,7 +318,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                     labelText: TranslationService.t('arabic_script'),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextField(
                   controller: translationController,
                   decoration: InputDecoration(
@@ -327,7 +327,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                         : 'Translation (Optional)',
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextField(
                   controller: targetController,
                   keyboardType: TextInputType.number,
@@ -389,7 +389,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       appBar: AppBar(
         title: Text(
           TranslationService.t('digital_tasbih'),
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
@@ -416,7 +416,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                           return Padding(
                             padding: const EdgeInsetsDirectional.only(end: 8.0),
                             child: ActionChip(
-                              avatar: Icon(
+                              avatar: const Icon(
                                 Icons.add,
                                 size: 16,
                                 color: Color(0xFFE5C158),
@@ -470,7 +470,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                       children: [
                         Text(
                           _arabicText,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: 'Amiri',
                             fontSize: 26,
                             color: Color(0xFFE5C158),
@@ -478,7 +478,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
                           _translationText,
                           style: TextStyle(
@@ -544,12 +544,12 @@ class _TasbihScreenState extends State<TasbihScreen>
                                 children: [
                                   Text(
                                     _count.toString(),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 64,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     "Target: $_target",
                                     style: TextStyle(
@@ -585,11 +585,11 @@ class _TasbihScreenState extends State<TasbihScreen>
                         vertical: 12,
                       ),
                     ),
-                    icon: Icon(Icons.refresh, size: 18),
+                    icon: const Icon(Icons.refresh, size: 18),
                     label: Text(TranslationService.t('reset_count')),
                     onPressed: _reset,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

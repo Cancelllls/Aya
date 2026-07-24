@@ -10,9 +10,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:geolocator/geolocator.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
@@ -109,7 +106,10 @@ void backgroundPrayerTimesUpdateCallback() async {
             method: method,
             school: school,
           );
-          await NotificationService().schedulePrayerAlarms(offlineData, storage);
+          await NotificationService().schedulePrayerAlarms(
+            offlineData,
+            storage,
+          );
         }
       }
     }
@@ -154,7 +154,7 @@ void backgroundPreAdhanCallback(int id) async {
           ),
         ),
       );
-      
+
       final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
       if (urls != null) {
         final filename = urls[lang];
@@ -263,16 +263,16 @@ void backgroundAdhanCallback(int id) async {
       });
 
       // Fail-safe: Also show an immediate notification in case zonedSchedule failed
-      final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+      final FlutterLocalNotificationsPlugin notificationsPlugin =
+          FlutterLocalNotificationsPlugin();
       try {
         const AndroidInitializationSettings initializationSettingsAndroid =
             AndroidInitializationSettings('ic_notification');
-        const InitializationSettings initializationSettings = InitializationSettings(
-          android: initializationSettingsAndroid,
-        );
-        await _notificationsPlugin.initialize(settings: initializationSettings);
+        const InitializationSettings initializationSettings =
+            InitializationSettings(android: initializationSettingsAndroid);
+        await notificationsPlugin.initialize(settings: initializationSettings);
 
-        await _notificationsPlugin.show(
+        await notificationsPlugin.show(
           id: id,
           title: 'حان وقت الصلاة',
           body: 'الصلاة خير من النوم - اضغط لإيقاف الأذان',
@@ -362,7 +362,6 @@ class NotificationService {
     }
   }
 
-
   Future<void> scheduleHijriEventReminder({
     required int id,
     required String title,
@@ -416,7 +415,10 @@ class NotificationService {
     try {
       // ponytail: YAGNI external dependency for this simple string check
       final String timeZoneName =
-          await const MethodChannel('com.quran.aya/system').invokeMethod<String>('getTimeZoneName') ?? 'UTC';
+          await const MethodChannel(
+            'com.quran.aya/system',
+          ).invokeMethod<String>('getTimeZoneName') ??
+          'UTC';
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (_) {
       timezoneFallbackToUtc = true;
@@ -520,7 +522,8 @@ class NotificationService {
     StorageService storage,
   ) async {
     // Validate prayer data
-    final isValid = prayerData.fajr.isNotEmpty &&
+    final isValid =
+        prayerData.fajr.isNotEmpty &&
         prayerData.dhuhr.isNotEmpty &&
         prayerData.asr.isNotEmpty &&
         prayerData.maghrib.isNotEmpty &&
@@ -543,16 +546,21 @@ class NotificationService {
     final alertIsha = storage.getBool('alert_isha', defaultValue: true);
 
     final prayersToSchedule = <String, String>{};
-    if (alertFajr && prayerData.fajr.isNotEmpty)
+    if (alertFajr && prayerData.fajr.isNotEmpty) {
       prayersToSchedule['Fajr'] = prayerData.fajr;
-    if (alertDhuhr && prayerData.dhuhr.isNotEmpty)
+    }
+    if (alertDhuhr && prayerData.dhuhr.isNotEmpty) {
       prayersToSchedule['Dhuhr'] = prayerData.dhuhr;
-    if (alertAsr && prayerData.asr.isNotEmpty)
+    }
+    if (alertAsr && prayerData.asr.isNotEmpty) {
       prayersToSchedule['Asr'] = prayerData.asr;
-    if (alertMaghrib && prayerData.maghrib.isNotEmpty)
+    }
+    if (alertMaghrib && prayerData.maghrib.isNotEmpty) {
       prayersToSchedule['Maghrib'] = prayerData.maghrib;
-    if (alertIsha && prayerData.isha.isNotEmpty)
+    }
+    if (alertIsha && prayerData.isha.isNotEmpty) {
       prayersToSchedule['Isha'] = prayerData.isha;
+    }
 
     final now = DateTime.now();
 
@@ -621,7 +629,11 @@ class NotificationService {
 
       for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
         final scheduledDate = DateTime(
-          now.year, now.month, now.day, hour, minute,
+          now.year,
+          now.month,
+          now.day,
+          hour,
+          minute,
         ).add(Duration(days: dayOffset));
 
         if (!scheduledDate.isAfter(now)) continue;
@@ -712,9 +724,7 @@ class NotificationService {
             try {
               await _notificationsPlugin.zonedSchedule(
                 id: preNotificationId,
-                title: isAr
-                    ? 'اقترب موعد الأذان'
-                    : 'Athan is approaching',
+                title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
                 body: isAr
                     ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
                     : '$preAdhanMins minutes remaining until $localizedName Athan.',
@@ -727,15 +737,14 @@ class NotificationService {
               try {
                 await _notificationsPlugin.zonedSchedule(
                   id: preNotificationId,
-                  title: isAr
-                      ? 'اقترب موعد الأذان'
-                      : 'Athan is approaching',
+                  title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
                   body: isAr
                       ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
                       : '$preAdhanMins minutes remaining until $localizedName Athan.',
                   scheduledDate: tzPreDateTime,
                   notificationDetails: preDetails,
-                  androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+                  androidScheduleMode:
+                      AndroidScheduleMode.inexactAllowWhileIdle,
                   payload: 'prayer_times',
                 );
               } catch (_) {}
@@ -769,7 +778,9 @@ class NotificationService {
             final targetDateForTracker = name == 'Fajr'
                 ? scheduledDate.subtract(const Duration(days: 1))
                 : scheduledDate;
-            final dateStr = DateFormat('yyyy-MM-dd').format(targetDateForTracker);
+            final dateStr = DateFormat(
+              'yyyy-MM-dd',
+            ).format(targetDateForTracker);
 
             final trackerDetails = NotificationDetails(
               android: AndroidNotificationDetails(

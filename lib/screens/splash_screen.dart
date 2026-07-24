@@ -2,14 +2,12 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/notification_service.dart';
 import 'welcome_screen.dart';
-import 'permission_guard_screen.dart';
 import '../main.dart';
 import '../widgets/islamic_logo_painter.dart';
 
@@ -177,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
 
                 // Animated App Name and Subtitle
                 FadeTransition(
@@ -193,7 +191,7 @@ class _SplashScreenState extends State<SplashScreen>
                           color: const Color(0xFFE5C158),
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         TranslationService.isArabic
                             ? "رفيقك الإسلامي اليومي"

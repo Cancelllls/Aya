@@ -2,7 +2,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
-import 'package:sqflite/sqflite.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
@@ -13,13 +12,11 @@ import 'services/notification_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/quran_screen.dart';
-import 'widgets/quick_access_pill.dart';
 import 'widgets/audio_player_overlay.dart';
 import 'screens/prayer_times_screen.dart';
 import 'screens/azkar_screen.dart';
 import 'screens/hadith_screen.dart';
 import 'screens/settings/settings_screen.dart';
-import 'screens/surah_reader/surah_reader_screen.dart';
 import 'screens/surah_reader/surah_pager_screen.dart';
 import 'screens/quran_download_screen.dart';
 import 'screens/splash_screen.dart';
@@ -439,7 +436,7 @@ class _AyaAppState extends State<AyaApp> {
       debugShowCheckedModeBanner: false,
       theme: themeData,
       locale: Locale(TranslationService.currentLanguage),
-      supportedLocales: [Locale('ar'), Locale('en')],
+      supportedLocales: [const Locale('ar'), const Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -1027,17 +1024,14 @@ class _MainScaffoldState extends State<MainScaffold>
 
             return Stack(
               children: [
-                IndexedStack(
-                  index: _currentTab,
-                  children: screens,
-                ),
+                IndexedStack(index: _currentTab, children: screens),
                 if (_currentTab == 1)
                   AudioPlayerOverlay(
                     bottomPosition: bottomNavbarStyle == 'floating'
                         ? kBottomNavigationBarHeight + 16.0 + 5.0
                         : kBottomNavigationBarHeight +
-                            MediaQuery.of(context).padding.bottom +
-                            8.0,
+                              MediaQuery.of(context).padding.bottom +
+                              8.0,
                     isDark: isDark,
                     theme: theme,
                   ),
@@ -1261,14 +1255,14 @@ class _MainScaffoldState extends State<MainScaffold>
                       // transparent — our container provides the background.
                       child: Theme(
                         data: theme.copyWith(canvasColor: Colors.transparent),
-                  child: MediaQuery.removePadding(
-                    context: context,
-                    removeBottom: true,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28.0),
-                      child: bottomBarWidget,
-                    ),
-                  ),
+                        child: MediaQuery.removePadding(
+                          context: context,
+                          removeBottom: true,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(28.0),
+                            child: bottomBarWidget,
+                          ),
+                        ),
                       ),
                     ),
                   ),

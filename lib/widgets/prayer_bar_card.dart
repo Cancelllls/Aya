@@ -14,8 +14,8 @@ class PrayerBarCard extends StatelessWidget {
     this.time,
     this.isCurrent,
     this.icon, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   String _formatTime(String time) {
     try {

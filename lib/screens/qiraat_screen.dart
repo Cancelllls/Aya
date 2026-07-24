@@ -26,7 +26,7 @@ class _QiraatScreenState extends State<QiraatScreen> {
   int? _playingSurah;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
-  
+
   List<Surah> _surahs = [];
 
   @override
@@ -44,7 +44,7 @@ class _QiraatScreenState extends State<QiraatScreen> {
       if (mounted) setState(() => _duration = dur);
     });
   }
-  
+
   Future<void> _loadSurahs() async {
     final surahs = await ApiService.fetchSurahList();
     if (mounted) setState(() => _surahs = surahs);
@@ -53,7 +53,9 @@ class _QiraatScreenState extends State<QiraatScreen> {
   Future<void> _fetchRiwayat() async {
     try {
       final lang = TranslationService.isArabic ? 'ar' : 'en';
-      final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/riwayat?language=$lang'));
+      final res = await http.get(
+        Uri.parse('https://mp3quran.net/api/v3/riwayat?language=$lang'),
+      );
       if (res.statusCode == 200) {
         final data = json.decode(utf8.decode(res.bodyBytes));
         if (mounted) {
@@ -76,7 +78,11 @@ class _QiraatScreenState extends State<QiraatScreen> {
     });
     try {
       final lang = TranslationService.isArabic ? 'ar' : 'en';
-      final res = await http.get(Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId'));
+      final res = await http.get(
+        Uri.parse(
+          'https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId',
+        ),
+      );
       if (res.statusCode == 200) {
         final data = json.decode(utf8.decode(res.bodyBytes));
         if (mounted) {
@@ -97,8 +103,10 @@ class _QiraatScreenState extends State<QiraatScreen> {
     if (moshaf.isEmpty) return;
     final server = moshaf[0]['server'] as String;
     final formattedNumber = surahNumber.toString().padLeft(3, '0');
-    final url = server.endsWith('/') ? '$server$formattedNumber.mp3' : '$server/$formattedNumber.mp3';
-    
+    final url = server.endsWith('/')
+        ? '$server$formattedNumber.mp3'
+        : '$server/$formattedNumber.mp3';
+
     await _audioPlayer.play(UrlSource(url));
     setState(() => _playingSurah = surahNumber);
   }
@@ -107,7 +115,7 @@ class _QiraatScreenState extends State<QiraatScreen> {
     await _audioPlayer.stop();
     setState(() => _playingSurah = null);
   }
-  
+
   @override
   void dispose() {
     _audioPlayer.dispose();
@@ -120,21 +128,32 @@ class _QiraatScreenState extends State<QiraatScreen> {
     final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
-        title: Text(TranslationService.isArabic ? "تلاوات القراءات" : "Qira'at Recitations"),
+        title: Text(
+          TranslationService.isArabic
+              ? "تلاوات القراءات"
+              : "Qira'at Recitations",
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Column(
         children: [
           if (_isLoadingRiwayat)
-            const Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Color(0xFFE5C158)))
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+            )
           else if (_riwayat.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(16),
               child: DropdownButtonFormField<Map<String, dynamic>>(
                 decoration: InputDecoration(
-                  labelText: TranslationService.isArabic ? "اختر الرواية" : "Select Qira'ah",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: TranslationService.isArabic
+                      ? "اختر الرواية"
+                      : "Select Qira'ah",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
                   fillColor: theme.cardColor,
                 ),
@@ -153,16 +172,23 @@ class _QiraatScreenState extends State<QiraatScreen> {
                 },
               ),
             ),
-            
+
           if (_isLoadingReciters)
-            const Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Color(0xFFE5C158)))
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+            )
           else if (_reciters.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: DropdownButtonFormField<Map<String, dynamic>>(
                 decoration: InputDecoration(
-                  labelText: TranslationService.isArabic ? "اختر القارئ" : "Select Reciter",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: TranslationService.isArabic
+                      ? "اختر القارئ"
+                      : "Select Reciter",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
                   fillColor: theme.cardColor,
                 ),
@@ -181,64 +207,95 @@ class _QiraatScreenState extends State<QiraatScreen> {
                 },
               ),
             ),
-            
+
           const SizedBox(height: 16),
           Expanded(
-            child: _selectedReciter == null 
-              ? Center(child: Text(TranslationService.isArabic ? "يرجى اختيار الرواية والقارئ" : "Please select Qira'ah and Reciter"))
-              : ListView.builder(
-                  itemCount: _surahs.length,
-                  itemBuilder: (context, index) {
-                    final surah = _surahs[index];
-                    final isPlaying = _playingSurah == surah.number && _isPlaying;
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: isPlaying ? const Color(0xFFE5C158) : theme.cardColor,
-                        child: Text('${surah.number}', style: TextStyle(color: isPlaying ? Colors.black : null)),
-                      ),
-                      title: Text(TranslationService.isArabic ? surah.name : surah.englishName),
-                      trailing: IconButton(
-                        icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, color: const Color(0xFFE5C158)),
-                        onPressed: () {
-                          if (isPlaying) {
-                            _stopAudio();
-                          } else {
-                            _playSurah(surah.number);
-                          }
-                        },
-                      ),
-                    );
-                  },
-              ),
+            child: _selectedReciter == null
+                ? Center(
+                    child: Text(
+                      TranslationService.isArabic
+                          ? "يرجى اختيار الرواية والقارئ"
+                          : "Please select Qira'ah and Reciter",
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _surahs.length,
+                    itemBuilder: (context, index) {
+                      final surah = _surahs[index];
+                      final isPlaying =
+                          _playingSurah == surah.number && _isPlaying;
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isPlaying
+                              ? const Color(0xFFE5C158)
+                              : theme.cardColor,
+                          child: Text(
+                            '${surah.number}',
+                            style: TextStyle(
+                              color: isPlaying ? Colors.black : null,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          TranslationService.isArabic
+                              ? surah.name
+                              : surah.englishName,
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(
+                            isPlaying
+                                ? Icons.stop_circle
+                                : Icons.play_circle_fill,
+                            color: const Color(0xFFE5C158),
+                          ),
+                          onPressed: () {
+                            if (isPlaying) {
+                              _stopAudio();
+                            } else {
+                              _playSurah(surah.number);
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  ),
           ),
-          
+
           if (_playingSurah != null)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.cardColor,
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))]
+                boxShadow: [
+                  const BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, -5),
+                  ),
+                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    TranslationService.isArabic 
-                      ? "جاري التشغيل: سورة ${_surahs.firstWhere((s) => s.number == _playingSurah).name}"
-                      : "Playing: ${_surahs.firstWhere((s) => s.number == _playingSurah).englishName}",
+                    TranslationService.isArabic
+                        ? "جاري التشغيل: سورة ${_surahs.firstWhere((s) => s.number == _playingSurah).name}"
+                        : "Playing: ${_surahs.firstWhere((s) => s.number == _playingSurah).englishName}",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Slider(
                     activeColor: const Color(0xFFE5C158),
                     value: _position.inSeconds.toDouble(),
-                    max: _duration.inSeconds > 0 ? _duration.inSeconds.toDouble() : 1.0,
+                    max: _duration.inSeconds > 0
+                        ? _duration.inSeconds.toDouble()
+                        : 1.0,
                     onChanged: (val) {
                       _audioPlayer.seek(Duration(seconds: val.toInt()));
                     },
                   ),
                 ],
               ),
-            )
+            ),
         ],
       ),
     );

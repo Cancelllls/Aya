@@ -156,13 +156,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-            SizedBox(width: 8),
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            const SizedBox(width: 8),
             Text(
               TranslationService.isArabic
                   ? "صلاحيات غير مكتملة"
                   : "Permissions Incomplete",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -170,7 +170,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           TranslationService.isArabic
               ? "تحذير: إذا واصلت بدون تفعيل صلاحيات الموقع والتنبيهات، فقد لا يتم تشغيل الأذان في موعده بدقة في الخلفية أو عند قفل الهاتف. هل تود المتابعة على أي حال؟"
               : "Warning: If you proceed without granting location and notifications, Athan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
-          style: TextStyle(height: 1.5, fontSize: 14),
+          style: const TextStyle(height: 1.5, fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -271,14 +271,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     TranslationService.setLanguage(newLang);
                     widget.onThemeChanged();
                   },
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.language,
                     size: 16,
                     color: Color(0xFFE5C158),
                   ),
                   label: Text(
                     TranslationService.isArabic ? 'English' : 'العربية',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFE5C158),
@@ -336,17 +336,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               );
             },
           ),
-          SizedBox(height: 48),
+          const SizedBox(height: 48),
           Text(
             TranslationService.t('welcome_app_name'),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w900,
               letterSpacing: 4,
               color: Color(0xFFE5C158),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             TranslationService.t('welcome_spiritual_companion'),
             style: TextStyle(
@@ -383,16 +383,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Text(
             TranslationService.t('welcome_features_title'),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             TranslationService.t('welcome_features_sub'),
             style: TextStyle(
@@ -400,25 +400,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               color: isDark ? Colors.white60 : Colors.black54,
             ),
           ),
-          SizedBox(height: 32),
+          const SizedBox(height: 32),
           _buildFeatureRow(
             icon: Icons.access_time_filled,
             title: TranslationService.t('welcome_feat_prayer_title'),
             description: TranslationService.t('welcome_feat_prayer_desc'),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildFeatureRow(
             icon: Icons.menu_book,
             title: TranslationService.t('welcome_feat_quran_title'),
             description: TranslationService.t('welcome_feat_quran_desc'),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildFeatureRow(
             icon: Icons.explore,
             title: TranslationService.t('welcome_feat_qibla_title'),
             description: TranslationService.t('welcome_feat_qibla_desc'),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildFeatureRow(
             icon: Icons.volunteer_activism,
             title: TranslationService.t('welcome_feat_tasbih_title'),
@@ -447,16 +447,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ),
           child: Icon(icon, color: const Color(0xFFE5C158), size: 20),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 description,
                 style: TextStyle(
@@ -482,20 +485,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.security_rounded, color: Color(0xFFE5C158), size: 64),
-          SizedBox(height: 16),
+          const Icon(
+            Icons.security_rounded,
+            color: Color(0xFFE5C158),
+            size: 64,
+          ),
+          const SizedBox(height: 16),
           Text(
             TranslationService.isArabic
                 ? "صلاحيات النظام المطلوبة"
                 : "Required System Permissions",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             TranslationService.isArabic
                 ? "يتطلب التطبيق الصلاحيات التالية للعمل بشكل صحيح وتشغيل الأذان في وقته بالخلفية."
@@ -507,16 +514,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           CheckboxListTile(
             title: Text(
               TranslationService.isArabic
                   ? "أريد استلام تنبيهات الأذان والأذكار"
                   : "I want to receive Adhan and Notification alerts",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             value: _wantAdhan,
-            activeColor: Color(0xFFE5C158),
+            activeColor: const Color(0xFFE5C158),
             checkColor: Colors.black,
             onChanged: (val) {
               setState(() {
@@ -531,76 +538,79 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 TranslationService.isArabic
                     ? "لن يتم طلب الصلاحيات الآن. يمكنك تفعيل الأذان لاحقاً من الإعدادات."
                     : "Permissions won't be requested. You can enable Adhan later from Settings.",
-                style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 13),
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                  fontSize: 13,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
           if (_wantAdhan)
-          Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                _buildPermissionItem(
-                  icon: Icons.location_on,
-                  title: TranslationService.isArabic
-                      ? "إذن الموقع الجغرافي"
-                      : "Location Permission",
-                  description: TranslationService.isArabic
-                      ? "لحساب مواقيت الصلاة بدقة بناءً على موقعك."
-                      : "Used to calculate prayer times accurately based on your location.",
-                  isGranted: _locationGranted,
-                  onRequest: _requestLocation,
-                ),
-                // Always Allow — only on API 29+ (Android 10+)
-                if (_androidSdkVersion >= 29) ...[
-                  SizedBox(height: 10),
+            Expanded(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
                   _buildPermissionItem(
-                    icon: Icons.location_searching,
+                    icon: Icons.location_on,
                     title: TranslationService.isArabic
-                        ? "السماح دائماً بالموقع"
-                        : "Always Allow Location",
+                        ? "إذن الموقع الجغرافي"
+                        : "Location Permission",
                     description: TranslationService.isArabic
-                        ? "لحساب مواقيت الصلاة في الخلفية حتى عند إغلاق التطبيق."
-                        : "Needed to calculate prayer times in background when app is closed.",
-                    isGranted: _bgLocationGranted,
-                    onRequest: _requestBgLocation,
-                    requiresPrior: !_locationGranted,
-                    priorLabel: TranslationService.isArabic
-                        ? "يتطلب إذن الموقع أولاً"
-                        : "Requires location permission first",
+                        ? "لحساب مواقيت الصلاة بدقة بناءً على موقعك."
+                        : "Used to calculate prayer times accurately based on your location.",
+                    isGranted: _locationGranted,
+                    onRequest: _requestLocation,
                   ),
-                ],
-                SizedBox(height: 10),
-                _buildPermissionItem(
-                  icon: Icons.notifications_active,
-                  title: TranslationService.isArabic
-                      ? "إذن الإشعارات"
-                      : "Notification Alerts",
-                  description: TranslationService.isArabic
-                      ? "لإرسال تنبيهات الأذان والأذكار في مواقيتها."
-                      : "Used to send sound and voice alerts on prayer times.",
-                  isGranted: _notifGranted,
-                  onRequest: _requestNotif,
-                ),
-                // Alarms & Reminders — only on API 31+ (Android 12+)
-                if (_androidSdkVersion >= 31) ...[
-                  SizedBox(height: 10),
+                  // Always Allow — only on API 29+ (Android 10+)
+                  if (_androidSdkVersion >= 29) ...[
+                    const SizedBox(height: 10),
+                    _buildPermissionItem(
+                      icon: Icons.location_searching,
+                      title: TranslationService.isArabic
+                          ? "السماح دائماً بالموقع"
+                          : "Always Allow Location",
+                      description: TranslationService.isArabic
+                          ? "لحساب مواقيت الصلاة في الخلفية حتى عند إغلاق التطبيق."
+                          : "Needed to calculate prayer times in background when app is closed.",
+                      isGranted: _bgLocationGranted,
+                      onRequest: _requestBgLocation,
+                      requiresPrior: !_locationGranted,
+                      priorLabel: TranslationService.isArabic
+                          ? "يتطلب إذن الموقع أولاً"
+                          : "Requires location permission first",
+                    ),
+                  ],
+                  const SizedBox(height: 10),
                   _buildPermissionItem(
-                    icon: Icons.access_alarm,
+                    icon: Icons.notifications_active,
                     title: TranslationService.isArabic
-                        ? "التنبيهات والتذكيرات"
-                        : "Alarms & Reminders",
+                        ? "إذن الإشعارات"
+                        : "Notification Alerts",
                     description: TranslationService.isArabic
-                        ? "يسمح بجدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
-                        : "Allows scheduling precise Athan alarms even in Doze mode.",
-                    isGranted: _exactAlarmGranted,
-                    onRequest: _requestExactAlarm,
+                        ? "لإرسال تنبيهات الأذان والأذكار في مواقيتها."
+                        : "Used to send sound and voice alerts on prayer times.",
+                    isGranted: _notifGranted,
+                    onRequest: _requestNotif,
                   ),
+                  // Alarms & Reminders — only on API 31+ (Android 12+)
+                  if (_androidSdkVersion >= 31) ...[
+                    const SizedBox(height: 10),
+                    _buildPermissionItem(
+                      icon: Icons.access_alarm,
+                      title: TranslationService.isArabic
+                          ? "التنبيهات والتذكيرات"
+                          : "Alarms & Reminders",
+                      description: TranslationService.isArabic
+                          ? "يسمح بجدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
+                          : "Allows scheduling precise Athan alarms even in Doze mode.",
+                      isGranted: _exactAlarmGranted,
+                      onRequest: _requestExactAlarm,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
                 ],
-                SizedBox(height: 8),
-              ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -640,17 +650,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 size: 20,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                     textAlign: TextAlign.start,
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     requiresPrior && priorLabel != null
                         ? priorLabel
@@ -670,9 +683,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ],
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             isGranted
-                ? Icon(Icons.check_circle, color: Colors.green)
+                ? const Icon(Icons.check_circle, color: Colors.green)
                 : TextButton(
                     style: TextButton.styleFrom(
                       foregroundColor: theme.primaryColor,
@@ -681,7 +694,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     onPressed: requiresPrior ? null : onRequest,
                     child: Text(
                       TranslationService.isArabic ? "تفعيل" : "Enable",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
           ],
@@ -722,7 +735,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              textStyle: TextStyle(fontWeight: FontWeight.bold),
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
             ),
             onPressed: () {
               if (_currentPage < 2) {

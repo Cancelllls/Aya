@@ -26,7 +26,9 @@ class QdcAudioService {
 
   static Future<String?> getAudioUrl(int surahNum, String reciter) async {
     final dir = await getApplicationDocumentsDirectory();
-    final cacheFile = File('${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json');
+    final cacheFile = File(
+      '${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json',
+    );
     if (await cacheFile.exists()) {
       try {
         final content = await cacheFile.readAsString();
@@ -39,13 +41,18 @@ class QdcAudioService {
     return null;
   }
 
-  static Future<Map<int, List<dynamic>>?> fetchSurahTimestamps(int surahNum, String reciter) async {
+  static Future<Map<int, List<dynamic>>?> fetchSurahTimestamps(
+    int surahNum,
+    String reciter,
+  ) async {
     final qdcId = getQdcReciterId(reciter);
     if (qdcId == null) return null;
 
     final dir = await getApplicationDocumentsDirectory();
-    final cacheFile = File('${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json');
-    
+    final cacheFile = File(
+      '${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json',
+    );
+
     if (await cacheFile.exists()) {
       try {
         final content = await cacheFile.readAsString();
@@ -65,7 +72,8 @@ class QdcAudioService {
     }
 
     final url = Uri.parse(
-        'https://api.qurancdn.com/api/qdc/audio/reciters/$qdcId/audio_files?chapter=$surahNum&segments=true');
+      'https://api.qurancdn.com/api/qdc/audio/reciters/$qdcId/audio_files?chapter=$surahNum&segments=true',
+    );
 
     try {
       final response = await http.get(url);
@@ -85,11 +93,11 @@ class QdcAudioService {
           ayahTimestamps[ayahNum] = times;
           toCache[ayahNum.toString()] = times;
         }
-        
+
         if (audioFiles[0].containsKey('audio_url')) {
           toCache['audio_url'] = audioFiles[0]['audio_url'];
         }
-        
+
         try {
           await cacheFile.parent.create(recursive: true);
           await cacheFile.writeAsString(jsonEncode(toCache));

@@ -1,22 +1,24 @@
 part of 'surah_reader_screen.dart';
 
 extension SurahReaderAudio on _SurahReaderScreenState {
-
   void _onPlayStateChanged() {
-      final playState = AudioManager.instance.playState.value;
-      if (playState.isPlaying &&
-          playState.surahNum == _currentSurah.number &&
-          playState.ayahNum > 0 &&
-          playState.ayahNum != _lastScrolledAyah) {
-        _lastScrolledAyah = playState.ayahNum;
-        _scrollToAyah(playState.ayahNum);
-      }
+    final playState = AudioManager.instance.playState.value;
+    if (playState.isPlaying &&
+        playState.surahNum == _currentSurah.number &&
+        playState.ayahNum > 0 &&
+        playState.ayahNum != _lastScrolledAyah) {
+      _lastScrolledAyah = playState.ayahNum;
+      _scrollToAyah(playState.ayahNum);
     }
+  }
 
   void _playAudioWithDisclaimer({int? ayahIndex}) {
     final supportsAyahSync = _quranScriptType == 'hafs';
-    final hideDisclaimer = widget.storage.getBool('hide_full_surah_disclaimer', defaultValue: false);
-    
+    final hideDisclaimer = widget.storage.getBool(
+      'hide_full_surah_disclaimer',
+      defaultValue: false,
+    );
+
     if (supportsAyahSync || hideDisclaimer) {
       if (ayahIndex != null && supportsAyahSync) {
         AudioManager.instance.playAyah(
@@ -34,7 +36,7 @@ extension SurahReaderAudio on _SurahReaderScreenState {
       }
       return;
     }
-    
+
     bool dontShowAgain = false;
     showDialog(
       context: context,
@@ -43,10 +45,15 @@ extension SurahReaderAudio on _SurahReaderScreenState {
           builder: (context, setModalState) {
             return AlertDialog(
               backgroundColor: Theme.of(context).cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: Text(
                 TranslationService.isArabic ? 'تنبيه' : 'Notice',
-                style: const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Color(0xFFE5C158),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -71,7 +78,9 @@ extension SurahReaderAudio on _SurahReaderScreenState {
                       ),
                       Expanded(
                         child: Text(
-                          TranslationService.isArabic ? 'لا تظهر هذه الرسالة مرة أخرى' : 'Do not show this again',
+                          TranslationService.isArabic
+                              ? 'لا تظهر هذه الرسالة مرة أخرى'
+                              : 'Do not show this again',
                           style: const TextStyle(fontSize: 14),
                         ),
                       ),
@@ -84,13 +93,18 @@ extension SurahReaderAudio on _SurahReaderScreenState {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     TranslationService.isArabic ? 'إلغاء' : 'Cancel',
-                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
                   ),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     if (dontShowAgain) {
-                      widget.storage.setBool('hide_full_surah_disclaimer', true);
+                      widget.storage.setBool(
+                        'hide_full_surah_disclaimer',
+                        true,
+                      );
                     }
                     Navigator.pop(context);
                     if (ayahIndex != null && supportsAyahSync) {
@@ -108,10 +122,15 @@ extension SurahReaderAudio on _SurahReaderScreenState {
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE5C158),
+                  ),
                   child: Text(
                     TranslationService.isArabic ? 'تشغيل' : 'Play',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],

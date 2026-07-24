@@ -203,7 +203,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           isArabic ? "ضبط تذكير بالحدث" : "Set Event Reminder",
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFFE5C158),
             fontWeight: FontWeight.bold,
           ),
@@ -214,9 +214,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           children: [
             Text(
               event['title'],
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               isArabic
                   ? "اختر متى تود تلقي إشعار التذكير لهذا الحدث الإسلامي:"
@@ -226,7 +226,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildReminderOption(
               dialogCtx,
               event,
@@ -271,8 +271,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(label, style: TextStyle(fontSize: 14)),
-      trailing: Icon(Icons.alarm_add, color: Color(0xFFE5C158), size: 20),
+      title: Text(label, style: const TextStyle(fontSize: 14)),
+      trailing: const Icon(Icons.alarm_add, color: Color(0xFFE5C158), size: 20),
       onTap: () async {
         Navigator.pop(dialogCtx);
 
@@ -385,7 +385,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   TranslationService.isArabic
                       ? "مطلوب إذن الموقع دائماً"
                       : "Location Permission 'Always' Required",
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Color(0xFFE5C158),
                     fontWeight: FontWeight.bold,
                   ),
@@ -415,7 +415,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     onPressed: () => Navigator.pop(dialogCtx, true),
                     child: Text(
                       TranslationService.isArabic ? "متابعة" : "Continue",
-                      style: TextStyle(color: Colors.black),
+                      style: const TextStyle(color: Colors.black),
                     ),
                   ),
                 ],
@@ -508,7 +508,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           backgroundColor: theme.cardColor,
           title: Text(
             TranslationService.t('set_manual_loc'),
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFFE5C158),
               fontWeight: FontWeight.bold,
             ),
@@ -525,7 +525,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       : 'e.g. London',
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextField(
                 controller: countryController,
                 decoration: InputDecoration(
@@ -564,13 +564,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   double? fetchLat;
                   double? fetchLon;
                   try {
-                    List<Location> locations = await locationFromAddress('$city, $country');
+                    List<Location> locations = await locationFromAddress(
+                      '$city, $country',
+                    );
                     if (locations.isNotEmpty) {
                       fetchLat = locations.first.latitude;
                       fetchLon = locations.first.longitude;
                     }
                   } catch (_) {}
-                  
+
                   await widget.storage.setLocation(
                     city,
                     country,
@@ -655,8 +657,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on, color: Color(0xFFE5C158)),
-                        SizedBox(width: 8),
+                        const Icon(Icons.location_on, color: Color(0xFFE5C158)),
+                        const SizedBox(width: 8),
                         Text(
                           "Location Settings",
                           style: TextStyle(
@@ -667,15 +669,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(
                       "${TranslationService.t('current_location')}: ${loc['city']}, ${loc['country']}",
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       "${TranslationService.isArabic ? 'الطريقة: الإحداثيات' : 'Method: Lat/Lng'} (${loc['latitude']?.toStringAsFixed(4) ?? '--'}, ${loc['longitude']?.toStringAsFixed(4) ?? '--'})",
                       style: TextStyle(
@@ -685,7 +687,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
@@ -694,19 +696,19 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                               backgroundColor: const Color(0xFFE5C158),
                               foregroundColor: Colors.black,
                             ),
-                            icon: Icon(Icons.my_location, size: 18),
+                            icon: const Icon(Icons.my_location, size: 18),
                             label: Text(TranslationService.t('use_gps')),
                             onPressed: _updateLocationWithGPS,
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Color(0xFFE5C158)),
+                              side: const BorderSide(color: Color(0xFFE5C158)),
                               foregroundColor: const Color(0xFFE5C158),
                             ),
-                            icon: Icon(Icons.keyboard, size: 18),
+                            icon: const Icon(Icons.keyboard, size: 18),
                             label: Text(TranslationService.t('set_manually')),
                             onPressed: _showManualLocationDialog,
                           ),
@@ -716,7 +718,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Segmented sub-tab bar
               Container(
@@ -752,15 +754,18 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               if (_selectedSubTab == 0) ...[
                 // Today
                 Text(
                   TranslationService.t('daily_schedule'),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
 
                 _isLoading
                     ? const Center(
@@ -841,7 +846,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       )
                     : _buildHijriCalendar(theme),
               ],
-              SizedBox(height: 85),
+              const SizedBox(height: 85),
             ],
           ),
         ),
@@ -939,49 +944,49 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             DataColumn(
               label: Text(
                 TranslationService.isArabic ? 'اليوم' : 'Date',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.t('fajr'),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.t('sunrise'),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.t('dhuhr'),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.t('asr'),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.isArabic ? 'الغروب' : 'Sunset',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.t('maghrib'),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             DataColumn(
               label: Text(
                 TranslationService.t('isha'),
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -993,7 +998,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             return DataRow(
               cells: [
                 DataCell(
-                  Text(dateStr, style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    dateStr,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 DataCell(Text(_formatTime(timings['Fajr']))),
                 DataCell(Text(_formatTime(timings['Sunrise']))),
@@ -1052,7 +1060,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
     final paddingCellsCount = startWeekday - 1;
     for (int i = 0; i < paddingCellsCount; i++) {
-      gridItems.add(SizedBox.shrink());
+      gridItems.add(const SizedBox.shrink());
     }
 
     final now = DateTime.now();
@@ -1083,21 +1091,24 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       backgroundColor: theme.cardColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Color(0xFFE5C158)),
+                        side: const BorderSide(color: Color(0xFFE5C158)),
                       ),
                       title: Text(
                         TranslationService.isArabic
                             ? 'حدث إسلامي'
                             : 'Islamic Event',
-                        style: TextStyle(color: Color(0xFFE5C158)),
+                        style: const TextStyle(color: Color(0xFFE5C158)),
                       ),
-                      content: Text(eventTitle, style: TextStyle(fontSize: 18)),
+                      content: Text(
+                        eventTitle,
+                        style: const TextStyle(fontSize: 18),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
                           child: Text(
                             TranslationService.isArabic ? 'حسناً' : 'OK',
-                            style: TextStyle(color: Color(0xFFE5C158)),
+                            style: const TextStyle(color: Color(0xFFE5C158)),
                           ),
                         ),
                       ],
@@ -1189,13 +1200,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.chevron_left, color: Color(0xFFE5C158)),
+                  icon: const Icon(
+                    Icons.chevron_left,
+                    color: Color(0xFFE5C158),
+                  ),
                   onPressed: _isCalendarLoading ? null : _prevCalendarMonth,
                 ),
                 Expanded(
                   child: Text(
                     "$gregMonthName $gregYear  /  $hijriMonthName $hijriYear",
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: Color(0xFFE5C158),
@@ -1204,14 +1218,17 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.chevron_right, color: Color(0xFFE5C158)),
+                  icon: const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFFE5C158),
+                  ),
                   onPressed: _isCalendarLoading ? null : _nextCalendarMonth,
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (_isCalendarLoading)
-              SizedBox(
+              const SizedBox(
                 height: 150,
                 child: Center(
                   child: CircularProgressIndicator(color: Color(0xFFE5C158)),
@@ -1258,32 +1275,32 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 },
               ),
               if (events.isNotEmpty) ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Divider(
                   color: Theme.of(context).dividerColor.withOpacity(0.12),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: Text(
                     TranslationService.isArabic
                         ? "المناسبات الهجرية"
                         : "Islamic Events",
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFE5C158),
                       fontSize: 14,
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Column(
                   children: events.map((event) {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
                         event['title'],
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -1299,7 +1316,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         ),
                       ),
                       trailing: IconButton(
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.notifications_active_outlined,
                           color: Color(0xFFE5C158),
                           size: 20,
@@ -1361,25 +1378,28 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               ),
               child: Icon(icon, color: const Color(0xFFE5C158), size: 18),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     displayName,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),
             ),
             Text(
               cleanTime,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             isSunriseOrSunset
-                ? SizedBox(width: 48)
+                ? const SizedBox(width: 48)
                 : IconButton(
                     icon: Icon(
                       alertOn
