@@ -32,24 +32,32 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
         
-      - name: Build APK
-        run: flutter build apk --release --target-platform android-arm64
+      - name: Build Global APK
+        run: flutter build apk --release
         
-      - name: Commit and push APK
-        run: |
-          mkdir -p releases
-          cp build/app/outputs/flutter-apk/app-release.apk releases/app-release.apk
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/app-release.apk
-          git commit -m "Auto-build arm64 APK [skip ci]" || echo "No changes to commit"
-          git push
+      - name: Build Split APKs
+        run: flutter build apk --release --split-per-abi
+        
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-releases
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
