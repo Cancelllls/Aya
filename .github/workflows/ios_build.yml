@@ -42,10 +42,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          REPO="Cancelllls/Aya"
           for i in $(seq 1 20); do
-            TAG=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq -r '.[0].tagName' 2>/dev/null || echo '')
+            TAG=$(gh release list --repo "$REPO" --limit 1 --json tagName --jq -r '.[0].tagName' 2>/dev/null)
             if [ -n "$TAG" ] && [ "$TAG" != "null" ]; then
-              gh release upload "$TAG" build/ios/iphoneos/ios-release.ipa --clobber
+              gh release upload "$TAG" build/ios/iphoneos/ios-release.ipa --repo "$REPO" --clobber
               exit 0
             fi
             echo "Waiting for APK release... ($i/20)"
