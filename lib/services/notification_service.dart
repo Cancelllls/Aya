@@ -387,7 +387,7 @@ class NotificationService {
         body: body,
         scheduledDate: tzDateTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: 'prayer_times',
       );
     } catch (_) {
@@ -730,7 +730,7 @@ class NotificationService {
                     : '$preAdhanMins minutes remaining until $localizedName Athan.',
                 scheduledDate: tzPreDateTime,
                 notificationDetails: preDetails,
-                androidScheduleMode: AndroidScheduleMode.alarmClock,
+                androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
                 payload: 'prayer_times',
               );
             } catch (_) {
