@@ -10,7 +10,9 @@ import android.util.Log
 
 class AdhanBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("AdhanReceiver", "Adhan Alarm Triggered!")
+        if (BuildConfig.DEBUG) {
+            Log.d("AdhanReceiver", "Adhan Alarm Triggered!")
+        }
         
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(

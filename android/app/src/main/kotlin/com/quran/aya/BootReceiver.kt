@@ -8,7 +8,9 @@ import android.util.Log
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == "android.intent.action.QUICKBOOT_POWERON") {
-            Log.d("BootReceiver", "Device rebooted, need to reschedule prayers.")
+            if (BuildConfig.DEBUG) {
+                Log.d("BootReceiver", "Device rebooted, need to reschedule prayers.")
+            }
             
             // To reschedule prayers on boot via Dart, one robust approach is to wake up 
             // the Flutter application. Another is to start a background service that spins up a FlutterEngine.
@@ -26,7 +28,9 @@ class BootReceiver : BroadcastReceiver() {
                     context.startActivity(it)
                 }
             } catch (e: Exception) {
-                Log.e("BootReceiver", "Failed to handle boot event: \${e.message}")
+                if (BuildConfig.DEBUG) {
+                    Log.e("BootReceiver", "Failed to handle boot event: \${e.message}")
+                }
             }
         }
     }
