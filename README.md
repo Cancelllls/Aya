@@ -1,16 +1,16 @@
-<div align="center">
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.x-blue?style=flat-square&logo=flutter" alt="Flutter">
+  <img src="https://img.shields.io/badge/Kotlin-Native-purple?style=flat-square&logo=kotlin" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Platform-Android%207–16-brightgreen?style=flat-square&logo=android" alt="Android 7–16">
+  <img src="https://img.shields.io/badge/Platform-iOS-lightgrey?style=flat-square&logo=apple" alt="iOS">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT">
+</p>
 
-<img src="https://img.shields.io/badge/Flutter-3.x-blue?style=flat-square&logo=flutter" alt="Flutter">
-<img src="https://img.shields.io/badge/Kotlin-Native-purple?style=flat-square&logo=kotlin" alt="Kotlin">
-<img src="https://img.shields.io/badge/Platform-Android%207–16-brightgreen?style=flat-square&logo=android" alt="Android 7–16">
-<img src="https://img.shields.io/badge/Platform-iOS-lightgrey?style=flat-square&logo=apple" alt="iOS">
-<img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT">
-
-# Aya — Islamic Companion App
-
-**Quran · Hadith · Prayer Times · Adhan · Azkar · Qibla · Tracker**
-
-[Download Latest](https://github.com/Cancelllls/Aya/releases) · Android · iOS (BrowserStack)
+<h1 align="center">Aya — Islamic Companion App</h1>
+<p align="center"><strong>Quran · Hadith · Prayer Times · Adhan · Azkar · Qibla · Tracker</strong></p>
+<p align="center">
+  <a href="https://github.com/Cancelllls/Aya/releases">Download Latest</a> · Android · iOS (BrowserStack)
+</p>
 
 ---
 
@@ -213,10 +213,5 @@ flutter build ios --release --no-codesign
 
 MIT — see [LICENSE](LICENSE).
 
-<div align="center">
-
-**بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ**
-
-Made with 🤍 for the Muslim community
-
-</div>
+<p align="center"><strong>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</strong></p>
+<p align="center">Made with 🤍 for the Muslim community</p>
