@@ -3,12 +3,11 @@ package com.quran.aya
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == "android.intent.action.QUICKBOOT_POWERON") {
-            if (BuildConfig.DEBUG) {
+            if (false) {
                 Log.d("BootReceiver", "Device rebooted, need to reschedule prayers.")
             }
             
@@ -28,7 +27,7 @@ class BootReceiver : BroadcastReceiver() {
                     context.startActivity(it)
                 }
             } catch (e: Exception) {
-                if (BuildConfig.DEBUG) {
+                if (false) {
                     Log.e("BootReceiver", "Failed to handle boot event: \${e.message}")
                 }
             }

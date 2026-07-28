@@ -6,11 +6,10 @@ import android.content.Intent
 import android.os.PowerManager
 import android.media.MediaPlayer
 import android.media.AudioAttributes
-import android.util.Log
 
 class AdhanBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (BuildConfig.DEBUG) {
+        if (false) {
             Log.d("AdhanReceiver", "Adhan Alarm Triggered!")
         }
         
