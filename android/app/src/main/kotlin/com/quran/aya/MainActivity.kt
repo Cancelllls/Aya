@@ -351,6 +351,7 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
         // The notification channel's Importance.max + fullScreenIntent + alarm audio
         // usage already ensures the device wakes and plays sound.
         alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
             timestamp,
             pendingIntent
         )
