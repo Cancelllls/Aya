@@ -691,29 +691,29 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen>
         final aDl = s['_dl_ara'] == true; final eDl = s['_dl_eng'] == true;
         return Card(color: theme.cardColor, margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child: Padding(padding: const EdgeInsets.all(14), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFFE5C158).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.menu_book, color: Color(0xFFE5C158), size: 20)),
               const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(b.nameEn, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 Text(b.nameAr, style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6))),
               ])),
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(child: aOk ? _chip(TranslationService.isArabic ? 'العربية ✓' : 'Arabic ✓') :
+              Flexible(child: aOk ? _chip(TranslationService.isArabic ? 'العربية ✓' : 'Arabic ✓') :
                 aDl ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158))) :
                 OutlinedButton.icon(icon: const Icon(Icons.download, size: 14), label: Text(TranslationService.isArabic ? 'عربي' : 'Arabic', style: const TextStyle(fontSize: 11)),
                   onPressed: () => _downloadHadith(b.id, 'ara'))),
               const SizedBox(width: 8),
-              Expanded(child: eOk ? _chip('English ✓') :
+              Flexible(child: eOk ? _chip('English ✓') :
                 eDl ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158))) :
                 OutlinedButton.icon(icon: const Icon(Icons.download, size: 14), label: const Text('English', style: TextStyle(fontSize: 11)),
                   onPressed: () => _downloadHadith(b.id, 'eng'))),
             ]),
-            if (aOk || eOk) Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [
+            if (aOk || eOk) Padding(padding: const EdgeInsets.only(top: 8), child: Wrap(spacing: 8, children: [
               if (aOk) TextButton.icon(icon: const Icon(Icons.delete_outline, size: 14, color: Colors.redAccent),
                 label: Text(TranslationService.isArabic ? 'حذف العربي' : 'Delete AR', style: const TextStyle(fontSize: 11, color: Colors.redAccent)),
                 onPressed: () => _deleteHadith(b.id, 'ara')),
