@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../data/reciters_data.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/quran_models.dart';
@@ -8,17 +10,23 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/quran_download_service.dart';
 import '../models/offline_surahs.dart';
+import '../services/database_service.dart';
+import 'hadith_screen.dart';
 
 class QuranDownloadScreen extends StatefulWidget {
   final StorageService storage;
+  final int initialTab;
 
-  const QuranDownloadScreen({super.key, required this.storage});
+  const QuranDownloadScreen({super.key, required this.storage, this.initialTab = 0});
 
   @override
   State<QuranDownloadScreen> createState() => _QuranDownloadScreenState();
 }
 
-class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
+class _QuranDownloadScreenState extends State<QuranDownloadScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  Map<String, Map<String, bool>> _hadithStates = {};
   List<Surah> _surahList = [];
   bool _isLoadingList = true;
   double _totalSpaceMB = 0.0;
@@ -27,6 +35,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
     _reciter = widget.storage.getString(
       'default_reciter',
       defaultValue: 'ar.alafasy',
@@ -39,8 +48,15 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     QuranDownloadService.instance.removeListener(_onDownloadServiceUpdate);
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadHadithStates();
   }
 
   void _onDownloadServiceUpdate() {
@@ -157,12 +173,25 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFFE5C158),
+          labelColor: const Color(0xFFE5C158),
+          unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+          tabs: [
+            Tab(text: TranslationService.isArabic ? 'تلاوات' : 'Recitations'),
+            Tab(text: TranslationService.isArabic ? 'الحديث' : 'Hadith'),
+          ],
+        ),
       ),
       body: _isLoadingList
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFFE5C158)),
             )
-          : ListView.builder(
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                ListView.builder(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: _surahList.length + 2,
@@ -489,6 +518,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                 );
               },
             ),
+            _buildHadithTab(theme),
+          ],
+        ),
     );
   }
 
@@ -603,6 +635,101 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       );
     }
   }
+
+  Future<void> _loadHadithStates() async {
+    final db = await DatabaseService.getInstance();
+    final states = <String, Map<String, bool>>{};
+    for (final book in hadithBooks) {
+      states[book.id] = {
+        'ara': await db.isHadithBookDownloaded(book.id, 'ara'),
+        'eng': await db.isHadithBookDownloaded(book.id, 'eng'),
+      };
+    }
+    if (mounted) setState(() => _hadithStates = states);
+  }
+
+  Future<void> _downloadHadith(String bookId, String lang) async {
+    setState(() { _hadithStates[bookId] ??= {}; _hadithStates[bookId]!['_dl_$lang'] = true; });
+    try {
+      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$lang-$bookId.min.json';
+      final res = await http.get(Uri.parse(url));
+      if (res.statusCode == 200) {
+        final db = await DatabaseService.getInstance();
+        final hadiths = jsonDecode(res.body)['hadiths'] as List;
+        await db.insertHadithBook(bookId, lang, hadiths);
+        await _loadHadithStates();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(TranslationService.isArabic ? 'تم التحميل!' : 'Downloaded!'),
+          backgroundColor: const Color(0xFFE5C158)));
+      }
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(TranslationService.isArabic ? 'فشل التحميل' : 'Download failed'),
+        backgroundColor: Colors.redAccent));
+    }
+    if (mounted) setState(() => _hadithStates[bookId]?.remove('_dl_$lang'));
+  }
+
+  Future<void> _deleteHadith(String bookId, String lang) async {
+    final db = await DatabaseService.getInstance();
+    await db.deleteHadithBook(bookId, lang);
+    await _loadHadithStates();
+  }
+
+  Widget _buildHadithTab(ThemeData theme) {
+    if (_hadithStates.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFE5C158)));
+    }
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      itemCount: hadithBooks.length,
+      itemBuilder: (ctx, i) {
+        final b = hadithBooks[i];
+        final s = _hadithStates[b.id] ?? {};
+        final aOk = s['ara'] == true; final eOk = s['eng'] == true;
+        final aDl = s['_dl_ara'] == true; final eDl = s['_dl_eng'] == true;
+        return Card(color: theme.cardColor, margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFFE5C158).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.menu_book, color: Color(0xFFE5C158), size: 20)),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(b.nameEn, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(b.nameAr, style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6))),
+              ])),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: aOk ? _chip(TranslationService.isArabic ? 'العربية ✓' : 'Arabic ✓') :
+                aDl ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158))) :
+                OutlinedButton.icon(icon: const Icon(Icons.download, size: 14), label: Text(TranslationService.isArabic ? 'عربي' : 'Arabic', style: const TextStyle(fontSize: 11)),
+                  onPressed: () => _downloadHadith(b.id, 'ara'))),
+              const SizedBox(width: 8),
+              Expanded(child: eOk ? _chip('English ✓') :
+                eDl ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158))) :
+                OutlinedButton.icon(icon: const Icon(Icons.download, size: 14), label: const Text('English', style: TextStyle(fontSize: 11)),
+                  onPressed: () => _downloadHadith(b.id, 'eng'))),
+            ]),
+            if (aOk || eOk) Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [
+              if (aOk) TextButton.icon(icon: const Icon(Icons.delete_outline, size: 14, color: Colors.redAccent),
+                label: Text(TranslationService.isArabic ? 'حذف العربي' : 'Delete AR', style: const TextStyle(fontSize: 11, color: Colors.redAccent)),
+                onPressed: () => _deleteHadith(b.id, 'ara')),
+              if (eOk) TextButton.icon(icon: const Icon(Icons.delete_outline, size: 14, color: Colors.redAccent),
+                label: Text(TranslationService.isArabic ? 'حذف الإنجليزي' : 'Delete EN', style: const TextStyle(fontSize: 11, color: Colors.redAccent)),
+                onPressed: () => _deleteHadith(b.id, 'eng')),
+            ])),
+          ])));
+      });
+  }
+
+  Widget _chip(String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.15), borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4))),
+    child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))));
 }
 
 // ─── Tafsir Picker Bottom Sheet ───────────────────────────────────────────────
@@ -933,6 +1060,15 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
   List<Map<String, String>> _allReciters = [];
   bool _loading = true;
   String? _downloading;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+
+  List<Map<String, String>> get _filtered => _query.isEmpty ? _allReciters
+      : _allReciters.where((r) =>
+          (r['nameAr']?.toLowerCase().contains(_query) ?? false) ||
+          (r['nameEn']?.toLowerCase().contains(_query) ?? false) ||
+          (r['quraaAr']?.toLowerCase().contains(_query) ?? false) ||
+          (r['quraaEn']?.toLowerCase().contains(_query) ?? false)).toList();
 
   @override
   void initState() {
@@ -1070,7 +1206,26 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v.toLowerCase()),
+              decoration: InputDecoration(
+                hintText: isAr ? 'ابحث عن قارئ...' : 'Search reciters...',
+                prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFFE5C158)),
+                suffixIcon: _query.isNotEmpty ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () { _searchCtrl.clear(); setState(() => _query = ''); },
+                ) : null,
+                filled: true, fillColor: theme.cardColor,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             isAr ? "اختر مقرئاً للتحميل" : "Choose a Reciter to Download",
             style: const TextStyle(
@@ -1100,9 +1255,9 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.zero,
-                itemCount: _allReciters.length,
+                itemCount: _filtered.length,
                 itemBuilder: (context, index) {
-                  final reciter = _allReciters[index];
+                  final reciter = _filtered[index];
                   final rId = reciter['id']!;
                   final rName = isAr ? reciter['nameAr']! : reciter['nameEn']!;
                   final rQuraa = isAr

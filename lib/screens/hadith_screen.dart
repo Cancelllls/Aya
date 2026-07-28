@@ -12,6 +12,7 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
 import 'hadith_explanation_screen.dart';
+import 'quran_download_screen.dart';
 
 class HadithBook {
   final String id;
@@ -250,48 +251,6 @@ class _HadithScreenState extends State<HadithScreen> {
           _isLoading = false;
         });
       }
-    }
-  }
-
-  Future<void> _downloadEntireBook() async {
-    setState(() => _isLoading = true);
-    final bookId = _selectedBook.id;
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final url =
-          'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$_displayLang-$bookId.min.json';
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        final hadiths = decoded['hadiths'] as List<dynamic>;
-        final db = await DatabaseService.getInstance();
-        await db.insertHadithBook(bookId, _displayLang, hadiths);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.isArabic
-                  ? "تم تحميل الكتاب كاملاً بنجاح!"
-                  : "Book downloaded successfully!",
-            ),
-            backgroundColor: const Color(0xFFE5C158),
-          ),
-        );
-        await _loadSelectedBookData();
-      } else {
-        throw Exception('Failed to download');
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "فشل تحميل الكتاب. حاول مجدداً."
-                : "Download failed. Try again.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
     }
   }
 
@@ -713,9 +672,12 @@ class _HadithScreenState extends State<HadithScreen> {
                             color: Color(0xFFE5C158),
                           ),
                           tooltip: TranslationService.isArabic
-                              ? "تحميل لـ $_displayLang"
-                              : "Download $_displayLang",
-                          onPressed: _downloadEntireBook,
+                              ? "إدارة التحميلات"
+                              : "Manage Downloads",
+                          onPressed: () => Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => QuranDownloadScreen(
+                              storage: widget.storage, initialTab: 1,
+                            ))),
                         )
                       else
                         Tooltip(
