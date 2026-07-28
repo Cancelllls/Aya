@@ -902,7 +902,7 @@ class NotificationService {
               : 'Read your morning Adhkar to start your day with blessing.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.alarmClock,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_morning',
         );
@@ -945,7 +945,7 @@ class NotificationService {
               : 'It is time for evening Adhkar for peace and protection.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.alarmClock,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_evening',
         );
@@ -1014,7 +1014,7 @@ class NotificationService {
             body: verseBody,
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.alarmClock,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
             payload: versePayload,
           );
         } catch (_) {

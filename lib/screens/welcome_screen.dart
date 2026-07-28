@@ -685,7 +685,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
             const SizedBox(width: 8),
             isGranted
-                ? const Icon(Icons.check_circle, color: Colors.green)
+                ? GestureDetector(
+                    onTap: onRequest,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                        const SizedBox(width: 6),
+                        Text(
+                          TranslationService.isArabic ? "إدارة" : "Manage",
+                          style: TextStyle(
+                            color: theme.primaryColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
                 : TextButton(
                     style: TextButton.styleFrom(
                       foregroundColor: theme.primaryColor,
