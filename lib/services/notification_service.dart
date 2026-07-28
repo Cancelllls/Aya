@@ -20,7 +20,6 @@ import 'offline_prayer_service.dart';
 void notificationTapBackground(
   NotificationResponse notificationResponse,
 ) async {
-  DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   if (notificationResponse.actionId == 'action_prayed' ||
       notificationResponse.actionId == 'action_missed') {
