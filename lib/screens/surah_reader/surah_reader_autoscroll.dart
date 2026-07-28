@@ -140,7 +140,18 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
     AudioPlayState playState,
   ) {
     final double safeBottom = MediaQuery.of(context).padding.bottom;
-    final double bottomOffset = 16.0 + safeBottom;
+    final String bottomNavbarStyle = widget.storage.getString(
+      'bottom_navbar_style',
+      defaultValue: 'floating',
+    );
+    final double navPillOffset = bottomNavbarStyle == 'floating'
+        ? kBottomNavigationBarHeight + 16.0
+        : 8.0;
+    // Reserve room for the audio player overlay when one is active
+    final bool audioActive =
+        AudioManager.instance.playState.value.title.isNotEmpty;
+    final double audioPlayerGap = audioActive ? 60.0 : 0.0;
+    final double bottomOffset = 16.0 + safeBottom + navPillOffset + audioPlayerGap;
 
     final quranScriptType = widget.storage.getString(
       'quran_script_type',
