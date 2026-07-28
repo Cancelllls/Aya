@@ -3,15 +3,14 @@
 <img src="https://img.shields.io/badge/Flutter-3.x-blue?style=flat-square&logo=flutter" alt="Flutter">
 <img src="https://img.shields.io/badge/Kotlin-Native-purple?style=flat-square&logo=kotlin" alt="Kotlin">
 <img src="https://img.shields.io/badge/Platform-Android%207–16-brightgreen?style=flat-square&logo=android" alt="Android 7–16">
+<img src="https://img.shields.io/badge/Platform-iOS-lightgrey?style=flat-square&logo=apple" alt="iOS">
 <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT">
 
 # Aya — Islamic Companion App
 
 **Quran · Hadith · Prayer Times · Adhan · Azkar · Qibla · Tracker**
 
-[Download APK](https://github.com/Cancelllls/Islamic-App/raw/main/app-release.apk)
-
-</div>
+[Download Latest](https://github.com/Cancelllls/Aya/releases) · Android · iOS (BrowserStack)
 
 ---
 
@@ -197,13 +196,16 @@ android/app/src/main/kotlin/com/quran/aya/
 ## Build
 
 ```bash
-git clone https://github.com/Cancelllls/Islamic-App.git
-cd Islamic-App
+git clone https://github.com/Cancelllls/Aya.git
+cd Aya
 flutter pub get
-flutter build apk --release --target-platform=android-arm64
-```
 
-APK output: `build/app/outputs/flutter-apk/app-release.apk`
+# Android
+flutter build apk --release --target-platform=android-arm64
+
+# iOS
+flutter build ios --release --no-codesign
+```
 
 ---
 
