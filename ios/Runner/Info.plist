@@ -70,5 +70,10 @@
 	<string>This app requires access to your location to calculate accurate prayer times.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app requires access to your location to calculate accurate prayer times.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
