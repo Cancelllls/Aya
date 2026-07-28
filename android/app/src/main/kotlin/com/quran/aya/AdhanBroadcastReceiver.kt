@@ -9,10 +9,7 @@ import android.media.AudioAttributes
 
 class AdhanBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (false) {
-            Log.d("AdhanReceiver", "Adhan Alarm Triggered!")
-        }
-        
+
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
