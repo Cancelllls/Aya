@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/azkar_data.dart';
@@ -24,6 +25,7 @@ class _AzkarScreenState extends State<AzkarScreen>
   final Map<String, int> _countsCache = {};
   bool _showTranslation = true;
   bool _showTransliteration = true;
+  List<AzkarItem> _myAzkar = [];
 
   @override
   void initState() {
@@ -37,7 +39,7 @@ class _AzkarScreenState extends State<AzkarScreen>
       defaultValue: !TranslationService.isArabic,
     );
     _tabController = TabController(
-      length: 5,
+      length: 11,
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
@@ -47,6 +49,7 @@ class _AzkarScreenState extends State<AzkarScreen>
       }
     });
     _initializeCounts();
+    _loadMyAzkar();
   }
 
   @override
@@ -90,6 +93,173 @@ class _AzkarScreenState extends State<AzkarScreen>
         defaultValue: item.count,
       );
     }
+    for (var item in AzkarData.sleepWaking) {
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
+    }
+    for (var item in AzkarData.salahSpecific) {
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
+    }
+    for (var item in AzkarData.lifeEvents) {
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
+    }
+    for (var item in AzkarData.protectionRuqyah) {
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
+    }
+    for (var item in AzkarData.forgivenessTawbah) {
+      _countsCache[item.id] = widget.storage.getInt(
+        'azkar_count_${item.id}',
+        defaultValue: item.count,
+      );
+    }
+  }
+
+  void _loadMyAzkar() {
+    final raw = widget.storage.getString('my_azkar_json', defaultValue: '[]');
+    try {
+      final List<dynamic> decoded = jsonDecode(raw);
+      _myAzkar = decoded.map((e) => AzkarItem(
+        id: e['id'] as String,
+        arabic: e['arabic'] as String,
+        transliteration: e['transliteration'] as String? ?? '',
+        translation: e['translation'] as String? ?? '',
+        count: e['count'] as int? ?? 1,
+        reference: e['reference'] as String? ?? '',
+      )).toList();
+    } catch (_) {
+      _myAzkar = [];
+    }
+  }
+
+  void _saveMyAzkar() {
+    final data = _myAzkar.map((e) => {
+      'id': e.id,
+      'arabic': e.arabic,
+      'transliteration': e.transliteration,
+      'translation': e.translation,
+      'count': e.count,
+      'reference': e.reference,
+    }).toList();
+    widget.storage.setString('my_azkar_json', jsonEncode(data));
+  }
+
+  void _addMyAzkar() {
+    final arabicCtrl = TextEditingController();
+    final translitCtrl = TextEditingController();
+    final translationCtrl = TextEditingController();
+    final countCtrl = TextEditingController(text: '1');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationService.isArabic ? "أضف ذكر" : "Add Dhikr"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: arabicCtrl,
+                textDirection: TextDirection.rtl,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic ? "النص العربي" : "Arabic Text",
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: translitCtrl,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic ? "النطق (اختياري)" : "Transliteration (optional)",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: translationCtrl,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic ? "الترجمة (اختياري)" : "Translation (optional)",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: countCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic ? "عدد المرات" : "Count",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(TranslationService.isArabic ? "إلغاء" : "Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (arabicCtrl.text.trim().isEmpty) return;
+              final id = 'my_${DateTime.now().millisecondsSinceEpoch}';
+              setState(() {
+                _myAzkar.add(AzkarItem(
+                  id: id,
+                  arabic: arabicCtrl.text.trim(),
+                  transliteration: translitCtrl.text.trim(),
+                  translation: translationCtrl.text.trim(),
+                  count: int.tryParse(countCtrl.text) ?? 1,
+                  reference: '',
+                ));
+              });
+              _saveMyAzkar();
+              Navigator.pop(ctx);
+            },
+            child: Text(TranslationService.isArabic ? "إضافة" : "Add"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteMyAzkar(int index) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationService.isArabic ? "حذف الذكر" : "Delete Dhikr"),
+        content: Text(TranslationService.isArabic
+            ? "هل أنت متأكد من حذف هذا الذكر؟"
+            : "Are you sure you want to delete this dhikr?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(TranslationService.isArabic ? "إلغاء" : "Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () {
+              setState(() {
+                _myAzkar.removeAt(index);
+              });
+              _saveMyAzkar();
+              Navigator.pop(ctx);
+            },
+            child: Text(TranslationService.isArabic ? "حذف" : "Delete"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _decrementCount(String id, int originalMax) {
@@ -323,6 +493,126 @@ class _AzkarScreenState extends State<AzkarScreen>
                     ],
                   ),
                 ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        TranslationService.isArabic ? "النوم" : "Sleep",
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.sleepWaking),
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: _tabController.index == 5
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        TranslationService.isArabic ? "الصلاة" : "Salah",
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.salahSpecific),
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: _tabController.index == 6
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        TranslationService.isArabic ? "أحداث" : "Life",
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.lifeEvents),
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: _tabController.index == 7
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        TranslationService.isArabic ? "رقية" : "Protection",
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.protectionRuqyah),
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: _tabController.index == 8
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        TranslationService.isArabic ? "توبة" : "Forgiveness",
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getTabProgress(AzkarData.forgivenessTawbah),
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: _tabController.index == 9
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        TranslationService.isArabic ? "أذكاري" : "My Azkar",
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "${_myAzkar.length}",
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: _tabController.index == 10
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -338,6 +628,12 @@ class _AzkarScreenState extends State<AzkarScreen>
                 _buildAzkarList(AzkarData.postPrayer, theme),
                 _buildAzkarList(AzkarData.daily, theme),
                 _buildNamesOfAllahGrid(theme),
+                _buildAzkarList(AzkarData.sleepWaking, theme),
+                _buildAzkarList(AzkarData.salahSpecific, theme),
+                _buildAzkarList(AzkarData.lifeEvents, theme),
+                _buildAzkarList(AzkarData.protectionRuqyah, theme),
+                _buildAzkarList(AzkarData.forgivenessTawbah, theme),
+                _buildMyAzkarList(theme),
               ],
             ),
           ),
@@ -636,6 +932,153 @@ class _AzkarScreenState extends State<AzkarScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMyAzkarList(ThemeData theme) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (_myAzkar.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() => _myAzkar.clear());
+                    _saveMyAzkar();
+                  },
+                  icon: const Icon(Icons.delete_sweep, size: 16, color: Colors.redAccent),
+                  label: Text(
+                    TranslationService.isArabic ? "مسح الكل" : "Clear All",
+                    style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else const SizedBox.shrink(),
+              TextButton.icon(
+                onPressed: _addMyAzkar,
+                icon: const Icon(Icons.add_circle, size: 16, color: Color(0xFFE5C158)),
+                label: Text(
+                  TranslationService.isArabic ? "أضف ذكر" : "Add Dhikr",
+                  style: const TextStyle(color: Color(0xFFE5C158), fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_myAzkar.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bookmark_add_outlined, size: 64, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.2)),
+                  const SizedBox(height: 16),
+                  Text(
+                    TranslationService.isArabic ? "لا يوجد أذكار مخصصة" : "No custom adhkar yet",
+                    style: TextStyle(fontSize: 16, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    TranslationService.isArabic ? "اضغط على '+' لإضافة ذكرك الخاص" : "Tap '+' to add your own dhikr",
+                    style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3)),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 85),
+              itemCount: _myAzkar.length,
+              itemBuilder: (context, index) {
+                final item = _myAzkar[index];
+                final currentCount = _countsCache[item.id] ?? item.count;
+                final isDone = currentCount == 0;
+
+                return Card(
+                  color: theme.cardColor,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: isDone
+                          ? const Color(0xFF10B981).withOpacity(0.5)
+                          : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04),
+                      width: isDone ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.arabic,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Amiri', height: 2.0),
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => _deleteMyAzkar(index),
+                              child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent.withOpacity(0.6)),
+                            ),
+                          ],
+                        ),
+                        if (_showTransliteration && item.transliteration.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(item.transliteration, style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontStyle: FontStyle.italic)),
+                        ],
+                        if (_showTranslation && item.translation.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(item.translation, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6))),
+                        ],
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "${TranslationService.isArabic ? 'العدد' : 'Count'}: $currentCount / ${item.count}",
+                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                            ),
+                            GestureDetector(
+                              onTap: isDone ? null : () => _decrementCount(item.id, item.count),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isDone ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFE5C158).withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  isDone
+                                      ? (TranslationService.isArabic ? "تم" : "✓ Done")
+                                      : (TranslationService.isArabic ? "اضغط" : "Tap"),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDone ? const Color(0xFF10B981) : const Color(0xFFE5C158),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
