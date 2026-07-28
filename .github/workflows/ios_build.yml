@@ -42,13 +42,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for i in 1 2 3 4 5 6; do
+          for i in $(seq 1 20); do
             TAG=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq -r '.[0].tagName' 2>/dev/null || echo '')
             if [ -n "$TAG" ] && [ "$TAG" != "null" ]; then
               gh release upload "$TAG" build/ios/iphoneos/ios-release.ipa --clobber
               exit 0
             fi
-            echo "Waiting for APK release... ($i/6)"
+            echo "Waiting for APK release... ($i/20)"
             sleep 30
           done
-          echo "No release found after 3 min — uploaded as artifact only"
+          echo "No release found after 10 min — uploaded as artifact only"
