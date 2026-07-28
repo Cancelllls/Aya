@@ -1030,7 +1030,7 @@ class _MainScaffoldState extends State<MainScaffold>
                     bottomPosition: bottomNavbarStyle == 'floating'
                         ? MediaQuery.of(context).padding.bottom +
                               kBottomNavigationBarHeight +
-                              16.0
+                              24.0
                         : kBottomNavigationBarHeight +
                               MediaQuery.of(context).padding.bottom +
                               8.0,
