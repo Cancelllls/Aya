@@ -145,8 +145,7 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
       defaultValue: 'floating',
     );
     final double navPillOffset = bottomNavbarStyle == 'floating'
-        ? 16.0 + kBottomNavigationBarHeight +
-            (Platform.isIOS ? 8.0 : 0.0)
+        ? 16.0 + kBottomNavigationBarHeight
         : 8.0;
     // Reserve room for the audio player overlay when one is active
     final bool audioActive =
