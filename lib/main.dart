@@ -46,8 +46,10 @@ void main() async {
   // Migrate huge caches from SharedPreferences to Files to fix startup memory lag
   await ApiService.migrateCacheToFiles();
 
-  // Initialize Android Alarm Manager
-  await AndroidAlarmManager.initialize();
+  // Initialize Android Alarm Manager (Android only)
+  try {
+    await AndroidAlarmManager.initialize();
+  } catch (_) {}
 
   final storage = await StorageService.getInstance();
   TranslationService.setLanguage(

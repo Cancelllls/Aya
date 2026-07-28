@@ -47,7 +47,9 @@ void notificationTapBackground(
       await plugin.cancel(id: notificationResponse.id!);
     }
   } else if (notificationResponse.actionId == 'action_stop_adhan') {
-    const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
+    try {
+      const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
+    } catch (_) {}
   }
 }
 
@@ -159,7 +161,9 @@ class NotificationService {
   ];
 
   static void stopActiveAthan() {
-    const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
+    try {
+      const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
+    } catch (_) {}
   }
 
   Future<void> scheduleHijriEventReminder({
