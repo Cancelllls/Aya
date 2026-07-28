@@ -3,10 +3,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:geolocator/geolocator.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
-import '../services/notification_service.dart';
 import 'welcome_screen.dart';
 import '../main.dart';
 import '../widgets/islamic_logo_painter.dart';
@@ -60,14 +58,6 @@ class _SplashScreenState extends State<SplashScreen>
     Future.delayed(const Duration(milliseconds: 2800), () async {
       if (!mounted) return;
 
-      // Check permissions
-      final gpsPerm = await Geolocator.checkPermission();
-      final gpsOk =
-          gpsPerm == LocationPermission.always ||
-          gpsPerm == LocationPermission.whileInUse;
-      final notifOk = await NotificationService().checkPermissions();
-
-      final allGranted = gpsOk && notifOk;
       final isFirstTime = widget.storage.getBool(
         'first_time_v2',
         defaultValue: true,

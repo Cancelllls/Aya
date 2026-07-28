@@ -303,7 +303,7 @@ class StorageService {
   }
 
   Future<bool> remove(String key) async {
-    return await prefs.remove(key) ?? false;
+    return await prefs.remove(key);
   }
 
   // --- Last Read Position ---

@@ -68,60 +68,13 @@ class _AzkarScreenState extends State<AzkarScreen>
   }
 
   void _initializeCounts() {
-    // Set up standard counts for each item, loading from persistence if available
-    for (var item in AzkarData.morning) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.evening) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.postPrayer) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.daily) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.sleepWaking) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.salahSpecific) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.lifeEvents) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.protectionRuqyah) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
-    }
-    for (var item in AzkarData.forgivenessTawbah) {
-      _countsCache[item.id] = widget.storage.getInt(
-        'azkar_count_${item.id}',
-        defaultValue: item.count,
-      );
+    for (final list in AzkarData.allCategories) {
+      for (var item in list) {
+        _countsCache[item.id] = widget.storage.getInt(
+          'azkar_count_${item.id}',
+          defaultValue: item.count,
+        );
+      }
     }
   }
 

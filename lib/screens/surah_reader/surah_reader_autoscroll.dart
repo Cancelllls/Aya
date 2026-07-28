@@ -151,7 +151,7 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
     final bool audioActive =
         AudioManager.instance.playState.value.title.isNotEmpty;
     final double audioPlayerGap = audioActive ? 60.0 : 0.0;
-    final double bottomOffset = 16.0 + safeBottom + navPillOffset + audioPlayerGap;
+    final double bottomOffset = safeBottom + navPillOffset + audioPlayerGap;
 
     final quranScriptType = widget.storage.getString(
       'quran_script_type',

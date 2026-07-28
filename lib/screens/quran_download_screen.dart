@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import '../data/reciters_data.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/quran_models.dart';
@@ -10,8 +8,6 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/quran_download_service.dart';
 import '../models/offline_surahs.dart';
-import '../services/database_service.dart';
-import 'hadith_screen.dart';
 
 class QuranDownloadScreen extends StatefulWidget {
   final StorageService storage;
@@ -27,8 +23,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   bool _isLoadingList = true;
   double _totalSpaceMB = 0.0;
   late String _reciter;
-  late String _tafsirEdition;
-  Map<String, Map<String, bool>> _hadithDownloadedStates = {};
 
   @override
   void initState() {
@@ -37,12 +31,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       'default_reciter',
       defaultValue: 'ar.alafasy',
     );
-    _tafsirEdition = widget.storage.getString(
-      'default_tafsir',
-      defaultValue: 'ar.muyassar',
-    );
     _loadSurahList();
-    _checkHadithStates();
     QuranDownloadService.instance.initStates(_reciter);
     QuranDownloadService.instance.calculateCounts(widget.storage);
     QuranDownloadService.instance.addListener(_onDownloadServiceUpdate);
@@ -58,88 +47,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     if (mounted) {
       unawaited(_updateTotalSpace());
       setState(() {});
-    }
-  }
-
-  Future<void> _checkHadithStates() async {
-    final Map<String, Map<String, bool>> states = {};
-    for (final book in hadithBooks) {
-      states[book.id] = await _getHadithBookDownloadState(book.id);
-    }
-    if (mounted) {
-      setState(() {
-        _hadithDownloadedStates = states;
-      });
-    }
-  }
-
-  Future<Map<String, bool>> _getHadithBookDownloadState(String bookId) async {
-    final db = await DatabaseService.getInstance();
-    return {
-      'ara': await db.isHadithBookDownloaded(bookId, 'ara'),
-      'eng': await db.isHadithBookDownloaded(bookId, 'eng'),
-    };
-  }
-
-  Future<void> _deleteHadithBook(String bookId, String lang) async {
-    try {
-      final db = await DatabaseService.getInstance();
-      await db.deleteHadithBook(bookId, lang);
-      await _checkHadithStates();
-    } catch (_) {}
-  }
-
-  Future<void> _downloadHadithBook(String bookId, String lang) async {
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "بدء تحميل كتاب الحديث..."
-                : "Starting Hadith book download...",
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-
-      final url =
-          'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$lang-$bookId.min.json';
-      final res = await http.get(Uri.parse(url));
-
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        final hadiths = decoded['hadiths'] as List<dynamic>;
-
-        final db = await DatabaseService.getInstance();
-        await db.insertHadithBook(bookId, lang, hadiths);
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.isArabic
-                  ? "تم التحميل بنجاح!"
-                  : "Downloaded successfully!",
-            ),
-            backgroundColor: const Color(0xFFE5C158),
-          ),
-        );
-        await _checkHadithStates();
-      } else {
-        throw Exception('Download failed');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "فشل التحميل. حاول مجدداً."
-                : "Download failed. Try again.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
     }
   }
 

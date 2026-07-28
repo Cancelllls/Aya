@@ -44,8 +44,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
   String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-amiri';
-  String _quranScriptType = 'hafs';
-  String _reciter = 'ar.alafasy';
   String _tafsirEdition = 'ar.muyassar';
 
   // Add calculation settings
@@ -78,9 +76,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
-  final bool _isPreviewPlaying = false;
-  final bool _isPreAdhanPreviewPlaying = false;
-
   @override
   void initState() {
     super.initState();
@@ -97,14 +92,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     _quranFont = widget.storage.getString(
       'quran_font',
       defaultValue: 'font-amiri',
-    );
-    _quranScriptType = widget.storage.getString(
-      'quran_script_type',
-      defaultValue: 'hafs',
-    );
-    _reciter = widget.storage.getString(
-      'default_reciter',
-      defaultValue: 'ar.alafasy',
     );
     _tafsirEdition = widget.storage.getString(
       'default_tafsir',
@@ -565,15 +552,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
   }
 
-  Future<void> _changeReciter(String? val) async {
-    if (val != null) {
-      setState(() {
-        _reciter = val;
-      });
-      await widget.storage.setString('default_reciter', val);
-      widget.onThemeChanged();
-    }
-  }
 
   Future<void> _changeTafsirEdition(String? val) async {
     if (val != null) {
@@ -741,7 +719,6 @@ class _SettingsScreenState extends State<SettingsScreen>
                 setState(() {
                   _themePreset = 'dark';
                   _quranFont = 'font-amiri';
-                  _reciter = 'ar.alafasy';
                   _tafsirEdition = 'ar.muyassar';
                   _calcMethod = 2;
                   _asrMethod = 0;

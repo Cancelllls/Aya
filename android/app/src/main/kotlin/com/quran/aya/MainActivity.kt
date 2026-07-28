@@ -30,6 +30,7 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
     private var lastZ = 0.0f
+    private var adhanMediaPlayer: android.media.MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -256,86 +257,27 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                 }
                 "updateWidget" -> {
                     try {
-                        // 1. Update Prayer Widget
-                        val intent1 = Intent(context, AyaWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids1 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaWidgetProvider::class.java)
+                        val widgetProviders = arrayOf(
+                            AyaWidgetProvider::class.java,
+                            AyaVerseWidgetProvider::class.java,
+                            AyaDhikrWidgetProvider::class.java,
+                            AyaHadithWidgetProvider::class.java,
+                            AyaTasbihWidgetProvider::class.java,
+                            AyaHijriWidgetProvider::class.java,
+                            AyaNextPrayerWidgetProvider::class.java,
+                            AyaAsmaulHusnaWidgetProvider::class.java,
                         )
-                        intent1.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids1)
-                        context.sendBroadcast(intent1)
-
-                        // 2. Update Verse Widget
-                        val intent2 = Intent(context, AyaVerseWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        val appWidgetManager = AppWidgetManager.getInstance(context)
+                        for (provider in widgetProviders) {
+                            val intent = Intent(context, provider).apply {
+                                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                            }
+                            val ids = appWidgetManager.getAppWidgetIds(
+                                ComponentName(context, provider)
+                            )
+                            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                            context.sendBroadcast(intent)
                         }
-                        val ids2 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaVerseWidgetProvider::class.java)
-                        )
-                        intent2.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids2)
-                        context.sendBroadcast(intent2)
-
-                        // 3. Update Dhikr Widget
-                        val intent3 = Intent(context, AyaDhikrWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids3 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaDhikrWidgetProvider::class.java)
-                        )
-                        intent3.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids3)
-                        context.sendBroadcast(intent3)
-
-                        // 4. Update Hadith Widget
-                        val intent4 = Intent(context, AyaHadithWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids4 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaHadithWidgetProvider::class.java)
-                        )
-                        intent4.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids4)
-                        context.sendBroadcast(intent4)
-
-                        // 5. Update Tasbih Widget
-                        val intent5 = Intent(context, AyaTasbihWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids5 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaTasbihWidgetProvider::class.java)
-                        )
-                        intent5.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids5)
-                        context.sendBroadcast(intent5)
-
-                        // 6. Update Hijri Widget
-                        val intent6 = Intent(context, AyaHijriWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids6 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaHijriWidgetProvider::class.java)
-                        )
-                        intent6.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids6)
-                        context.sendBroadcast(intent6)
-
-                        // 7. Update Next Prayer Widget
-                        val intent7 = Intent(context, AyaNextPrayerWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids7 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaNextPrayerWidgetProvider::class.java)
-                        )
-                        intent7.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids7)
-                        context.sendBroadcast(intent7)
-
-                        // 8. Update Asma ul Husna Widget
-                        val intent8 = Intent(context, AyaAsmaulHusnaWidgetProvider::class.java).apply {
-                            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                        }
-                        val ids8 = AppWidgetManager.getInstance(context).getAppWidgetIds(
-                            ComponentName(context, AyaAsmaulHusnaWidgetProvider::class.java)
-                        )
-                        intent8.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids8)
-                        context.sendBroadcast(intent8)
-
                         result.success(true)
                     } catch (e: Exception) {
                         result.error("ERROR", e.message, null)
@@ -343,6 +285,10 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                 }
                 "getTimeZoneName" -> {
                     result.success(java.util.TimeZone.getDefault().id)
+                }
+                "stopAdhan" -> {
+                    stopAdhanAudio()
+                    result.success(true)
                 }
                 else -> {
                     result.notImplemented()
@@ -392,16 +338,22 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
         val intent = Intent(this, AdhanBroadcastReceiver::class.java).apply {
             putExtra("ALARM_ID", id)
         }
-        
+
         val pendingIntent = PendingIntent.getBroadcast(
-            this, 
-            id, 
-            intent, 
+            this,
+            id,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val alarmClockInfo = AlarmManager.AlarmClockInfo(timestamp, pendingIntent)
-        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        // Use setExactAndAllowWhileIdle instead of setAlarmClock
+        // to avoid hijacking the system clock tile.
+        // The notification channel's Importance.max + fullScreenIntent + alarm audio
+        // usage already ensures the device wakes and plays sound.
+        alarmManager.setExactAndAllowWhileIdle(
+            timestamp,
+            pendingIntent
+        )
     }
 
     private fun openOemAutoStartSettings() {
@@ -440,6 +392,14 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)
+        } catch (e: Exception) {}
+    }
+
+    private fun stopAdhanAudio() {
+        try {
+            adhanMediaPlayer?.stop()
+            adhanMediaPlayer?.release()
+            adhanMediaPlayer = null
         } catch (e: Exception) {}
     }
 }

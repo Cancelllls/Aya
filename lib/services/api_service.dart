@@ -2,11 +2,10 @@ import 'offline_prayer_service.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter/foundation.dart' show compute, debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
@@ -15,12 +14,6 @@ import 'database_service.dart';
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
 class ApiService {
-  static final http.Client _client = http.Client();
-
-  // Base URLs
-  static const String _quranBaseUrl =
-      'https://raw.githubusercontent.com/Cancelllls/Islamic-App/main/database';
-
   // ─── Prayer Times ────────────────────────────────────────────────────────
   static Future<void> cachePrayerTimes(String key, PrayerTimeData data) async {
     try {
@@ -82,10 +75,6 @@ class ApiService {
       print('Error reading cached prayer times: $e');
     }
     return null;
-  }
-
-  static dynamic _parseJson(String body) {
-    return jsonDecode(body);
   }
 
   static Future<PrayerTimeData> fetchPrayerTimes({
@@ -164,31 +153,6 @@ class ApiService {
     final db = await DatabaseService.getInstance();
     final data = await db.getSurahs();
     return data.map((e) => Surah.fromJson(e)).toList();
-  }
-
-  static Future<void> _injectTafsirIfCached(
-    int surahNumber,
-    List<Ayah> ayahs,
-    String tafsirEdition,
-  ) async {
-    try {
-      var tafsirRaw = await _getCachedString(
-        'cached_tafsir_${tafsirEdition}_$surahNumber',
-      );
-      if (tafsirRaw == null && tafsirEdition == 'ar.muyassar') {
-        // Fallback for old cache key
-        tafsirRaw = await _getCachedString('cached_tafsir_$surahNumber');
-      }
-      if (tafsirRaw != null && tafsirRaw.isNotEmpty) {
-        final decoded = jsonDecode(tafsirRaw);
-        final tafsirAyahs = decoded['data']['ayahs'] as List<dynamic>;
-        for (int i = 0; i < ayahs.length; i++) {
-          if (i < tafsirAyahs.length) {
-            ayahs[i].tafseer = tafsirAyahs[i]['text'] as String? ?? '';
-          }
-        }
-      }
-    } catch (_) {}
   }
 
   static Future<List<Ayah>> fetchSurahDetails(

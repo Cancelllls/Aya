@@ -79,7 +79,7 @@ extension SurahReaderData on _SurahReaderScreenState {
 
           // Set first dynamic reciter as default if none selected or if current is invalid
           final currentReciter =
-              widget.storage.getString('default_reciter') ?? '';
+              widget.storage.getString('default_reciter');
           if (!currentReciter.startsWith('mp3quran_server_') &&
               _dynamicReciters.isNotEmpty) {
             final moshaf = _dynamicReciters[0]['moshaf'] as List;

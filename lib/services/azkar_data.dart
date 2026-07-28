@@ -31,6 +31,12 @@ class NameOfAllah {
 }
 
 class AzkarData {
+  static List<List<AzkarItem>> get allCategories => [
+    morning, evening, postPrayer, daily,
+    sleepWaking, salahSpecific, lifeEvents,
+    protectionRuqyah, forgivenessTawbah,
+  ];
+
   static final List<AzkarItem> morning = [
     AzkarItem(
       id: "m1",

@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -16,7 +13,6 @@ import 'storage_service.dart';
 import 'api_service.dart';
 import 'translation_service.dart';
 import 'quran_verses.dart';
-import 'adhan_audio_service.dart';
 import 'database_service.dart';
 import 'offline_prayer_service.dart';
 
@@ -52,10 +48,7 @@ void notificationTapBackground(
       await plugin.cancel(id: notificationResponse.id!);
     }
   } else if (notificationResponse.actionId == 'action_stop_adhan') {
-    final sendPort = IsolateNameServer.lookupPortByName('adhan_stop_port');
-    if (sendPort != null) {
-      sendPort.send('stop');
-    }
+    const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
   }
 }
 
@@ -119,195 +112,6 @@ void backgroundPrayerTimesUpdateCallback() async {
   }
 }
 
-@pragma('vm:entry-point')
-@pragma('vm:entry-point')
-void backgroundPreAdhanCallback(int id) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    final storage = await StorageService.getInstance();
-    final alertMode = storage.getString(
-      'pre_adhan_alert_mode',
-      defaultValue: 'vibrate',
-    );
-    const platform = MethodChannel('com.quran.aya/system');
-
-    if (alertMode == 'silent' || alertMode == 'off') {
-      return;
-    }
-
-    // Vibration is now handled directly by AndroidNotificationDetails
-
-    if (alertMode == 'voice' || alertMode == 'vibrate_and_voice') {
-      final isAr = TranslationService.currentLanguage == 'ar';
-      final lang = isAr ? 'ar' : 'en';
-      final player = AudioPlayer();
-      await player.setAudioContext(
-        AudioContext(
-          android: const AudioContextAndroid(
-            usageType: AndroidUsageType.alarm,
-            contentType: AndroidContentType.sonification,
-            audioFocus: AndroidAudioFocus.gain,
-          ),
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-            options: {AVAudioSessionOptions.duckOthers},
-          ),
-        ),
-      );
-
-      final urls = AdhanAudioService.preAdhanVoiceUrls['standard'];
-      if (urls != null) {
-        final filename = urls[lang];
-        if (filename != null) {
-          await player.play(AssetSource('audio/adhan/$filename'));
-        }
-      }
-
-      final receivePort = ReceivePort();
-      IsolateNameServer.removePortNameMapping('adhan_stop_port');
-      IsolateNameServer.registerPortWithName(
-        receivePort.sendPort,
-        'adhan_stop_port',
-      );
-
-      receivePort.listen((message) async {
-        if (message == 'stop') {
-          await player.stop();
-          receivePort.close();
-          IsolateNameServer.removePortNameMapping('adhan_stop_port');
-        }
-      });
-
-      await player.onPlayerComplete.first;
-      receivePort.close();
-      IsolateNameServer.removePortNameMapping('adhan_stop_port');
-    }
-  } catch (e) {
-    // ignore: avoid_print
-    print('Error in backgroundPreAdhanCallback: $e');
-  }
-}
-
-@pragma('vm:entry-point')
-void backgroundAdhanCallback(int id) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    final storage = await StorageService.getInstance();
-    final adhanMode = storage.getString(
-      'adhan_alert_mode',
-      defaultValue: 'real_reciter',
-    );
-    const platform = MethodChannel('com.quran.aya/system');
-
-    // Vibration is now handled directly by AndroidNotificationDetails
-
-    if (adhanMode == 'real_reciter' || adhanMode == 'vibrate_and_voice') {
-      final prayerIndex = (id - 4000) % 10;
-      final isFajr = prayerIndex == 1;
-
-      final reciterSetting = isFajr ? 'fajr_adhan_reciter' : 'adhan_reciter';
-      final reciter = storage.getString(
-        reciterSetting,
-        defaultValue: isFajr ? 'mishary' : 'mishary',
-      );
-
-      String filename = '';
-
-      if (isFajr) {
-        filename =
-            AdhanAudioService.fajrReciterUrls[reciter] ??
-            AdhanAudioService.fajrReciterUrls['mishary']!;
-      } else {
-        filename =
-            AdhanAudioService.standardReciterUrls[reciter] ??
-            AdhanAudioService.standardReciterUrls['mishary']!;
-      }
-
-      final player = AudioPlayer();
-      await player.setAudioContext(
-        AudioContext(
-          android: const AudioContextAndroid(
-            usageType: AndroidUsageType.alarm,
-            contentType: AndroidContentType.sonification,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
-          ),
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-            options: {AVAudioSessionOptions.duckOthers},
-          ),
-        ),
-      );
-
-      final receivePort = ReceivePort();
-      IsolateNameServer.removePortNameMapping('adhan_stop_port');
-      IsolateNameServer.registerPortWithName(
-        receivePort.sendPort,
-        'adhan_stop_port',
-      );
-
-      final completer = Completer<void>();
-
-      receivePort.listen((message) {
-        if (message == 'stop') {
-          player.stop();
-          receivePort.close();
-          IsolateNameServer.removePortNameMapping('adhan_stop_port');
-          if (!completer.isCompleted) completer.complete();
-        }
-      });
-
-      player.onPlayerComplete.listen((_) {
-        receivePort.close();
-        IsolateNameServer.removePortNameMapping('adhan_stop_port');
-        if (!completer.isCompleted) completer.complete();
-      });
-
-      // Fail-safe: Also show an immediate notification in case zonedSchedule failed
-      final FlutterLocalNotificationsPlugin notificationsPlugin =
-          FlutterLocalNotificationsPlugin();
-      try {
-        const AndroidInitializationSettings initializationSettingsAndroid =
-            AndroidInitializationSettings('ic_notification');
-        const InitializationSettings initializationSettings =
-            InitializationSettings(android: initializationSettingsAndroid);
-        await notificationsPlugin.initialize(settings: initializationSettings);
-
-        await notificationsPlugin.show(
-          id: id,
-          title: 'حان وقت الصلاة',
-          body: 'الصلاة خير من النوم - اضغط لإيقاف الأذان',
-          notificationDetails: const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'adhan_v5_sound',
-              'Athan Alarms',
-              importance: Importance.max,
-              priority: Priority.high,
-              playSound: false,
-              enableVibration: true,
-              actions: [
-                AndroidNotificationAction(
-                  'action_stop_adhan',
-                  'إيقاف / Stop',
-                  showsUserInterface: false,
-                  cancelNotification: true,
-                ),
-              ],
-            ),
-          ),
-          payload: 'prayer_times',
-        );
-      } catch (_) {}
-
-      await player.play(AssetSource('audio/adhan/$filename'));
-
-      await completer.future;
-    }
-  } catch (e) {
-    // ignore: avoid_print
-    print('Error in backgroundAdhanCallback: $e');
-  }
-}
-
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -356,10 +160,7 @@ class NotificationService {
   ];
 
   static void stopActiveAthan() {
-    final sendPort = IsolateNameServer.lookupPortByName('adhan_stop_port');
-    if (sendPort != null) {
-      sendPort.send('stop');
-    }
+    const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
   }
 
   Future<void> scheduleHijriEventReminder({
@@ -387,7 +188,7 @@ class NotificationService {
         body: body,
         scheduledDate: tzDateTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: 'prayer_times',
       );
     } catch (_) {
@@ -654,11 +455,10 @@ class NotificationService {
                   : 'It is time for the $localizedName prayer.',
               scheduledDate: tzDateTime,
               notificationDetails: adhanNotificationDetails,
-              androidScheduleMode: AndroidScheduleMode.alarmClock,
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
               payload: 'prayer_times',
             );
           } catch (_) {
-            // Fallback: inexact if exact alarm permission revoked
             try {
               await _notificationsPlugin.zonedSchedule(
                 id: notificationId,
@@ -730,7 +530,7 @@ class NotificationService {
                     : '$preAdhanMins minutes remaining until $localizedName Athan.',
                 scheduledDate: tzPreDateTime,
                 notificationDetails: preDetails,
-                androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
                 payload: 'prayer_times',
               );
             } catch (_) {
@@ -815,7 +615,7 @@ class NotificationService {
                 body: isAr ? 'سجل صلاتك الآن.' : 'Log your prayer now.',
                 scheduledDate: tzTrackerTime,
                 notificationDetails: trackerDetails,
-                androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
                 payload: 'tracker:$dateStr:$prevPrayerKey',
               );
             } catch (_) {}
@@ -902,7 +702,7 @@ class NotificationService {
               : 'Read your morning Adhkar to start your day with blessing.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_morning',
         );
@@ -945,7 +745,7 @@ class NotificationService {
               : 'It is time for evening Adhkar for peace and protection.',
           scheduledDate: tzDateTime,
           notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
           payload: 'azkar_evening',
         );
@@ -1014,7 +814,7 @@ class NotificationService {
             body: verseBody,
             scheduledDate: tzDateTime,
             notificationDetails: verseNotificationDetails,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
             payload: versePayload,
           );
         } catch (_) {

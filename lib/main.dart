@@ -1020,8 +1020,6 @@ class _MainScaffoldState extends State<MainScaffold>
         body: ValueListenableBuilder<AudioPlayState>(
           valueListenable: AudioManager.instance.playState,
           builder: (context, audioState, child) {
-            final hasPlayer = audioState.title.isNotEmpty;
-
             return Stack(
               children: [
                 IndexedStack(index: _currentTab, children: screens),

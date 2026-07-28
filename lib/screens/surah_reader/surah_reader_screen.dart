@@ -603,8 +603,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     value:
                                         widget.storage.getString(
                                           'default_reciter',
-                                        ) ??
-                                        'ar.alafasy',
+                                          defaultValue: 'ar.alafasy',
+                                        ),
                                     dropdownColor: theme.cardColor,
                                     underline: const SizedBox(),
                                     icon: const Icon(
@@ -721,8 +721,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       final current =
                                           widget.storage.getString(
                                             'default_reciter',
-                                          ) ??
-                                          '';
+                                          );
                                       if (!current.startsWith(
                                             'mp3quran_server_',
                                           ) ||

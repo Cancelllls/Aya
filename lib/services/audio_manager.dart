@@ -45,7 +45,6 @@ class AudioManager {
   final ValueNotifier<Duration> durationNotifier = ValueNotifier(Duration.zero);
   bool isSeeking = false;
 
-  List<Ayah> _currentPlaylist = [];
   int _surahNum = 0;
   String _surahName = '';
   late StorageService _storage;
@@ -176,8 +175,6 @@ class AudioManager {
   ) async {
     _surahNum = surahNum;
     _surahName = surahName;
-    _currentPlaylist = ayahs;
-
     int initialAyahNum = 1;
     if (index >= 0 && index < ayahs.length) {
       initialAyahNum = ayahs[index].numberInSurah;

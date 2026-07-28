@@ -315,7 +315,6 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
 
   Widget _buildCalendarView(bool isAr, ThemeData theme) {
     final days = _getDaysInMonth();
-    final firstDayWeekday = days.first.weekday;
     final monthStr = DateFormat(
       'MMMM yyyy',
       isAr ? 'ar' : 'en',

@@ -173,8 +173,6 @@ class _QiblaScreenState extends State<QiblaScreen>
         _calculateQiblaDirection();
       });
     }
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
