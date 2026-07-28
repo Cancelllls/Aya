@@ -144,13 +144,9 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
       'bottom_navbar_style',
       defaultValue: 'floating',
     );
-    // Match audio player overlay from main.dart exactly
-    final double audioPlayerBottom = 16.0 + safeBottom + kBottomNavigationBarHeight;
-    final bool audioActive =
-        AudioManager.instance.playState.value.title.isNotEmpty;
-    final double audioPlayerGap = audioActive ? 60.0 : 0.0;
+    // Match floating pill bottom padding from main.dart exactly
     final double bottomOffset = bottomNavbarStyle == 'floating'
-        ? audioPlayerBottom + audioPlayerGap
+        ? 16.0 + safeBottom
         : safeBottom + 8.0;
 
     final quranScriptType = widget.storage.getString(
