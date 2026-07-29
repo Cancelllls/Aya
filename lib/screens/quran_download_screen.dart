@@ -651,7 +651,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen>
   Future<void> _downloadHadith(String bookId, String lang) async {
     setState(() { _hadithStates[bookId] ??= {}; _hadithStates[bookId]!['_dl_$lang'] = true; });
     try {
-      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$lang-$bookId.min.json';
+      final url = 'https://pub-7491504471d0449e8cf02064e43a38d5.r2.dev/hadith/$lang-$bookId.json';
       final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
         final db = await DatabaseService.getInstance();
