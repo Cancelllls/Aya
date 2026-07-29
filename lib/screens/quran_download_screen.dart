@@ -1259,6 +1259,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                           ),
                       ],
                     ),
+                  ),
                 ],
               );
                 },
