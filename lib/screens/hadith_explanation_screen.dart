@@ -117,10 +117,16 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String msg = e.toString();
+        if (msg.contains('RangeError') || msg.contains('RangeError')) {
+          msg = TranslationService.isArabic
+              ? 'نتائج كثيرة جداً - حاول تضييق نطاق البحث'
+              : 'Too many results — try a more specific query';
+        }
         setState(() {
           _error = TranslationService.isArabic
-              ? "تعذر جلب النتائج. (${e.toString()})"
-              : "No results found. (${e.toString()})";
+              ? "تعذر جلب النتائج. $msg"
+              : "No results found. $msg";
           _isLoading = false;
         });
       }

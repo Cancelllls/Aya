@@ -161,9 +161,15 @@ class _HadithScreenState extends State<HadithScreen> {
           context,
         ).loadString('assets/hadith/$_displayLang-$bookId.json');
         final data = jsonDecode(jsonString);
-        final List<dynamic> hadiths = data['hadiths'] ?? [];
-        await db.insertHadithBook(bookId, _displayLang, hadiths);
-        isDownloaded = true;
+        List<dynamic> hadiths = data['hadiths'] ?? [];
+        // Fix: some bundled JSONs use 'hadith' key instead of 'hadiths'
+        if (hadiths.isEmpty && data['hadith'] != null) {
+          hadiths = data['hadith'] as List<dynamic>;
+        }
+        if (hadiths.isNotEmpty) {
+          await db.insertHadithBook(bookId, _displayLang, hadiths);
+          isDownloaded = true;
+        }
       } catch (e) {
         print("Failed to seed bundled hadith: $e");
       }

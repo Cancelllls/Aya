@@ -705,16 +705,19 @@ class DatabaseService {
 
       final batch = txn.batch();
       for (var h in hadiths) {
+        // Support multiple JSON field names for hadith text
+        final text = h['text'] ?? h['hadithText'] ?? h['arabic'] ?? h['body'] ?? '';
+        final number = h['hadithnumber'] ?? h['hadithNumber'] ?? h['number'] ?? 0;
         batch.insert('hadiths', {
           'book_id': dbBookId,
-          'hadith_number': h['hadithnumber'] ?? 0,
-          'arabic': lang == 'ara' ? (h['text'] ?? '') : '',
-          'english': lang == 'eng' ? (h['text'] ?? '') : '',
+          'hadith_number': number,
+          'arabic': lang == 'ara' ? text : '',
+          'english': lang == 'eng' ? text : '',
           'search_arabic': lang == 'ara'
-              ? _stripTashkeel((h['text'] ?? '').toString()).toLowerCase()
+              ? _stripTashkeel(text.toString()).toLowerCase()
               : '',
           'search_english': lang == 'eng'
-              ? (h['text'] ?? '').toString().toLowerCase()
+              ? text.toString().toLowerCase()
               : '',
           'grades': jsonEncode(h['grades'] ?? []),
         });
