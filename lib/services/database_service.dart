@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 6;
+  static const int _version = 7;
 
   DatabaseService._();
 
@@ -272,6 +272,21 @@ class DatabaseService {
         ''');
       } catch (e) {
         print("Error during v6 upgrade: $e");
+      }
+    }
+
+    if (oldVersion < 7) {
+      try {
+        // Force re-seed of Muslim: wipe existing data to fix blank hadiths
+        // caused by JSON field name mismatch in older app versions
+        await db.execute(
+          "DELETE FROM hadiths WHERE book_id IN ('ara_muslim', 'eng_muslim')",
+        );
+        await db.execute(
+          "DELETE FROM hadith_books WHERE book_id IN ('ara_muslim', 'eng_muslim')",
+        );
+      } catch (e) {
+        print("Error during v7 upgrade: $e");
       }
     }
 
