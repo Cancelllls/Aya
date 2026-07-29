@@ -154,8 +154,7 @@ class _HadithScreenState extends State<HadithScreen> {
     bool isDownloaded = await db.isHadithBookDownloaded(bookId, _displayLang);
 
     // If not downloaded but it is bundled in assets
-    final isBukhariOrMuslim = bookId == 'bukhari' || bookId == 'muslim';
-    if (!isDownloaded && isBukhariOrMuslim) {
+    if (!isDownloaded) {
       try {
         final jsonString = await DefaultAssetBundle.of(
           context,
