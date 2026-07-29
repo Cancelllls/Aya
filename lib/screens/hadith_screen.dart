@@ -12,7 +12,6 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
 import 'hadith_explanation_screen.dart';
-import 'quran_download_screen.dart';
 
 class HadithBook {
   final String id;
@@ -153,7 +152,6 @@ class _HadithScreenState extends State<HadithScreen> {
     // Check if downloaded
     bool isDownloaded = await db.isHadithBookDownloaded(bookId, _displayLang);
 
-    // If not downloaded but it is bundled in assets
     if (!isDownloaded) {
       try {
         final jsonString = await DefaultAssetBundle.of(
@@ -161,14 +159,11 @@ class _HadithScreenState extends State<HadithScreen> {
         ).loadString('assets/hadith/$_displayLang-$bookId.json');
         final data = jsonDecode(jsonString);
         List<dynamic> hadiths = data['hadiths'] ?? [];
-        // Fix: some bundled JSONs use 'hadith' key instead of 'hadiths'
         if (hadiths.isEmpty && data['hadith'] != null) {
           hadiths = data['hadith'] as List<dynamic>;
         }
-        if (hadiths.isNotEmpty) {
-          await db.insertHadithBook(bookId, _displayLang, hadiths);
-          isDownloaded = true;
-        }
+        await db.insertHadithBook(bookId, _displayLang, hadiths);
+        isDownloaded = true;
       } catch (e) {
         print("Failed to seed bundled hadith: $e");
       }
@@ -256,6 +251,48 @@ class _HadithScreenState extends State<HadithScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _downloadEntireBook() async {
+    setState(() => _isLoading = true);
+    final bookId = _selectedBook.id;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final url =
+          'https://pub-7491504471d0449e8cf02064e43a38d5.r2.dev/hadith/$_displayLang-$bookId.json';
+      final res = await http.get(Uri.parse(url));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        final hadiths = decoded['hadiths'] as List<dynamic>;
+        final db = await DatabaseService.getInstance();
+        await db.insertHadithBook(bookId, _displayLang, hadiths);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? "تم تحميل الكتاب كاملاً بنجاح!"
+                  : "Book downloaded successfully!",
+            ),
+            backgroundColor: const Color(0xFFE5C158),
+          ),
+        );
+        await _loadSelectedBookData();
+      } else {
+        throw Exception('Failed to download');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? "فشل تحميل الكتاب. حاول مجدداً."
+                : "Download failed. Try again.",
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -677,12 +714,9 @@ class _HadithScreenState extends State<HadithScreen> {
                             color: Color(0xFFE5C158),
                           ),
                           tooltip: TranslationService.isArabic
-                              ? "إدارة التحميلات"
-                              : "Manage Downloads",
-                          onPressed: () => Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => QuranDownloadScreen(
-                              storage: widget.storage, initialTab: 1,
-                            ))),
+                              ? "تحميل لـ $_displayLang"
+                              : "Download $_displayLang",
+                          onPressed: _downloadEntireBook,
                         )
                       else
                         Tooltip(
