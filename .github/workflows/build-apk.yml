@@ -31,6 +31,19 @@ jobs:
         with:
           channel: 'stable'
           
+      - name: Set Version
+        id: version
+        run: |
+          RUN_NUM=${{ github.run_number }}
+          MAJOR=1
+          MINOR=$((RUN_NUM / 100))
+          PATCH=$((RUN_NUM % 100))
+          VER="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "tag=$VER" >> $GITHUB_OUTPUT
+          echo "display=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+          # Write version.dart for app to read
+          echo "const appVersion = '${MAJOR}.${MINOR}.${PATCH}';" > lib/version.dart
+
       - name: Install dependencies
         run: flutter pub get
         
@@ -53,7 +66,7 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          PREV_TAG=$(git tag --sort=-creatordate | grep '^v1\.0\.' | head -1 || echo '')
+          PREV_TAG=$(git tag --sort=-creatordate | grep '^v1\.' | head -1 || echo '')
           if [ -n "$PREV_TAG" ]; then
             RANGE="$PREV_TAG..HEAD"
           else
@@ -69,8 +82,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Release v1.0.${{ github.run_number }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
           body: |
             ## What's Changed
             ${{ steps.changelog.outputs.body }}

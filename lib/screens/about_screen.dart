@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/translation_service.dart';
+import '../version.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -44,7 +45,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isArabic ? "الإصدار ١.٠.٠" : "Version 1.0.0",
+              isArabic ? "الإصدار $appVersion" : "Version $appVersion",
               style: TextStyle(
                 fontSize: 16,
                 color: theme.textTheme.bodyMedium?.color,
