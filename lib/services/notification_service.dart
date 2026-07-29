@@ -13,6 +13,7 @@ import 'storage_service.dart';
 import 'api_service.dart';
 import 'translation_service.dart';
 import 'quran_verses.dart';
+import 'adhan_audio_service.dart';
 import 'database_service.dart';
 import 'offline_prayer_service.dart';
 
@@ -374,19 +375,39 @@ class NotificationService {
       'adhan_alert_mode',
       defaultValue: 'real_reciter',
     );
+    final adhanReciter = storage.getString(
+      'adhan_reciter',
+      defaultValue: 'mishary',
+    );
+    final fajrReciter = storage.getString(
+      'fajr_adhan_reciter',
+      defaultValue: 'mishary',
+    );
 
-    // For adhan notifications: always use notification channel sound
-    // Android OS plays the sound natively — no background Dart isolate needed
-    final AndroidNotificationDetails adhanAndroidDetails =
-        AndroidNotificationDetails(
+    String _getAdhanSound(String prayerName) {
+      if (adhanMode == 'silent' || adhanMode == 'vibrate') return '';
+      final isFajr = prayerName == 'Fajr' || prayerName == 'fajr';
+      final reciter = isFajr ? fajrReciter : adhanReciter;
+      final filename = isFajr
+          ? AdhanAudioService.fajrReciterUrls[reciter]
+          : AdhanAudioService.standardReciterUrls[reciter];
+      if (filename == null) return 'default_adhan';
+      return filename.replaceAll('.mp3', '');
+    }
+
+    // Build notification details per prayer (fajr uses different reciter)
+    NotificationDetails _buildAdhanDetails(String prayerName) {
+      final soundName = _getAdhanSound(prayerName);
+      return NotificationDetails(
+        android: AndroidNotificationDetails(
           'adhan_native_v1',
           'Athan Alarms',
           channelDescription: 'Prayer time athan alerts with sound',
           importance: Importance.max,
           priority: Priority.high,
-          playSound: adhanMode != 'silent' && adhanMode != 'vibrate',
-          sound: (adhanMode != 'silent' && adhanMode != 'vibrate')
-              ? const RawResourceAndroidNotificationSound('default_adhan')
+          playSound: soundName.isNotEmpty,
+          sound: soundName.isNotEmpty
+              ? RawResourceAndroidNotificationSound(soundName)
               : null,
           enableVibration: adhanMode != 'silent',
           vibrationPattern: adhanMode != 'silent'
@@ -397,15 +418,9 @@ class NotificationService {
           visibility: NotificationVisibility.public,
           fullScreenIntent: adhanMode != 'silent',
           audioAttributesUsage: AudioAttributesUsage.alarm,
-        );
-
-    final NotificationDetails adhanNotificationDetails = NotificationDetails(
-      android: adhanAndroidDetails,
-      iOS: const DarwinNotificationDetails(
-        presentAlert: true,
-        presentSound: true,
-      ),
-    );
+        ),
+      );
+    }
 
     int id = 1;
 
@@ -457,7 +472,7 @@ class NotificationService {
                   ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
                   : 'It is time for the $localizedName prayer.',
               scheduledDate: tzDateTime,
-              notificationDetails: adhanNotificationDetails,
+              notificationDetails: _buildAdhanDetails(name),
               androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
               payload: 'prayer_times',
             );
@@ -472,7 +487,7 @@ class NotificationService {
                     ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
                     : 'It is time for the $localizedName prayer.',
                 scheduledDate: tzDateTime,
-                notificationDetails: adhanNotificationDetails,
+                notificationDetails: _buildAdhanDetails(name),
                 androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
                 payload: 'prayer_times',
               );
@@ -553,6 +568,88 @@ class NotificationService {
               } catch (_) {}
             }
           }
+        }
+
+        // === RAMADAN: IMSAK & IFTAR ===
+        final hijriMonth = int.tryParse(prayerData.hijriMonth) ?? 0;
+        if (hijriMonth == 9) {
+          final imsakEnabled = storage.getBool('ramadan_imsak_enabled', defaultValue: true);
+          final imsakOffset = storage.getInt('ramadan_imsak_offset', defaultValue: 0);
+          final iftarEnabled = storage.getBool('ramadan_iftar_enabled', defaultValue: true);
+
+          if (imsakEnabled && adhanMode != 'off') {
+            final imsakTime = scheduledDate.subtract(Duration(minutes: imsakOffset));
+            if (imsakTime.isAfter(now)) {
+              final tzImsakTime = tz.TZDateTime.from(imsakTime, tz.local);
+              final imsakSoundName = _getAdhanSound(name);
+              try {
+                await _notificationsPlugin.zonedSchedule(
+                  id: notificationId + 7000,
+                  title: isAr ? 'سحور / إمساك' : 'Suhoor / Imsak',
+                  body: isAr ? 'حان وقت الإمساك عن الطعام.' : 'Time to stop eating for the fast.',
+                  scheduledDate: tzImsakTime,
+                  notificationDetails: NotificationDetails(
+                    android: AndroidNotificationDetails(
+                      'ramadan_imsak',
+                      'Ramadan Imsak',
+                      channelDescription: 'Imsak (Suhoor) alerts during Ramadan',
+                      importance: Importance.max,
+                      priority: Priority.high,
+                      playSound: imsakSoundName.isNotEmpty,
+                      sound: imsakSoundName.isNotEmpty
+                          ? RawResourceAndroidNotificationSound(imsakSoundName)
+                          : null,
+                      enableVibration: true,
+                      vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 200]),
+                      icon: 'ic_notification',
+                      color: const Color(0xFF0F766E),
+                      audioAttributesUsage: AudioAttributesUsage.alarm,
+                    ),
+                  ),
+                  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                  payload: 'prayer_times',
+                );
+              } catch (_) {}
+            }
+          }
+
+          if (iftarEnabled && adhanMode != 'off' && name == 'Maghrib') {
+            if (scheduledDate.isAfter(now)) {
+              try {
+                await _notificationsPlugin.zonedSchedule(
+                  id: notificationId + 8000,
+                  title: isAr ? 'إفطار' : 'Iftar',
+                  body: isAr ? 'حان وقت الإفطار، اللهم لك صمت وعلى رزقك أفطرت.' : 'Time to break your fast. O Allah, for You I fasted and with Your provision I break my fast.',
+                  scheduledDate: tzDateTime,
+                  notificationDetails: NotificationDetails(
+                    android: AndroidNotificationDetails(
+                      'ramadan_iftar',
+                      'Ramadan Iftar',
+                      channelDescription: 'Iftar (breaking fast) alerts during Ramadan',
+                      importance: Importance.max,
+                      priority: Priority.high,
+                      playSound: adhanMode != 'silent' && adhanMode != 'vibrate',
+                      sound: (adhanMode != 'silent' && adhanMode != 'vibrate')
+                          ? const RawResourceAndroidNotificationSound('prayer_reminder_call')
+                          : null,
+                      enableVibration: true,
+                      vibrationPattern: Int64List.fromList([0, 500, 200, 500, 200, 200]),
+                      icon: 'ic_notification',
+                      color: const Color(0xFF0F766E),
+                      audioAttributesUsage: AudioAttributesUsage.alarm,
+                    ),
+                  ),
+                  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                  payload: 'prayer_times',
+                );
+              } catch (_) {}
+            }
+          }
+        }
+
+        // === ISLAMIC EVENTS REMINDERS ===
+        if (name == 'Fajr' && dayOffset == 0) {
+          _scheduleIslamicEvents(storage, now, isAr);
         }
 
         // === PRAYER TRACKER REMINDER (15 mins before next prayer) ===
@@ -832,6 +929,54 @@ class NotificationService {
           );
         }
       }
+    }
+  }
+
+  void _scheduleIslamicEvents(StorageService storage, DateTime now, bool isAr) {
+    if (!storage.getBool('islamic_events_enabled', defaultValue: true)) return;
+
+    // Islamic events mapped to approximate Gregorian dates for 1448 AH (2026-2027)
+    // These shift ~10-11 days earlier each Gregorian year — update annually.
+    final events = <MapEntry<String, DateTime>>[
+      MapEntry(isAr ? 'رأس السنة الهجرية ١٤٤٨' : 'Islamic New Year 1448', DateTime(2026, 7, 26)),
+      MapEntry(isAr ? 'عاشوراء' : 'Ashura', DateTime(2026, 8, 4)),
+      MapEntry(isAr ? 'الإسراء والمعراج' : 'Isra & Miraj', DateTime(2027, 1, 19)),
+      MapEntry(isAr ? 'ليلة النصف من شعبان' : "Nisf Sha'ban", DateTime(2027, 3, 7)),
+      MapEntry(isAr ? 'ليلة القدر' : 'Laylatul Qadr', DateTime(2027, 4, 21)),
+      MapEntry(isAr ? 'عيد الفطر' : 'Eid al-Fitr', DateTime(2027, 4, 22)),
+      MapEntry(isAr ? 'يوم عرفة' : 'Day of Arafah', DateTime(2027, 6, 26)),
+      MapEntry(isAr ? 'عيد الأضحى' : 'Eid al-Adha', DateTime(2027, 6, 27)),
+    ];
+
+    int eventId = 9000;
+    for (final entry in events) {
+      if (entry.value.isBefore(now)) continue;
+      final tzEventTime = tz.TZDateTime.from(
+        DateTime(entry.value.year, entry.value.month, entry.value.day, 9, 0),
+        tz.local,
+      );
+      try {
+        _notificationsPlugin.zonedSchedule(
+          id: eventId,
+          title: entry.key,
+          body: isAr ? 'ذكرى إسلامية مباركة' : 'Blessed Islamic occasion',
+          scheduledDate: tzEventTime,
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'islamic_events',
+              'Islamic Events',
+              channelDescription: 'Reminders for Islamic holidays and events',
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: 'ic_notification',
+              color: Color(0xFF0F766E),
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload: 'islamic_event',
+        );
+      } catch (_) {}
+      eventId++;
     }
   }
 

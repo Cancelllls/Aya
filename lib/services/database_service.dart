@@ -264,6 +264,12 @@ class DatabaseService {
             created_at INTEGER NOT NULL
           )
         ''');
+        // Clean up zombie hadith_books entries (book exists but 0 hadiths)
+        await db.execute('''
+          DELETE FROM hadith_books WHERE book_id NOT IN (
+            SELECT DISTINCT book_id FROM hadiths
+          )
+        ''');
       } catch (e) {
         print("Error during v6 upgrade: $e");
       }
@@ -664,12 +670,18 @@ class DatabaseService {
     final db = _database;
     if (db == null) return false;
     final dbBookId = '${lang}_$bookId';
-    final res = await db.query(
+    final bookRes = await db.query(
       'hadith_books',
       where: 'book_id = ?',
       whereArgs: [dbBookId],
     );
-    return res.isNotEmpty;
+    if (bookRes.isEmpty) return false;
+    // Verify actual hadiths exist — prevents zombie entries
+    final count = Sqflite.firstIntValue(await db.rawQuery(
+      'SELECT COUNT(*) FROM hadiths WHERE book_id = ?',
+      [dbBookId],
+    ));
+    return (count ?? 0) > 0;
   }
 
   Future<void> insertHadithBook(

@@ -462,6 +462,119 @@ extension SettingsNotificationsSection on _SettingsScreenState {
         ),
       ),
       const SizedBox(height: 20),
+      // ── Ramadan Section ──
+      _buildSectionHeader(
+        TranslationService.isArabic ? "رمضان" : "Ramadan",
+      ),
+      Card(
+        color: theme.cardColor.withOpacity(0.7),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: Text(TranslationService.isArabic ? "تنبيه الإمساك (السحور)" : "Imsak Alarm (Suhoor)"),
+                  subtitle: Text(TranslationService.isArabic ? "تنبيه عند وقت الإمساك في رمضان" : "Alert at Imsak time during Ramadan"),
+                  activeThumbColor: const Color(0xFFE5C158),
+                  value: _ramadanImsakEnabled,
+                  onChanged: (val) {
+                    setState(() => _ramadanImsakEnabled = val);
+                    widget.storage.setBool('ramadan_imsak_enabled', val);
+                    _rescheduleAlarms();
+                  },
+                ),
+                if (_ramadanImsakEnabled)
+                  ListTile(
+                    title: Text(TranslationService.isArabic ? "وقت التنبيه قبل الإمساك" : "Imsak Alert Offset"),
+                    trailing: SizedBox(
+                      width: 160,
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: _ramadanImsakOffset,
+                        underline: const SizedBox(),
+                        dropdownColor: theme.cardColor,
+                        items: [0, 5, 10, 15].map((mins) {
+                          return DropdownMenuItem<int>(
+                            value: mins,
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(mins == 0
+                                  ? (TranslationService.isArabic ? "وقت الفجر" : "At Fajr")
+                                  : (TranslationService.isArabic ? "قبل الفجر بـ $mins د" : "$mins min before Fajr")),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _ramadanImsakOffset = val);
+                            widget.storage.setInt('ramadan_imsak_offset', val);
+                            _rescheduleAlarms();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                SwitchListTile(
+                  title: Text(TranslationService.isArabic ? "تنبيه الإفطار" : "Iftar Reminder"),
+                  subtitle: Text(TranslationService.isArabic ? "تنبيه عند أذان المغرب في رمضان" : "Alert at Maghrib during Ramadan"),
+                  activeThumbColor: const Color(0xFFE5C158),
+                  value: _ramadanIftarEnabled,
+                  onChanged: (val) {
+                    setState(() => _ramadanIftarEnabled = val);
+                    widget.storage.setBool('ramadan_iftar_enabled', val);
+                    _rescheduleAlarms();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
+      // ── Islamic Events ──
+      _buildSectionHeader(
+        TranslationService.isArabic ? "المناسبات الإسلامية" : "Islamic Events",
+      ),
+      Card(
+        color: theme.cardColor.withOpacity(0.7),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: SwitchListTile(
+              title: Text(TranslationService.isArabic ? "تذكير بالمناسبات" : "Event Reminders"),
+              subtitle: Text(TranslationService.isArabic
+                  ? "عيد الفطر، عيد الأضحى، عاشوراء، ليلة القدر وغيرها"
+                  : "Eid, Ashura, Laylatul Qadr, Arafah and more"),
+              activeThumbColor: const Color(0xFFE5C158),
+              value: _islamicEventsEnabled,
+              onChanged: (val) {
+                setState(() => _islamicEventsEnabled = val);
+                widget.storage.setBool('islamic_events_enabled', val);
+                _rescheduleAlarms();
+              },
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
     ];
   }
 }

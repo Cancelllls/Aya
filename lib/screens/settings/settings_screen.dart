@@ -66,6 +66,10 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _morningAzkarReminder = true;
   bool _eveningAzkarReminder = true;
   bool _todaysVerseReminder = true;
+  bool _ramadanImsakEnabled = true;
+  int _ramadanImsakOffset = 0;
+  bool _ramadanIftarEnabled = true;
+  bool _islamicEventsEnabled = true;
 
   // New settings options
   bool _use24hFormat = false;
@@ -144,6 +148,22 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
     _todaysVerseReminder = widget.storage.getBool(
       'todays_verse_reminder',
+      defaultValue: true,
+    );
+    _ramadanImsakEnabled = widget.storage.getBool(
+      'ramadan_imsak_enabled',
+      defaultValue: true,
+    );
+    _ramadanImsakOffset = widget.storage.getInt(
+      'ramadan_imsak_offset',
+      defaultValue: 0,
+    );
+    _ramadanIftarEnabled = widget.storage.getBool(
+      'ramadan_iftar_enabled',
+      defaultValue: true,
+    );
+    _islamicEventsEnabled = widget.storage.getBool(
+      'islamic_events_enabled',
       defaultValue: true,
     );
     _firstDayOfWeek = widget.storage.getInt(
