@@ -301,7 +301,7 @@ class ApiService {
           ? '$server$formattedNumber.mp3'
           : '$server/$formattedNumber.mp3';
     }
-    return 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/$reciter/$surahNumber.mp3';
+    return 'https://cdn.islamic.network/quran/audio/128/$reciter/$surahNumber.mp3';
   }
 
   static String buildSurahAudioUrlForQiraat(
