@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 5;
+  static const int _version = 6;
 
   DatabaseService._();
 
@@ -178,6 +178,15 @@ class DatabaseService {
     await db.execute(
       'CREATE INDEX idx_prayer_tracker_date ON prayer_tracker(date)',
     );
+    await db.execute('''
+      CREATE TABLE hadith_translations (
+        text_hash TEXT PRIMARY KEY,
+        source_text TEXT NOT NULL,
+        translated_text TEXT NOT NULL,
+        target_lang TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    ''');
   }
 
   static Future<void> _onUpgrade(
@@ -241,6 +250,22 @@ class DatabaseService {
         await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
       } catch (e) {
         print("Error during v5 upgrade: $e");
+      }
+    }
+
+    if (oldVersion < 6) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS hadith_translations (
+            text_hash TEXT PRIMARY KEY,
+            source_text TEXT NOT NULL,
+            translated_text TEXT NOT NULL,
+            target_lang TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+      } catch (e) {
+        print("Error during v6 upgrade: $e");
       }
     }
 
@@ -758,5 +783,28 @@ class DatabaseService {
         offset: offset,
       );
     }
+  }
+
+  Future<String?> getCachedTranslation(String textHash) async {
+    final db = await _database;
+    if (db == null) return null;
+    final results = await db.query('hadith_translations',
+      where: 'text_hash = ?', whereArgs: [textHash], limit: 1);
+    if (results.isEmpty) return null;
+    return results.first['translated_text'] as String?;
+  }
+
+  Future<void> cacheTranslation(
+    String textHash, String sourceText, String translatedText, String targetLang,
+  ) async {
+    final db = await _database;
+    if (db == null) return;
+    await db.insert('hadith_translations', {
+      'text_hash': textHash,
+      'source_text': sourceText,
+      'translated_text': translatedText,
+      'target_lang': targetLang,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

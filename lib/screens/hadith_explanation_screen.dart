@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dorar_hadith/dorar_hadith.dart';
-import 'package:translator/translator.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../services/translation_service.dart';
+import '../services/database_service.dart';
 
 class HadithExplanationScreen extends StatefulWidget {
   final String query;
@@ -90,41 +92,21 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       }
 
       if (widget.displayLang == 'eng' && parsed.isNotEmpty) {
-        try {
-          final translator = GoogleTranslator();
-          final List<Map<String, String>> translatedParsed = [];
-          for (var item in parsed) {
-            final tText = await translator.translate(
-              item['text'] ?? '',
-              from: 'ar',
-              to: 'en',
-            );
-            final tExplanation = await translator.translate(
-              item['explanation'] ?? '',
-              from: 'ar',
-              to: 'en',
-            );
-            final tGrading = await translator.translate(
-              item['grading'] ?? '',
-              from: 'ar',
-              to: 'en',
-            );
-            translatedParsed.add({
-              'text': tText.text,
-              'explanation': tExplanation.text,
-              'grading': tGrading.text,
-            });
-          }
-          if (mounted) {
-            setState(() {
-              _parsedExplanations = translatedParsed;
-              _isLoading = false;
-            });
-          }
-          return;
-        } catch (e) {
-          // Fallback to Arabic if translation fails
+        final List<Map<String, String>> translatedParsed = [];
+        for (var item in parsed) {
+          translatedParsed.add({
+            'text': await _translateOrCache(item['text'] ?? ''),
+            'explanation': await _translateOrCache(item['explanation'] ?? ''),
+            'grading': await _translateOrCache(item['grading'] ?? ''),
+          });
         }
+        if (mounted) {
+          setState(() {
+            _parsedExplanations = translatedParsed;
+            _isLoading = false;
+          });
+        }
+        return;
       }
 
       if (mounted) {
@@ -450,5 +432,31 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         ),
       ),
     );
+  }
+
+  String _makeKey(String text) {
+    return base64Encode(utf8.encode(text.trim())).substring(0, 200);
+  }
+
+  Future<String> _translateOrCache(String text) async {
+    if (text.trim().isEmpty) return text;
+    final key = _makeKey(text);
+    final db = await DatabaseService.getInstance();
+    final cached = await db.getCachedTranslation(key);
+    if (cached != null) return cached;
+
+    try {
+      final url = Uri.parse(
+        'https://lingva.ml/api/v1/ar/en/${Uri.encodeComponent(text)}',
+      );
+      final res = await http.get(url).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        final translated = decoded['translation'] as String? ?? text;
+        await db.cacheTranslation(key, text, translated, 'en');
+        return translated;
+      }
+    } catch (_) {}
+    return text;
   }
 }
