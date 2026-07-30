@@ -252,7 +252,7 @@ class _HadithScreenState extends State<HadithScreen> {
     // Online Fetch API
     try {
       final url =
-          'https://pub-7491504471d0449e8cf02064e43a38d5.r2.dev/hadith/$_displayLang-$bookId.json';
+          'https://cdn.jsdelivr.net/gh/Cancelllls/aya-data@main/hadith/$_displayLang-$bookId.json';
       final response = await http
           .get(Uri.parse(url))
           .timeout(const Duration(seconds: 10));
@@ -315,7 +315,7 @@ class _HadithScreenState extends State<HadithScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final url =
-          'https://pub-7491504471d0449e8cf02064e43a38d5.r2.dev/hadith/$_displayLang-$bookId.json';
+          'https://cdn.jsdelivr.net/gh/Cancelllls/aya-data@main/hadith/$_displayLang-$bookId.json';
       final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
