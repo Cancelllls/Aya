@@ -16,6 +16,15 @@ def load_hadiths(path):
         data = json.load(f)
     return {h.get('hadithnumber',0): h.get('text','') for h in data.get('hadiths', data.get('hadith',[]))}
 
+def clean_text(text):
+    """Remove digitization artifacts from classical sharh text."""
+    text = re.sub(r'\bms\d+\b', '', text)
+    text = re.sub(r'\bPageV\d+P\d+\b', '', text)
+    text = re.sub(r'\bV\d+P\d+\b', '', text)
+    text = re.sub(r' {2,}', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
 def extract_query(text, max_words=8):
     clean = re.sub(r'[ً-ٰ]', '', text).strip()
     words = clean.split()
@@ -34,7 +43,7 @@ def build_cache_entries(book_id, parsed_data, hadith_db, source_name):
         hadith_text = hadith_db.get(num, '')
         if not hadith_text: continue
         key = f"{book_id}:{num}"
-        truncated = explanation[:4000]
+        truncated = clean_text(explanation[:4000])
         if len(explanation) > 4000:
             truncated += f"\n\n[...المزيد في {source_name} — {len(explanation)} حرف]"
         cache[key] = {
