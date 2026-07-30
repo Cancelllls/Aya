@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/translation_service.dart';
 import '../services/sharh_cache_service.dart';
@@ -16,6 +17,17 @@ class _AboutScreenState extends State<AboutScreen> {
   String _cacheProgress = '';
   final _logLines = <String>[];
   SharhCacheService? _cacheService;
+  List<String> _selectedBooks = [];
+  bool _startFresh = false;
+
+  static const _bookLabels = {
+    'bukhari': 'Sahih al-Bukhari / صحيح البخاري',
+    'muslim': 'Sahih Muslim / صحيح مسلم',
+    'tirmidhi': "Jami' at-Tirmidhi / جامع الترمذي",
+    'abudawud': 'Sunan Abu Dawud / سنن أبي داود',
+    'nasai': "Sunan an-Nasa'i / سنن النسائي",
+    'ibnmajah': 'Sunan Ibn Majah / سنن ابن ماجه',
+  };
 
   @override
   void dispose() {
@@ -24,11 +36,27 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Future<void> _startCaching() async {
+    if (_selectedBooks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select at least one book first')),
+      );
+      return;
+    }
+
     setState(() {
       _cacheRunning = true;
       _cacheStatus = 'Starting...';
       _logLines.clear();
     });
+
+    // Clear selected books if starting fresh
+    if (_startFresh) {
+      final svc = SharhCacheService(onLog: (_) {});
+      for (var bookId in _selectedBooks) {
+        await svc.clearBook(bookId);
+      }
+      _logLines.add('🧹 Cleared ${_selectedBooks.length} book(s)');
+    }
 
     _cacheService = SharhCacheService(
       onLog: (msg) {
@@ -50,10 +78,7 @@ class _AboutScreenState extends State<AboutScreen> {
     );
 
     try {
-      // Cache all 6 books — grading is automatic for Bukhari/Muslim,
-      // but explanations (sharh) are valuable for every book.
-      final books = ['bukhari', 'muslim', 'tirmidhi', 'abudawud', 'nasai', 'ibnmajah'];
-      for (var bookId in books) {
+      for (var bookId in _selectedBooks) {
         if (mounted) {
           setState(() => _cacheStatus = 'Caching $bookId...');
         }
@@ -76,15 +101,20 @@ class _AboutScreenState extends State<AboutScreen> {
   Future<void> _checkCache() async {
     final service = SharhCacheService(onLog: (_) {});
     try {
-      final stats = await service.getCacheStats();
+      final done = await service.getBookProgress();
+      final totals = await service.getBookTotals();
       final sizeKb = await service.getCacheSize();
       final path = await service.getCachePath();
       if (mounted) {
         setState(() {
-          _cacheStatus = 'Cached: ${stats.entries.map((e) => '${e.key}=${e.value}').join(', ')}';
-          _logLines.insert(0, '📦 ${sizeKb}KB at $path');
-          if (stats.isNotEmpty) {
-            _logLines.insert(0, stats.entries.map((e) => '  ${e.key}: ${e.value}').join('\n'));
+          _cacheStatus = '';
+          _logLines.clear();
+          _logLines.add('📦 ${sizeKb}KB at $path');
+          for (var bookId in _bookLabels.keys) {
+            final d = done[bookId] ?? 0;
+            final t = totals[bookId] ?? 0;
+            final pct = t > 0 ? (d * 100 ~/ t) : 0;
+            _logLines.add('  $bookId: $d/$t ($pct%)');
           }
           _cacheProgress = '$sizeKb KB';
         });
@@ -113,6 +143,97 @@ class _AboutScreenState extends State<AboutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Export failed: $e')),
         );
+      }
+    }
+  }
+
+  Future<void> _showBookPicker() async {
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (ctx) {
+        final books = _bookLabels.keys.toList();
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Select Books to Cache'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var bookId in books)
+                      CheckboxListTile(
+                        title: Text(
+                          _bookLabels[bookId] ?? bookId,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        value: _selectedBooks.contains(bookId),
+                        onChanged: (checked) {
+                          setDialogState(() {
+                            if (checked == true) {
+                              _selectedBooks.add(bookId);
+                            } else {
+                              _selectedBooks.remove(bookId);
+                            }
+                          });
+                          setState(() {});
+                        },
+                        dense: true,
+                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() => _selectedBooks = books.toList());
+                            setState(() {});
+                          },
+                          child: const Text('All', style: TextStyle(fontSize: 12)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() => _selectedBooks = []);
+                            setState(() {});
+                          },
+                          child: const Text('None', style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    SwitchListTile(
+                      title: const Text('Start fresh (clear existing)', style: TextStyle(fontSize: 13)),
+                      value: _startFresh,
+                      onChanged: (v) {
+                        setDialogState(() => _startFresh = v);
+                        setState(() {});
+                      },
+                      dense: true,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, null),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, _selectedBooks),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE5C158),
+                  ),
+                  child: const Text('Done', style: TextStyle(color: Colors.black)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      setState(() => _selectedBooks = result);
+      if (result.isNotEmpty && !_cacheRunning) {
+        unawaited(_startCaching());
       }
     }
   }
@@ -232,6 +353,17 @@ class _AboutScreenState extends State<AboutScreen> {
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
               ),
             ),
+            if (_selectedBooks.isNotEmpty && !_cacheRunning)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${_selectedBooks.length} book(s) selected${_startFresh ? ' (fresh)' : ' (resume)'}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                  ),
+                ),
+              ),
             const SizedBox(height: 8),
             if (_cacheStatus.isNotEmpty)
               Padding(
@@ -268,7 +400,7 @@ class _AboutScreenState extends State<AboutScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton.icon(
-                  onPressed: _cacheRunning ? null : _startCaching,
+                  onPressed: _cacheRunning ? null : _showBookPicker,
                   icon: Icon(
                     _cacheRunning ? Icons.hourglass_bottom : Icons.download,
                     size: 16,
@@ -276,7 +408,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   label: Text(
                     _cacheRunning
                         ? (_logLines.where((l) => !l.startsWith('  ')).firstOrNull ?? 'Running...')
-                        : (isArabic ? 'تحميل الشروح' : 'Pre-cache Sharh'),
+                        : (isArabic ? 'بدء' : 'Start'),
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: TextButton.styleFrom(

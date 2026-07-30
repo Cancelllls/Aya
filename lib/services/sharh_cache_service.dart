@@ -244,17 +244,78 @@ class SharhCacheService {
     return 0;
   }
 
-  /// How many books' entries are cached
+  /// How many books' entries are cached (successful + total)
   Future<Map<String, int>> getCacheStats() async {
     final cache = await _loadCache();
     final stats = <String, int>{};
     for (var key in cache.keys) {
       final parts = key.split(':');
       if (parts.length == 2) {
-        stats[parts[0]] = (stats[parts[0]] ?? 0) + 1;
+        final book = parts[0];
+        stats[book] = (stats[book] ?? 0) + 1;
       }
     }
     return stats;
+  }
+
+  /// Get per-book completed count (only _ok:true entries)
+  Future<Map<String, int>> getBookProgress() async {
+    final cache = await _loadCache();
+    final done = <String, int>{};
+    for (var entry in cache.entries) {
+      final parts = entry.key.split(':');
+      if (parts.length != 2) continue;
+      final book = parts[0];
+      if (entry.value is Map && entry.value['_ok'] == true) {
+        done[book] = (done[book] ?? 0) + 1;
+      }
+    }
+    return done;
+  }
+
+  /// Get total hadith count for each book (from DB approximate)
+  Future<Map<String, int>> getBookTotals() async {
+    final db = await DatabaseService.getInstance();
+    final totals = <String, int>{};
+    for (var bookId in ['bukhari', 'muslim', 'tirmidhi', 'abudawud', 'nasai', 'ibnmajah']) {
+      try {
+        final hadiths = await db.getHadiths(bookId, 'ara', 100000, 0);
+        totals[bookId] = hadiths.length;
+      } catch (_) {
+        totals[bookId] = 0;
+      }
+    }
+    return totals;
+  }
+
+  /// Remove cache entries for a specific book (start fresh)
+  Future<void> clearBook(String bookId) async {
+    final cache = await _loadCache();
+    final prefix = '$bookId:';
+    cache.removeWhere((key, _) => key.startsWith(prefix));
+    await _saveCache(cache);
+  }
+
+  /// Clear entire cache
+  Future<void> clearAll() async {
+    await _saveCache({});
+  }
+
+  /// Count pending (not-yet-cached) hadiths for a book
+  Future<int> pendingForBook(String bookId) async {
+    final cache = await _loadCache();
+    final db = await DatabaseService.getInstance();
+    final hadiths = await db.getHadiths(bookId, 'ara', 100000, 0);
+    final prefix = '$bookId:';
+    int pending = 0;
+    for (var h in hadiths) {
+      final key = '$prefix${h['hadith_number']}';
+      if (!cache.containsKey(key) ||
+          (cache[key] is Map && cache[key]['_ok'] != true)) {
+        pending++;
+      }
+    }
+    return pending;
   }
 
   /// Extract a good search query from a hadith text.
