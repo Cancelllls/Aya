@@ -102,55 +102,85 @@ class SharhCacheService {
 
       try {
         final client = DorarClient();
-        final sharhResults = await client.searchSharh(
+
+        // Step 1: Always hit the reliable JSON API first (grading + rawi + book info).
+        // This works for virtually every hadith.
+        final hadithResults = await client.searchHadith(
           HadithSearchParams(value: query, page: 1),
         );
 
-        if (sharhResults.data.isNotEmpty) {
-          final s = sharhResults.data.first;
-          final sharhText = (s.sharhText ?? '')
-              .replaceAll(RegExp(r'<[^>]*>'), '')
-              .trim();
-          final hadithText = s.hadithText
-              .replaceAll(RegExp(r'<[^>]*>'), '')
-              .trim();
-          final grading = (s.sharhMetadata?.sharh ?? s.grade)
-              .replaceAll(RegExp(r'<[^>]*>'), '')
-              .trim();
+        String? sharhExplanation;
+        String? foundText;
+        String? foundGrading;
 
-          cache[key] = {
-            'q': query,
-            't': hadithText,
-            'e': sharhText, // explanation
-            'g': grading, // grading
-            '_ok': true,
-          };
-          newCount++;
-          onLog('    ✓ (${sharhText.length} chars)');
-        } else {
-          // Try basic hadith search as fallback
-          final hadithResults = await client.searchHadith(
+        if (hadithResults.data.isNotEmpty) {
+          final hh = hadithResults.data.first;
+          foundText = hh.hadith.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+          foundGrading = 'الراوي: ${hh.rawi}\n'
+              'المحدث: ${hh.mohdith}\n'
+              'المصدر: ${hh.book}\n'
+              'خلاصة حكم المحدث: ${hh.grade}'
+              .replaceAll(RegExp(r'<[^>]*>'), '')
+              .trim();
+        }
+
+        // Step 2: Also try sharh search for explanation text.
+        // Only a subset of hadiths have dedicated sharh entries — that's normal.
+        try {
+          final sharhResults = await client.searchSharh(
             HadithSearchParams(value: query, page: 1),
           );
-          if (hadithResults.data.isNotEmpty) {
-            final hh = hadithResults.data.first;
-            cache[key] = {
-              'q': query,
-              't': hh.hadith.replaceAll(RegExp(r'<[^>]*>'), '').trim(),
-              'g': 'الراوي: ${hh.rawi}\nالمحدث: ${hh.mohdith}\nالمصدر: ${hh.book}\nخلاصة حكم المحدث: ${hh.grade}'
-                  .replaceAll(RegExp(r'<[^>]*>'), '')
-                  .trim(),
-              '_ok': true,
-            };
-            newCount++;
-            onLog('    ✓ (grading only)');
-          } else {
-            cache[key] = {'_ok': false, '_reason': 'no results'};
-            onLog('    ✗ no results');
+          if (sharhResults.data.isNotEmpty) {
+            final s = sharhResults.data.first;
+            final sharhFull = (s.sharhText ?? '')
+                .replaceAll(RegExp(r'<[^>]*>'), '')
+                .trim();
+            if (sharhFull.isNotEmpty) {
+              // Parse out the explanation portion (after the grading header)
+              final takhreejIdx = sharhFull.indexOf('التخريج');
+              if (takhreejIdx != -1) {
+                final afterTakhreej = sharhFull.indexOf('\n', takhreejIdx);
+                if (afterTakhreej != -1) {
+                  sharhExplanation =
+                      sharhFull.substring(afterTakhreej).trim();
+                }
+              }
+              if (sharhExplanation == null || sharhExplanation.isEmpty) {
+                sharhExplanation = sharhFull;
+              }
+              // Use sharh grading as override (more detailed) if available
+              final rawiIdx = sharhFull.indexOf('الراوي');
+              if (rawiIdx != -1) {
+                final endOfHdr = sharhFull.indexOf('\n\n', rawiIdx);
+                if (endOfHdr != -1) {
+                  foundGrading = sharhFull.substring(rawiIdx, endOfHdr).trim();
+                }
+              }
+            }
           }
+        } catch (_) {
+          // Sharh is a bonus — ignore failures
         }
 
         await client.dispose();
+
+        if (foundText != null) {
+          cache[key] = {
+            'q': query,
+            't': foundText,
+            'e': sharhExplanation ?? '',
+            'g': foundGrading ?? '',
+            '_ok': true,
+          };
+          newCount++;
+          final extra = sharhExplanation != null && sharhExplanation.isNotEmpty
+              ? ' +sharh'
+              : '';
+          onLog('    ✓$extra');
+        } else {
+          cache[key] = {'_ok': false, '_reason': 'no results'};
+          onLog('    ✗ no results');
+        }
       } catch (e) {
         cache[key] = {'_ok': false, '_reason': e.toString()};
         onLog('    ✗ $e');
