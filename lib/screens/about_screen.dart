@@ -19,6 +19,7 @@ class _AboutScreenState extends State<AboutScreen> {
   SharhCacheService? _cacheService;
   List<String> _selectedBooks = [];
   bool _startFresh = false;
+  String? _cdnDownloading;
 
   static const _bookLabels = {
     'bukhari': 'Sahih al-Bukhari / صحيح البخاري',
@@ -142,6 +143,39 @@ class _AboutScreenState extends State<AboutScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadCdnBook(String bookId) async {
+    setState(() {
+      _cdnDownloading = bookId;
+      _logLines.clear();
+    });
+
+    final service = SharhCacheService(
+      onLog: (msg) {
+        if (mounted) setState(() => _logLines.insert(0, msg));
+      },
+    );
+
+    try {
+      final added = await service.downloadFromCdn(bookId);
+      if (mounted) {
+        setState(() => _cdnDownloading = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ $bookId: $added entries added'),
+            backgroundColor: const Color(0xFFE5C158),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cdnDownloading = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ $bookId: $e')),
         );
       }
     }
@@ -475,6 +509,44 @@ class _AboutScreenState extends State<AboutScreen> {
                   ),
                 ),
               ),
+
+            // ── CDN Download Section ──
+            const SizedBox(height: 16),
+            const Divider(),
+            Text(
+              isArabic ? "تحميل الشروح الجاهزة" : "Download Pre-built Sharh",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (var bookId in ['bukhari', 'muslim', 'abudawud', 'tirmidhi', 'nasai'])
+                  ActionChip(
+                    avatar: Icon(
+                      _cdnDownloading == bookId
+                          ? Icons.hourglass_bottom
+                          : Icons.cloud_download,
+                      size: 14,
+                    ),
+                    label: Text(
+                      _bookLabels[bookId]?.split(' / ').first ?? bookId,
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                    onPressed: _cdnDownloading != null || _cacheRunning
+                        ? null
+                        : () => _downloadCdnBook(bookId),
+                    backgroundColor: const Color(0xFFE5C158).withOpacity(0.1),
+                    side: const BorderSide(
+                        color: Color(0xFFE5C158), width: 0.5),
+                  ),
+              ],
+            ),
 
             const SizedBox(height: 40),
             Text(

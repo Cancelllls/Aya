@@ -5,17 +5,22 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
+import '../services/sharh_cache_service.dart';
 
 class HadithExplanationScreen extends StatefulWidget {
   final String query;
   final String displayLang;
   final bool isSharh;
+  final String? bookId;
+  final int? hadithNumber;
 
   const HadithExplanationScreen({
     super.key,
     required this.query,
     required this.displayLang,
     this.isSharh = false,
+    this.bookId,
+    this.hadithNumber,
   });
 
   @override
@@ -35,6 +40,40 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
   }
 
   Future<void> _fetchExplanation() async {
+    // 1. Check offline sharh cache first
+    if (widget.bookId != null && widget.hadithNumber != null) {
+      try {
+        final service = SharhCacheService();
+        final cached = await service.cachedExplanation(
+          widget.bookId!,
+          widget.hadithNumber!,
+        );
+        if (cached != null && mounted) {
+          final explanation = (cached['e'] ?? '').toString();
+          final grading = (cached['g'] ?? '').toString();
+          final source = (cached['_source'] ?? '').toString();
+          if (explanation.isNotEmpty) {
+            setState(() {
+              _parsedExplanations = [
+                {
+                  'text': (cached['t'] ?? '').toString(),
+                  'explanation': explanation,
+                  'grading': grading.isNotEmpty
+                      ? grading
+                      : (source.isNotEmpty ? '📚 $source' : ''),
+                },
+              ];
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+      } catch (_) {
+        // Cache miss — fall through to Dorar
+      }
+    }
+
+    // 2. Online lookup via Dorar
     final client = DorarClient();
     try {
       List<Map<String, String>> parsed = [];

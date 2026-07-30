@@ -653,6 +653,8 @@ class _HadithScreenState extends State<HadithScreen> {
                 ),
                 onTap: () async {
                   Navigator.pop(context);
+                  final bookId = h['_bookId'] ?? _selectedBook.id;
+                  final hadithNumber = h['number'] as int?;
                   final text = h['arabic'].toString();
                   final queryWords = _buildHadithQuery(text);
                   await Navigator.push(
@@ -661,6 +663,8 @@ class _HadithScreenState extends State<HadithScreen> {
                       builder: (context) => HadithExplanationScreen(
                         query: queryWords,
                         displayLang: _displayLang,
+                        bookId: bookId,
+                        hadithNumber: hadithNumber,
                       ),
                     ),
                   );
@@ -670,16 +674,18 @@ class _HadithScreenState extends State<HadithScreen> {
                 leading: const Icon(Icons.menu_book, color: Color(0xFFE5C158)),
                 title: Text(
                   TranslationService.isArabic
-                      ? "قراءة الشرح (إنترنت)"
-                      : "Read Explanation (Online)",
+                      ? "قراءة الشرح"
+                      : "Read Explanation",
                 ),
                 subtitle: Text(
                   TranslationService.isArabic
-                      ? "البحث عن شروحات الحديث في الموسوعة الحديثية"
-                      : "Search for scholarly explanations on Dorar.net",
+                      ? "شرح الحديث (من الذاكرة أو الإنترنت)"
+                      : "Hadith explanation (cached or online)",
                 ),
                 onTap: () async {
                   Navigator.pop(context);
+                  final bookId = h['_bookId'] ?? _selectedBook.id;
+                  final hadithNumber = h['number'] as int?;
                   final text = h['arabic'].toString();
                   final queryWords = _buildHadithQuery(text);
                   await Navigator.push(
@@ -689,6 +695,8 @@ class _HadithScreenState extends State<HadithScreen> {
                         query: queryWords,
                         displayLang: _displayLang,
                         isSharh: true,
+                        bookId: bookId,
+                        hadithNumber: hadithNumber,
                       ),
                     ),
                   );
