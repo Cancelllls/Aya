@@ -18,12 +18,14 @@ class HadithBook {
   final String nameEn;
   final String nameAr;
   final int totalHadiths;
+  final bool arabicOnly;
 
   const HadithBook({
     required this.id,
     required this.nameEn,
     required this.nameAr,
     required this.totalHadiths,
+    this.arabicOnly = false,
   });
 }
 
@@ -64,6 +66,50 @@ const List<HadithBook> hadithBooks = [
     nameAr: 'سنن ابن ماجه',
     totalHadiths: 4341,
   ),
+  HadithBook(
+    id: 'malik',
+    nameEn: 'Muwatta Malik',
+    nameAr: 'موطأ مالك',
+    totalHadiths: 1985,
+  ),
+  HadithBook(
+    id: 'riyadussalihin',
+    nameEn: 'Riyad as-Salihin',
+    nameAr: 'رياض الصالحين',
+    totalHadiths: 1896,
+  ),
+
+  HadithBook(
+    id: 'adabalmufrad',
+    nameEn: 'Al-Adab Al-Mufrad',
+    nameAr: 'الأدب المفرد',
+    totalHadiths: 1326,
+  ),
+  HadithBook(
+    id: 'bulughalmaram',
+    nameEn: 'Bulugh al-Maram',
+    nameAr: 'بلوغ المرام',
+    totalHadiths: 1767,
+  ),
+  HadithBook(
+    id: 'mishkat',
+    nameEn: 'Mishkat al-Masabih',
+    nameAr: 'مشكاة المصابيح',
+    totalHadiths: 4428,
+  ),
+  HadithBook(
+    id: 'shamail',
+    nameEn: 'Shama\'il Muhammadiyah',
+    nameAr: 'الشمائل المحمدية',
+    totalHadiths: 402,
+  ),
+  HadithBook(
+    id: 'ahmed',
+    nameEn: 'Musnad Ahmad (Arabic)',
+    nameAr: 'مسند الإمام أحمد',
+    totalHadiths: 26363,
+    arabicOnly: true,
+  ),
 ];
 
 class HadithScreen extends StatefulWidget {
@@ -85,13 +131,16 @@ class HadithScreen extends StatefulWidget {
 class _HadithScreenState extends State<HadithScreen> {
   HadithBook _selectedBook = hadithBooks[0];
   List<dynamic> _hadithList = [];
+  List<dynamic>? _crossSearchResults;
   bool _isLoading = false;
   int? _highlightedHadithNumber;
   bool _isOffline = false;
   String _error = '';
+  String? _activeSearchQuery;
   int _currentPage = 1;
   static const int _pageSize = 20;
   late String _displayLang;
+  static Map<String, List<String?>>? _gradesLookup;
 
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _jumpController = TextEditingController();
@@ -176,20 +225,23 @@ class _HadithScreenState extends State<HadithScreen> {
         7500,
         0,
       ); // Load all for now to keep pagination logic intact
+      await _loadGrades();
       if (mounted) {
+        final list = results
+            .map(
+              (e) => {
+                'number': e['hadith_number'],
+                'arabic': e['arabic'],
+                'english': e['english'],
+                'searchArText': e['search_arabic'],
+                'searchEnText': e['search_english'],
+                'grades': jsonDecode(e['grades'] ?? '[]'),
+              },
+            )
+            .toList();
+        _injectGrades(list, bookId);
         setState(() {
-          _hadithList = results
-              .map(
-                (e) => {
-                  'number': e['hadith_number'],
-                  'arabic': e['arabic'],
-                  'english': e['english'],
-                  'searchArText': e['search_arabic'],
-                  'searchEnText': e['search_english'],
-                  'grades': jsonDecode(e['grades'] ?? '[]'),
-                },
-              )
-              .toList();
+          _hadithList = list;
           _isOffline = true;
           _isLoading = false;
         });
@@ -231,6 +283,9 @@ class _HadithScreenState extends State<HadithScreen> {
                   (h['english'] as String).trim().isNotEmpty,
             )
             .toList();
+
+        await _loadGrades();
+        _injectGrades(list, bookId);
 
         if (mounted) {
           setState(() {
@@ -304,20 +359,133 @@ class _HadithScreenState extends State<HadithScreen> {
         .replaceAll('ى', 'ي'); // Normalize Alef Maksura
   }
 
+  Future<void> _loadGrades() async {
+    if (_gradesLookup != null) return;
+    try {
+      final jsonStr = await DefaultAssetBundle.of(context)
+          .loadString('assets/hadith/grades.json');
+      final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+      _gradesLookup = decoded.map(
+        (k, v) => MapEntry(
+          k,
+          (v as List<dynamic>)
+              .map((e) => (e as String?)?.trim() ?? '')
+              .map((s) => s.isEmpty ? null : s)
+              .toList(),
+        ),
+      );
+    } catch (_) {
+      _gradesLookup = {}; // prevent retry on missing/corrupt file
+    }
+  }
+
+  void _injectGrades(List<dynamic> hadiths, String bookId) {
+    // Bukhari and Muslim: entire collection is Sahih
+    if (bookId == 'bukhari' || bookId == 'muslim') {
+      for (var h in hadiths) {
+        final existing = List<dynamic>.from(h['grades'] ?? []);
+        if (existing.isEmpty) {
+          h['grades'] = [
+            {'grade': TranslationService.isArabic ? 'صحيح' : 'Sahih'},
+          ];
+        }
+      }
+      return;
+    }
+
+    final bookGrades = _gradesLookup?[bookId];
+    if (bookGrades == null) return;
+
+    for (var h in hadiths) {
+      final num = h['number'] as int;
+      if (num > 0 && num <= bookGrades.length) {
+        final grade = bookGrades[num - 1];
+        if (grade != null && grade.isNotEmpty) {
+          final existing = List<dynamic>.from(h['grades'] ?? []);
+          final alreadyExists = existing.any((g) {
+            final gStr = g is Map ? g['grade']?.toString() : g.toString();
+            return gStr == grade;
+          });
+          if (!alreadyExists) {
+            existing.add({'grade': grade});
+            h['grades'] = existing;
+          }
+        }
+      }
+    }
+  }
+
+  bool _isSahihBook(dynamic h) {
+    final bookId = h['_bookId'] as String? ?? _selectedBook.id;
+    return bookId == 'bukhari' || bookId == 'muslim';
+  }
+
   List<dynamic> _getFilteredHadiths() {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return _hadithList;
+    if (query.isEmpty) {
+      _crossSearchResults = null;
+      _activeSearchQuery = null;
+      return _hadithList;
+    }
+    // Use the cross-book search results when available
+    if (_crossSearchResults != null && _activeSearchQuery == query) {
+      return _crossSearchResults!;
+    }
+    return _hadithList;
+  }
 
-    final normQuery = _normalizeArabic(query);
+  Future<void> _performCrossBookSearch(String query) async {
+    if (query.length < 2) {
+      if (mounted) {
+        setState(() {
+          _crossSearchResults = null;
+          _activeSearchQuery = null;
+          _currentPage = 1;
+        });
+      }
+      return;
+    }
 
-    return _hadithList.where((h) {
-      final numStr = h['number'].toString();
-      final arText = h['searchArText'];
-      final enText = h['searchEnText'];
-      return numStr == query ||
-          arText.contains(normQuery) ||
-          enText.contains(query);
-    }).toList();
+    final db = await DatabaseService.getInstance();
+    final results = await db.searchAllHadiths(_displayLang, query, 100);
+
+    // Map book_id back to book display names and inject grades
+    final mapped = <Map<String, dynamic>>[];
+    for (var r in results) {
+      final dbBookId = r['book_id'] as String;
+      // dbBookId is "ara_bukhari" or "eng_bukhari"
+      final parts = dbBookId.split('_');
+      final langPrefix = parts[0];
+      final bookId = parts.length > 1 ? parts.sublist(1).join('_') : dbBookId;
+
+      final book = hadithBooks.where((b) => b.id == bookId).firstOrNull;
+      if (book == null) continue;
+
+      mapped.add({
+        'number': r['hadith_number'],
+        'arabic': r['arabic'],
+        'english': r['english'],
+        'searchArText': r['search_arabic'],
+        'searchEnText': r['search_english'],
+        'grades': jsonDecode((r['grades'] as String?) ?? '[]'),
+        '_bookId': bookId,
+        '_bookName': langPrefix == 'ara' ? book.nameAr : book.nameEn,
+      });
+    }
+
+    // Inject grades
+    for (var bookId in mapped.map((m) => m['_bookId'] as String).toSet()) {
+      final bookHadiths = mapped.where((m) => m['_bookId'] == bookId).toList();
+      _injectGrades(bookHadiths, bookId);
+    }
+
+    if (mounted) {
+      setState(() {
+        _crossSearchResults = mapped;
+        _activeSearchQuery = query;
+        _currentPage = 1;
+      });
+    }
   }
 
   void _jumpToHadith() {
@@ -415,6 +583,38 @@ class _HadithScreenState extends State<HadithScreen> {
     return query.isEmpty ? "حديث" : query;
   }
 
+  List<HadithBook> get _filteredBooks {
+    if (_displayLang == 'ara') return hadithBooks;
+    return hadithBooks.where((b) => !b.arabicOnly).toList();
+  }
+
+  void _handleHadithTap(Map<String, dynamic> h) {
+    final resultBookId = h['_bookId'] as String?;
+    if (resultBookId != null && resultBookId != _selectedBook.id) {
+      // Cross-search result — switch to its book first
+      final book = hadithBooks.firstWhere(
+        (b) => b.id == resultBookId,
+        orElse: () => _selectedBook,
+      );
+      setState(() {
+        _selectedBook = book;
+        _currentPage = 1;
+        _crossSearchResults = null;
+        _activeSearchQuery = null;
+        _searchController.clear();
+        _hadithList = [];
+      });
+      _loadSelectedBookData().then((_) {
+        if (mounted) {
+          _jumpToHadithByNumber(h['number'] as int);
+          _showHadithOptions(h);
+        }
+      });
+      return;
+    }
+    _showHadithOptions(h);
+  }
+
   void _showHadithOptions(Map<String, dynamic> h) {
     showModalBottomSheet(
       context: context,
@@ -443,13 +643,13 @@ class _HadithScreenState extends State<HadithScreen> {
                 leading: const Icon(Icons.fact_check, color: Color(0xFFE5C158)),
                 title: Text(
                   TranslationService.isArabic
-                      ? "تخريج الحديث (إنترنت)"
-                      : "Hadith Grading (Online)",
+                      ? "تخريج الحديث وتفاصيل الإسناد"
+                      : "Detailed Grading & Isnad",
                 ),
                 subtitle: Text(
                   TranslationService.isArabic
-                      ? "البحث عن تخريج الحديث وحكمه في موقع الدرر السنية"
-                      : "Search for authenticity grading on Dorar.net",
+                      ? "البحث عن تخريج الحديث وتفاصيل الإسناد في موقع الدرر السنية"
+                      : "Search for detailed grading and narrator chain on Dorar.net",
                 ),
                 onTap: () async {
                   Navigator.pop(context);
@@ -498,10 +698,17 @@ class _HadithScreenState extends State<HadithScreen> {
                 builder: (context, setModalState) {
                   final List<String> current =
                       widget.storage.getStringList('hadith_bookmarks') ?? [];
+                  final bookId = h['_bookId'] ?? _selectedBook.id;
+                  final book = (bookId != _selectedBook.id)
+                      ? hadithBooks.firstWhere(
+                          (b) => b.id == bookId,
+                          orElse: () => _selectedBook,
+                        )
+                      : _selectedBook;
                   final data = jsonEncode({
-                    'bookId': _selectedBook.id,
-                    'book': _selectedBook.nameEn,
-                    'bookAr': _selectedBook.nameAr,
+                    'bookId': bookId,
+                    'book': book.nameEn,
+                    'bookAr': book.nameAr,
                     'number': h['number'],
                     'text': _displayLang == 'ara' ? h['arabic'] : h['english'],
                   });
@@ -629,7 +836,7 @@ class _HadithScreenState extends State<HadithScreen> {
                             value: _selectedBook,
                             isExpanded: true,
                             selectedItemBuilder: (BuildContext context) {
-                              return hadithBooks.map((b) {
+                              return _filteredBooks.map((b) {
                                 return Container(
                                   alignment: AlignmentDirectional.centerStart,
                                   child: Text(
@@ -649,7 +856,7 @@ class _HadithScreenState extends State<HadithScreen> {
                               Icons.keyboard_arrow_down,
                               color: Color(0xFFE5C158),
                             ),
-                            items: hadithBooks.map((b) {
+                            items: _filteredBooks.map((b) {
                               return DropdownMenuItem<HadithBook>(
                                 value: b,
                                 child: Text(
@@ -750,8 +957,8 @@ class _HadithScreenState extends State<HadithScreen> {
                       ),
                       decoration: InputDecoration(
                         hintText: TranslationService.isArabic
-                            ? "بحث في هذا الكتاب..."
-                            : "Search in this book...",
+                            ? "بحث في كل كتب الحديث..."
+                            : "Search across all books...",
                         prefixIcon: Icon(
                           Icons.search,
                           size: 18,
@@ -761,12 +968,18 @@ class _HadithScreenState extends State<HadithScreen> {
                       onChanged: (q) {
                         if (_debounce?.isActive ?? false) _debounce!.cancel();
                         _debounce = Timer(
-                          const Duration(milliseconds: 500),
+                          const Duration(milliseconds: 400),
                           () {
                             if (mounted) {
-                              setState(() {
-                                _currentPage = 1;
-                              });
+                              if (q.trim().isEmpty) {
+                                setState(() {
+                                  _crossSearchResults = null;
+                                  _activeSearchQuery = null;
+                                  _currentPage = 1;
+                                });
+                              } else {
+                                _performCrossBookSearch(q.trim());
+                              }
                             }
                           },
                         );
@@ -889,7 +1102,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                 ),
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(16),
-                                  onTap: () => _showHadithOptions(h),
+                                  onTap: () => _handleHadithTap(h),
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Column(
@@ -902,32 +1115,67 @@ class _HadithScreenState extends State<HadithScreen> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white.withOpacity(
+                                                      0.15,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(8),
                                                   ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(
-                                                  0.15,
+                                                  child: Text(
+                                                    "${TranslationService.isArabic ? 'حديث' : 'Hadith'} ${h['number']}",
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: theme.primaryColor,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
                                                 ),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                "${TranslationService.isArabic ? 'حديث' : 'Hadith'} ${h['number']}",
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.primaryColor,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
+                                                if (_crossSearchResults != null &&
+                                                    h['_bookName'] != null) ...[
+                                                  const SizedBox(width: 6),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFE5C158,
+                                                      ).withOpacity(0.15),
+                                                      borderRadius:
+                                                          BorderRadius.circular(6),
+                                                    ),
+                                                    child: Text(
+                                                      h['_bookName'],
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: const Color(
+                                                          0xFFE5C158,
+                                                        ),
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
                                             ),
                                             const SizedBox(width: 8),
                                             if ((h['grades'] != null &&
                                                     (h['grades'] as List)
                                                         .isNotEmpty) ||
+                                                _isSahihBook(h) ||
                                                 _selectedBook.id == 'bukhari' ||
                                                 _selectedBook.id == 'muslim')
                                               Expanded(
@@ -940,10 +1188,13 @@ class _HadithScreenState extends State<HadithScreen> {
                                                         List<dynamic>.from(
                                                           h['grades'] ?? [],
                                                         );
+                                                    final effectiveBookId =
+                                                        h['_bookId'] ??
+                                                            _selectedBook.id;
                                                     if (grades.isEmpty &&
-                                                        (_selectedBook.id ==
+                                                        (effectiveBookId ==
                                                                 'bukhari' ||
-                                                            _selectedBook.id ==
+                                                            effectiveBookId ==
                                                                 'muslim')) {
                                                       grades.add({
                                                         'grade':

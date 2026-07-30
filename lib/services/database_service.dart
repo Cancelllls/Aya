@@ -815,6 +815,41 @@ class DatabaseService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> searchAllHadiths(
+    String lang,
+    String query,
+    int limit, {
+    List<String>? excludeBookIds,
+  }) async {
+    final db = _database;
+    if (db == null) return [];
+
+    final cleanQuery = _stripTashkeel(query).toLowerCase();
+    final searchPattern = '%$cleanQuery%';
+    final langPrefix = '${lang}_%';
+
+    final intQuery = int.tryParse(query);
+
+    if (intQuery != null) {
+      return await db.query(
+        'hadiths',
+        where:
+            'book_id LIKE ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
+        whereArgs: [langPrefix, intQuery, searchPattern, searchPattern],
+        orderBy: 'hadith_number ASC',
+        limit: limit,
+      );
+    } else {
+      return await db.query(
+        'hadiths',
+        where: 'book_id LIKE ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
+        whereArgs: [langPrefix, searchPattern, searchPattern],
+        orderBy: 'hadith_number ASC',
+        limit: limit,
+      );
+    }
+  }
+
   Future<String?> getCachedTranslation(String textHash) async {
     final db = await _database;
     if (db == null) return null;
