@@ -653,57 +653,118 @@ class _HifdhRevealWrapper extends StatefulWidget {
   State<_HifdhRevealWrapper> createState() => _HifdhRevealWrapperState();
 }
 
-class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper> {
-  bool _revealed = false;
-  Timer? _hideTimer;
+class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _blurAnim;
 
-  void _reveal() {
-    setState(() => _revealed = true);
-    _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _revealed = false);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+      value: 1.0, // start blurred
+    );
+    _blurAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+    );
   }
 
   @override
   void dispose() {
-    _hideTimer?.cancel();
+    _ctrl.dispose();
     super.dispose();
+  }
+
+  void _toggle() {
+    if (_ctrl.value > 0.5) {
+      _ctrl.reverse(); // reveal
+    } else {
+      _ctrl.forward(); // blur again
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _revealed ? null : _reveal,
-      child: Stack(
-        children: [
-          Text(
-            widget.ayah.text,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.justify,
-            style: widget.textStyle,
-          ),
-          if (!_revealed)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF1E293B)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  TranslationService.isArabic ? 'اضغط للكشف' : 'Tap to reveal',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.orangeAccent,
-                    fontWeight: FontWeight.w600,
+      onTap: _toggle,
+      child: AnimatedBuilder(
+        animation: _blurAnim,
+        builder: (context, child) {
+          final blur = _blurAnim.value * 6.0;
+          return Stack(
+            children: [
+              // The actual text (always visible, blurred when hidden)
+              Text(
+                widget.ayah.text,
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.justify,
+                style: widget.textStyle,
+              ),
+              // Blur overlay that fades out on reveal
+              IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: _blurAnim.value,
+                  duration: Duration.zero, // driven by parent animation
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(
+                        sigmaX: blur,
+                        sigmaY: blur,
+                      ),
+                      child: Opacity(
+                        opacity: 0.6,
+                        child: Text(
+                          widget.ayah.text,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.justify,
+                          style: widget.textStyle,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+              // "Tap to reveal" hint — fades out as blur clears
+              if (_blurAnim.value > 0.3)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: (_blurAnim.value - 0.3) / 0.7,
+                      duration: Duration.zero,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .scaffoldBackgroundColor
+                                .withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            TranslationService.isArabic
+                                ? 'اضغط للكشف'
+                                : 'Tap to reveal',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orangeAccent
+                                  .withOpacity(_blurAnim.value),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
