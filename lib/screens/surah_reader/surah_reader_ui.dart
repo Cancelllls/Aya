@@ -692,7 +692,7 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
       child: AnimatedBuilder(
         animation: _blurAnim,
         builder: (context, child) {
-          final blur = _blurAnim.value * 6.0;
+          final blur = _blurAnim.value * 20.0;
           return Stack(
             children: [
               // The actual text (always visible, blurred when hidden)
@@ -715,12 +715,15 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
                         sigmaY: blur,
                       ),
                       child: Opacity(
-                        opacity: 0.6,
+                        opacity: 0.8,
                         child: Text(
                           widget.ayah.text,
                           textDirection: TextDirection.rtl,
                           textAlign: TextAlign.justify,
-                          style: widget.textStyle,
+                          style: widget.textStyle.copyWith(
+                            color: Theme.of(context)
+                                .scaffoldBackgroundColor,
+                          ),
                         ),
                       ),
                     ),
