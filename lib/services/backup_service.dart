@@ -98,7 +98,7 @@ class BackupService {
       if (item is Map) {
         final date = item['date']?.toString() ?? '';
         for (var prayer in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']) {
-          final status = item[prayer] as int? ?? 0;
+          final status = int.tryParse('${item[prayer]}') ?? 0;
           if (status > 0) {
             await db.updatePrayerTracker(date, prayer, status);
           }
