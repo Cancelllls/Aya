@@ -35,6 +35,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  bool _changelogShown = false;
   PrayerTimeData? _prayerData;
   bool _isLoading = true;
   bool _hasError = false;
@@ -121,7 +122,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadPrayerTimes();
     _startCountdownTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ChangelogDialog.showIfNew(context);
+      if (mounted && !_changelogShown) {
+        _changelogShown = true;
+        ChangelogDialog.showIfNew(context);
+      }
     });
   }
 
