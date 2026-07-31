@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 7;
+  static const int _version = 8;
 
   DatabaseService._();
 
@@ -26,6 +26,10 @@ class DatabaseService {
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+    // WAL mode — faster concurrent reads, no write blocks
+    await db.execute('PRAGMA journal_mode=WAL');
+    await db.execute('PRAGMA synchronous=NORMAL');
+    await db.execute('PRAGMA cache_size=-8000'); // 8MB cache
     await _seedQuranData(db);
     return db;
   }
@@ -162,6 +166,15 @@ class DatabaseService {
       )
     ''');
     await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
+    await db.execute('CREATE INDEX idx_hadiths_book_num ON hadiths(book_id, hadith_number)');
+
+    // FTS5 full-text search for cross-book Arabic/English search
+    await db.execute('''
+      CREATE VIRTUAL TABLE hadiths_fts USING fts5(
+        search_arabic, search_english, content='',
+        tokenize='unicode61 remove_diacritics 2'
+      )
+    ''');
 
     // Prayer Tracker
     await db.execute('''
@@ -287,6 +300,30 @@ class DatabaseService {
         );
       } catch (e) {
         print("Error during v7 upgrade: $e");
+      }
+    }
+
+    if (oldVersion < 8) {
+      try {
+        // ── Performance optimizations for 125K+ hadith rows ──
+        // 1. Composite index: speeds up book-scoped queries with ORDER BY hadith_number
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_hadiths_book_num ON hadiths(book_id, hadith_number)',
+        );
+        // 2. FTS5 full-text index for instant cross-book Arabic search
+        await db.execute('''
+          CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
+            search_arabic, search_english, content='',
+            tokenize='unicode61 remove_diacritics 2'
+          )
+        ''');
+        // Populate FTS from existing data
+        await db.execute(
+          "INSERT INTO hadiths_fts(hadiths_fts) VALUES('rebuild')",
+        );
+        print("v8 upgrade complete: composite index + FTS5 added");
+      } catch (e) {
+        print("Error during v8 upgrade: $e");
       }
     }
 
@@ -738,6 +775,14 @@ class DatabaseService {
         });
       }
       await batch.commit(noResult: true);
+
+      // Populate FTS index for this book
+      await txn.rawInsert(
+        "INSERT INTO hadiths_fts(rowid, search_arabic, search_english) "
+        "SELECT id, search_arabic, search_english FROM hadiths "
+        "WHERE book_id = ?",
+        [dbBookId],
+      );
     });
   }
 
@@ -834,19 +879,31 @@ class DatabaseService {
       return await db.query(
         'hadiths',
         where:
-            'book_id LIKE ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [langPrefix, intQuery, searchPattern, searchPattern],
+            'book_id LIKE ? AND (hadith_number = ? OR id IN (SELECT rowid FROM hadiths_fts WHERE hadiths_fts MATCH ?))',
+        whereArgs: [langPrefix, intQuery, '"$cleanQuery"'],
         orderBy: 'hadith_number ASC',
         limit: limit,
       );
     } else {
-      return await db.query(
-        'hadiths',
-        where: 'book_id LIKE ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [langPrefix, searchPattern, searchPattern],
-        orderBy: 'hadith_number ASC',
-        limit: limit,
-      );
+      // FTS5 MATCH for instant full-text cross-book search
+      try {
+        return await db.rawQuery(
+          'SELECT h.* FROM hadiths h '
+          'INNER JOIN hadiths_fts f ON h.id = f.rowid '
+          'WHERE h.book_id LIKE ? AND hadiths_fts MATCH ? '
+          'ORDER BY rank LIMIT ?',
+          [langPrefix, '"$cleanQuery"', limit],
+        );
+      } catch (_) {
+        // Fallback to LIKE if FTS query fails (special chars)
+        return await db.query(
+          'hadiths',
+          where: 'book_id LIKE ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
+          whereArgs: [langPrefix, searchPattern, searchPattern],
+          orderBy: 'hadith_number ASC',
+          limit: limit,
+        );
+      }
     }
   }
 
