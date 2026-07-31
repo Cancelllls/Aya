@@ -66,18 +66,10 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          PREV_TAG=$(git tag --sort=-creatordate | grep '^v1\.' | head -1 || echo '')
-          if [ -n "$PREV_TAG" ]; then
-            RANGE="$PREV_TAG..HEAD"
-          else
-            RANGE="HEAD~10..HEAD"
-          fi
-          CHANGELOG=$(git log "$RANGE" --pretty=format:'- %s' --no-merges | sed 's/^/- /')
-          # Escape for GitHub Actions multiline output
-          CHANGELOG="${CHANGELOG//'%'/'%25'}"
-          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-          echo "body=$CHANGELOG" >> $GITHUB_OUTPUT
+          CHANGELOG=$(python3 tools/gen_changelog.py "${{ steps.version.outputs.display }}")
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65

@@ -1,0 +1,39 @@
+{
+  "versions": [
+    {
+      "version": "1.0.98",
+      "date": "2026-07-31",
+      "title": "Hadith Expansion & Offline Sharh",
+      "changes": {
+        "en": [
+          "13 Hadith Books — All 6 canonical collections plus 7 additional books (75K+ hadiths)",
+          "Offline Sharh — Classical explanations from Fath al-Bari, Awn al-Ma'bud, and more",
+          "Cross-Book Search — Search all 13 books at once, no tashkeel needed",
+          "Inline Hadith Grading — Sahih/Hasan/Da'if chips shown on every hadith card",
+          "Offline Explanation Downloads — One-tap download of classical sharh per book",
+          "Memorization Mode — Tap to reveal ayah text, auto-hides after 3 seconds",
+          "Share Hadith & Ayahs — Share formatted text with references",
+          "Backup & Restore — Export bookmarks, settings, and prayer tracker data",
+          "Prayer Tracker Stats — Weekly, monthly, and yearly completion percentages",
+          "Database Optimizations — WAL mode, FTS5 full-text search, composite indexes",
+          "Smooth Surah Transitions — Natural page-turn feel with ease-out curve",
+          "Bundled Fonts — Amiri, Inter, Outfit, Scheherazade New load instantly"
+        ],
+        "ar": [
+          "١٣ كتاب حديث — جميع الكتب الستة بالإضافة إلى ٧ كتب إضافية (أكثر من ٧٥ ألف حديث)",
+          "شروح بدون اتصال — شروح كلاسيكية من فتح الباري وعون المعبود وغيرها",
+          "البحث المتقاطع — ابحث في جميع الكتب الـ ١٣ دفعة واحدة بدون تشكيل",
+          "تخريج الأحاديث — عرض درجة الحديث (صحيح/حسن/ضعيف) على كل بطاقة",
+          "تحميل الشروح — تحميل الشروح الكلاسيكية لكل كتاب بلمسة واحدة",
+          "وضع الحفظ — اضغط لكشف نص الآية، يختفي تلقائياً بعد ٣ ثوانٍ",
+          "مشاركة الأحاديث والآيات — مشاركة النص مع المراجع",
+          "نسخ احتياطي — تصدير واستيراد الإشارات والإعدادات ومتتبع الصلاة",
+          "إحصائيات متتبع الصلاة — نسب إتمام أسبوعية وشهرية وسنوية",
+          "تحسينات قاعدة البيانات — وضع WAL وفهرسة FTS5 للبحث السريع",
+          "انتقالات سلسة بين السور — حركة طبيعية لتقليب الصفحات",
+          "خطوط محملة مسبقاً — تحميل فوري لجميع الخطوط بدون اتصال"
+        ]
+      }
+    }
+  ]
+}
