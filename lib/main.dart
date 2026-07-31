@@ -1,4 +1,3 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
@@ -63,13 +62,6 @@ void main() async {
   // Initialize Audio Manager
   AudioManager.instance.init(storage);
 
-  // Preload fonts for faster rendering of Quran and Tafsir
-  try {
-    GoogleFonts.amiri();
-    await GoogleFonts.pendingFonts();
-  } catch (e) {
-    // Ignore offline font loading errors
-  }
 
   runApp(AyaApp(storage: storage));
 }

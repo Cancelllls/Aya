@@ -6,7 +6,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
@@ -1293,7 +1292,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                             _displayLang == 'ara')
                                           Text(
                                             h['arabic'],
-                                            style: GoogleFonts.amiri(
+                                            style: TextStyle(fontFamily: 'Amiri',
                                               fontSize: 18,
                                               height: 1.8,
                                               fontWeight: FontWeight.w500,

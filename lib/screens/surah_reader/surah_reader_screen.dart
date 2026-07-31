@@ -163,14 +163,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         backgroundColor: backgroundColor,
       );
     }
-    return GoogleFonts.amiri(
+    return TextStyle(
+      fontFamily: 'Amiri',
       fontSize: fontSize,
       height: height,
       color: color,
       fontWeight: fontWeight,
       backgroundColor: backgroundColor,
     );
-  }
 
   String _getHizbRangeText() {
     if (_ayahList.isEmpty) {

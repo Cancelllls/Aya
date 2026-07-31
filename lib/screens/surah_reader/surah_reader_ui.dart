@@ -75,7 +75,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
               color: Colors.transparent,
               child: Text(
                 _currentSurah.name,
-                style: GoogleFonts.amiri(
+                style: const TextStyle(fontFamily: 'Amiri',
                   color: const Color(0xFFE5C158),
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
