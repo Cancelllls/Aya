@@ -198,7 +198,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     return "$juzText • $hizbText";
   }
 
-  void _navigateToSurahWithAnimation(int nextSurahNum, bool isSwipeRight) {
+  void _navigateToSurahWithAnimation(int nextSurahNum, bool goingForward) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -218,20 +218,22 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               storage: widget.storage,
             ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final slideDir = isSwipeRight ? -1.0 : 1.0;
-          var begin = Offset(slideDir, 0.0);
-          var end = Offset.zero;
-          var curve = Curves.easeInOut;
-          var tween = Tween(
-            begin: begin,
-            end: end,
-          ).chain(CurveTween(curve: curve));
+          // goingForward=true (next surah): slide in from right → left
+          // goingForward=false (prev surah): slide in from left → right
+          final begin = Offset(goingForward ? 0.3 : -0.3, 0.0);
           return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
+            position: Tween(begin: begin, end: Offset.zero)
+                .chain(CurveTween(curve: Curves.easeOutCubic))
+                .animate(animation),
+            child: FadeTransition(
+              opacity: Tween(begin: 0.0, end: 1.0)
+                  .chain(CurveTween(curve: Curves.easeOutCubic))
+                  .animate(animation),
+              child: child,
+            ),
           );
         },
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 400),
       ),
     );
   }
@@ -931,20 +933,29 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           );
         },
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 350),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeOutCubic,
           transitionBuilder: (Widget child, Animation<double> animation) {
-            // Determine slide direction based on some logic, or just a default slide.
-            // A simple fade and slight slide:
             final offsetAnimation = Tween<Offset>(
               begin: Offset(
-                _slideDirection.toDouble(),
+                _slideDirection * 0.3,
                 0.0,
-              ), // slides from right or left
+              ),
               end: Offset.zero,
-            ).animate(animation);
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ));
             return SlideTransition(
               position: offsetAnimation,
-              child: FadeTransition(opacity: animation, child: child),
+              child: FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                ),
+                child: child,
+              ),
             );
           },
           child: _isLoading

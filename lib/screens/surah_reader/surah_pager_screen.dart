@@ -72,8 +72,8 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
             if (index < 113) {
               _pageController.animateToPage(
                 index + 1,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutCubic,
               );
             }
           },
@@ -81,8 +81,8 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
             if (index > 0) {
               _pageController.animateToPage(
                 index - 1,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutCubic,
               );
             }
           },
