@@ -378,51 +378,108 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildFeaturesSlide(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
           Text(
-            TranslationService.t('welcome_features_title'),
+            TranslationService.isArabic
+                ? "ماذا يقدم التطبيق"
+                : "What Aya Offers",
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
-            TranslationService.t('welcome_features_sub'),
+            TranslationService.isArabic
+                ? "رفيقك الإسلامي المتكامل"
+                : "Your complete Islamic companion",
             style: TextStyle(
               fontSize: 14,
               color: isDark ? Colors.white60 : Colors.black54,
             ),
           ),
-          const SizedBox(height: 32),
-          _buildFeatureRow(
-            icon: Icons.access_time_filled,
-            title: TranslationService.t('welcome_feat_prayer_title'),
-            description: TranslationService.t('welcome_feat_prayer_desc'),
-          ),
           const SizedBox(height: 20),
-          _buildFeatureRow(
-            icon: Icons.menu_book,
-            title: TranslationService.t('welcome_feat_quran_title'),
-            description: TranslationService.t('welcome_feat_quran_desc'),
-          ),
-          const SizedBox(height: 20),
-          _buildFeatureRow(
-            icon: Icons.explore,
-            title: TranslationService.t('welcome_feat_qibla_title'),
-            description: TranslationService.t('welcome_feat_qibla_desc'),
-          ),
-          const SizedBox(height: 20),
-          _buildFeatureRow(
-            icon: Icons.volunteer_activism,
-            title: TranslationService.t('welcome_feat_tasbih_title'),
-            description: TranslationService.t('welcome_feat_tasbih_desc'),
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                _buildFeatureRow(
+                  icon: Icons.access_time_filled,
+                  title: TranslationService.isArabic
+                      ? 'مواقيت الصلاة والأذان'
+                      : 'Prayer Times & Adhan',
+                  description: TranslationService.isArabic
+                      ? 'مواقيت دقيقة وأذان مع اختيار القراء ونداء قبل الأذان.'
+                      : 'Accurate times, adhan with reciter selection & pre-adhan alerts.',
+                ),
+                const SizedBox(height: 14),
+                _buildFeatureRow(
+                  icon: Icons.menu_book_rounded,
+                  title: TranslationService.isArabic
+                      ? 'القرآن الكريم'
+                      : 'Holy Quran',
+                  description: TranslationService.isArabic
+                      ? 'تلاوة مع ١٠ قراءات مختلفة وتفسير ميسر وتحفيظ آية.'
+                      : 'Read with 10 Qira\'at, tafsir, and verse-by-verse memorization.',
+                ),
+                const SizedBox(height: 14),
+                _buildFeatureRow(
+                  icon: Icons.library_books,
+                  title: TranslationService.isArabic
+                      ? '١٣ كتاب حديث مع الشرح'
+                      : '13 Hadith Books + Sharh',
+                  description: TranslationService.isArabic
+                      ? 'كل كتب الحديث الستة والمزيد مع التخريج والشرح دون اتصال.'
+                      : 'All 6 major collections + 7 more. Offline grading & classical explanations.',
+                ),
+                const SizedBox(height: 14),
+                _buildFeatureRow(
+                  icon: Icons.search_rounded,
+                  title: TranslationService.isArabic
+                      ? 'البحث في كل كتب الحديث'
+                      : 'Cross-Book Hadith Search',
+                  description: TranslationService.isArabic
+                      ? 'ابحث في ٧٥ ألف حديث دفعة واحدة بدون تشكيل.'
+                      : 'Search 75K+ hadiths across all books at once — no tashkeel needed.',
+                ),
+                const SizedBox(height: 14),
+                _buildFeatureRow(
+                  icon: Icons.calendar_month,
+                  title: TranslationService.isArabic
+                      ? 'رمضان والمناسبات'
+                      : 'Ramadan & Events',
+                  description: TranslationService.isArabic
+                      ? 'تنبيهات الإمساك والإفطار والتذكير بالمناسبات الإسلامية.'
+                      : 'Imsak/Iftar alerts and Islamic event reminders throughout the year.',
+                ),
+                const SizedBox(height: 14),
+                _buildFeatureRow(
+                  icon: Icons.spa,
+                  title: TranslationService.isArabic
+                      ? 'الأذكار اليومية'
+                      : 'Daily Azkar',
+                  description: TranslationService.isArabic
+                      ? 'أذكار الصباح والمساء والنوم والصلاة مع إمكانية إضافة أذكارك الخاصة.'
+                      : 'Morning/evening/sleep/prayer azkar with custom entry support.',
+                ),
+                const SizedBox(height: 14),
+                _buildFeatureRow(
+                  icon: Icons.wifi_off,
+                  title: TranslationService.isArabic
+                      ? 'بدون اتصال بالإنترنت'
+                      : '100% Offline-First',
+                  description: TranslationService.isArabic
+                      ? 'كل شيء يعمل بدون إنترنت: قرآن، حديث، أذكار، مواقيت، أذان.'
+                      : 'Everything works offline: Quran, Hadith, Azkar, Prayer Times, Adhan.',
+                ),
+              ],
+            ),
           ),
         ],
       ),
