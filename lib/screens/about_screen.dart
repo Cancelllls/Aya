@@ -1,56 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/translation_service.dart';
-import '../services/sharh_cache_service.dart';
 import '../version.dart';
 
-class AboutScreen extends StatefulWidget {
+class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
-
-  @override
-  State<AboutScreen> createState() => _AboutScreenState();
-}
-
-class _AboutScreenState extends State<AboutScreen> {
-  String? _downloadingBook;
-  String _downloadStatus = '';
-
-  static const _bookLabels = {
-    'bukhari': 'Sahih al-Bukhari / صحيح البخاري',
-    'muslim': 'Sahih Muslim / صحيح مسلم',
-    'abudawud': 'Sunan Abu Dawud / سنن أبي داود',
-    'tirmidhi': "Jami' at-Tirmidhi / جامع الترمذي",
-    'nasai': "Sunan an-Nasa'i / سنن النسائي",
-  };
-
-  Future<void> _downloadCdnBook(String bookId) async {
-    setState(() {
-      _downloadingBook = bookId;
-      _downloadStatus = 'Downloading $bookId...';
-    });
-
-    final service = SharhCacheService(
-      onLog: (msg) {
-        if (mounted) setState(() => _downloadStatus = msg);
-      },
-    );
-
-    try {
-      final added = await service.downloadFromCdn(bookId);
-      if (mounted) {
-        setState(() {
-          _downloadingBook = null;
-          _downloadStatus = '✓ $bookId: $added entries';
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _downloadingBook = null;
-          _downloadStatus = '✗ $bookId: $e';
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,69 +108,28 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
             ),
 
-            // ── Offline Sharh Download Section ──
+            // ── Hadith Sharh Download ──
             const SizedBox(height: 32),
             const Divider(),
             const SizedBox(height: 12),
             Text(
-              isArabic ? "تحميل الشروح" : "Download Hadith Explanations",
+              isArabic ? "شروح الأحاديث" : "Hadith Explanations",
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Text(
               isArabic
-                  ? 'حمل شروح الأحاديث الكلاسيكية للوصول دون اتصال'
-                  : 'Download classical hadith explanations for offline access',
+                  ? 'يتم تحميل الشروح تلقائياً عند الحاجة من قائمة خيارات الحديث'
+                  : 'Explanations are downloaded automatically when needed from the hadith options menu',
               style: TextStyle(
-                fontSize: 11,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                fontSize: 12,
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
               ),
-            ),
-            const SizedBox(height: 8),
-            if (_downloadStatus.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  _downloadStatus,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.textTheme.bodyMedium?.color,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              alignment: WrapAlignment.center,
-              children: [
-                for (var bookId in _bookLabels.keys)
-                  ActionChip(
-                    avatar: Icon(
-                      _downloadingBook == bookId
-                          ? Icons.hourglass_bottom
-                          : Icons.cloud_download,
-                      size: 14,
-                    ),
-                    label: Text(
-                      _bookLabels[bookId]?.split(' / ').first ?? bookId,
-                      style: const TextStyle(fontSize: 10),
-                    ),
-                    onPressed: _downloadingBook != null
-                        ? null
-                        : () => _downloadCdnBook(bookId),
-                    backgroundColor:
-                        const Color(0xFFE5C158).withOpacity(0.1),
-                    side: const BorderSide(
-                      color: Color(0xFFE5C158),
-                      width: 0.5,
-                    ),
-                  ),
-              ],
+              textAlign: TextAlign.center,
             ),
 
             const SizedBox(height: 40),

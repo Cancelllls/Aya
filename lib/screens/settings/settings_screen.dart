@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/storage_service.dart';
+import '../../services/backup_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
@@ -21,6 +23,7 @@ part 'settings_notifications.dart';
 part 'settings_audio.dart';
 part 'settings_permissions.dart';
 part 'settings_focus_lock.dart';
+part 'settings_backup.dart';
 
 class SettingsScreen extends StatefulWidget {
   final StorageService storage;
@@ -804,6 +807,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           ..._buildAudioSection(theme),
           ..._buildPermissionsSection(theme),
           ..._buildFocusLockSection(theme),
+          ..._buildBackupSection(theme),
           const SizedBox(height: 40),
 
           // App info credits
