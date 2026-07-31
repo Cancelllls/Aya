@@ -43,6 +43,9 @@ jobs:
           echo "display=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
           # Write version.dart for app to read
           echo "const appVersion = '${MAJOR}.${MINOR}.${PATCH}';" > lib/version.dart
+          # Update Android versionCode in pubspec.yaml for proper update installs
+          VERSION_CODE=$((RUN_NUM))
+          sed -i "s/^version: .*/version: ${MAJOR}.${MINOR}.${PATCH}+${VERSION_CODE}/" pubspec.yaml
 
       - name: Install dependencies
         run: flutter pub get

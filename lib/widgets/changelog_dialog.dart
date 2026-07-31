@@ -9,12 +9,12 @@ import '../services/storage_service.dart';
 /// Shows changelog on first launch after version bump, reading from assets/changelog.json.
 class ChangelogDialog {
   static Future<void> showIfNew(BuildContext context) async {
-    final storage = await StorageService.getInstance();
-    final seen = storage.getString('seen_changelog', defaultValue: '');
-    if (seen == appVersion) return;
-
-    final isArabic = TranslationService.isArabic;
     try {
+      final storage = await StorageService.getInstance();
+      final seen = storage.getString('seen_changelog', defaultValue: '');
+      if (seen == appVersion) return;
+
+      final isArabic = TranslationService.isArabic;
       final jsonStr = await rootBundle.loadString('assets/changelog.json');
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
       final versions =
@@ -108,11 +108,7 @@ class ChangelogDialog {
         ));
       }
     } catch (_) {
-      // Fallback if changelog.json is missing or corrupted
-      if (context.mounted) {
-        await storage.setString('seen_changelog', appVersion);
-      }
+      // Silently skip — changelog is non-critical
     }
-    await storage.setString('seen_changelog', appVersion);
   }
 }

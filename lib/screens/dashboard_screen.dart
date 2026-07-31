@@ -124,7 +124,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && !_changelogShown) {
         _changelogShown = true;
-        ChangelogDialog.showIfNew(context);
+        Future.microtask(() => ChangelogDialog.showIfNew(context));
       }
     });
   }
