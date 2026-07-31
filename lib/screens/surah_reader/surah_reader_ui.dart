@@ -394,7 +394,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
             final isHighlighted = isBookmarked || isPlaying;
 
             final recognizer = TapGestureRecognizer()
-              ..onTap = () => _showAyahActionSheet(ayah);
+              ..onTap = _hifdhMode
+                  ? () => {} // in hifdh mode, don't show actions on tap
+                  : () => _showAyahActionSheet(ayah);
             pageRecs.add(recognizer);
 
             spans.add(
