@@ -173,11 +173,11 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       Text(
                         "AYA",
-                        style: const TextStyle(fontFamily: 'Outfit',
+                        style: TextStyle(fontFamily: 'Outfit',
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 8,
-                          color: Color(0xFFE5C158),
+                          color: const Color(0xFFE5C158),
                         ),
                       ),
                       const SizedBox(height: 8),

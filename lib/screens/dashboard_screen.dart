@@ -9,7 +9,6 @@ import '../widgets/welcome_header.dart';
 import '../widgets/grid_service_card.dart';
 import '../widgets/prayer_bar_card.dart';
 import '../widgets/quick_access_pill.dart';
-import '../widgets/changelog_dialog.dart';
 import '../services/notification_service.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
@@ -35,7 +34,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool _changelogShown = false;
   PrayerTimeData? _prayerData;
   bool _isLoading = true;
   bool _hasError = false;
@@ -121,12 +119,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _randomVerse = QuranVersesData.verses[randIndex];
     _loadPrayerTimes();
     _startCountdownTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_changelogShown) {
-        _changelogShown = true;
-        Future.microtask(() => ChangelogDialog.showIfNew(context));
-      }
-    });
   }
 
   @override

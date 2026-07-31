@@ -62,7 +62,6 @@ void main() async {
   // Initialize Audio Manager
   AudioManager.instance.init(storage);
 
-
   runApp(AyaApp(storage: storage));
 }
 

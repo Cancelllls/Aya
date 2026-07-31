@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 8;
+  static const int _version = 7;
 
   DatabaseService._();
 
@@ -30,11 +30,9 @@ class DatabaseService {
         onUpgrade: _onUpgrade,
       );
     } catch (e) {
-      // If DB is corrupted (e.g. from a failed migration), delete and retry
-      print("Database open failed: $e — recreating");
-      try {
-        await deleteDatabase(path);
-      } catch (_) {}
+      // Recover from corrupted DB (e.g. from failed migration)
+      print("DB open failed: $e — recreating");
+      try { await deleteDatabase(path); } catch (_) {}
       db = await openDatabase(
         path,
         version: _version,
@@ -43,9 +41,6 @@ class DatabaseService {
       );
     }
 
-    await db.execute('PRAGMA journal_mode=WAL');
-    await db.execute('PRAGMA synchronous=NORMAL');
-    await db.execute('PRAGMA cache_size=-8000');
     await _seedQuranData(db);
     return db;
   }
@@ -307,17 +302,6 @@ class DatabaseService {
         );
       } catch (e) {
         print("Error during v7 upgrade: $e");
-      }
-    }
-
-    if (oldVersion < 8) {
-      try {
-        // Composite index: speeds up book-scoped queries
-        await db.execute(
-          'CREATE INDEX IF NOT EXISTS idx_hadiths_book_num ON hadiths(book_id, hadith_number)',
-        );
-      } catch (e) {
-        print("Error during v8 upgrade: $e");
       }
     }
 
@@ -865,8 +849,8 @@ class DatabaseService {
       return await db.query(
         'hadiths',
         where:
-            'book_id LIKE ? AND hadith_number = ?',
-        whereArgs: [langPrefix, intQuery],
+            'book_id LIKE ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
+        whereArgs: [langPrefix, intQuery, searchPattern, searchPattern],
         orderBy: 'hadith_number ASC',
         limit: limit,
       );
