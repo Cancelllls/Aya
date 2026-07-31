@@ -279,7 +279,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   const SizedBox(height: 8),
                   Text(
                     ayah.translation,
-                    style: GoogleFonts.inter(
+                    style: const TextStyle(fontFamily: 'Inter',
                       fontSize: 14 * _fontSizeMultiplier,
                       // ignore: deprecated_member_use
                       color: theme.textTheme.bodyMedium?.color?.withOpacity(

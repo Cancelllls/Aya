@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import 'welcome_screen.dart';
@@ -174,7 +173,7 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       Text(
                         "AYA",
-                        style: GoogleFonts.outfit(
+                        style: const TextStyle(fontFamily: 'Outfit',
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 8,
@@ -186,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen>
                         TranslationService.isArabic
                             ? "رفيقك الإسلامي اليومي"
                             : "YOUR DAILY ISLAMIC COMPANION",
-                        style: GoogleFonts.inter(
+                        style: const TextStyle(fontFamily: 'Inter',
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2.5,
