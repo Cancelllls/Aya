@@ -645,9 +645,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
 }
 
 class _HifdhRevealWrapper extends StatefulWidget {
-
-class _HifdhRevealWrapper extends StatefulWidget {
-  final Ayah ayah;
+  final dynamic ayah;
   final TextStyle textStyle;
   const _HifdhRevealWrapper({required this.ayah, required this.textStyle});
 
