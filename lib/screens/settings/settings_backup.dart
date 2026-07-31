@@ -81,15 +81,15 @@ extension SettingsBackupSection on _SettingsScreenState {
                     );
                     if (confirmed != true) return;
                     try {
-                      final content = await BackupService.importBackupFile();
+                      final content = await BackupService.pickAndReadBackupFile();
                       if (content == null) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 isArabic
-                                    ? "لم يتم العثور على ملف نسخ احتياطي. تأكد من وجود aya_backup.json في مجلد التطبيق."
-                                    : "No backup file found. Ensure aya_backup.json is in the app folder.",
+                                    ? "لم يتم اختيار ملف."
+                                    : "No file selected.",
                               ),
                             ),
                           );

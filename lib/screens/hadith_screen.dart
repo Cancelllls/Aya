@@ -363,6 +363,15 @@ class _HadithScreenState extends State<HadithScreen> {
         .replaceAll('ى', 'ي'); // Normalize Alef Maksura
   }
 
+  String _cleanEnglish(String text) {
+    return text
+        .replaceAll('\r\n', '\n')
+        .replaceAll(RegExp(r'\n\s{2,}'), '\n')
+        .replaceAll('\n', ' ')
+        .replaceAll(RegExp(r' {2,}'), ' ')
+        .trim();
+  }
+
   Future<void> _loadGrades() async {
     if (_gradesLookup != null) return;
     try {
@@ -1333,7 +1342,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                                 .isNotEmpty &&
                                             _displayLang == 'eng')
                                           Text(
-                                            h['english'],
+                                            _cleanEnglish(h['english'].toString()),
                                             style: TextStyle(
                                               fontSize: 14,
                                               height: 1.5,

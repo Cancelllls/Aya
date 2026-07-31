@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/storage_service.dart';
 import '../services/database_service.dart';
 
@@ -14,28 +15,40 @@ class BackupService {
     final bookmarks = storage.getStringList('hadith_bookmarks') ?? [];
     final quranBookmarks = storage.getStringList('quran_bookmarks') ?? [];
 
-    // Collect settings including both String and bool values
+    // Collect settings as proper types
     final settings = <String, dynamic>{};
-    for (var key in [
+    final strKeys = [
       'prayer_method', 'prayer_school', 'calc_method', 'asr_method',
       'adhan_alert_mode', 'pre_adhan_alert_mode', 'quran_font',
-      'theme_preset', 'morning_azkar_reminder', 'evening_azkar_reminder',
-      'todays_verse_reminder', 'use_24h_format',
-    ]) {
-      final val = storage.getString(key, defaultValue: '');
-      if (val.isNotEmpty) settings[key] = val;
+      'theme_preset', 'lang_code', 'reading_mode',
+    ];
+    for (var key in strKeys) {
+      final v = storage.getString(key);
+      if (v != null && v.isNotEmpty) settings[key] = v;
     }
-    for (var key in [
+    final intKeys = ['first_day_of_week', 'pre_adhan_duration', 'focus_lock_duration'];
+    for (var key in intKeys) {
+      final v = storage.getInt(key, defaultValue: -1);
+      if (v != -1) settings[key] = v;
+    }
+    final boolKeys = [
       'morning_azkar_reminder', 'evening_azkar_reminder', 'todays_verse_reminder',
       'ramadan_imsak_enabled', 'ramadan_iftar_enabled', 'islamic_events_enabled',
       'swipe_surah_navigation', 'hide_full_surah_disclaimer',
-    ]) {
-      final val = storage.getBool(key);
-      if (val != null) settings[key] = val;
+      'use_24h_format', 'continuous_play', 'auto_bookmark',
+    ];
+    for (var key in boolKeys) {
+      final v = storage.getBool(key);
+      if (v != null) settings[key] = v;
     }
 
     final azkar = storage.getStringList('custom_dhikrs') ?? [];
-    final tracker = await db.getPrayerTrackerRange('2020-01-01', '2030-01-01');
+
+    // Prayer tracker — convert int values to int for safe JSON encoding
+    final rawTracker = await db.getPrayerTrackerRange('2020-01-01', '2030-01-01');
+    final tracker = rawTracker.map((row) {
+      return row.map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0));
+    }).toList();
 
     return {
       'version': 1,
@@ -100,12 +113,18 @@ class BackupService {
     await SharePlus.instance.share(ShareParams(files: [file], text: 'Aya Backup'));
   }
 
-  static Future<String?> importBackupFile() async {
-    // FilePicker would be ideal, but we use share_plus receive intent on mobile.
-    // For now, this reads a file from a known path or share intent.
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/aya_backup.json');
-    if (!await file.exists()) return null;
-    return await file.readAsString();
+  static Future<String?> pickAndReadBackupFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.first;
+    if (file.path == null) {
+      // On web or content URI, read bytes
+      return file.bytes != null ? utf8.decode(file.bytes!) : null;
+    }
+    return await File(file.path!).readAsString();
   }
 }
