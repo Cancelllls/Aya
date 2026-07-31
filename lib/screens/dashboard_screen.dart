@@ -9,6 +9,7 @@ import '../widgets/welcome_header.dart';
 import '../widgets/grid_service_card.dart';
 import '../widgets/prayer_bar_card.dart';
 import '../widgets/quick_access_pill.dart';
+import '../widgets/changelog_dialog.dart';
 import '../services/notification_service.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
@@ -119,6 +120,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _randomVerse = QuranVersesData.verses[randIndex];
     _loadPrayerTimes();
     _startCountdownTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ChangelogDialog.showIfNew(context);
+    });
   }
 
   @override

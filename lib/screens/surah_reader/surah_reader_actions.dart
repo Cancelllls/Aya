@@ -232,6 +232,22 @@ extension SurahReaderActions on _SurahReaderScreenState {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.share, color: Color(0xFFE5C158)),
+                title: Text(
+                  TranslationService.isArabic ? "مشاركة" : "Share Verse",
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  final ref =
+                      '${_currentSurah.englishName} ${_currentSurah.number}:${ayah.numberInSurah}';
+                  SharePlus.instance.share(
+                    ShareParams(
+                      text: '${ayah.text}\n\n${ayah.translation}\n\n— $ref • Aya App',
+                    ),
+                  );
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.copy, color: Color(0xFFE5C158)),
                 title: Text(TranslationService.t('copy_verse')),
                 onTap: () {

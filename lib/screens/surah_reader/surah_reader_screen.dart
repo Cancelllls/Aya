@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/quran_models.dart';
 import '../../services/api_service.dart';
 import '../../services/local_quran_service.dart';

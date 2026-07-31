@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
@@ -702,6 +703,29 @@ class _HadithScreenState extends State<HadithScreen> {
                         hadithNumber: hadithNumber,
                       ),
                     ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share, color: Color(0xFFE5C158)),
+                title: Text(
+                  TranslationService.isArabic ? "مشاركة" : "Share",
+                ),
+                subtitle: Text(
+                  TranslationService.isArabic
+                      ? "مشاركة الحديث كنص"
+                      : "Share hadith text",
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  final text = _displayLang == 'ara'
+                      ? (h['arabic'] ?? '').toString()
+                      : (h['english'] ?? '').toString();
+                  final ref = TranslationService.isArabic
+                      ? 'الراوي: ${_selectedBook.nameAr}'
+                      : 'Source: ${_selectedBook.nameEn}';
+                  SharePlus.instance.share(
+                    ShareParams(text: '$text\n\n— $ref • Aya App'),
                   );
                 },
               ),
