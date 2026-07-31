@@ -717,7 +717,7 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
                         sigmaY: blur,
                       ),
                       child: Opacity(
-                        opacity: 0.8,
+                        opacity: 0.4,
                         child: Text(
                           widget.ayah.text,
                           textDirection: TextDirection.rtl,
