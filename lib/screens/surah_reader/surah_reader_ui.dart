@@ -645,7 +645,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
 }
 
 class _HifdhRevealWrapper extends StatefulWidget {
-  final dynamic ayah;
+  final Ayah ayah;
   final TextStyle textStyle;
   const _HifdhRevealWrapper({required this.ayah, required this.textStyle});
 
@@ -687,7 +687,9 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1E293B)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 alignment: Alignment.center,
