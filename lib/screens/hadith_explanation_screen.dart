@@ -94,6 +94,8 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         },
       ];
       _isLoading = false;
+      _downloading = false;
+      _offeringDownload = false;
     });
   }
 
@@ -126,7 +128,10 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       }
 
       // Book downloaded but this hadith wasn't in it — go online
-      if (mounted) await _fetchFromDorar();
+      if (mounted) {
+        _downloading = false;
+        await _fetchFromDorar();
+      }
     } catch (e) {
       if (mounted) {
         setState(() {

@@ -17,10 +17,24 @@ def load_hadiths(path):
     return {h.get('hadithnumber',0): h.get('text','') for h in data.get('hadiths', data.get('hadith',[]))}
 
 def clean_text(text):
-    """Remove digitization artifacts from classical sharh text."""
+    """Remove digitization artifacts + normalize for mobile readability."""
+    if not text: return text
+    # ms/page markers
     text = re.sub(r'\bms\d+\b', '', text)
     text = re.sub(r'\bPageV\d+P\d+\b', '', text)
     text = re.sub(r'\bV\d+P\d+\b', '', text)
+    # OpenITI structural markers
+    text = re.sub(r'^\s*#\s*\|\s*\d+\s*\([^)]*\)\s*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*#\s*\d+\s*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*#\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'\s+#\s+', ' ', text)  # mid-text # from concatenation
+    # Per-chapter bracket/hash numbers
+    text = re.sub(r'^\s*[\(\[]\d+[\)\]]\s*', '', text)
+    text = re.sub(r'^\s*(/\s*)?\d+\.\s*', '', text)
+    # Metadata headers
+    text = re.sub(r'^\s*-\s*(أطرافه|طرفه)\s*في:\s*[\d،,\s]+.*$', '', text, flags=re.MULTILINE)
+    # Collapse hard line breaks into flowing text, keep double newlines as paragraph breaks
+    text = re.sub(r'(?<!\n)\n(?!\n)', ' ', text)
     text = re.sub(r' {2,}', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()

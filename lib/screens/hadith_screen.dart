@@ -219,10 +219,14 @@ class _HadithScreenState extends State<HadithScreen> {
     }
 
     if (isDownloaded) {
+      // Musnad Ahmad has 26K+ hadiths — load enough for all books
+      final maxHadiths = _selectedBook.totalHadiths > 7500
+          ? _selectedBook.totalHadiths + 100
+          : 7500;
       final results = await db.getHadiths(
         bookId,
         _displayLang,
-        7500,
+        maxHadiths,
         0,
       ); // Load all for now to keep pagination logic intact
       await _loadGrades();
