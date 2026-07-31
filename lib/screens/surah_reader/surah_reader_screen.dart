@@ -272,7 +272,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               _hifdhMode ? Icons.visibility_off : Icons.visibility,
               color: _hifdhMode ? Colors.orangeAccent : null,
             ),
-            onPressed: () => setState(() => _hifdhMode = !_hifdhMode),
+            onPressed: () => setState(() {
+              _hifdhMode = !_hifdhMode;
+              // Hifdh only works in card modes — auto-switch from continuous
+              if (_hifdhMode && _readingMode == 'continuous') {
+                _readingMode = 'translation';
+                widget.storage.setString('reading_mode', 'translation');
+              }
+            }),
             tooltip: TranslationService.isArabic
                 ? "وضع الحفظ"
                 : "Memorization Mode",

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:file_picker/file_picker.dart';
 import '../services/storage_service.dart';
 import '../services/database_service.dart';
 
@@ -113,18 +112,33 @@ class BackupService {
     await SharePlus.instance.share(ShareParams(files: [file], text: 'Aya Backup'));
   }
 
-  static Future<String?> pickAndReadBackupFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-      allowMultiple: false,
-    );
-    if (result == null || result.files.isEmpty) return null;
-    final file = result.files.first;
-    if (file.path == null) {
-      // On web or content URI, read bytes
-      return file.bytes != null ? utf8.decode(file.bytes!) : null;
+  /// Read backup from a user-specified file path.
+  /// On Android, users can export to Downloads and reference it there.
+  static Future<String?> readBackupFromPath(String path) async {
+    try {
+      final file = File(path);
+      if (!await file.exists()) return null;
+      return await file.readAsString();
+    } catch (_) {
+      return null;
     }
-    return await File(file.path!).readAsString();
+  }
+
+  /// Read from the default backup location (app documents).
+  static Future<String?> readDefaultBackup() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/aya_backup.json');
+    if (!await file.exists()) {
+      // Also check Downloads
+      final dlDir = Directory('/storage/emulated/0/Download');
+      if (await dlDir.exists()) {
+        final dlFile = File('${dlDir.path}/aya_backup.json');
+        if (await dlFile.exists()) {
+          return await dlFile.readAsString();
+        }
+      }
+      return null;
+    }
+    return await file.readAsString();
   }
 }

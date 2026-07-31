@@ -81,16 +81,18 @@ extension SettingsBackupSection on _SettingsScreenState {
                     );
                     if (confirmed != true) return;
                     try {
-                      final content = await BackupService.pickAndReadBackupFile();
+                      // Try default backup location + Downloads
+                      final content = await BackupService.readDefaultBackup();
                       if (content == null) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 isArabic
-                                    ? "لم يتم اختيار ملف."
-                                    : "No file selected.",
+                                    ? "لم يتم العثور على ملف aya_backup.json. تأكد من وجوده في مجلد التنزيلات."
+                                    : "No aya_backup.json found. Make sure it's in your Downloads folder.",
                               ),
+                              duration: const Duration(seconds: 4),
                             ),
                           );
                         }
