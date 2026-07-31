@@ -49,7 +49,6 @@ dependencies:
   timezone: ^0.11.0
   intl: ^0.20.2
   url_launcher: ^6.3.0
-  google_fonts: ^8.1.0
   path_provider: ^2.1.6
   android_alarm_manager_plus: ^5.0.0
   in_app_purchase: ^3.3.0
@@ -124,6 +123,12 @@ flutter:
         - asset: assets/fonts/ScheherazadeNew-Regular.ttf
         - asset: assets/fonts/ScheherazadeNew-Bold.ttf
           weight: 700
+    - family: Warsh
+      fonts:
+        - asset: assets/fonts/warsh.10.ttf
+    - family: Qalun
+      fonts:
+        - asset: assets/fonts/qaloon.10.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -151,13 +156,6 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-  fonts:
-    - family: Warsh
-      fonts:
-        - asset: assets/fonts/warsh.10.ttf
-    - family: Qalun
-      fonts:
-        - asset: assets/fonts/qaloon.10.ttf
 
 flutter_icons:
   android: true

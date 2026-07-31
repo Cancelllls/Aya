@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/translation_service.dart';
 import '../services/sharh_cache_service.dart';
@@ -12,262 +11,43 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
-  bool _cacheRunning = false;
-  String _cacheStatus = '';
-  String _cacheProgress = '';
-  final _logLines = <String>[];
-  SharhCacheService? _cacheService;
-  List<String> _selectedBooks = [];
-  bool _startFresh = false;
-  String? _cdnDownloading;
+  String? _downloadingBook;
+  String _downloadStatus = '';
 
   static const _bookLabels = {
     'bukhari': 'Sahih al-Bukhari / صحيح البخاري',
     'muslim': 'Sahih Muslim / صحيح مسلم',
-    'tirmidhi': "Jami' at-Tirmidhi / جامع الترمذي",
     'abudawud': 'Sunan Abu Dawud / سنن أبي داود',
+    'tirmidhi': "Jami' at-Tirmidhi / جامع الترمذي",
     'nasai': "Sunan an-Nasa'i / سنن النسائي",
-    'ibnmajah': 'Sunan Ibn Majah / سنن ابن ماجه',
   };
-
-  @override
-  void dispose() {
-    _cacheService?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _startCaching() async {
-    if (_selectedBooks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one book first')),
-      );
-      return;
-    }
-
-    setState(() {
-      _cacheRunning = true;
-      _cacheStatus = 'Starting...';
-      _logLines.clear();
-    });
-
-    // Clear selected books if starting fresh
-    if (_startFresh) {
-      final svc = SharhCacheService(onLog: (_) {});
-      for (var bookId in _selectedBooks) {
-        await svc.clearBook(bookId);
-      }
-      _logLines.add('🧹 Cleared ${_selectedBooks.length} book(s)');
-    }
-
-    _cacheService = SharhCacheService(
-      onLog: (msg) {
-        if (mounted) {
-          setState(() {
-            _logLines.insert(0, msg);
-            if (_logLines.length > 50) _logLines.removeLast();
-            _cacheStatus = msg;
-          });
-        }
-      },
-      onProgress: (done, total) {
-        if (mounted) {
-          setState(() {
-            _cacheProgress = '$done / $total';
-          });
-        }
-      },
-    );
-
-    try {
-      for (var bookId in _selectedBooks) {
-        if (mounted) {
-          setState(() => _cacheStatus = 'Caching $bookId...');
-        }
-        await _cacheService!.cacheBook(bookId, 'ara');
-      }
-      if (mounted) {
-        setState(() => _cacheStatus = 'Done!');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _cacheStatus = 'Error: $e');
-      }
-    }
-
-    if (mounted) {
-      setState(() => _cacheRunning = false);
-    }
-  }
-
-  Future<void> _checkCache() async {
-    final service = SharhCacheService(onLog: (_) {});
-    try {
-      final done = await service.getBookProgress();
-      final totals = await service.getBookTotals();
-      final sizeKb = await service.getCacheSize();
-      final path = await service.getCachePath();
-      if (mounted) {
-        setState(() {
-          _cacheStatus = '';
-          _logLines.clear();
-          _logLines.add('📦 ${sizeKb}KB at $path');
-          for (var bookId in _bookLabels.keys) {
-            final d = done[bookId] ?? 0;
-            final t = totals[bookId] ?? 0;
-            final pct = t > 0 ? (d * 100 ~/ t) : 0;
-            _logLines.add('  $bookId: $d/$t ($pct%)');
-          }
-          _cacheProgress = '$sizeKb KB';
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _cacheStatus = 'No cache yet');
-      }
-    }
-  }
-
-  Future<void> _exportCache() async {
-    try {
-      final service = SharhCacheService(onLog: (_) {});
-      final path = await service.exportToDownloads();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ Exported to $path'),
-            backgroundColor: const Color(0xFFE5C158),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
-        );
-      }
-    }
-  }
 
   Future<void> _downloadCdnBook(String bookId) async {
     setState(() {
-      _cdnDownloading = bookId;
-      _logLines.clear();
+      _downloadingBook = bookId;
+      _downloadStatus = 'Downloading $bookId...';
     });
 
     final service = SharhCacheService(
       onLog: (msg) {
-        if (mounted) setState(() => _logLines.insert(0, msg));
+        if (mounted) setState(() => _downloadStatus = msg);
       },
     );
 
     try {
       final added = await service.downloadFromCdn(bookId);
       if (mounted) {
-        setState(() => _cdnDownloading = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ $bookId: $added entries added'),
-            backgroundColor: const Color(0xFFE5C158),
-          ),
-        );
+        setState(() {
+          _downloadingBook = null;
+          _downloadStatus = '✓ $bookId: $added entries';
+        });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _cdnDownloading = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ $bookId: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _showBookPicker() async {
-    final result = await showDialog<List<String>>(
-      context: context,
-      builder: (ctx) {
-        final books = _bookLabels.keys.toList();
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              title: const Text('Select Books to Cache'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (var bookId in books)
-                      CheckboxListTile(
-                        title: Text(
-                          _bookLabels[bookId] ?? bookId,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        value: _selectedBooks.contains(bookId),
-                        onChanged: (checked) {
-                          setDialogState(() {
-                            if (checked == true) {
-                              _selectedBooks.add(bookId);
-                            } else {
-                              _selectedBooks.remove(bookId);
-                            }
-                          });
-                          setState(() {});
-                        },
-                        dense: true,
-                      ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            setDialogState(() => _selectedBooks = books.toList());
-                            setState(() {});
-                          },
-                          child: const Text('All', style: TextStyle(fontSize: 12)),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setDialogState(() => _selectedBooks = []);
-                            setState(() {});
-                          },
-                          child: const Text('None', style: TextStyle(fontSize: 12)),
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    SwitchListTile(
-                      title: const Text('Start fresh (clear existing)', style: TextStyle(fontSize: 13)),
-                      value: _startFresh,
-                      onChanged: (v) {
-                        setDialogState(() => _startFresh = v);
-                        setState(() {});
-                      },
-                      dense: true,
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, null),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx, _selectedBooks),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5C158),
-                  ),
-                  child: const Text('Done', style: TextStyle(color: Colors.black)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result != null) {
-      setState(() => _selectedBooks = result);
-      if (result.isNotEmpty && !_cacheRunning) {
-        unawaited(_startCaching());
+        setState(() {
+          _downloadingBook = null;
+          _downloadStatus = '✗ $bookId: $e';
+        });
       }
     }
   }
@@ -375,35 +155,34 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
             ),
 
-            // ── Developer / Cache Section ──
+            // ── Offline Sharh Download Section ──
             const SizedBox(height: 32),
             const Divider(),
             const SizedBox(height: 12),
             Text(
-              isArabic ? "ذاكرة التخزين المؤقت للشروح" : "Sharh Cache (Dev)",
+              isArabic ? "تحميل الشروح" : "Download Hadith Explanations",
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
               ),
             ),
-            if (_selectedBooks.isNotEmpty && !_cacheRunning)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${_selectedBooks.length} book(s) selected${_startFresh ? ' (fresh)' : ' (resume)'}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
-                  ),
-                ),
+            const SizedBox(height: 4),
+            Text(
+              isArabic
+                  ? 'حمل شروح الأحاديث الكلاسيكية للوصول دون اتصال'
+                  : 'Download classical hadith explanations for offline access',
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
               ),
+            ),
             const SizedBox(height: 8),
-            if (_cacheStatus.isNotEmpty)
+            if (_downloadStatus.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  _cacheStatus,
+                  _downloadStatus,
                   style: TextStyle(
                     fontSize: 12,
                     color: theme.textTheme.bodyMedium?.color,
@@ -411,125 +190,15 @@ class _AboutScreenState extends State<AboutScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            if (_cacheProgress.isNotEmpty && _cacheRunning)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: LinearProgressIndicator(
-                  value: _cacheProgress.contains('/')
-                      ? () {
-                          final parts = _cacheProgress.split(' / ');
-                          if (parts.length == 2) {
-                            final d = int.tryParse(parts[0]) ?? 0;
-                            final t = int.tryParse(parts[1]) ?? 1;
-                            return t > 0 ? d / t : 0.0;
-                          }
-                          return null;
-                        }()
-                      : null,
-                  color: const Color(0xFFE5C158),
-                  backgroundColor: const Color(0xFFE5C158).withOpacity(0.2),
-                ),
-              ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton.icon(
-                  onPressed: _cacheRunning ? null : _showBookPicker,
-                  icon: Icon(
-                    _cacheRunning ? Icons.hourglass_bottom : Icons.download,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _cacheRunning
-                        ? (_logLines.where((l) => !l.startsWith('  ')).firstOrNull ?? 'Running...')
-                        : (isArabic ? 'بدء' : 'Start'),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFE5C158),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: _cacheRunning ? null : _checkCache,
-                  icon: const Icon(Icons.info_outline, size: 16),
-                  label: Text(
-                    isArabic ? 'فحص' : 'Check',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.textTheme.bodyMedium?.color,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: _cacheRunning ? null : _exportCache,
-                  icon: const Icon(Icons.share, size: 16),
-                  label: Text(
-                    isArabic ? 'تصدير' : 'Export',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.textTheme.bodyMedium?.color,
-                  ),
-                ),
-              ],
-            ),
-            if (_cacheRunning)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: TextButton(
-                  onPressed: () {
-                    _cacheService?.cancel();
-                    setState(() => _cacheRunning = false);
-                  },
-                  child: Text(
-                    isArabic ? 'إيقاف' : 'Stop',
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-                  ),
-                ),
-              ),
-            if (_logLines.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: SingleChildScrollView(
-                  child: Text(
-                    _logLines.join('\n'),
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      color: Color(0xFF88CC88),
-                    ),
-                  ),
-                ),
-              ),
-
-            // ── CDN Download Section ──
-            const SizedBox(height: 16),
-            const Divider(),
-            Text(
-              isArabic ? "تحميل الشروح الجاهزة" : "Download Pre-built Sharh",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
-              ),
-            ),
-            const SizedBox(height: 6),
             Wrap(
               spacing: 6,
               runSpacing: 4,
+              alignment: WrapAlignment.center,
               children: [
-                for (var bookId in ['bukhari', 'muslim', 'abudawud', 'tirmidhi', 'nasai'])
+                for (var bookId in _bookLabels.keys)
                   ActionChip(
                     avatar: Icon(
-                      _cdnDownloading == bookId
+                      _downloadingBook == bookId
                           ? Icons.hourglass_bottom
                           : Icons.cloud_download,
                       size: 14,
@@ -538,12 +207,15 @@ class _AboutScreenState extends State<AboutScreen> {
                       _bookLabels[bookId]?.split(' / ').first ?? bookId,
                       style: const TextStyle(fontSize: 10),
                     ),
-                    onPressed: _cdnDownloading != null || _cacheRunning
+                    onPressed: _downloadingBook != null
                         ? null
                         : () => _downloadCdnBook(bookId),
-                    backgroundColor: const Color(0xFFE5C158).withOpacity(0.1),
+                    backgroundColor:
+                        const Color(0xFFE5C158).withOpacity(0.1),
                     side: const BorderSide(
-                        color: Color(0xFFE5C158), width: 0.5),
+                      color: Color(0xFFE5C158),
+                      width: 0.5,
+                    ),
                   ),
               ],
             ),
