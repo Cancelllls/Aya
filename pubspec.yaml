@@ -91,6 +91,7 @@ flutter:
     - assets/audio/adhan/
     - assets/quran/
     - assets/hadith/
+    - assets/changelog.json
     - assets/fonts/
 
   fonts:

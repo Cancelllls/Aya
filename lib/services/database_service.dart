@@ -168,14 +168,6 @@ class DatabaseService {
     await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
     await db.execute('CREATE INDEX idx_hadiths_book_num ON hadiths(book_id, hadith_number)');
 
-    // FTS5 full-text search for cross-book Arabic/English search
-    await db.execute('''
-      CREATE VIRTUAL TABLE hadiths_fts USING fts5(
-        search_arabic, search_english, content='',
-        tokenize='unicode61 remove_diacritics 2'
-      )
-    ''');
-
     // Prayer Tracker
     await db.execute('''
       CREATE TABLE prayer_tracker (
@@ -305,23 +297,10 @@ class DatabaseService {
 
     if (oldVersion < 8) {
       try {
-        // ── Performance optimizations for 125K+ hadith rows ──
-        // 1. Composite index: speeds up book-scoped queries with ORDER BY hadith_number
+        // Composite index: speeds up book-scoped queries
         await db.execute(
           'CREATE INDEX IF NOT EXISTS idx_hadiths_book_num ON hadiths(book_id, hadith_number)',
         );
-        // 2. FTS5 full-text index for instant cross-book Arabic search
-        await db.execute('''
-          CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
-            search_arabic, search_english, content='',
-            tokenize='unicode61 remove_diacritics 2'
-          )
-        ''');
-        // Populate FTS from existing data
-        await db.execute(
-          "INSERT INTO hadiths_fts(hadiths_fts) VALUES('rebuild')",
-        );
-        print("v8 upgrade complete: composite index + FTS5 added");
       } catch (e) {
         print("Error during v8 upgrade: $e");
       }
@@ -469,6 +448,30 @@ class DatabaseService {
     );
 
     return results;
+  }
+
+  static bool _ftsReady = false;
+
+  /// Create and populate FTS table lazily (on first cross-book search).
+  static Future<void> _ensureFts(Database db) async {
+    if (_ftsReady) return;
+    try {
+      await db.execute('''
+        CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
+          search_arabic, search_english,
+          tokenize='unicode61 remove_diacritics 2'
+        )
+      ''');
+      // Populate from existing hadiths table using INSERT...SELECT
+      await db.execute(
+        'INSERT INTO hadiths_fts(rowid, search_arabic, search_english) '
+        'SELECT id, search_arabic, search_english FROM hadiths '
+        'WHERE id NOT IN (SELECT rowid FROM hadiths_fts)',
+      );
+      _ftsReady = true;
+    } catch (_) {
+      // FTS not available \u2014 LIKE fallback in searchAllHadiths handles this
+    }
   }
 
   static String _stripTashkeel(String input) {
@@ -775,14 +778,6 @@ class DatabaseService {
         });
       }
       await batch.commit(noResult: true);
-
-      // Populate FTS index for this book
-      await txn.rawInsert(
-        "INSERT INTO hadiths_fts(rowid, search_arabic, search_english) "
-        "SELECT id, search_arabic, search_english FROM hadiths "
-        "WHERE book_id = ?",
-        [dbBookId],
-      );
     });
   }
 
@@ -879,14 +874,15 @@ class DatabaseService {
       return await db.query(
         'hadiths',
         where:
-            'book_id LIKE ? AND (hadith_number = ? OR id IN (SELECT rowid FROM hadiths_fts WHERE hadiths_fts MATCH ?))',
-        whereArgs: [langPrefix, intQuery, '"$cleanQuery"'],
+            'book_id LIKE ? AND hadith_number = ?',
+        whereArgs: [langPrefix, intQuery],
         orderBy: 'hadith_number ASC',
         limit: limit,
       );
     } else {
       // FTS5 MATCH for instant full-text cross-book search
       try {
+        await _ensureFts(db);
         return await db.rawQuery(
           'SELECT h.* FROM hadiths h '
           'INNER JOIN hadiths_fts f ON h.id = f.rowid '
