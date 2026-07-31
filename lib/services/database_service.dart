@@ -20,16 +20,32 @@ class DatabaseService {
 
   static Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'aya_app.db');
-    final db = await openDatabase(
-      path,
-      version: _version,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-    );
-    // WAL mode — faster concurrent reads, no write blocks
+
+    Database? db;
+    try {
+      db = await openDatabase(
+        path,
+        version: _version,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    } catch (e) {
+      // If DB is corrupted (e.g. from a failed migration), delete and retry
+      print("Database open failed: $e — recreating");
+      try {
+        await deleteDatabase(path);
+      } catch (_) {}
+      db = await openDatabase(
+        path,
+        version: _version,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    }
+
     await db.execute('PRAGMA journal_mode=WAL');
     await db.execute('PRAGMA synchronous=NORMAL');
-    await db.execute('PRAGMA cache_size=-8000'); // 8MB cache
+    await db.execute('PRAGMA cache_size=-8000');
     await _seedQuranData(db);
     return db;
   }
@@ -166,7 +182,6 @@ class DatabaseService {
       )
     ''');
     await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
-    await db.execute('CREATE INDEX idx_hadiths_book_num ON hadiths(book_id, hadith_number)');
 
     // Prayer Tracker
     await db.execute('''
