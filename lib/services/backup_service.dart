@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/storage_service.dart';
@@ -39,7 +38,8 @@ class BackupService {
 
     // Prayer tracker
     final tracker = await db.getPrayerTrackerRange(
-      '2020-01-01', '2030-01-01',
+      '2020-01-01',
+      '2030-01-01',
     );
 
     return {

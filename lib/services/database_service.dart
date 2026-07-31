@@ -450,30 +450,6 @@ class DatabaseService {
     return results;
   }
 
-  static bool _ftsReady = false;
-
-  /// Create and populate FTS table lazily (on first cross-book search).
-  static Future<void> _ensureFts(Database db) async {
-    if (_ftsReady) return;
-    try {
-      await db.execute('''
-        CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
-          search_arabic, search_english,
-          tokenize='unicode61 remove_diacritics 2'
-        )
-      ''');
-      // Populate from existing hadiths table using INSERT...SELECT
-      await db.execute(
-        'INSERT INTO hadiths_fts(rowid, search_arabic, search_english) '
-        'SELECT id, search_arabic, search_english FROM hadiths '
-        'WHERE id NOT IN (SELECT rowid FROM hadiths_fts)',
-      );
-      _ftsReady = true;
-    } catch (_) {
-      // FTS not available \u2014 LIKE fallback in searchAllHadiths handles this
-    }
-  }
-
   static String _stripTashkeel(String input) {
     final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
     return input.replaceAll(tashkeelRegex, '');
@@ -880,26 +856,13 @@ class DatabaseService {
         limit: limit,
       );
     } else {
-      // FTS5 MATCH for instant full-text cross-book search
-      try {
-        await _ensureFts(db);
-        return await db.rawQuery(
-          'SELECT h.* FROM hadiths h '
-          'INNER JOIN hadiths_fts f ON h.id = f.rowid '
-          'WHERE h.book_id LIKE ? AND hadiths_fts MATCH ? '
-          'ORDER BY rank LIMIT ?',
-          [langPrefix, '"$cleanQuery"', limit],
-        );
-      } catch (_) {
-        // Fallback to LIKE if FTS query fails (special chars)
-        return await db.query(
-          'hadiths',
-          where: 'book_id LIKE ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
-          whereArgs: [langPrefix, searchPattern, searchPattern],
-          orderBy: 'hadith_number ASC',
-          limit: limit,
-        );
-      }
+      return await db.query(
+        'hadiths',
+        where: 'book_id LIKE ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
+        whereArgs: [langPrefix, searchPattern, searchPattern],
+        orderBy: 'hadith_number ASC',
+        limit: limit,
+      );
     }
   }
 
