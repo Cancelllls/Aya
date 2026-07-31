@@ -39,7 +39,7 @@ class BackupService {
 
     // Prayer tracker
     final tracker = await db.getPrayerTrackerRange(
-      DateTime(2020, 1, 1), DateTime(2030, 1, 1),
+      '2020-01-01', '2030-01-01',
     );
 
     return {
@@ -96,14 +96,13 @@ class BackupService {
     final tracker = data['prayer_tracker'] as List? ?? [];
     for (var item in tracker) {
       if (item is Map) {
-        await db.savePrayerTrackerDay(
-          item['date']?.toString() ?? '',
-          item['fajr'] as int? ?? 0,
-          item['dhuhr'] as int? ?? 0,
-          item['asr'] as int? ?? 0,
-          item['maghrib'] as int? ?? 0,
-          item['isha'] as int? ?? 0,
-        );
+        final date = item['date']?.toString() ?? '';
+        for (var prayer in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']) {
+          final status = item[prayer] as int? ?? 0;
+          if (status > 0) {
+            await db.updatePrayerTracker(date, prayer, status);
+          }
+        }
       }
     }
     if (tracker.isNotEmpty) imported++;

@@ -177,7 +177,7 @@ class _SplashScreenState extends State<SplashScreen>
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 8,
-                          color: const Color(0xFFE5C158),
+                          color: Color(0xFFE5C158),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -185,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen>
                         TranslationService.isArabic
                             ? "رفيقك الإسلامي اليومي"
                             : "YOUR DAILY ISLAMIC COMPANION",
-                        style: const TextStyle(fontFamily: 'Inter',
+                        style: TextStyle(fontFamily: 'Inter',
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2.5,

@@ -174,6 +174,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       fontWeight: fontWeight,
       backgroundColor: backgroundColor,
     );
+  }
 
   String _getHizbRangeText() {
     if (_ayahList.isEmpty) {
@@ -221,17 +222,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               storage: widget.storage,
             ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // goingForward=true (next surah): slide in from right → left
-          // goingForward=false (prev surah): slide in from left → right
           final begin = Offset(goingForward ? 0.3 : -0.3, 0.0);
           return SlideTransition(
             position: Tween(begin: begin, end: Offset.zero)
-                .chain(CurveTween(curve: Curves.easeOutCubic))
-                .animate(animation),
+              .chain(CurveTween(curve: Curves.easeOutCubic))
+              .animate(animation),
             child: FadeTransition(
               opacity: Tween(begin: 0.0, end: 1.0)
-                  .chain(CurveTween(curve: Curves.easeOutCubic))
-                  .animate(animation),
+                .chain(CurveTween(curve: Curves.easeOutCubic))
+                .animate(animation),
               child: child,
             ),
           );
@@ -271,13 +270,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           IconButton(
             icon: Icon(
               _hifdhMode ? Icons.visibility_off : Icons.visibility,
-              color: _hifdhMode
-                  ? Colors.orangeAccent
-                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white),
+              color: _hifdhMode ? Colors.orangeAccent : null,
             ),
-            onPressed: () {
-              setState(() => _hifdhMode = !_hifdhMode);
-            },
+            onPressed: () => setState(() => _hifdhMode = !_hifdhMode),
             tooltip: TranslationService.isArabic
                 ? "وضع الحفظ"
                 : "Memorization Mode",
@@ -955,10 +950,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           switchOutCurve: Curves.easeOutCubic,
           transitionBuilder: (Widget child, Animation<double> animation) {
             final offsetAnimation = Tween<Offset>(
-              begin: Offset(
-                _slideDirection * 0.3,
-                0.0,
-              ),
+              begin: Offset(_slideDirection * 0.3, 0.0),
               end: Offset.zero,
             ).animate(CurvedAnimation(
               parent: animation,
