@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/storage_service.dart';
@@ -242,6 +243,20 @@ class _TasbihScreenState extends State<TasbihScreen>
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
                 Navigator.pop(dialogContext);
+                // Save to daily history before resetting
+                if (_count > 0) {
+                  final today = DateTime.now().toIso8601String().substring(0, 10);
+                  final key = 'tasbih_history_$today';
+                  final current = jsonDecode(
+                    widget.storage.getString(key, defaultValue: '[]'),
+                  );
+                  current.add({
+                    'dhikr': _arabicText,
+                    'count': _count,
+                    'time': DateTime.now().toIso8601String(),
+                  });
+                  widget.storage.setString(key, jsonEncode(current));
+                }
                 setState(() {
                   _count = 0;
                 });
