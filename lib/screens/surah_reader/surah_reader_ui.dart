@@ -262,16 +262,25 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    ayah.text,
-                    textDirection: TextDirection.rtl,
-                    textAlign: TextAlign.justify,
-                    style: _getArabicTextStyle(
-                      22 * _fontSizeMultiplier,
-                      height: 2.1,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _hifdhMode
+                      ? _HifdhRevealWrapper(
+                          ayah: ayah,
+                          textStyle: _getArabicTextStyle(
+                            22 * _fontSizeMultiplier,
+                            height: 2.1,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : Text(
+                          ayah.text,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.justify,
+                          style: _getArabicTextStyle(
+                            22 * _fontSizeMultiplier,
+                            height: 2.1,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 if (_readingMode == 'translation') ...[
                   const SizedBox(height: 12),
@@ -279,7 +288,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   const SizedBox(height: 8),
                   Text(
                     ayah.translation,
-                    style: const TextStyle(fontFamily: 'Inter',
+                    style: TextStyle(fontFamily: 'Inter',
                       fontSize: 14 * _fontSizeMultiplier,
                       // ignore: deprecated_member_use
                       color: theme.textTheme.bodyMedium?.color?.withOpacity(
@@ -629,6 +638,89 @@ extension SurahReaderUi on _SurahReaderScreenState {
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HifdhRevealWrapper extends StatefulWidget {
+  final Ayah ayah;
+  final TextStyle textStyle;
+  const _HifdhRevealWrapper({required this.ayah, required this.textStyle});
+
+  @override
+  State<_HifdhRevealWrapper> createState() => _HifdhRevealWrapperState();
+}
+
+class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper> {
+  bool _revealed = false;
+  Timer? _hideTimer;
+
+  void _reveal() {
+    setState(() => _revealed = true);
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _revealed = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _revealed ? null : _reveal,
+      child: Stack(
+        children: [
+          Text(
+            widget.ayah.text,
+            textDirection: TextDirection.rtl,
+            textAlign: TextAlign.justify,
+            style: widget.textStyle,
+          ),
+          if (!_revealed)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 5),
+                  child: Opacity(
+                    opacity: 0.0,
+                    child: Text(
+                      widget.ayah.text,
+                      textDirection: TextDirection.rtl,
+                      style: widget.textStyle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (!_revealed)
+            Positioned(
+              right: 8,
+              top: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orangeAccent.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+                ),
+                child: Text(
+                  '',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orangeAccent,
+                    fontFamily: widget.textStyle.fontFamily,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

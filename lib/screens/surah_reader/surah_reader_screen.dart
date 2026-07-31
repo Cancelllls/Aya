@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -60,6 +61,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       'translation'; // 'translation', 'arabic_only', 'tafseer', 'continuous'
   String _quranScriptType = 'hafs';
   bool _isBookmarked = false;
+  bool _hifdhMode = false;
   int? _bookmarkedAyahNumber;
   int? _lastScrolledAyah;
 
@@ -266,6 +268,20 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(
+              _hifdhMode ? Icons.visibility_off : Icons.visibility,
+              color: _hifdhMode
+                  ? Colors.orangeAccent
+                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white),
+            ),
+            onPressed: () {
+              setState(() => _hifdhMode = !_hifdhMode);
+            },
+            tooltip: TranslationService.isArabic
+                ? "وضع الحفظ"
+                : "Memorization Mode",
+          ),
           IconButton(
             icon: Icon(
               _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
