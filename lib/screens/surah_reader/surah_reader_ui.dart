@@ -645,6 +645,8 @@ extension SurahReaderUi on _SurahReaderScreenState {
 }
 
 class _HifdhRevealWrapper extends StatefulWidget {
+
+class _HifdhRevealWrapper extends StatefulWidget {
   final Ayah ayah;
   final TextStyle textStyle;
   const _HifdhRevealWrapper({required this.ayah, required this.textStyle});
@@ -685,38 +687,18 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper> {
           ),
           if (!_revealed)
             Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 5),
-                  child: Opacity(
-                    opacity: 0.0,
-                    child: Text(
-                      widget.ayah.text,
-                      textDirection: TextDirection.rtl,
-                      style: widget.textStyle,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          if (!_revealed)
-            Positioned(
-              right: 8,
-              top: 4,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+                  color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(6),
                 ),
+                alignment: Alignment.center,
                 child: Text(
-                  '',
-                  style: TextStyle(
-                    fontSize: 12,
+                  TranslationService.isArabic ? 'اضغط للكشف' : 'Tap to reveal',
+                  style: const TextStyle(
+                    fontSize: 13,
                     color: Colors.orangeAccent,
-                    fontFamily: widget.textStyle.fontFamily,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
