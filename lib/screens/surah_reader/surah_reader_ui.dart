@@ -694,45 +694,42 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
       child: AnimatedBuilder(
         animation: _blurAnim,
         builder: (context, child) {
-          final blur = _blurAnim.value * 20.0;
+          final blur = _blurAnim.value * 16.0;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return Stack(
             children: [
-              // The actual text (always visible, blurred when hidden)
+              // The actual text (always visible)
               Text(
                 widget.ayah.text,
                 textDirection: TextDirection.rtl,
                 textAlign: TextAlign.justify,
                 style: widget.textStyle,
               ),
-              // Blur overlay that fades out on reveal
-              IgnorePointer(
-                child: AnimatedOpacity(
-                  opacity: _blurAnim.value,
-                  duration: Duration.zero, // driven by parent animation
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(
-                        sigmaX: blur,
-                        sigmaY: blur,
-                      ),
-                      child: Opacity(
-                        opacity: 0.4,
-                        child: Text(
-                          widget.ayah.text,
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.justify,
-                          style: widget.textStyle.copyWith(
-                            color: Theme.of(context)
-                                .scaffoldBackgroundColor,
+              // BackdropFilter blurs everything underneath —
+              // much more effective than background-colored text blur
+              if (_blurAnim.value > 0.01)
+                IgnorePointer(
+                  child: Opacity(
+                    opacity: _blurAnim.value,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: blur,
+                          sigmaY: blur,
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.4)
+                                : Colors.white.withOpacity(0.4),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              // "Tap to reveal" hint — fades out as blur clears
+              // "Tap to reveal" hint
               if (_blurAnim.value > 0.3)
                 Positioned.fill(
                   child: IgnorePointer(
@@ -742,13 +739,12 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
                       child: Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
+                            horizontal: 14, vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .scaffoldBackgroundColor
-                                .withOpacity(0.7),
+                            color: isDark
+                                ? Colors.black54
+                                : Colors.black12,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
