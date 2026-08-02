@@ -270,7 +270,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           IconButton(
             icon: Icon(
               _hifdhMode ? Icons.visibility_off : Icons.visibility,
-              color: _hifdhMode ? Colors.orangeAccent : null,
+              color: _hifdhMode ? Colors.orangeAccent : Colors.white54,
             ),
             onPressed: () => setState(() {
               _hifdhMode = !_hifdhMode;

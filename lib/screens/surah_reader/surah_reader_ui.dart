@@ -694,7 +694,7 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
       child: AnimatedBuilder(
         animation: _blurAnim,
         builder: (context, child) {
-          final blur = _blurAnim.value * 16.0;
+          final blur = _blurAnim.value * 30.0;
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Stack(
             children: [
@@ -705,8 +705,7 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
                 textAlign: TextAlign.justify,
                 style: widget.textStyle,
               ),
-              // BackdropFilter blurs everything underneath —
-              // much more effective than background-colored text blur
+              // Strong BackdropFilter — blurs text + dims it
               if (_blurAnim.value > 0.01)
                 IgnorePointer(
                   child: Opacity(
@@ -721,8 +720,8 @@ class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
                         child: Container(
                           decoration: BoxDecoration(
                             color: isDark
-                                ? Colors.black.withOpacity(0.4)
-                                : Colors.white.withOpacity(0.4),
+                                ? Colors.black.withOpacity(0.75)
+                                : Colors.white.withOpacity(0.7),
                           ),
                         ),
                       ),
