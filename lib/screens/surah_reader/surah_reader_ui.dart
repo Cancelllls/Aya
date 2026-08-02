@@ -262,25 +262,16 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: _hifdhMode
-                      ? _HifdhRevealWrapper(
-                          ayah: ayah,
-                          textStyle: _getArabicTextStyle(
-                            22 * _fontSizeMultiplier,
-                            height: 2.1,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )
-                      : Text(
-                          ayah.text,
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.justify,
-                          style: _getArabicTextStyle(
-                            22 * _fontSizeMultiplier,
-                            height: 2.1,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  child: Text(
+                    ayah.text,
+                    textDirection: TextDirection.rtl,
+                    textAlign: TextAlign.justify,
+                    style: _getArabicTextStyle(
+                      22 * _fontSizeMultiplier,
+                      height: 2.1,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 if (_readingMode == 'translation') ...[
                   const SizedBox(height: 12),
@@ -394,9 +385,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
             final isHighlighted = isBookmarked || isPlaying;
 
             final recognizer = TapGestureRecognizer()
-              ..onTap = _hifdhMode
-                  ? () => {} // in hifdh mode, don't show actions on tap
-                  : () => _showAyahActionSheet(ayah);
+              ..onTap = () => _showAyahActionSheet(ayah);
             pageRecs.add(recognizer);
 
             spans.add(
@@ -641,130 +630,6 @@ extension SurahReaderUi on _SurahReaderScreenState {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _HifdhRevealWrapper extends StatefulWidget {
-  final Ayah ayah;
-  final TextStyle textStyle;
-  const _HifdhRevealWrapper({required this.ayah, required this.textStyle});
-
-  @override
-  State<_HifdhRevealWrapper> createState() => _HifdhRevealWrapperState();
-}
-
-class _HifdhRevealWrapperState extends State<_HifdhRevealWrapper>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _blurAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-      value: 1.0, // start blurred
-    );
-    _blurAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  void _toggle() {
-    if (_ctrl.value > 0.5) {
-      _ctrl.reverse(); // reveal
-    } else {
-      _ctrl.forward(); // blur again
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _toggle,
-      child: AnimatedBuilder(
-        animation: _blurAnim,
-        builder: (context, child) {
-          final blur = _blurAnim.value * 30.0;
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Stack(
-            children: [
-              // The actual text (always visible)
-              Text(
-                widget.ayah.text,
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.justify,
-                style: widget.textStyle,
-              ),
-              // Strong BackdropFilter — blurs text + dims it
-              if (_blurAnim.value > 0.01)
-                IgnorePointer(
-                  child: Opacity(
-                    opacity: _blurAnim.value,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: blur,
-                          sigmaY: blur,
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.black.withOpacity(0.75)
-                                : Colors.white.withOpacity(0.7),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              // "Tap to reveal" hint
-              if (_blurAnim.value > 0.3)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedOpacity(
-                      opacity: (_blurAnim.value - 0.3) / 0.7,
-                      duration: Duration.zero,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.black54
-                                : Colors.black12,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            TranslationService.isArabic
-                                ? 'اضغط للكشف'
-                                : 'Tap to reveal',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orangeAccent
-                                  .withOpacity(_blurAnim.value),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
       ),
     );
   }

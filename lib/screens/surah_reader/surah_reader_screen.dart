@@ -61,7 +61,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       'translation'; // 'translation', 'arabic_only', 'tafseer', 'continuous'
   String _quranScriptType = 'hafs';
   bool _isBookmarked = false;
-  bool _hifdhMode = false;
   int? _bookmarkedAyahNumber;
   int? _lastScrolledAyah;
 
@@ -267,23 +266,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(
-              _hifdhMode ? Icons.visibility_off : Icons.visibility,
-              color: _hifdhMode ? Colors.orangeAccent : Colors.white54,
-            ),
-            onPressed: () => setState(() {
-              _hifdhMode = !_hifdhMode;
-              // Hifdh only works in card modes — auto-switch from continuous
-              if (_hifdhMode && _readingMode == 'continuous') {
-                _readingMode = 'translation';
-                widget.storage.setString('reading_mode', 'translation');
-              }
-            }),
-            tooltip: TranslationService.isArabic
-                ? "وضع الحفظ"
-                : "Memorization Mode",
-          ),
           IconButton(
             icon: Icon(
               _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
@@ -906,9 +888,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          GestureDetector(
+      body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onHorizontalDragStart: widget.isInsidePager
             ? null
@@ -1260,50 +1240,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                   ],
                 ),
         ),
-      ),
-          if (_hifdhMode && _readingMode == 'continuous')
-            Positioned.fill(
-              child: Material(
-                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.visibility_off, size: 48, color: Colors.orangeAccent),
-                      const SizedBox(height: 16),
-                      Text(
-                        TranslationService.isArabic
-                            ? 'وضع الحفظ لا يدعم وضع القراءة المستمرة'
-                            : 'Memorization mode works best with per-ayah view',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.auto_fix_high, size: 16),
-                        label: Text(
-                          TranslationService.isArabic
-                              ? 'التبديل إلى عرض الترجمة'
-                              : 'Switch to Translation View',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () => setState(() {
-                          _readingMode = 'translation';
-                          widget.storage.setString('reading_mode', 'translation');
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }
