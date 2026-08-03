@@ -270,10 +270,11 @@ class _HadithScreenState extends State<HadithScreen> {
 
   Future<void> _loadHadithPage(DatabaseService db, String bookId, int page) async {
     if (!mounted || (!_hasMore && page > 0)) return;
-    setState(() => _loadingMore = page > 0);
+    if (page > 0) setState(() => _loadingMore = true);
 
-    final offset = page * _pageSize * 2; // load 2 pages at once
-    final results = await db.getHadiths(bookId, _displayLang, _pageSize * 2, offset);
+    final batch = _pageSize * 5; // load 100 hadiths per batch for smooth scrolling
+    final offset = page * batch;
+    final results = await db.getHadiths(bookId, _displayLang, batch, offset);
     await _loadGrades();
 
     if (mounted) {
@@ -292,7 +293,10 @@ class _HadithScreenState extends State<HadithScreen> {
         } else {
           _hadithList.addAll(list);
         }
-        _hasMore = results.length >= _pageSize * 2;
+        // Use total count for accurate hasMore
+        _hasMore = _totalHadiths > 0
+            ? _hadithList.length < _totalHadiths
+            : results.length >= batch;
         _isOffline = true;
         _isLoading = false;
         _loadingMore = false;
@@ -302,10 +306,11 @@ class _HadithScreenState extends State<HadithScreen> {
 
   Future<void> _loadMoreIfNeeded() async {
     if (_loadingMore || !_hasMore || _activeSearchQuery.isNotEmpty) return;
-    final visibleEnd = (_currentPage * _pageSize);
-    if (visibleEnd >= _hadithList.length - _pageSize) {
-      final nextPage = _hadithList.length ~/ (_pageSize * 2);
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadingMore = true;
       final db = await DatabaseService.getInstance();
+      final nextPage = _hadithList.length ~/ (_pageSize * 5) + 1;
       await _loadHadithPage(db, _selectedBook.id, nextPage);
     }
   }

@@ -29,6 +29,7 @@ class SurahReaderScreen extends StatefulWidget {
   final StorageService storage;
   final int? initialAyahNumber;
   final bool isInsidePager;
+  final bool hideAppBar;
   final VoidCallback? onGoToNext;
   final VoidCallback? onGoToPrev;
 
@@ -38,6 +39,7 @@ class SurahReaderScreen extends StatefulWidget {
     required this.storage,
     this.initialAyahNumber,
     this.isInsidePager = false,
+    this.hideAppBar = false,
     this.onGoToNext,
     this.onGoToPrev,
   });
@@ -246,7 +248,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: widget.hideAppBar ? null : AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
