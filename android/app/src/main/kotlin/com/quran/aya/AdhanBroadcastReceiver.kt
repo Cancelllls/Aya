@@ -136,8 +136,19 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             return
         }
 
+        lateinit var player: MediaPlayer
+        lateinit var mediaSession: MediaSessionCompat
+
+        fun stop() {
+            try { player.stop(); player.release() } catch (_: Exception) {}
+            mediaSession.release()
+            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
+            notifManager.cancel(alarmId)
+            if (wakeLock.isHeld) wakeLock.release()
+        }
+
         // ── MediaSessionCompat for volume-key stop ──────────────────
-        val mediaSession = MediaSessionCompat(context, "AyaAdhan")
+        mediaSession = MediaSessionCompat(context, "AyaAdhan")
         mediaSession.setPlaybackState(
             PlaybackStateCompat.Builder()
                 .setState(PlaybackStateCompat.STATE_PLAYING, 0, 0f)
@@ -147,7 +158,6 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             VolumeProviderCompat.VOLUME_CONTROL_RELATIVE, 100, 50
         ) {
             override fun onAdjustVolume(direction: Int) {
-                // direction -1 = volume down, 1 = volume up — stop on either
                 stop()
             }
         }
@@ -155,7 +165,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         mediaSession.setActive(true)
 
         // ── MediaPlayer ─────────────────────────────────────────────
-        val player = MediaPlayer.create(context, resId)
+        player = MediaPlayer.create(context, resId)
         player.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
@@ -163,14 +173,6 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
                 .setLegacyStreamType(AudioManager.STREAM_ALARM)
                 .build()
         )
-
-        fun stop() {
-            try { player.stop(); player.release() } catch (_: Exception) {}
-            mediaSession.release()
-            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
-            notifManager.cancel(alarmId)
-            if (wakeLock.isHeld) wakeLock.release()
-        }
 
         Companion.activeStop = ::stop
 
