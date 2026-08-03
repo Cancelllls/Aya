@@ -83,12 +83,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
     final notifOk = await NotificationService().checkPermissions();
-    int? exactAlarmResult;
-    try {
-      exactAlarmResult = await _platform.invokeMethod<int>('checkExactAlarmPermission');
-    } catch (_) {}
-    // 0 = denied, 1 = granted, null = unknown (show permission card)
-    final exactAlarmOk = exactAlarmResult == 1;
+    // Always require explicit user grant — never trust auto-grant from canScheduleExactAlarms().
+    // Android 12-14 sometimes returns true by default for apps targeting lower SDKs.
+    // Only mark granted if the user previously completed onboarding AND granted it.
+    final alreadyOnboarded = widget.storage.getBool('first_time_v2') == false;
+    final exactAlarmOk = alreadyOnboarded
+        ? (await _platform.invokeMethod<int>('checkExactAlarmPermission') ?? 0) == 1
+        : false;
     if (mounted) {
       setState(() {
         _locationGranted = locOk;
@@ -126,7 +127,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   Future<void> _requestExactAlarm() async {
     try {
+      // Force-reset so card shows as pending until the user returns
+      setState(() => _exactAlarmGranted = false);
       await _platform.invokeMethod('requestExactAlarmPermission');
+      // Re-check immediately in case the dialog was skipped
+      await _checkAllPermissions();
     } catch (_) {}
   }
 
