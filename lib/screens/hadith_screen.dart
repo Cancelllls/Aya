@@ -268,13 +268,12 @@ class _HadithScreenState extends State<HadithScreen> {
     }
   }
 
-  Future<void> _loadHadithPage(DatabaseService db, String bookId, int page) async {
+  Future<void> _loadHadithPage(DatabaseService db, String bookId, int page, {int batchSize = 75}) async {
     if (!mounted || (!_hasMore && page > 0)) return;
     if (page > 0) setState(() => _loadingMore = true);
 
-    final batch = _pageSize * 5; // load 100 hadiths per batch for smooth scrolling
-    final offset = page * batch;
-    final results = await db.getHadiths(bookId, _displayLang, batch, offset);
+    final offset = page * batchSize;
+    final results = await db.getHadiths(bookId, _displayLang, batchSize, offset);
     await _loadGrades();
 
     if (mounted) {
@@ -293,10 +292,9 @@ class _HadithScreenState extends State<HadithScreen> {
         } else {
           _hadithList.addAll(list);
         }
-        // Use total count for accurate hasMore
         _hasMore = _totalHadiths > 0
             ? _hadithList.length < _totalHadiths
-            : results.length >= batch;
+            : results.length >= batchSize;
         _isOffline = true;
         _isLoading = false;
         _loadingMore = false;
@@ -306,13 +304,24 @@ class _HadithScreenState extends State<HadithScreen> {
 
   Future<void> _loadMoreIfNeeded() async {
     if (_loadingMore || !_hasMore || _activeSearchQuery.isNotEmpty) return;
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    final currentScroll = _scrollController.position.pixels;
+    // Pre-load next batch when user reaches 60% of what's loaded
+    if (currentScroll > maxScroll * 0.6) {
       _loadingMore = true;
       final db = await DatabaseService.getInstance();
-      final nextPage = _hadithList.length ~/ (_pageSize * 5) + 1;
+      final nextPage = _hadithList.length ~/ 75 + 1;
       await _loadHadithPage(db, _selectedBook.id, nextPage);
     }
+  }
+
+  int get _totalPages {
+    if (_totalHadiths > 0) return (_totalHadiths / _pageSize).ceil();
+    return (_hadithList.length / _pageSize).ceil();
   }
 
   Future<void> _downloadEntireBook() async {
@@ -833,7 +842,10 @@ class _HadithScreenState extends State<HadithScreen> {
     final theme = Theme.of(context);
     final filtered = _getFilteredHadiths();
 
-    final totalPages = (filtered.length / _pageSize).ceil();
+    // Use real total when browsing; use filtered length when searching
+    final totalPages = _activeSearchQuery.isNotEmpty
+        ? (filtered.length / _pageSize).ceil()
+        : (_totalPages > 0 ? _totalPages : (filtered.length / _pageSize).ceil());
     final pageHadiths = filtered
         .skip((_currentPage - 1) * _pageSize)
         .take(_pageSize)
