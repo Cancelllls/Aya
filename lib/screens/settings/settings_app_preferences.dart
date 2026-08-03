@@ -8,14 +8,14 @@ extension SettingsAppPreferencesSection on _SettingsScreenState {
         TranslationService.isArabic ? "تفضيلات التطبيق" : "App Preferences",
       ),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color:
                 (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(

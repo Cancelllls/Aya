@@ -160,6 +160,8 @@ class ApiService {
     String tafsirEdition = 'ar.muyassar',
   }) async {
     final db = await DatabaseService.getInstance();
+    // Exclude tafsir from initial load — it's the single largest column.
+    // Tafsir is lazy-loaded when the user switches to tafsir mode.
     final ayahsRaw = await db.getAyahsForSurah(surahNumber);
 
     final list = <Ayah>[];
@@ -175,12 +177,28 @@ class ApiService {
         translation: row['text_english'] as String? ?? '',
         juz: row['juz'] as int? ?? 0,
         hizb: row['hizb'] as int? ?? 0,
-        tafseer: row['tafsir'] as String? ?? '',
+        tafseer: '',
       );
       list.add(ayah);
     }
 
     return list;
+  }
+
+  /// Fetch tafsir text for a surah and merge into existing [ayahs] list.
+  static Future<void> fetchTafsirForSurah(
+    int surahNumber,
+    List<Ayah> ayahs,
+  ) async {
+    final db = await DatabaseService.getInstance();
+    final rows = await db.getTafsirForSurah(surahNumber);
+    final lookup = <int, String>{};
+    for (final r in rows) {
+      lookup[r['ayah_number'] as int] = (r['tafsir'] as String?) ?? '';
+    }
+    for (final a in ayahs) {
+      a.tafseer = lookup[a.numberInSurah] ?? '';
+    }
   }
 
   // ─── Reverse Geocoding ───────────────────────────────────────────────────

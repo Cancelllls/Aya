@@ -28,7 +28,7 @@ class WelcomeHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.15),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.15),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -42,7 +42,7 @@ class WelcomeHeader extends StatelessWidget {
             style: TextStyle(
               color: isDark
                   ? const Color(0xFFE5C158)
-                  : Colors.white.withOpacity(0.9),
+                  : Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 2,
@@ -61,7 +61,7 @@ class WelcomeHeader extends StatelessWidget {
           Text(
             _randomVerse.getDisplayString(TranslationService.isArabic),
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 14,
               fontStyle: FontStyle.italic,
             ),

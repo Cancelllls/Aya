@@ -23,7 +23,7 @@ class GridServiceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-              .withOpacity(0.04),
+              .withValues(alpha: 0.04),
           width: 1.0,
         ),
       ),
@@ -39,7 +39,7 @@ class GridServiceCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5C158).withOpacity(0.1),
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: const Color(0xFFE5C158), size: 18),

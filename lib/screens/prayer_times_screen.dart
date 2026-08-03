@@ -8,6 +8,7 @@ import '../services/storage_service.dart';
 import '../services/offline_prayer_service.dart';
 import '../services/translation_service.dart';
 import '../services/notification_service.dart';
+import '../utils/text_helpers.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   final StorageService storage;
@@ -223,7 +224,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   : "Choose when you would like to receive a notification alert for this Islamic event:",
               style: TextStyle(
                 fontSize: 13,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 16),
@@ -404,7 +405,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         color:
                             (Theme.of(context).textTheme.bodyMedium?.color ??
                                     Colors.white)
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                       ),
                     ),
                   ),
@@ -546,7 +547,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   color:
                       (Theme.of(context).textTheme.bodyMedium?.color ??
                               Colors.white)
-                          .withOpacity(0.7),
+                          .withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -648,7 +649,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 decoration: BoxDecoration(
                   color: theme.cardColor,
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.12),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -682,7 +683,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       "${TranslationService.isArabic ? 'الطريقة: الإحداثيات' : 'Method: Lat/Lng'} (${loc['latitude']?.toStringAsFixed(4) ?? '--'}, ${loc['longitude']?.toStringAsFixed(4) ?? '--'})",
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                           0.5,
                         ),
                       ),
@@ -727,7 +728,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.12),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
                   ),
                 ),
                 child: Row(
@@ -876,7 +877,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               fontSize: 13,
               color: isSelected
                   ? Colors.black
-                  : theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                  : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
             ),
           ),
         ),
@@ -884,31 +885,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     );
   }
 
-  String _formatTime(String rawTime) {
-    if (rawTime.isEmpty) return '--:--';
-    final cleanTime = rawTime.split(' ')[0]; // Extract "HH:mm"
-    final use24h = widget.storage.getBool(
-      'use_24h_format',
-      defaultValue: false,
+  String _fmt(String raw) {
+    return formatPrayerTime(
+      raw,
+      use24h: widget.storage.getBool('use_24h_format', defaultValue: false),
     );
-    if (use24h) {
-      return cleanTime;
-    }
-
-    // Parse "HH:mm" to 12-hour format
-    final parts = cleanTime.split(':');
-    if (parts.length < 2) return cleanTime;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return cleanTime;
-
-    final isPm = hour >= 12;
-    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
-    final displayMinute = minute.toString().padLeft(2, '0');
-    final amPm = isPm
-        ? (TranslationService.isArabic ? 'م' : 'PM')
-        : (TranslationService.isArabic ? 'ص' : 'AM');
-    return '$displayHour:$displayMinute $amPm';
   }
 
   Widget _buildPrayerCalendar(ThemeData theme) {
@@ -930,7 +911,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: Theme.of(context).dividerColor.withOpacity(0.12),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
         ),
       ),
       child: SingleChildScrollView(
@@ -938,7 +919,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         child: DataTable(
           columnSpacing: 16,
           headingRowColor: WidgetStateProperty.all(
-            const Color(0xFFE5C158).withOpacity(0.1),
+            const Color(0xFFE5C158).withValues(alpha: 0.1),
           ),
           columns: [
             DataColumn(
@@ -1003,13 +984,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                DataCell(Text(_formatTime(timings['Fajr']))),
-                DataCell(Text(_formatTime(timings['Sunrise']))),
-                DataCell(Text(_formatTime(timings['Dhuhr']))),
-                DataCell(Text(_formatTime(timings['Asr']))),
-                DataCell(Text(_formatTime(timings['Sunset']))),
-                DataCell(Text(_formatTime(timings['Maghrib']))),
-                DataCell(Text(_formatTime(timings['Isha']))),
+                DataCell(Text(_fmt(timings['Fajr']))),
+                DataCell(Text(_fmt(timings['Sunrise']))),
+                DataCell(Text(_fmt(timings['Dhuhr']))),
+                DataCell(Text(_fmt(timings['Asr']))),
+                DataCell(Text(_fmt(timings['Sunset']))),
+                DataCell(Text(_fmt(timings['Maghrib']))),
+                DataCell(Text(_fmt(timings['Isha']))),
               ],
             );
           }).toList(),
@@ -1120,17 +1101,17 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: isToday
-                  ? const Color(0xFFE5C158).withOpacity(0.15)
+                  ? const Color(0xFFE5C158).withValues(alpha: 0.15)
                   : (hasEvent
-                        ? const Color(0xFFE5C158).withOpacity(0.05)
-                        : theme.cardColor.withOpacity(0.6)),
+                        ? const Color(0xFFE5C158).withValues(alpha: 0.05)
+                        : theme.cardColor.withValues(alpha: 0.6)),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isToday
                     ? const Color(0xFFE5C158)
                     : (hasEvent
-                          ? const Color(0xFFE5C158).withOpacity(0.5)
-                          : Theme.of(context).dividerColor.withOpacity(0.1)),
+                          ? const Color(0xFFE5C158).withValues(alpha: 0.5)
+                          : Theme.of(context).dividerColor.withValues(alpha: 0.1)),
                 width: isToday || hasEvent ? 1.5 : 1.0,
               ),
             ),
@@ -1143,7 +1124,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     gregDay,
                     style: TextStyle(
                       fontSize: 10,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                         0.5,
                       ),
                     ),
@@ -1189,7 +1170,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: Theme.of(context).dividerColor.withOpacity(0.12),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
         ),
       ),
       child: Padding(
@@ -1250,7 +1231,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                           0.6,
                         ),
                       ),
@@ -1259,7 +1240,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 },
               ),
               Divider(
-                color: Theme.of(context).dividerColor.withOpacity(0.12),
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
                 height: 12,
               ),
               GridView.builder(
@@ -1277,7 +1258,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               if (events.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Divider(
-                  color: Theme.of(context).dividerColor.withOpacity(0.12),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
                 ),
                 const SizedBox(height: 8),
                 Align(
@@ -1312,7 +1293,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                           color:
                               (Theme.of(context).textTheme.bodyMedium?.color ??
                                       Colors.white)
-                                  .withOpacity(0.38),
+                                  .withValues(alpha: 0.38),
                         ),
                       ),
                       trailing: IconButton(
@@ -1340,7 +1321,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     String time,
     IconData icon,
   ) {
-    final cleanTime = _formatTime(time);
+    final cleanTime = _fmt(time);
     final alertKey = 'alert_${name.toLowerCase()}';
     final alertOn = widget.storage.getBool(alertKey, defaultValue: true);
     final displayName = TranslationService.t(name.toLowerCase());
@@ -1349,14 +1330,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
     return Card(
       color: isNext
-          ? const Color(0xFFE5C158).withOpacity(0.08)
+          ? const Color(0xFFE5C158).withValues(alpha: 0.08)
           : theme.cardColor,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isNext
-              ? const Color(0xFFE5C158).withOpacity(0.6)
+              ? const Color(0xFFE5C158).withValues(alpha: 0.6)
               : Colors.transparent,
           width: isNext ? 1.8 : 0.0,
         ),
@@ -1373,7 +1354,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 color:
                     (Theme.of(context).textTheme.bodyLarge?.color ??
                             Colors.white)
-                        .withOpacity(0.04),
+                        .withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: const Color(0xFFE5C158), size: 18),

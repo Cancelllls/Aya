@@ -57,6 +57,19 @@ extension SurahReaderBookmarks on _SurahReaderScreenState {
     );
   }
 
+  /// Debounce last-read-position writes — fires at most once every 5 seconds
+  /// and immediately on explicit save/exit.
+  void _debouncedSavePosition(int surahNum, int ayahNum) {
+    _savePositionTimer?.cancel();
+    _savePositionTimer = Timer(const Duration(seconds: 5), () {
+      widget.storage.saveLastReadPosition(surahNum, ayahNum);
+    });
+  }
+
+  void _flushPositionSave() {
+    _savePositionTimer?.cancel();
+  }
+
   void _toggleBookmark() async {
     if (_isBookmarked) {
       await widget.storage.removeBookmark(_currentSurah.number);

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import 'welcome_screen.dart';
-import '../main.dart';
+import 'main_scaffold.dart';
 import '../widgets/islamic_logo_painter.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -148,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE5C158).withOpacity(
+                          color: const Color(0xFFE5C158).withValues(alpha: 
                             0.08 + 0.08 * sin(_controller.value * 2 * pi),
                           ),
                           blurRadius: 40,
@@ -194,7 +194,7 @@ class _SplashScreenState extends State<SplashScreen>
                                           context,
                                         ).textTheme.bodyMedium?.color ??
                                         Colors.white)
-                                    .withOpacity(0.3)
+                                    .withValues(alpha: 0.3)
                               : Colors.black38,
                         ),
                       ),

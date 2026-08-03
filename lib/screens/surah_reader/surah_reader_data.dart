@@ -51,23 +51,9 @@ extension SurahReaderData on _SurahReaderScreenState {
       if (modalSetState != null) modalSetState(() {});
     }
     try {
-      final isAr = TranslationService.isArabic;
-      final data = isAr ? recitersDataAr : recitersDataEn;
-      final allReciters = data['reciters'] as List;
-
-      final filteredReciters = allReciters
-          .map((r) {
-            // Deep copy the reciter to avoid mutating the constant
-            final newR = Map<String, dynamic>.from(r);
-            final moshafs = (newR['moshaf'] as List)
-                .cast<Map<String, dynamic>>();
-            newR['moshaf'] = moshafs
-                .where((m) => m['rewaya_id'] == riwayahId)
-                .toList();
-            return newR;
-          })
-          .where((r) => (r['moshaf'] as List).isNotEmpty)
-          .toList();
+      final filteredReciters = await RecitersCacheService.getRecitersForRiwayah(
+        riwayahId,
+      );
 
       if (mounted) {
         setState(() {
@@ -111,8 +97,23 @@ extension SurahReaderData on _SurahReaderScreenState {
     } catch (_) {}
   }
 
+  Future<void> _ensureTafsirLoaded() async {
+    if (_tafsirLoaded) return;
+    final hasContent = _ayahList.any((a) => a.tafseer.isNotEmpty);
+    if (hasContent) return;
+
+    try {
+      await ApiService.fetchTafsirForSurah(_currentSurah.number, _ayahList);
+    } catch (_) {}
+    _tafsirLoaded = true;
+    if (mounted) setState(() {});
+  }
+
   Future<void> _loadAyahs() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _tafsirLoaded = false;
+    });
     try {
       final tafsirEdition = widget.storage.getString(
         'default_tafsir',
@@ -159,6 +160,10 @@ extension SurahReaderData on _SurahReaderScreenState {
             _scrollToAyah(lastAyahInSurah);
           });
         }
+      }
+      // If user is already in tafsir mode, lazy-load it now
+      if (_readingMode == 'tafseer') {
+        unawaited(_ensureTafsirLoaded());
       }
     } catch (e) {
       if (mounted) {

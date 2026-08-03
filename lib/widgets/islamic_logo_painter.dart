@@ -42,14 +42,14 @@ class IslamicLogoPainter extends CustomPainter {
 
     // Inner details circle
     final circlePaint = Paint()
-      ..color = color.withOpacity(0.4)
+      ..color = color.withValues(alpha: 0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawCircle(center, radius * 0.6, circlePaint);
 
     // Glowing core
     final glowPaint = Paint()
-      ..color = color.withOpacity(0.12 + 0.12 * sin(animationValue * 2 * pi))
+      ..color = color.withValues(alpha: 0.12 + 0.12 * sin(animationValue * 2 * pi))
       ..style = PaintingStyle.fill;
     canvas.drawCircle(
       center,

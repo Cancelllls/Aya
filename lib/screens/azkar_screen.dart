@@ -280,7 +280,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           ? Colors.black
                           : (Theme.of(context).textTheme.bodyMedium?.color ??
                                     Colors.white)
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                     ),
                   ),
                   selected: _showTranslation,
@@ -307,7 +307,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           ? Colors.black
                           : (Theme.of(context).textTheme.bodyMedium?.color ??
                                     Colors.white)
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                     ),
                   ),
                   selected: _showTransliteration,
@@ -333,7 +333,7 @@ class _AzkarScreenState extends State<AzkarScreen>
               indicatorColor: const Color(0xFFE5C158),
               labelColor: const Color(0xFFE5C158),
               unselectedLabelColor: theme.textTheme.bodyMedium?.color
-                  ?.withOpacity(0.5),
+                  ?.withValues(alpha: 0.5),
               isScrollable: true,
               physics: const BouncingScrollPhysics(),
               tabs: [
@@ -350,7 +350,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 0
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                                   0.4,
                                 ),
                         ),
@@ -371,7 +371,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 1
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                                   0.4,
                                 ),
                         ),
@@ -392,7 +392,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 2
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                                   0.4,
                                 ),
                         ),
@@ -413,7 +413,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 3
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                                   0.4,
                                 ),
                         ),
@@ -438,7 +438,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontWeight: FontWeight.w600,
                           color: _tabController.index == 4
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                                   0.4,
                                 ),
                         ),
@@ -460,7 +460,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontSize: 10, fontWeight: FontWeight.w600,
                           color: _tabController.index == 5
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -480,7 +480,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontSize: 10, fontWeight: FontWeight.w600,
                           color: _tabController.index == 6
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -500,7 +500,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontSize: 10, fontWeight: FontWeight.w600,
                           color: _tabController.index == 7
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -520,7 +520,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontSize: 10, fontWeight: FontWeight.w600,
                           color: _tabController.index == 8
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -540,7 +540,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontSize: 10, fontWeight: FontWeight.w600,
                           color: _tabController.index == 9
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -560,7 +560,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           fontSize: 10, fontWeight: FontWeight.w600,
                           color: _tabController.index == 10
                               ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                              : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -641,10 +641,10 @@ class _AzkarScreenState extends State<AzkarScreen>
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
                     color: isDone
-                        ? const Color(0xFF10B981).withOpacity(0.5)
+                        ? const Color(0xFF10B981).withValues(alpha: 0.5)
                         : (Theme.of(context).textTheme.bodyLarge?.color ??
                                   Colors.white)
-                              .withOpacity(0.04),
+                              .withValues(alpha: 0.04),
                     width: isDone ? 1.5 : 1.0,
                   ),
                 ),
@@ -663,7 +663,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE5C158).withOpacity(0.08),
+                              color: const Color(0xFFE5C158).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -735,7 +735,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                         Divider(
                           color: Theme.of(
                             context,
-                          ).dividerColor.withOpacity(0.1),
+                          ).dividerColor.withValues(alpha: 0.1),
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -748,7 +748,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                             fontSize: 13,
                             fontStyle: FontStyle.italic,
                             color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.6),
+                                ?.withValues(alpha: 0.6),
                             height: 1.4,
                           ),
                         ),
@@ -761,7 +761,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                           style: TextStyle(
                             fontSize: 13,
                             color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.8),
+                                ?.withValues(alpha: 0.8),
                             height: 1.4,
                           ),
                         ),
@@ -772,7 +772,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                         "${TranslationService.isArabic ? 'المصدر' : 'Source'}: ${item.reference}",
                         style: TextStyle(
                           fontSize: 10,
-                          color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                             0.4,
                           ),
                         ),
@@ -810,7 +810,7 @@ class _AzkarScreenState extends State<AzkarScreen>
             side: BorderSide(
               color:
                   (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                      .withOpacity(0.04),
+                      .withValues(alpha: 0.04),
               width: 1.0,
             ),
           ),
@@ -827,7 +827,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5C158).withOpacity(0.08),
+                      color: const Color(0xFFE5C158).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -859,7 +859,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     style: TextStyle(
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                         0.6,
                       ),
                     ),
@@ -873,7 +873,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 10,
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                         0.8,
                       ),
                     ),
@@ -926,16 +926,16 @@ class _AzkarScreenState extends State<AzkarScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.bookmark_add_outlined, size: 64, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.2)),
+                  Icon(Icons.bookmark_add_outlined, size: 64, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
                   Text(
                     TranslationService.isArabic ? "لا يوجد أذكار مخصصة" : "No custom adhkar yet",
-                    style: TextStyle(fontSize: 16, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4)),
+                    style: TextStyle(fontSize: 16, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4)),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     TranslationService.isArabic ? "اضغط على '+' لإضافة ذكرك الخاص" : "Tap '+' to add your own dhikr",
-                    style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3)),
+                    style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3)),
                   ),
                 ],
               ),
@@ -959,8 +959,8 @@ class _AzkarScreenState extends State<AzkarScreen>
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
                       color: isDone
-                          ? const Color(0xFF10B981).withOpacity(0.5)
-                          : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.04),
+                          ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                          : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.04),
                       width: isDone ? 1.5 : 1.0,
                     ),
                   ),
@@ -982,17 +982,17 @@ class _AzkarScreenState extends State<AzkarScreen>
                             ),
                             GestureDetector(
                               onTap: () => _deleteMyAzkar(index),
-                              child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent.withOpacity(0.6)),
+                              child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent.withValues(alpha: 0.6)),
                             ),
                           ],
                         ),
                         if (_showTransliteration && item.transliteration.isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(item.transliteration, style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5), fontStyle: FontStyle.italic)),
+                          Text(item.transliteration, style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5), fontStyle: FontStyle.italic)),
                         ],
                         if (_showTranslation && item.translation.isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(item.translation, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6))),
+                          Text(item.translation, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6))),
                         ],
                         const SizedBox(height: 12),
                         Row(
@@ -1000,14 +1000,14 @@ class _AzkarScreenState extends State<AzkarScreen>
                           children: [
                             Text(
                               "${TranslationService.isArabic ? 'العدد' : 'Count'}: $currentCount / ${item.count}",
-                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
                             ),
                             GestureDetector(
                               onTap: isDone ? null : () => _decrementCount(item.id, item.count),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isDone ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFE5C158).withOpacity(0.15),
+                                  color: isDone ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFE5C158).withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(

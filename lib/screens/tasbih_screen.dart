@@ -235,7 +235,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                   color:
                       (Theme.of(context).textTheme.bodyMedium?.color ??
                               Colors.white)
-                          .withOpacity(0.7),
+                          .withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -362,7 +362,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                   color:
                       (Theme.of(context).textTheme.bodyMedium?.color ??
                               Colors.white)
-                          .withOpacity(0.7),
+                          .withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -451,7 +451,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                           child: ChoiceChip(
                             selectedColor: const Color(
                               0xFFE5C158,
-                            ).withOpacity(0.2),
+                            ).withValues(alpha: 0.2),
                             disabledColor: theme.cardColor,
                             label: Text(
                               preset['name'],
@@ -499,7 +499,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                           style: TextStyle(
                             fontSize: 13,
                             color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.6),
+                                ?.withValues(alpha: 0.6),
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 2,
@@ -531,7 +531,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                                               context,
                                             ).textTheme.bodyLarge?.color ??
                                             Colors.white)
-                                        .withOpacity(0.04),
+                                        .withValues(alpha: 0.04),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                   Color(0xFFE5C158),
                                 ),
@@ -548,7 +548,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                                   BoxShadow(
                                     color: Theme.of(
                                       context,
-                                    ).shadowColor.withOpacity(0.2),
+                                    ).shadowColor.withValues(alpha: 0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
                                   ),
@@ -570,7 +570,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: theme.textTheme.bodyMedium?.color
-                                          ?.withOpacity(0.4),
+                                          ?.withValues(alpha: 0.4),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -591,10 +591,10 @@ class _TasbihScreenState extends State<TasbihScreen>
                         color:
                             (Theme.of(context).textTheme.bodyMedium?.color ??
                                     Colors.white)
-                                .withOpacity(0.24),
+                                .withValues(alpha: 0.24),
                       ),
                       foregroundColor: theme.textTheme.bodyMedium?.color
-                          ?.withOpacity(0.7),
+                          ?.withValues(alpha: 0.7),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,

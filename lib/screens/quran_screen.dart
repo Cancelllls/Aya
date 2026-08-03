@@ -4,6 +4,7 @@ import '../models/quran_models.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
+import '../utils/text_helpers.dart';
 import 'dart:async';
 import 'surah_reader/surah_pager_screen.dart';
 
@@ -108,11 +109,6 @@ class _QuranScreenState extends State<QuranScreen> {
     }
   }
 
-  String _stripTashkeel(String input) {
-    final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
-    return input.replaceAll(tashkeelRegex, '');
-  }
-
   void _filterSurahs(String query) {
     if (query.isEmpty) {
       setState(() {
@@ -124,10 +120,10 @@ class _QuranScreenState extends State<QuranScreen> {
     }
 
     final lower = query.toLowerCase();
-    final cleanQuery = _stripTashkeel(lower);
+    final cleanQuery = stripTashkeel(lower);
     setState(() {
       _filteredSurahList = _surahList.where((surah) {
-        final cleanName = _stripTashkeel(surah.name);
+        final cleanName = stripTashkeel(surah.name);
         return surah.englishName.toLowerCase().contains(lower) ||
             surah.englishNameTranslation.toLowerCase().contains(lower) ||
             cleanName.contains(cleanQuery) ||
@@ -180,7 +176,7 @@ class _QuranScreenState extends State<QuranScreen> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: const Color(0xFFE5C158).withOpacity(0.15),
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.15),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
@@ -189,7 +185,7 @@ class _QuranScreenState extends State<QuranScreen> {
                   color:
                       (Theme.of(context).textTheme.bodyLarge?.color ??
                               Colors.white)
-                          .withOpacity(0.08),
+                          .withValues(alpha: 0.08),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -355,7 +351,7 @@ class _QuranScreenState extends State<QuranScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: const Color(0xFFE5C158).withOpacity(0.12),
+          color: const Color(0xFFE5C158).withValues(alpha: 0.12),
           width: 1,
         ),
       ),
@@ -374,10 +370,10 @@ class _QuranScreenState extends State<QuranScreen> {
                   height: 32,
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: const Color(0xFFE5C158).withOpacity(0.3),
+                      color: const Color(0xFFE5C158).withValues(alpha: 0.3),
                       width: 1.5,
                     ),
-                    color: const Color(0xFFE5C158).withOpacity(0.08),
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -386,7 +382,7 @@ class _QuranScreenState extends State<QuranScreen> {
                 height: 32,
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: const Color(0xFFE5C158).withOpacity(0.3),
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -416,7 +412,7 @@ class _QuranScreenState extends State<QuranScreen> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
               ),
             ),
             Icon(Icons.circle, size: 4, color: theme.dividerColor),
@@ -424,7 +420,7 @@ class _QuranScreenState extends State<QuranScreen> {
               "${surah.numberOfAyahs} ${TranslationService.t('verses')}",
               style: TextStyle(
                 fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
               ),
             ),
             Icon(Icons.circle, size: 4, color: theme.dividerColor),
@@ -432,7 +428,7 @@ class _QuranScreenState extends State<QuranScreen> {
               "${TranslationService.t('juz')} ${surah.startingJuz} • ${TranslationService.t('hizb')} ${surah.startingHizb}",
               style: TextStyle(
                 fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -519,7 +515,7 @@ class _QuranScreenState extends State<QuranScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: const Color(0xFFE5C158).withOpacity(0.12),
+              color: const Color(0xFFE5C158).withValues(alpha: 0.12),
               width: 1,
             ),
           ),

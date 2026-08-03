@@ -14,7 +14,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
           // ignore: deprecated_member_use
           Expanded(
             child: Divider(
-              color: const Color(0xFFE5C158).withOpacity(0.3),
+              color: const Color(0xFFE5C158).withValues(alpha: 0.3),
               thickness: 1,
             ),
           ),
@@ -24,11 +24,11 @@ extension SurahReaderUi on _SurahReaderScreenState {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 // ignore: deprecated_member_use
-                color: const Color(0xFFE5C158).withOpacity(0.12),
+                color: const Color(0xFFE5C158).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
                 // ignore: deprecated_member_use
                 border: Border.all(
-                  color: const Color(0xFFE5C158).withOpacity(0.4),
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.4),
                   width: 1,
                 ),
               ),
@@ -45,7 +45,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
           // ignore: deprecated_member_use
           Expanded(
             child: Divider(
-              color: const Color(0xFFE5C158).withOpacity(0.3),
+              color: const Color(0xFFE5C158).withValues(alpha: 0.3),
               thickness: 1,
             ),
           ),
@@ -63,7 +63,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
         borderRadius: BorderRadius.circular(12),
         // ignore: deprecated_member_use
         border: Border.all(
-          color: const Color(0xFFE5C158).withOpacity(0.35),
+          color: const Color(0xFFE5C158).withValues(alpha: 0.35),
           width: 1.5,
         ),
       ),
@@ -97,7 +97,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
             style: TextStyle(
               fontSize: 11,
               // ignore: deprecated_member_use
-              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -119,7 +119,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
       key: Key('ayah_${ayah.numberInSurah}'),
       onVisibilityChanged: (info) {
         if (info.visibleFraction > 0.5) {
-          widget.storage.saveLastReadPosition(
+          _debouncedSavePosition(
             _currentSurah.number,
             ayah.numberInSurah,
           );
@@ -133,25 +133,25 @@ extension SurahReaderUi on _SurahReaderScreenState {
         decoration: BoxDecoration(
           color: isPlaying
               // ignore: deprecated_member_use
-              ? const Color(0xFFE5C158).withOpacity(isDark ? 0.18 : 0.12)
+              ? const Color(0xFFE5C158).withValues(alpha: isDark ? 0.18 : 0.12)
               : theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isHighlighted
                 ? const Color(0xFFE5C158)
                 // ignore: deprecated_member_use
-                : const Color(0xFFE5C158).withOpacity(0.12),
+                : const Color(0xFFE5C158).withValues(alpha: 0.12),
             width: isHighlighted ? 2.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
               color: isHighlighted
                   // ignore: deprecated_member_use
-                  ? const Color(0xFFE5C158).withOpacity(0.08)
+                  ? const Color(0xFFE5C158).withValues(alpha: 0.08)
                   // ignore: deprecated_member_use
                   : Theme.of(
                       context,
-                    ).shadowColor.withOpacity(isDark ? 0.15 : 0.02),
+                    ).shadowColor.withValues(alpha: isDark ? 0.15 : 0.02),
               blurRadius: 8,
             ),
           ],
@@ -185,8 +185,8 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       decoration: BoxDecoration(
                         color: isBookmarked
                             // ignore: deprecated_member_use
-                            ? const Color(0xFFE5C158).withOpacity(0.15)
-                            : theme.dividerColor.withOpacity(0.08),
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.15)
+                            : theme.dividerColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -282,7 +282,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                     style: TextStyle(fontFamily: 'Inter',
                       fontSize: 14 * _fontSizeMultiplier,
                       // ignore: deprecated_member_use
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                         0.85,
                       ),
                       height: 1.5,
@@ -401,10 +401,10 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
                   backgroundColor: isPlaying
                       // ignore: deprecated_member_use
-                      ? const Color(0xFFE5C158).withOpacity(0.3)
+                      ? const Color(0xFFE5C158).withValues(alpha: 0.3)
                       : isBookmarked
                       // ignore: deprecated_member_use
-                      ? const Color(0xFFE5C158).withOpacity(0.15)
+                      ? const Color(0xFFE5C158).withValues(alpha: 0.15)
                       : null,
                 ),
               ),
@@ -442,7 +442,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 key: Key('chunk_$pageIndex'),
                 onVisibilityChanged: (info) {
                   if (info.visibleFraction > 0.5 && chunk.isNotEmpty) {
-                    widget.storage.saveLastReadPosition(
+                    _debouncedSavePosition(
                       _currentSurah.number,
                       chunk.first.numberInSurah,
                     );
@@ -464,13 +464,13 @@ extension SurahReaderUi on _SurahReaderScreenState {
                           borderRadius: BorderRadius.circular(16),
                           // ignore: deprecated_member_use
                           border: Border.all(
-                            color: const Color(0xFFE5C158).withOpacity(0.35),
+                            color: const Color(0xFFE5C158).withValues(alpha: 0.35),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
                               // ignore: deprecated_member_use
-                              color: Colors.black.withOpacity(
+                              color: Colors.black.withValues(alpha: 
                                 isDark ? 0.3 : 0.04,
                               ),
                               blurRadius: 10,
@@ -487,7 +487,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                         : BoxDecoration(
                             // ignore: deprecated_member_use
                             border: Border.all(
-                              color: const Color(0xFFE5C158).withOpacity(0.15),
+                              color: const Color(0xFFE5C158).withValues(alpha: 0.15),
                               width: 1,
                             ),
                             borderRadius: BorderRadius.circular(12),
@@ -523,7 +523,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
         color: theme.appBarTheme.backgroundColor,
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFE5C158).withOpacity(0.15),
+            color: const Color(0xFFE5C158).withValues(alpha: 0.15),
             width: 1.0,
           ),
         ),
@@ -591,7 +591,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                         min: 0,
                         max: maxVal,
                         activeColor: const Color(0xFFE5C158),
-                        inactiveColor: const Color(0xFFE5C158).withOpacity(0.3),
+                        inactiveColor: const Color(0xFFE5C158).withValues(alpha: 0.3),
                         onChanged: (val) {
                           if (!isSplit) {
                             AudioManager.instance.positionNotifier.value =

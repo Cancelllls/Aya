@@ -1,12 +1,24 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:io';
+import '../utils/text_helpers.dart';
+import 'hadith_database_service.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static const int _version = 7;
+  static Future<void>? _seeding;
+  static const int _version = 8;
+  // Keep in sync with android/app/build.gradle.kts applicationId
+  static const String _packageName = 'com.quran.aya';
+
+  HadithDatabaseService? _hadith;
+
+  /// Hadith-specific operations. Available after [getInstance].
+  HadithDatabaseService get hadith => _hadith!;
 
   DatabaseService._();
 
@@ -14,12 +26,37 @@ class DatabaseService {
     if (_instance == null) {
       _instance = DatabaseService._();
       _database = await _initDatabase();
+      _instance!._hadith = HadithDatabaseService(_database!);
     }
     return _instance!;
   }
 
+  /// Resolves the databases directory path.
+  /// Falls back to known Android locations when platform channels are
+  /// unavailable (e.g. background isolate spawned by notification plugin).
+  static Future<String> _databasesPath() async {
+    try {
+      return await getDatabasesPath();
+    } catch (_) {
+      for (final dir in <String>[
+        '/data/data/$_packageName/databases',
+        '/data/user/0/$_packageName/databases',
+      ]) {
+        if (await Directory(dir).exists()) return dir;
+      }
+      rethrow;
+    }
+  }
+
   static Future<Database> _initDatabase() async {
-    final path = join(await getDatabasesPath(), 'aya_app.db');
+    final path = join(await _databasesPath(), 'aya_app.db');
+
+    // Use bundled SQLite with FTS5 on Android/Linux via FFI.
+    // iOS already has FTS5 in its system SQLite.
+    if (!Platform.isIOS && !Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
 
     Database? db;
     try {
@@ -30,8 +67,7 @@ class DatabaseService {
         onUpgrade: _onUpgrade,
       );
     } catch (e) {
-      // Recover from corrupted DB (e.g. from failed migration)
-      print("DB open failed: $e — recreating");
+      // DB open failed — recreating
       try { await deleteDatabase(path); } catch (_) {}
       db = await openDatabase(
         path,
@@ -41,7 +77,8 @@ class DatabaseService {
       );
     }
 
-    await _seedQuranData(db);
+    // Quran data is lazy-seeded on first read to avoid ~130 MB
+    // cold-start overhead. See _ensureQuranSeeded().
     return db;
   }
 
@@ -178,6 +215,14 @@ class DatabaseService {
     ''');
     await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
 
+    // ── FTS5 full-text search (guaranteed by bundled SQLite via FFI) ──
+    await db.execute('''
+      CREATE VIRTUAL TABLE hadiths_fts USING fts5(
+        search_arabic, search_english,
+        tokenize='unicode61 remove_diacritics 2'
+      )
+    ''');
+
     // Prayer Tracker
     await db.execute('''
       CREATE TABLE prayer_tracker (
@@ -225,7 +270,7 @@ class DatabaseService {
           batch.update(
             'ayahs',
             {
-              'text_arabic_clean': _stripTashkeel(
+              'text_arabic_clean': stripTashkeel(
                 row['text_arabic'] as String? ?? '',
               ).toLowerCase(),
             },
@@ -235,7 +280,7 @@ class DatabaseService {
         }
         await batch.commit(noResult: true);
       } catch (e) {
-        print("Error during v4 upgrade: $e");
+        // v4 upgrade error — non-critical
       }
     }
 
@@ -264,7 +309,6 @@ class DatabaseService {
         ''');
         await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
       } catch (e) {
-        print("Error during v5 upgrade: $e");
       }
     }
 
@@ -286,7 +330,6 @@ class DatabaseService {
           )
         ''');
       } catch (e) {
-        print("Error during v6 upgrade: $e");
       }
     }
 
@@ -301,8 +344,21 @@ class DatabaseService {
           "DELETE FROM hadith_books WHERE book_id IN ('ara_muslim', 'eng_muslim')",
         );
       } catch (e) {
-        print("Error during v7 upgrade: $e");
+        // v7 upgrade error — hadith re-seed skipped
       }
+    }
+
+    if (oldVersion < 8) {
+      await db.execute('''
+        CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
+          search_arabic, search_english,
+          tokenize='unicode61 remove_diacritics 2'
+        )
+      ''');
+      await db.execute(
+        'INSERT INTO hadiths_fts(search_arabic, search_english) '
+        'SELECT search_arabic, search_english FROM hadiths',
+      );
     }
 
     if (oldVersion < 2) {
@@ -397,7 +453,7 @@ class DatabaseService {
               'ayah_number': arabic[i]['numberInSurah'],
               'global_number': arabic[i]['number'],
               'text_arabic': arabic[i]['text'],
-              'text_arabic_clean': _stripTashkeel(
+              'text_arabic_clean': stripTashkeel(
                 arabic[i]['text'],
               ).toLowerCase(),
               'text_english': english[i]['text'],
@@ -410,20 +466,57 @@ class DatabaseService {
         await batch.commit(noResult: true);
       }
     } catch (e) {
-      print('Failed to seed Quran data: $e');
+      // Quran seed failed — will retry on next cold start
     }
+  }
+
+  /// Seed Quran data lazily — on first surah open rather than cold start.
+  /// This avoids loading ~130 MB of bundled JSON into SQLite before the
+  /// splash screen even renders.
+  static Future<void> _ensureQuranSeeded() async {
+    if (_seeding != null) return _seeding!;
+    _seeding = _seedQuranData(_database!);
+    await _seeding;
   }
 
   // ── Quran Data ─────────────────────────────────────────────
   Future<List<Map<String, dynamic>>> getSurahs() async {
     final db = _database!;
+    await _ensureQuranSeeded();
     return await db.query('surahs', orderBy: 'number ASC');
   }
 
-  Future<List<Map<String, dynamic>>> getAyahsForSurah(int surahNumber) async {
+  Future<List<Map<String, dynamic>>> getAyahsForSurah(
+    int surahNumber, {
+    bool includeTafsir = false,
+  }) async {
     final db = _database!;
+    await _ensureQuranSeeded();
+    final columns = includeTafsir
+        ? null // all columns
+        : <String>[
+            'id', 'surah_number', 'ayah_number', 'global_number',
+            'text_arabic', 'text_arabic_clean', 'text_english',
+            'juz', 'hizb',
+          ];
     return await db.query(
       'ayahs',
+      columns: columns,
+      where: 'surah_number = ?',
+      whereArgs: [surahNumber],
+      orderBy: 'ayah_number ASC',
+    );
+  }
+
+  /// Fetch only tafsir text for a surah — used for lazy loading.
+  Future<List<Map<String, dynamic>>> getTafsirForSurah(
+    int surahNumber,
+  ) async {
+    final db = _database!;
+    await _ensureQuranSeeded();
+    return await db.query(
+      'ayahs',
+      columns: ['ayah_number', 'tafsir'],
       where: 'surah_number = ?',
       whereArgs: [surahNumber],
       orderBy: 'ayah_number ASC',
@@ -432,7 +525,8 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
     final db = _database!;
-    final queryClean = _stripTashkeel(query).toLowerCase();
+    await _ensureQuranSeeded();
+    final queryClean = stripTashkeel(query).toLowerCase();
     final searchPattern = '%$queryClean%';
 
     final results = await db.rawQuery(
@@ -447,11 +541,6 @@ class DatabaseService {
     );
 
     return results;
-  }
-
-  static String _stripTashkeel(String input) {
-    final RegExp tashkeelRegex = RegExp(r'[\u064B-\u065F\u0670]');
-    return input.replaceAll(tashkeelRegex, '');
   }
 
   // ── Prayer Times Cache ──────────────────────────────────────
@@ -692,199 +781,4 @@ class DatabaseService {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Hadith Database Methods
-  // ---------------------------------------------------------------------------
-
-  Future<bool> isHadithBookDownloaded(String bookId, String lang) async {
-    final db = _database;
-    if (db == null) return false;
-    final dbBookId = '${lang}_$bookId';
-    final bookRes = await db.query(
-      'hadith_books',
-      where: 'book_id = ?',
-      whereArgs: [dbBookId],
-    );
-    if (bookRes.isEmpty) return false;
-    // Verify actual hadiths exist — prevents zombie entries
-    final count = Sqflite.firstIntValue(await db.rawQuery(
-      'SELECT COUNT(*) FROM hadiths WHERE book_id = ?',
-      [dbBookId],
-    ));
-    return (count ?? 0) > 0;
-  }
-
-  Future<void> insertHadithBook(
-    String bookId,
-    String lang,
-    List<dynamic> hadiths,
-  ) async {
-    final db = _database;
-    if (db == null) return;
-
-    final dbBookId = '${lang}_$bookId';
-
-    await db.transaction((txn) async {
-      await txn.insert('hadith_books', {
-        'book_id': dbBookId,
-        'lang': lang,
-        'downloaded_at': DateTime.now().millisecondsSinceEpoch,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-
-      await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
-
-      final batch = txn.batch();
-      for (var h in hadiths) {
-        // Support multiple JSON field names for hadith text
-        final text = h['text'] ?? h['hadithText'] ?? h['arabic'] ?? h['body'] ?? '';
-        final number = h['hadithnumber'] ?? h['hadithNumber'] ?? h['number'] ?? 0;
-        batch.insert('hadiths', {
-          'book_id': dbBookId,
-          'hadith_number': number,
-          'arabic': lang == 'ara' ? text : '',
-          'english': lang == 'eng' ? text : '',
-          'search_arabic': lang == 'ara'
-              ? _stripTashkeel(text.toString()).toLowerCase()
-              : '',
-          'search_english': lang == 'eng'
-              ? text.toString().toLowerCase()
-              : '',
-          'grades': jsonEncode(h['grades'] ?? []),
-        });
-      }
-      await batch.commit(noResult: true);
-    });
-  }
-
-  Future<void> deleteHadithBook(String bookId, String lang) async {
-    final db = _database;
-    if (db == null) return;
-    final dbBookId = '${lang}_$bookId';
-
-    await db.transaction((txn) async {
-      await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
-      await txn.delete(
-        'hadith_books',
-        where: 'book_id = ?',
-        whereArgs: [dbBookId],
-      );
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> getHadiths(
-    String bookId,
-    String lang,
-    int limit,
-    int offset,
-  ) async {
-    final db = _database;
-    if (db == null) return [];
-    final dbBookId = '${lang}_$bookId';
-
-    return await db.query(
-      'hadiths',
-      where: 'book_id = ?',
-      whereArgs: [dbBookId],
-      orderBy: 'hadith_number ASC',
-      limit: limit,
-      offset: offset,
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> searchHadiths(
-    String bookId,
-    String lang,
-    String query,
-    int limit,
-    int offset,
-  ) async {
-    final db = _database;
-    if (db == null) return [];
-    final dbBookId = '${lang}_$bookId';
-
-    final cleanQuery = _stripTashkeel(query).toLowerCase();
-    final searchPattern = '%$cleanQuery%';
-
-    final intQuery = int.tryParse(query);
-
-    if (intQuery != null) {
-      return await db.query(
-        'hadiths',
-        where:
-            'book_id = ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [dbBookId, intQuery, searchPattern, searchPattern],
-        orderBy: 'hadith_number ASC',
-        limit: limit,
-        offset: offset,
-      );
-    } else {
-      return await db.query(
-        'hadiths',
-        where:
-            'book_id = ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [dbBookId, searchPattern, searchPattern],
-        orderBy: 'hadith_number ASC',
-        limit: limit,
-        offset: offset,
-      );
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> searchAllHadiths(
-    String lang,
-    String query,
-    int limit, {
-    List<String>? excludeBookIds,
-  }) async {
-    final db = _database;
-    if (db == null) return [];
-
-    final cleanQuery = _stripTashkeel(query).toLowerCase();
-    final searchPattern = '%$cleanQuery%';
-    final langPrefix = '${lang}_%';
-
-    final intQuery = int.tryParse(query);
-
-    if (intQuery != null) {
-      return await db.query(
-        'hadiths',
-        where:
-            'book_id LIKE ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [langPrefix, intQuery, searchPattern, searchPattern],
-        orderBy: 'hadith_number ASC',
-        limit: limit,
-      );
-    } else {
-      return await db.query(
-        'hadiths',
-        where: 'book_id LIKE ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [langPrefix, searchPattern, searchPattern],
-        orderBy: 'hadith_number ASC',
-        limit: limit,
-      );
-    }
-  }
-
-  Future<String?> getCachedTranslation(String textHash) async {
-    final db = await _database;
-    if (db == null) return null;
-    final results = await db.query('hadith_translations',
-      where: 'text_hash = ?', whereArgs: [textHash], limit: 1);
-    if (results.isEmpty) return null;
-    return results.first['translated_text'] as String?;
-  }
-
-  Future<void> cacheTranslation(
-    String textHash, String sourceText, String translatedText, String targetLang,
-  ) async {
-    final db = await _database;
-    if (db == null) return;
-    await db.insert('hadith_translations', {
-      'text_hash': textHash,
-      'source_text': sourceText,
-      'translated_text': translatedText,
-      'target_lang': targetLang,
-      'created_at': DateTime.now().millisecondsSinceEpoch,
-    }, conflictAlgorithm: ConflictAlgorithm.ignore);
-  }
 }

@@ -22,4 +22,5 @@
     
     <string name="widget_asma_label">آية - أسماء الله الحسنى</string>
     <string name="widget_asma_description">يعرض اسماً من أسماء الله الحسنى يومياً.</string>
+    <string name="adhan_playing">الأذان يعمل — اضغط لفتح التطبيق</string>
 </resources>
