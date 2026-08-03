@@ -149,8 +149,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                 : null,
             isInsidePager: true,
             hideAppBar: true,
-            hideAutoScrollBar: true,
-            speedLevel: _speedLevel,
             onGoToNext: () {
               if (index < 113) {
                 _pageController.animateToPage(
