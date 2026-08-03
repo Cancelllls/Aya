@@ -19,18 +19,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           fetch-tags: true
-      
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          
+          cache: true  # <-- enables Gradle + pub caching
+
       - name: Set Version
         id: version
         run: |
@@ -41,27 +42,21 @@ jobs:
           VER="v${MAJOR}.${MINOR}.${PATCH}"
           echo "tag=$VER" >> $GITHUB_OUTPUT
           echo "display=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
-          # Write version.dart for app to read
           echo "const appVersion = '${MAJOR}.${MINOR}.${PATCH}';" > lib/version.dart
-          # Update Android versionCode in pubspec.yaml for proper update installs
           VERSION_CODE=$((RUN_NUM))
           sed -i "s/^version: .*/version: ${MAJOR}.${MINOR}.${PATCH}+${VERSION_CODE}/" pubspec.yaml
 
       - name: Install dependencies
         run: flutter pub get
-        
-      - name: Build Global APK
-        run: flutter build apk --release
-        
+
       - name: Build Split APKs
         run: flutter build apk --release --split-per-abi
-        
+
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-releases
           path: |
-            build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             build/app/outputs/flutter-apk/app-x86_64-release.apk
@@ -85,7 +80,6 @@ jobs:
             ## What's Changed
             ${{ steps.changelog.outputs.body }}
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             build/app/outputs/flutter-apk/app-x86_64-release.apk
