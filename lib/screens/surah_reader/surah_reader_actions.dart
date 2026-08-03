@@ -1,7 +1,11 @@
 part of 'surah_reader_screen.dart';
 
 extension SurahReaderActions on _SurahReaderScreenState {
-  void _showTafseerDialog(Ayah ayah) {
+  void _showTafseerDialog(Ayah ayah) async {
+    // Ensure tafsir is loaded for this surah (lazy-loaded, not bundled)
+    if (ayah.tafseer.isEmpty) {
+      await _ensureTafsirLoaded();
+    }
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).cardColor,

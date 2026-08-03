@@ -30,6 +30,9 @@ class SurahReaderScreen extends StatefulWidget {
   final int? initialAyahNumber;
   final bool isInsidePager;
   final bool hideAppBar;
+  final String? readingMode;
+  final String? quranScriptType;
+  final double? fontSizeMultiplier;
   final VoidCallback? onGoToNext;
   final VoidCallback? onGoToPrev;
 
@@ -40,6 +43,9 @@ class SurahReaderScreen extends StatefulWidget {
     this.initialAyahNumber,
     this.isInsidePager = false,
     this.hideAppBar = false,
+    this.readingMode,
+    this.quranScriptType,
+    this.fontSizeMultiplier,
     this.onGoToNext,
     this.onGoToPrev,
   });
@@ -102,14 +108,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       );
     }
     _currentSurah = widget.surah;
-    _readingMode = widget.storage.getString(
-      'reading_mode',
-      defaultValue: 'continuous',
-    );
-    _quranScriptType = widget.storage.getString(
-      'quran_script_type',
-      defaultValue: 'hafs',
-    );
+    // Use pager-provided overrides if available, otherwise read from storage
+    _readingMode = widget.readingMode ??
+        widget.storage.getString('reading_mode', defaultValue: 'continuous');
+    _quranScriptType = widget.quranScriptType ??
+        widget.storage.getString('quran_script_type', defaultValue: 'hafs');
     _hideContinuousBorders = widget.storage.getBool(
       'setting_hide_continuous_borders',
       defaultValue: false,
@@ -118,10 +121,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       'swipe_surah_navigation',
       defaultValue: true,
     );
-    _fontSizeMultiplier = widget.storage.getDouble(
-      'setting_quran_font_size_multiplier',
-      defaultValue: 1.0,
-    );
+    _fontSizeMultiplier = widget.fontSizeMultiplier ??
+        widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
     _loadAyahs();
     _fetchDynamicReciters(_quranScriptType);
     _checkBookmarkStatus();

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/quran_models.dart';
 import '../../services/storage_service.dart';
-import '../../models/offline_surahs.dart';
+import '../../services/reciters_cache_service.dart';
 import '../../services/translation_service.dart';
+import '../../models/offline_surahs.dart';
 import 'surah_reader_screen.dart';
 
 class SurahPagerScreen extends StatefulWidget {
@@ -24,14 +25,22 @@ class SurahPagerScreen extends StatefulWidget {
 class _SurahPagerScreenState extends State<SurahPagerScreen> {
   late PageController _pageController;
   int _currentPage = 0;
-  int _speedLevel = 2;
+  int _reloadKey = 0;
+  String _readingMode = 'continuous';
+  String _quranScriptType = 'hafs';
+  double _fontSizeMultiplier = 1.0;
+  bool _isLoadingReciters = false;
+  List<dynamic> _dynamicReciters = [];
 
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialSurah.number - 1;
-    _speedLevel = widget.storage.getInt('autoscroll_speed', defaultValue: 2);
     _pageController = PageController(initialPage: _currentPage);
+    _readingMode = widget.storage.getString('reading_mode', defaultValue: 'continuous');
+    _quranScriptType = widget.storage.getString('quran_script_type', defaultValue: 'hafs');
+    _fontSizeMultiplier = widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
+    if (_quranScriptType != 'hafs') _fetchDynamicReciters();
   }
 
   @override
@@ -40,19 +49,66 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     super.dispose();
   }
 
-  void _onSpeedChanged(int speed) {
-    widget.storage.setInt('autoscroll_speed', speed);
-    setState(() => _speedLevel = speed);
+  Future<void> _fetchDynamicReciters() async {
+    final riwayahId = _riwayahIdFor(_quranScriptType);
+    if (mounted) setState(() => _isLoadingReciters = true);
+    try {
+      final filtered = await RecitersCacheService.getRecitersForRiwayah(riwayahId);
+      if (mounted) {
+        setState(() {
+          _dynamicReciters = filtered;
+          _isLoadingReciters = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingReciters = false);
+    }
+  }
+
+  int _riwayahIdFor(String script) {
+    switch (script) {
+      case 'warsh': return 2;
+      case 'qaloon': return 5;
+      case 'shuba': return 15;
+      case 'duri': return 13;
+      case 'susi': return 7;
+      case 'bazzi': return 4;
+      case 'qunbul': return 6;
+      case 'hisham': return 19;
+      case 'ibn-dhakwan': return 16;
+      default: return 1;
+    }
+  }
+
+  void _onQiraahChanged(String val) {
+    widget.storage.setString('quran_script_type', val);
+    if (val == 'hafs') {
+      widget.storage.setString('default_reciter', 'ar.alafasy');
+    }
+    setState(() {
+      _quranScriptType = val;
+      _reloadKey++;
+    });
+    if (val != 'hafs') _fetchDynamicReciters();
+  }
+
+  void _onReciterChanged(String val) {
+    widget.storage.setString('default_reciter', val);
+    if (mounted) setState(() {});
+  }
+
+  void _changeFontSize(double delta) {
+    setState(() {
+      _fontSizeMultiplier = (_fontSizeMultiplier + delta).clamp(0.8, 1.8);
+    });
+    widget.storage.setDouble('setting_quran_font_size_multiplier', _fontSizeMultiplier);
   }
 
   @override
   Widget build(BuildContext context) {
-    final surahData = allOfflineSurahs[_currentPage];
     final theme = Theme.of(context);
-
-    final speedLabels = TranslationService.isArabic
-        ? ['بطيء جداً', 'بطيء', 'متوسط', 'سريع', 'سريع جداً']
-        : ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'];
+    final surahData = allOfflineSurahs[_currentPage];
+    final storedReciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -75,55 +131,58 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(38),
-          child: Container(
-            height: 38,
-            color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                const Icon(Icons.speed, color: Color(0xFFE5C158), size: 14),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    speedLabels[_speedLevel.clamp(0, 4)],
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-                for (var i = 1; i <= 5; i++)
-                  GestureDetector(
-                    onTap: () => _onSpeedChanged(i),
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _speedLevel == i
-                            ? const Color(0xFFE5C158)
-                            : const Color(0xFFE5C158).withValues(alpha: 0.15),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$i',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: _speedLevel == i
-                              ? Colors.black
-                              : const Color(0xFFE5C158),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.chrome_reader_mode,
+              color: theme.appBarTheme.iconTheme?.color ?? Colors.white,
             ),
+            tooltip: TranslationService.isArabic ? "تغيير نمط العرض" : "Change View Mode",
+            color: theme.cardColor,
+            onSelected: (mode) {
+              setState(() => _readingMode = mode);
+              widget.storage.setString('reading_mode', mode);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'continuous',
+                child: Row(children: [
+                  Icon(Icons.menu_book, color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
+                  const SizedBox(width: 8),
+                  Text(TranslationService.isArabic ? "المصحف المتصل" : "Continuous", style: TextStyle(color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'continuous' ? FontWeight.bold : null)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'arabic_only',
+                child: Row(children: [
+                  Icon(Icons.text_format, color: _readingMode == 'arabic_only' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
+                  const SizedBox(width: 8),
+                  Text(TranslationService.isArabic ? "العربية فقط" : "Arabic Only", style: TextStyle(color: _readingMode == 'arabic_only' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'arabic_only' ? FontWeight.bold : null)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'translation',
+                child: Row(children: [
+                  Icon(Icons.translate, color: _readingMode == 'translation' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
+                  const SizedBox(width: 8),
+                  Text(TranslationService.isArabic ? "الترجمة" : "Translation", style: TextStyle(color: _readingMode == 'translation' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'translation' ? FontWeight.bold : null)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'tafseer',
+                child: Row(children: [
+                  Icon(Icons.info_outline, color: _readingMode == 'tafseer' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
+                  const SizedBox(width: 8),
+                  Text(TranslationService.isArabic ? "التفسير" : "Tafsir", style: TextStyle(color: _readingMode == 'tafseer' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'tafseer' ? FontWeight.bold : null)),
+                ]),
+              ),
+            ],
           ),
-        ),
+          IconButton(
+            icon: const Icon(Icons.text_fields),
+            onPressed: () => _showReadingSettings(context, theme, storedReciter),
+          ),
+        ],
       ),
       body: PageView.builder(
         controller: _pageController,
@@ -142,31 +201,86 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
           );
 
           return SurahReaderScreen(
+            key: ValueKey('surah_${_reloadKey}_$surahNum'),
             surah: surah,
             storage: widget.storage,
             initialAyahNumber: surahNum == widget.initialSurah.number
                 ? widget.initialAyahNumber
                 : null,
             isInsidePager: true,
-            hideAppBar: false,
+            hideAppBar: true,
+            readingMode: _readingMode,
+            quranScriptType: _quranScriptType,
+            fontSizeMultiplier: _fontSizeMultiplier,
             onGoToNext: () {
               if (index < 113) {
-                _pageController.animateToPage(
-                  index + 1,
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeOutCubic,
-                );
+                _pageController.animateToPage(index + 1, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
               }
             },
             onGoToPrev: () {
               if (index > 0) {
-                _pageController.animateToPage(
-                  index - 1,
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeOutCubic,
-                );
+                _pageController.animateToPage(index - 1, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
               }
             },
+          );
+        },
+      ),
+    );
+  }
+
+  void _showReadingSettings(BuildContext context, ThemeData theme, String storedReciter) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(TranslationService.t('reading_settings'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 20),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(TranslationService.isArabic ? 'الرواية' : "Qira'ah", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8))),
+                  SizedBox(width: 170, child: DropdownButton<String>(isExpanded: true, value: _quranScriptType, dropdownColor: theme.cardColor, underline: const SizedBox(), icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                    items: ['hafs','warsh','qaloon','shuba','duri','susi','bazzi','qunbul','hisham','ibn-dhakwan'].map((v) {
+                      final labels = {'hafs': ['حفص عن عاصم', "Hafs A'n Assem"], 'warsh': ['ورش عن نافع', "Warsh A'n Nafi'"], 'qaloon': ['قالون عن نافع', "Qalun A'n Nafi'"], 'shuba': ['شعبة عن عاصم', "Shuba A'n Assem"], 'duri': ['الدوري عن أبي عمرو', "Al-Duri A'n Abi Amr"], 'susi': ['السوسي عن أبي عمرو', "As-Susi A'n Abi Amr"], 'bazzi': ['البزي عن ابن كثير', "Al-Bazzi A'n Ibn Katheer"], 'qunbul': ['قنبل عن ابن كثير', "Qunbul A'n Ibn Katheer"], 'hisham': ['هشام عن ابن عامر', "Hisham A'n Ibn Amir"], 'ibn-dhakwan': ['ابن ذكوان عن ابن عامر', "Ibn Dhakwan A'n Ibn Amir"]};
+                      return DropdownMenuItem(value: v, child: Text(labels[v]![TranslationService.isArabic ? 0 : 1], overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: (v) { if (v != null) { _onQiraahChanged(v); setModalState(() {}); } },
+                  )),
+                ]),
+                const SizedBox(height: 16),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(TranslationService.isArabic ? 'القارئ' : 'Reciter', style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8))),
+                  _isLoadingReciters
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5C158)))
+                      : _quranScriptType == 'hafs'
+                      ? SizedBox(width: 170, child: DropdownButton<String>(isExpanded: true, value: storedReciter, dropdownColor: theme.cardColor, underline: const SizedBox(), icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                          items: (List.from(availableReciters)..sort((a, b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn))).map<DropdownMenuItem<String>>((r) => DropdownMenuItem(value: r.id, child: Text(TranslationService.isArabic ? r.nameAr : r.nameEn, overflow: TextOverflow.ellipsis))).toList(),
+                          onChanged: (v) { if (v != null) { _onReciterChanged(v); setModalState(() {}); } },
+                        ))
+                      : SizedBox(width: 170, child: DropdownButton<String>(isExpanded: true,
+                          value: (() { if (!storedReciter.startsWith('mp3quran_server_') || _dynamicReciters.isEmpty) return null; final sc = storedReciter.substring(16); return _dynamicReciters.any((r) => (r['moshaf'] as List).isNotEmpty && (r['moshaf'][0]['server'] as String) == sc) ? sc : null; })(),
+                          dropdownColor: theme.cardColor, underline: const SizedBox(), icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                          items: _dynamicReciters.where((r) => (r['moshaf'] as List).isNotEmpty).map((r) => DropdownMenuItem(value: (r['moshaf'][0]['server'] as String), child: Text(r['name'] as String, overflow: TextOverflow.ellipsis))).toList(),
+                          onChanged: (v) { if (v != null) { _onReciterChanged('mp3quran_server_$v'); setModalState(() {}); } },
+                        )),
+                ]),
+                const SizedBox(height: 20),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(TranslationService.t('arabic_font_size'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8))),
+                  Row(children: [
+                    IconButton(icon: const Icon(Icons.remove_circle_outline, color: Color(0xFFE5C158)), onPressed: () { _changeFontSize(-0.1); setModalState(() {}); }),
+                    Text("${(_fontSizeMultiplier * 100).toInt()}%", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.add_circle_outline, color: Color(0xFFE5C158)), onPressed: () { _changeFontSize(0.1); setModalState(() {}); }),
+                  ]),
+                ]),
+              ],
+            ),
           );
         },
       ),

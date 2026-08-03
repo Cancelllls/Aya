@@ -57,7 +57,13 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
           ? 'تلاوة غير معروفة'
           : 'Unknown Reciter';
     } else {
-      _cachedReciterLabel = _reciter;
+      // Look up Hafs reciter name from the static list
+      final rec = availableReciters
+          .where((r) => r.id == _reciter)
+          .firstOrNull;
+      _cachedReciterLabel = rec != null
+          ? (TranslationService.isArabic ? rec.nameAr : rec.nameEn)
+          : _reciter;
     }
   }
 
