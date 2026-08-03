@@ -1,12 +1,13 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:io';
 
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static bool? _ftsAvailable;
   static const int _version = 8;
 
   DatabaseService._();
@@ -22,6 +23,13 @@ class DatabaseService {
   static Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'aya_app.db');
 
+    // Use bundled SQLite with FTS5 on Android/Linux via FFI.
+    // iOS already has FTS5 in its system SQLite.
+    if (!Platform.isIOS && !Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
     Database? db;
     try {
       db = await openDatabase(
@@ -31,7 +39,6 @@ class DatabaseService {
         onUpgrade: _onUpgrade,
       );
     } catch (e) {
-      // Recover from corrupted DB (e.g. from failed migration)
       print("DB open failed: $e — recreating");
       try { await deleteDatabase(path); } catch (_) {}
       db = await openDatabase(
@@ -179,18 +186,13 @@ class DatabaseService {
     ''');
     await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
 
-    // ── FTS5 full-text search (optional — system SQLite may not have it) ──
-    try {
-      await db.execute('''
-        CREATE VIRTUAL TABLE hadiths_fts USING fts5(
-          search_arabic, search_english,
-          tokenize='unicode61 remove_diacritics 2'
-        )
-      ''');
-      _ftsAvailable = true;
-    } catch (_) {
-      _ftsAvailable = false;
-    }
+    // ── FTS5 full-text search (guaranteed by bundled SQLite via FFI) ──
+    await db.execute('''
+      CREATE VIRTUAL TABLE hadiths_fts USING fts5(
+        search_arabic, search_english,
+        tokenize='unicode61 remove_diacritics 2'
+      )
+    ''');
 
     // Prayer Tracker
     await db.execute('''
@@ -320,22 +322,16 @@ class DatabaseService {
     }
 
     if (oldVersion < 8) {
-      try {
-        await db.execute('''
-          CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
-            search_arabic, search_english,
-            tokenize='unicode61 remove_diacritics 2'
-          )
-        ''');
-        await db.execute(
-          'INSERT INTO hadiths_fts(search_arabic, search_english) '
-          'SELECT search_arabic, search_english FROM hadiths',
-        );
-        _ftsAvailable = true;
-      } catch (e) {
-        _ftsAvailable = false;
-        print("FTS5 not available on this device — using LIKE fallback");
-      }
+      await db.execute('''
+        CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
+          search_arabic, search_english,
+          tokenize='unicode61 remove_diacritics 2'
+        )
+      ''');
+      await db.execute(
+        'INSERT INTO hadiths_fts(search_arabic, search_english) '
+        'SELECT search_arabic, search_english FROM hadiths',
+      );
     }
 
     if (oldVersion < 2) {
@@ -787,14 +783,12 @@ class DatabaseService {
       }
       await batch.commit(noResult: true);
       // Populate FTS5 index for newly inserted hadiths
-      try {
-        await txn.execute(
-          'INSERT INTO hadiths_fts(search_arabic, search_english) '
-          'SELECT search_arabic, search_english FROM hadiths '
-          'WHERE book_id = ?',
-          [dbBookId],
-        );
-      } catch (_) {}
+      await txn.execute(
+        'INSERT INTO hadiths_fts(search_arabic, search_english) '
+        'SELECT search_arabic, search_english FROM hadiths '
+        'WHERE book_id = ?',
+        [dbBookId],
+      );
     });
   }
 
@@ -845,8 +839,6 @@ class DatabaseService {
     final dbBookId = '${lang}_$bookId';
 
     final cleanQuery = _stripTashkeel(query).toLowerCase();
-    final searchPattern = '%$cleanQuery%';
-
     final intQuery = int.tryParse(query);
 
     // FTS5 MATCH for instant single-book search
