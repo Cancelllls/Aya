@@ -243,8 +243,6 @@ class NotificationService {
           importance: Importance.max,
           playSound: true,
           sound: RawResourceAndroidNotificationSound('default_adhan'),
-          enableVibration: true,
-          vibrationPattern: Int64List.fromList([0, 1000, 500, 1000, 500, 500]),
           audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       );
