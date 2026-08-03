@@ -32,7 +32,14 @@ class AboutScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: theme.primaryColor.withValues(alpha: 0.1),
               ),
-              child: Icon(Icons.mosque, size: 80, color: theme.primaryColor),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 80,
+                  height: 80,
+                ),
+              ),
             ),
             const SizedBox(height: 24),
             Text(
