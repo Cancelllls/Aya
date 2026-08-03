@@ -123,13 +123,13 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                     result.success(Build.VERSION.SDK_INT)
                 }
                 "checkExactAlarmPermission" -> {
-                    val permitted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                        alarmManager.canScheduleExactAlarms()
+                        if (alarmManager.canScheduleExactAlarms()) 1 else 0
                     } else {
-                        true
+                        1 // No special permission needed on Android < 12
                     }
-                    result.success(permitted)
+                    result.success(granted)
                 }
                 "requestExactAlarmPermission" -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

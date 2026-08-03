@@ -230,20 +230,35 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation('UTC'));
     }
 
-    // Ensure the adhan notification channel is created before any use
-    await _notificationsPlugin
+    // Pre-create all notification channels so they exist before any use
+    final androidPlugin = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            'adhan_native_v1',
-            'Athan Alarms',
-            description: 'Prayer time athan alerts with sound',
-            importance: Importance.max,
-            playSound: true,
-            sound: RawResourceAndroidNotificationSound('default_adhan'),
-          ),
-        );
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'adhan_native_v1',
+          'Athan Alarms',
+          description: 'Prayer time athan alerts with sound',
+          importance: Importance.max,
+          playSound: true,
+          sound: RawResourceAndroidNotificationSound('default_adhan'),
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'pre_adhan_native_v2',
+          'Pre-Athan Alerts',
+          description: 'Reminders before prayer time',
+          importance: Importance.max,
+          playSound: true,
+          sound: RawResourceAndroidNotificationSound('default_pre_adhan'),
+          enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+    }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');

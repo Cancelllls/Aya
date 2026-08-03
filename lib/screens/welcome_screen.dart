@@ -83,12 +83,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
     final notifOk = await NotificationService().checkPermissions();
-    bool exactAlarmOk = true;
+    int? exactAlarmResult;
     try {
-      exactAlarmOk =
-          await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
-          true;
+      exactAlarmResult = await _platform.invokeMethod<int>('checkExactAlarmPermission');
     } catch (_) {}
+    // 0 = denied, 1 = granted, null = unknown (show permission card)
+    final exactAlarmOk = exactAlarmResult == 1;
     if (mounted) {
       setState(() {
         _locationGranted = locOk;
