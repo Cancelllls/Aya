@@ -1,6 +1,5 @@
 package com.quran.aya
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -13,7 +12,6 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.os.Vibrator
 import android.os.VibrationEffect
-import androidx.activity.result.contract.ActivityResultContracts
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -21,26 +19,12 @@ import io.flutter.plugin.common.MethodChannel.Result
 import android.app.PendingIntent
 
 class MainActivity : FlutterActivity() {
+    companion object {
+        const val PICK_FILE_REQUEST = 9001
+    }
+
     private val CHANNEL = "com.quran.aya/system"
     private var pendingFileResult: Result? = null
-    private val filePickerLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                // Copy content URI to a temp file so the Dart side can read it
-                val input = contentResolver.openInputStream(uri)
-                val tmpFile = java.io.File(cacheDir, "import_backup.json")
-                input?.use { it.copyTo(tmpFile.outputStream()) }
-                pendingFileResult?.success(tmpFile.absolutePath)
-            } catch (e: Exception) {
-                pendingFileResult?.success(null)
-            }
-        } else {
-            pendingFileResult?.success(null)
-        }
-        pendingFileResult = null
-    }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +50,27 @@ class MainActivity : FlutterActivity() {
                 params.preferredRefreshRate = 144f
                 window.attributes = params
             } catch (_: Exception) {}
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICK_FILE_REQUEST) {
+            val uri = data?.data
+            if (uri != null && resultCode == android.app.Activity.RESULT_OK) {
+                try {
+                    val input = contentResolver.openInputStream(uri)
+                    val tmpFile = java.io.File(cacheDir, "import_backup.json")
+                    input?.use { it.copyTo(tmpFile.outputStream()) }
+                    pendingFileResult?.success(tmpFile.absolutePath)
+                } catch (e: Exception) {
+                    pendingFileResult?.success(null)
+                }
+            } else {
+                pendingFileResult?.success(null)
+            }
+            pendingFileResult = null
         }
     }
 
@@ -268,7 +273,12 @@ class MainActivity : FlutterActivity() {
                 }
                 "pickFile" -> {
                     pendingFileResult = result
-                    filePickerLauncher.launch(arrayOf("application/json", "*/*"))
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = "application/json"
+                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "*/*"))
+                    }
+                    startActivityForResult(intent, PICK_FILE_REQUEST)
                 }
                 "stopAdhan" -> {
                     AdhanBroadcastReceiver.activeStop?.invoke()
