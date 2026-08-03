@@ -136,8 +136,11 @@ class _HadithScreenState extends State<HadithScreen> {
   int? _highlightedHadithNumber;
   bool _isOffline = false;
   String _error = '';
-  String? _activeSearchQuery;
+  String _activeSearchQuery = '';
   int _currentPage = 1;
+  int _totalHadiths = 0;
+  bool _hasMore = true;
+  bool _loadingMore = false;
   static const int _pageSize = 20;
   late String _displayLang;
   static Map<String, List<String?>>? _gradesLookup;
@@ -147,10 +150,23 @@ class _HadithScreenState extends State<HadithScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _debounce;
 
+  void _scrollToTop() {
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (_scrollController.hasClients) _scrollController.jumpTo(0.0);
+    });
+  }
+
+  void _autoClearHighlight() {
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _highlightedHadithNumber = null);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _displayLang = TranslationService.isArabic ? 'ara' : 'eng';
+    _scrollController.addListener(_loadMoreIfNeeded);
     // If opened from a bookmark, switch to that book
     if (widget.initialBookId != null) {
       final found = hadithBooks
@@ -193,19 +209,22 @@ class _HadithScreenState extends State<HadithScreen> {
       _isLoading = true;
       _error = '';
       _hadithList = [];
+      _currentPage = 1;
+      _hasMore = true;
+      _activeSearchQuery = '';
+      _searchController.clear();
+      _crossSearchResults = null;
     });
 
     final bookId = _selectedBook.id;
     final db = await DatabaseService.getInstance();
 
-    // Check if downloaded
+    // Seed from bundled asset if not yet downloaded
     bool isDownloaded = await db.isHadithBookDownloaded(bookId, _displayLang);
-
     if (!isDownloaded) {
       try {
-        final jsonString = await DefaultAssetBundle.of(
-          context,
-        ).loadString('assets/hadith/$_displayLang-$bookId.json');
+        final jsonString = await DefaultAssetBundle.of(context)
+            .loadString('assets/hadith/$_displayLang-$bookId.json');
         final data = jsonDecode(jsonString);
         List<dynamic> hadiths = data['hadiths'] ?? [];
         if (hadiths.isEmpty && data['hadith'] != null) {
@@ -219,85 +238,21 @@ class _HadithScreenState extends State<HadithScreen> {
     }
 
     if (isDownloaded) {
-      // Musnad Ahmad has 26K+ hadiths — load enough for all books
-      final maxHadiths = _selectedBook.totalHadiths > 7500
-          ? _selectedBook.totalHadiths + 100
-          : 7500;
-      final results = await db.getHadiths(
-        bookId,
-        _displayLang,
-        maxHadiths,
-        0,
-      ); // Load all for now to keep pagination logic intact
-      await _loadGrades();
-      if (mounted) {
-        final list = results
-            .map(
-              (e) => {
-                'number': e['hadith_number'],
-                'arabic': e['arabic'],
-                'english': e['english'],
-                'searchArText': e['search_arabic'],
-                'searchEnText': e['search_english'],
-                'grades': jsonDecode(e['grades'] ?? '[]'),
-              },
-            )
-            .toList();
-        _injectGrades(list, bookId);
-        setState(() {
-          _hadithList = list;
-          _isOffline = true;
-          _isLoading = false;
-        });
-      }
+      // Get total count for pagination UI
+      _totalHadiths = await db.getHadithCount(bookId, _displayLang);
+      await _loadHadithPage(db, bookId, 0);
       return;
     }
 
-    // Online Fetch API
+    // Online fallback
     try {
-      final url =
-          'https://cdn.jsdelivr.net/gh/Cancelllls/Islamic-Assets@main/hadith/$_displayLang-$bookId.json';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 10));
-
+      final url = 'https://cdn.jsdelivr.net/gh/Cancelllls/Islamic-Assets@main/hadith/$_displayLang-$bookId.json';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         final List<dynamic> rawHadiths = decoded['hadiths'] ?? [];
-        final List<dynamic> list = rawHadiths
-            .map((h) {
-              return {
-                'number': h['hadithnumber'] ?? 0,
-                'arabic': _displayLang == 'ara' ? (h['text'] ?? '') : '',
-                'searchArText': _displayLang == 'ara'
-                    ? _normalizeArabic(
-                        (h['text'] ?? '').toString(),
-                      ).toLowerCase()
-                    : '',
-                'searchEnText': _displayLang == 'eng'
-                    ? (h['text'] ?? '').toString().toLowerCase()
-                    : '',
-                'english': _displayLang == 'eng' ? (h['text'] ?? '') : '',
-                'grades': h['grades'] ?? [],
-              };
-            })
-            .where(
-              (h) =>
-                  (h['arabic'] as String).trim().isNotEmpty ||
-                  (h['english'] as String).trim().isNotEmpty,
-            )
-            .toList();
-
-        await _loadGrades();
-        _injectGrades(list, bookId);
-
-        if (mounted) {
-          setState(() {
-            _hadithList = list;
-            _isOffline = false;
-            _isLoading = false;
-          });
-        }
+        await db.insertHadithBook(bookId, _displayLang, rawHadiths);
+        await _loadHadithPage(db, bookId, 0);
       } else {
         throw Exception('Failed to load online data');
       }
@@ -305,11 +260,53 @@ class _HadithScreenState extends State<HadithScreen> {
       if (mounted) {
         setState(() {
           _error = TranslationService.isArabic
-              ? "فشل في تحميل الأحاديث الشريفة. الرجاء التحقق من الاتصال بالإنترنت."
-              : "Failed to load Hadiths. Please check your internet connection.";
+              ? "فشل في تحميل الأحاديث الشريفة."
+              : "Failed to load Hadiths.";
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadHadithPage(DatabaseService db, String bookId, int page) async {
+    if (!mounted || (!_hasMore && page > 0)) return;
+    setState(() => _loadingMore = page > 0);
+
+    final offset = page * _pageSize * 2; // load 2 pages at once
+    final results = await db.getHadiths(bookId, _displayLang, _pageSize * 2, offset);
+    await _loadGrades();
+
+    if (mounted) {
+      final list = results.map((e) => {
+        'number': e['hadith_number'],
+        'arabic': e['arabic'],
+        'english': e['english'],
+        'searchArText': e['search_arabic'],
+        'searchEnText': e['search_english'],
+        'grades': jsonDecode(e['grades'] ?? '[]'),
+      }).toList();
+      _injectGrades(list, bookId);
+      setState(() {
+        if (page == 0) {
+          _hadithList = list;
+        } else {
+          _hadithList.addAll(list);
+        }
+        _hasMore = results.length >= _pageSize * 2;
+        _isOffline = true;
+        _isLoading = false;
+        _loadingMore = false;
+      });
+    }
+  }
+
+  Future<void> _loadMoreIfNeeded() async {
+    if (_loadingMore || !_hasMore || _activeSearchQuery.isNotEmpty) return;
+    final visibleEnd = (_currentPage * _pageSize);
+    if (visibleEnd >= _hadithList.length - _pageSize) {
+      final nextPage = _hadithList.length ~/ (_pageSize * 2);
+      final db = await DatabaseService.getInstance();
+      await _loadHadithPage(db, _selectedBook.id, nextPage);
     }
   }
 
@@ -437,10 +434,10 @@ class _HadithScreenState extends State<HadithScreen> {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) {
       _crossSearchResults = null;
-      _activeSearchQuery = null;
+      _activeSearchQuery = '';
       return _hadithList;
     }
-    // Use the cross-book search results when available
+    // Use cross-book search results when available
     if (_crossSearchResults != null && _activeSearchQuery == query) {
       return _crossSearchResults!;
     }
@@ -452,7 +449,7 @@ class _HadithScreenState extends State<HadithScreen> {
       if (mounted) {
         setState(() {
           _crossSearchResults = null;
-          _activeSearchQuery = null;
+          _activeSearchQuery = '';
           _currentPage = 1;
         });
       }
@@ -507,7 +504,7 @@ class _HadithScreenState extends State<HadithScreen> {
     _jumpToHadithByNumber(num);
   }
 
-  void _jumpToHadithByNumber(int num) {
+  void _jumpToHadithByNumber(int num) async {
     final idx = _hadithList.indexWhere((element) => element['number'] == num);
     if (idx != -1) {
       setState(() {
@@ -515,28 +512,39 @@ class _HadithScreenState extends State<HadithScreen> {
         _jumpController.clear();
         _highlightedHadithNumber = num;
       });
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (_scrollController.hasClients) {
-          _scrollController.jumpTo(0.0);
-        }
+      _scrollToTop();
+      _autoClearHighlight();
+      return;
+    }
+
+    // Not in cache — load from DB
+    final db = await DatabaseService.getInstance();
+    final row = await db.getHadithByNumber(_selectedBook.id, _displayLang, num);
+    if (row != null && mounted) {
+      await _loadGrades();
+      final entry = {
+        'number': row['hadith_number'],
+        'arabic': row['arabic'],
+        'english': row['english'],
+        'searchArText': row['search_arabic'],
+        'searchEnText': row['search_english'],
+        'grades': jsonDecode((row['grades'] as String?) ?? '[]'),
+      };
+      _injectGrades([entry], _selectedBook.id);
+      setState(() {
+        _hadithList.insert(0, entry);
+        _currentPage = 1;
+        _jumpController.clear();
+        _highlightedHadithNumber = num;
       });
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) {
-          setState(() {
-            _highlightedHadithNumber = null;
-          });
-        }
-      });
+      _scrollToTop();
+      _autoClearHighlight();
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "الرقم غير موجود في هذا الكتاب"
-                : "Number not found in this book",
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(TranslationService.isArabic
+            ? "الرقم غير موجود في هذا الكتاب"
+            : "Number not found in this book"),
+      ));
     }
   }
 
@@ -613,7 +621,7 @@ class _HadithScreenState extends State<HadithScreen> {
         _selectedBook = book;
         _currentPage = 1;
         _crossSearchResults = null;
-        _activeSearchQuery = null;
+        _activeSearchQuery = '';
         _searchController.clear();
         _hadithList = [];
       });
@@ -1018,7 +1026,7 @@ class _HadithScreenState extends State<HadithScreen> {
                               if (q.trim().isEmpty) {
                                 setState(() {
                                   _crossSearchResults = null;
-                                  _activeSearchQuery = null;
+                                  _activeSearchQuery = '';
                                   _currentPage = 1;
                                 });
                               } else {

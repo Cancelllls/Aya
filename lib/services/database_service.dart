@@ -39,7 +39,7 @@ class DatabaseService {
         onUpgrade: _onUpgrade,
       );
     } catch (e) {
-      print("DB open failed: $e — recreating");
+      // DB open failed — recreating
       try { await deleteDatabase(path); } catch (_) {}
       db = await openDatabase(
         path,
@@ -251,7 +251,7 @@ class DatabaseService {
         }
         await batch.commit(noResult: true);
       } catch (e) {
-        print("Error during v4 upgrade: $e");
+        // v4 upgrade error — non-critical
       }
     }
 
@@ -280,7 +280,6 @@ class DatabaseService {
         ''');
         await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
       } catch (e) {
-        print("Error during v5 upgrade: $e");
       }
     }
 
@@ -302,7 +301,6 @@ class DatabaseService {
           )
         ''');
       } catch (e) {
-        print("Error during v6 upgrade: $e");
       }
     }
 
@@ -317,7 +315,7 @@ class DatabaseService {
           "DELETE FROM hadith_books WHERE book_id IN ('ara_muslim', 'eng_muslim')",
         );
       } catch (e) {
-        print("Error during v7 upgrade: $e");
+        // v7 upgrade error — hadith re-seed skipped
       }
     }
 
@@ -439,7 +437,7 @@ class DatabaseService {
         await batch.commit(noResult: true);
       }
     } catch (e) {
-      print('Failed to seed Quran data: $e');
+      // Quran seed failed — will retry on next cold start
     }
   }
 
@@ -825,6 +823,31 @@ class DatabaseService {
       limit: limit,
       offset: offset,
     );
+  }
+
+  Future<int> getHadithCount(String bookId, String lang) async {
+    final db = _database;
+    if (db == null) return 0;
+    final dbBookId = '${lang}_$bookId';
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM hadiths WHERE book_id = ?',
+      [dbBookId],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<Map<String, dynamic>?> getHadithByNumber(
+      String bookId, String lang, int hadithNumber) async {
+    final db = _database;
+    if (db == null) return null;
+    final dbBookId = '${lang}_$bookId';
+    final results = await db.query(
+      'hadiths',
+      where: 'book_id = ? AND hadith_number = ?',
+      whereArgs: [dbBookId, hadithNumber],
+      limit: 1,
+    );
+    return results.isNotEmpty ? results.first : null;
   }
 
   Future<List<Map<String, dynamic>>> searchHadiths(
