@@ -897,7 +897,9 @@ class _HadithScreenState extends State<HadithScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<HadithBook>(
                             dropdownColor: theme.cardColor,
-                            value: _selectedBook,
+                            value: _filteredBooks.contains(_selectedBook)
+                                ? _selectedBook
+                                : _filteredBooks.first,
                             isExpanded: true,
                             selectedItemBuilder: (BuildContext context) {
                               return _filteredBooks.map((b) {
@@ -954,6 +956,12 @@ class _HadithScreenState extends State<HadithScreen> {
                           setState(() {
                             _displayLang = newLang;
                             _currentPage = 1;
+                            // If current book is Arabic-only and switching
+                            // to English, fall back to Bukhari.
+                            if (newLang == 'eng' &&
+                                _selectedBook.arabicOnly) {
+                              _selectedBook = hadithBooks[0];
+                            }
                           });
                           _loadSelectedBookData();
                         },

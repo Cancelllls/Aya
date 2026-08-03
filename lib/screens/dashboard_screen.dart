@@ -9,7 +9,7 @@ import '../widgets/welcome_header.dart';
 import '../widgets/grid_service_card.dart';
 import '../widgets/prayer_bar_card.dart';
 import '../widgets/quick_access_pill.dart';
-import '../widgets/prayers_countdown_card.dart';
+import '../utils/text_helpers.dart';
 import '../services/notification_service.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
@@ -488,6 +488,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  String _pad(int v) => v.toString().padLeft(2, '0');
+
+  Widget _pill(ThemeData theme, String label, String time, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFFE5C158)),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+        Text(
+          formatPrayerTime(time, use24h: widget.storage.getBool('use_24h_format', defaultValue: false)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = widget.storage.getLocation();
@@ -592,11 +608,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   )
                 : _prayerData == null
                 ? const SizedBox.shrink()
-                : PrayersCountdownCard(
-                    data: _prayerData!,
-                    use24h: widget.storage.getBool(
-                      'use_24h_format',
-                      defaultValue: false,
+                : Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      border: Border.all(
+                        color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).shadowColor
+                              .withValues(alpha: 0.05),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981)
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            TranslationService.t('live_countdown'),
+                            style: const TextStyle(
+                              color: Color(0xFF10B981),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "${TranslationService.t('time_until')} ${TranslationService.t(_nextPrayerName.toLowerCase())}",
+                          style: TextStyle(
+                            color: theme.textTheme.titleMedium?.color
+                                ?.withValues(alpha: 0.7),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_pad(_nextPrayerCountdown.inHours)}:${_pad(_nextPrayerCountdown.inMinutes.remainder(60))}:${_pad(_nextPrayerCountdown.inSeconds.remainder(60))}',
+                          style: const TextStyle(
+                            color: Color(0xFFE5C158),
+                            fontSize: 42,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Divider(color: theme.dividerColor),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _pill(theme, TranslationService.t('sunrise'), _prayerData!.sunrise, Icons.wb_sunny_outlined),
+                            _pill(theme, TranslationService.t('fajr'), _prayerData!.fajr, Icons.cloud_queue),
+                            _pill(theme, TranslationService.t('sunset'), _prayerData!.sunset, Icons.wb_twilight),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
             const SizedBox(height: 24),

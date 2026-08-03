@@ -85,15 +85,25 @@ class MainActivity : FlutterActivity() {
                     result.success(Build.VERSION.SDK_INT)
                 }
                 "checkExactAlarmPermission" -> {
-                    val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    // Never trust auto-grant — only true if user explicitly opened
+                    // the permission screen AND the system reports it as granted.
+                    val prefs = getSharedPreferences("flutter.aya", Context.MODE_PRIVATE)
+                    val wasRequested = prefs.getBoolean("alarm_permission_requested", false)
+                    var granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
                         alarmManager.canScheduleExactAlarms()
                     } else {
                         true
                     }
+                    if (!wasRequested && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        granted = false
+                    }
                     result.success(granted)
                 }
                 "requestExactAlarmPermission" -> {
+                    // Mark that the user explicitly requested this permission
+                    getSharedPreferences("flutter.aya", Context.MODE_PRIVATE)
+                        .edit().putBoolean("alarm_permission_requested", true).apply()
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         runOnUiThread {
                             var started = false

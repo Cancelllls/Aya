@@ -148,7 +148,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                 ? widget.initialAyahNumber
                 : null,
             isInsidePager: true,
-            hideAppBar: true,
+            hideAppBar: false,
             onGoToNext: () {
               if (index < 113) {
                 _pageController.animateToPage(

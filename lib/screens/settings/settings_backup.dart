@@ -52,110 +52,47 @@ extension SettingsBackupSection on _SettingsScreenState {
                     style: const TextStyle(fontSize: 12),
                   ),
                   onTap: () async {
-                    // Show path input dialog — user pastes the file path
-                    final controller = TextEditingController();
-                    // Pre-fill common locations
-                    controller.text = '/storage/emulated/0/Download/aya_backup.json';
-                    controller.selection = TextSelection(
-                      baseOffset: 0,
-                      extentOffset: controller.text.length,
-                    );
-
-                    final result = await showDialog<String>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: Text(isArabic ? "استيراد نسخة احتياطية" : "Import Backup"),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              isArabic
-                                  ? 'الصق مسار ملف النسخة الاحتياطية:'
-                                  : 'Paste the backup file path:',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: theme.textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: controller,
-                              decoration: InputDecoration(
-                                hintText: '/storage/emulated/0/...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                isDense: true,
-                              ),
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              isArabic
-                                  ? 'تلميح: يستخدم مدراء الملفات "نسخ المسار" أو "Copy Path". '
-                                      'أو حرّك الملف لمجلد التنزيلات ليكتشفه التطبيق تلقائياً.'
-                                  : 'Tip: Use your file manager\'s "Copy Path". '
-                                      'Or move the file to Downloads for auto-detection.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: Text(isArabic ? "إلغاء" : "Cancel"),
-                          ),
-                          // Auto-detect button
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, 'auto'),
-                            child: Text(
-                              isArabic ? "بحث تلقائي" : "Auto-detect",
-                              style: TextStyle(
-                                color: theme.textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE5C158),
-                            ),
-                            onPressed: () => Navigator.pop(ctx, controller.text),
-                            child: Text(
-                              isArabic ? "استيراد" : "Import",
-                              style: const TextStyle(color: Colors.black),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (result == null || result.isEmpty) return;
-
                     try {
-                      String? content;
-                      if (result == 'auto') {
-                        content = await BackupService.readDefaultBackup();
-                      } else {
-                        content = await BackupService.readBackupFromPath(result);
-                      }
-                      if (content == null) {
+                      final result = await FilePicker.platform.pickFiles(
+                        type: FileType.any,
+                      );
+                      if (result == null || result.files.isEmpty) return;
+
+                      final path = result.files.single.path;
+                      if (path == null) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 isArabic
-                                    ? "تعذر فتح الملف. تحقق من المسار والصلاحيات."
-                                    : "Could not open file. Check the path and permissions.",
+                                    ? "تعذر الوصول للملف المحدد"
+                                    : "Could not access the selected file",
                               ),
                             ),
                           );
                         }
                         return;
                       }
-                      final data = jsonDecode(content) as Map<String, dynamic>;
+
+                      final content =
+                          await BackupService.readBackupFromPath(path);
+                      if (content == null) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isArabic
+                                    ? "تعذر فتح الملف. تأكد أنه ملف JSON صالح."
+                                    : "Could not open file. Make sure it's a valid JSON.",
+                              ),
+                            ),
+                          );
+                        }
+                        return;
+                      }
+
+                      final data =
+                          jsonDecode(content) as Map<String, dynamic>;
                       final count = await BackupService.importData(data);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -172,7 +109,11 @@ extension SettingsBackupSection on _SettingsScreenState {
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${isArabic ? "فشل" : "Failed"}: $e')),
+                          SnackBar(
+                            content: Text(
+                              '${isArabic ? "فشل" : "Failed"}: $e',
+                            ),
+                          ),
                         );
                       }
                     }

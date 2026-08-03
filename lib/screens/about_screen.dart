@@ -112,28 +112,6 @@ class AboutScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 32),
-            _sectionHeader(theme, isArabic ? "التقنية" : "Technology"),
-            const SizedBox(height: 12),
-            Card(
-              color: theme.cardColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _techRow(isArabic ? "الإطار" : "Framework", "Flutter 3.x / Dart 3.10"),
-                    _techRow(isArabic ? "قاعدة البيانات" : "Database", "SQLite + FTS5 full-text search"),
-                    _techRow(isArabic ? "الصوت" : "Audio", "Native Android alarms + audioplayers"),
-                    _techRow(isArabic ? "الموقع" : "Location", "GPS + offline geocoding"),
-                    _techRow(isArabic ? "حساب المواقيت" : "Prayer Calc", "adhan / hijri (offline)"),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
             _sectionHeader(theme, isArabic ? "المطور" : "Developer"),
             const SizedBox(height: 12),
             Card(
@@ -246,29 +224,4 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _techRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: ThemeData().textTheme.bodyMedium?.color,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFE5C158),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

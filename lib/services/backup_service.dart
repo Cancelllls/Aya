@@ -17,7 +17,7 @@ class BackupService {
     // Collect settings as proper types
     final settings = <String, dynamic>{};
     final strKeys = [
-      'prayer_method', 'prayer_school', 'calc_method', 'asr_method',
+      'prayer_method', 'prayer_school',
       'adhan_alert_mode', 'pre_adhan_alert_mode', 'quran_font',
       'theme_preset', 'lang_code', 'reading_mode',
     ];
@@ -25,7 +25,7 @@ class BackupService {
       final v = storage.getString(key);
       if (v != null && v.isNotEmpty) settings[key] = v;
     }
-    final intKeys = ['first_day_of_week', 'pre_adhan_duration', 'focus_lock_duration'];
+    final intKeys = ['calc_method', 'asr_method', 'first_day_of_week', 'pre_adhan_duration', 'focus_lock_duration'];
     for (var key in intKeys) {
       final v = storage.getInt(key, defaultValue: -1);
       if (v != -1) settings[key] = v;
@@ -73,9 +73,13 @@ class BackupService {
 
     final settings = data['settings'] as Map<String, dynamic>? ?? {};
     for (var e in settings.entries) {
-      if (e.value is String) { await storage.setString(e.key, e.value); }
-      else if (e.value is bool) { await storage.setBool(e.key, e.value); }
-      else if (e.value is num) { await storage.setInt(e.key, e.value.toInt()); }
+      if (e.value is String) {
+        await storage.setString(e.key, e.value as String);
+      } else if (e.value is bool) {
+        await storage.setBool(e.key, e.value as bool);
+      } else if (e.value is num) {
+        await storage.setInt(e.key, (e.value as num).toInt());
+      }
     }
     if (settings.isNotEmpty) imported++;
 
