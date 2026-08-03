@@ -118,11 +118,12 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         }
 
         // ── Accelerometer (flip-face-down stop) ──────────────────────
-        var lastZ = 0f
+        var accelSensorManager: SensorManager? = null
         try {
-            val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+            val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            accelSensorManager = sm
+            val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+            sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
         } catch (_: Exception) {}
 
         // ── MediaPlayer (skip if silent mode requested) ────────────────
@@ -166,7 +167,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         fun stop() {
             try { player.stop(); player.release() } catch (_: Exception) {}
             mediaSession.release()
-            try { sensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
+            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
             notifManager.cancel(alarmId)
             if (wakeLock.isHeld) wakeLock.release()
         }
@@ -176,14 +177,14 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         player.setOnCompletionListener {
             it.release()
             mediaSession.release()
-            try { sensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
+            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
             notifManager.cancel(alarmId)
             if (wakeLock.isHeld) wakeLock.release()
         }
-        player.setOnErrorListener { _, _, _ ->
-            it.release()
+        player.setOnErrorListener { mp, _, _ ->
+            mp.release()
             mediaSession.release()
-            try { sensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
+            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
             notifManager.cancel(alarmId)
             if (wakeLock.isHeld) wakeLock.release()
             true
