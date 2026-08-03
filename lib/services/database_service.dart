@@ -6,6 +6,7 @@ import 'dart:convert';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
+  static bool? _ftsAvailable;
   static const int _version = 8;
 
   DatabaseService._();
@@ -178,13 +179,18 @@ class DatabaseService {
     ''');
     await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
 
-    // ── FTS5 full-text search index (internal content table) ──
-    await db.execute('''
-      CREATE VIRTUAL TABLE hadiths_fts USING fts5(
-        search_arabic, search_english,
-        tokenize='unicode61 remove_diacritics 2'
-      )
-    ''');
+    // ── FTS5 full-text search (optional — system SQLite may not have it) ──
+    try {
+      await db.execute('''
+        CREATE VIRTUAL TABLE hadiths_fts USING fts5(
+          search_arabic, search_english,
+          tokenize='unicode61 remove_diacritics 2'
+        )
+      ''');
+      _ftsAvailable = true;
+    } catch (_) {
+      _ftsAvailable = false;
+    }
 
     // Prayer Tracker
     await db.execute('''
@@ -315,20 +321,20 @@ class DatabaseService {
 
     if (oldVersion < 8) {
       try {
-        // ── Add FTS5 full-text search for 100x faster Arabic search ──
         await db.execute('''
           CREATE VIRTUAL TABLE IF NOT EXISTS hadiths_fts USING fts5(
             search_arabic, search_english,
             tokenize='unicode61 remove_diacritics 2'
           )
         ''');
-        // Populate from existing hadiths data
         await db.execute(
           'INSERT INTO hadiths_fts(search_arabic, search_english) '
           'SELECT search_arabic, search_english FROM hadiths',
         );
+        _ftsAvailable = true;
       } catch (e) {
-        print("Error during v8 upgrade (FTS5): $e");
+        _ftsAvailable = false;
+        print("FTS5 not available on this device — using LIKE fallback");
       }
     }
 
