@@ -55,7 +55,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
           widget.hadithNumber!,
         );
         if (cached != null && mounted) {
-          _showCachedResult(cached);
+          await _showCachedResult(cached);
           return;
         }
 
@@ -79,24 +79,43 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
     return SharhCacheService.availableBooks.containsKey(bookId);
   }
 
-  void _showCachedResult(Map<String, dynamic> cached) {
+  Future<void> _showCachedResult(Map<String, dynamic> cached) async {
     final explanation = (cached['e'] ?? '').toString();
     final grading = (cached['g'] ?? '').toString();
     final source = (cached['_source'] ?? '').toString();
-    setState(() {
-      _parsedExplanations = [
-        {
-          'text': (cached['t'] ?? '').toString(),
-          'explanation': explanation,
-          'grading': grading.isNotEmpty
-              ? grading
-              : (source.isNotEmpty ? '\u{1F4DA} $source' : ''),
-        },
-      ];
-      _isLoading = false;
-      _downloading = false;
-      _offeringDownload = false;
-    });
+
+    // Use correct hadith text from our database, not the scraper's search result.
+    String hadithText = (cached['t'] ?? '').toString();
+    if (widget.bookId != null && widget.hadithNumber != null) {
+      try {
+        final db = await DatabaseService.getInstance();
+        final lang = widget.displayLang == 'eng' ? 'eng' : 'ara';
+        final row = await db.getHadithByNumber(widget.bookId!, lang, widget.hadithNumber!);
+        if (row != null) {
+          final txt = lang == 'ara'
+              ? (row['arabic'] as String? ?? '')
+              : (row['english'] as String? ?? '');
+          if (txt.trim().isNotEmpty) hadithText = txt;
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _parsedExplanations = [
+          {
+            'text': hadithText,
+            'explanation': explanation,
+            'grading': grading.isNotEmpty
+                ? grading
+                : (source.isNotEmpty ? '\u{1F4DA} $source' : ''),
+          },
+        ];
+        _isLoading = false;
+        _downloading = false;
+        _offeringDownload = false;
+      });
+    }
   }
 
   Future<void> _downloadFromCdn() async {
@@ -122,7 +141,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
           widget.hadithNumber!,
         );
         if (cached != null && mounted) {
-          _showCachedResult(cached);
+          await _showCachedResult(cached);
           return;
         }
       }
