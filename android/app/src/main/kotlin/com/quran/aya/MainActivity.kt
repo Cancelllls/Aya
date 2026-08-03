@@ -1,5 +1,6 @@
 package com.quran.aya
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -12,13 +13,34 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.os.Vibrator
 import android.os.VibrationEffect
+import androidx.activity.result.contract.ActivityResultContracts
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.Result
 import android.app.PendingIntent
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.quran.aya/system"
+    private var pendingFileResult: Result? = null
+    private val filePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                // Copy content URI to a temp file so the Dart side can read it
+                val input = contentResolver.openInputStream(uri)
+                val tmpFile = java.io.File(cacheDir, "import_backup.json")
+                input?.use { it.copyTo(tmpFile.outputStream()) }
+                pendingFileResult?.success(tmpFile.absolutePath)
+            } catch (e: Exception) {
+                pendingFileResult?.success(null)
+            }
+        } else {
+            pendingFileResult?.success(null)
+        }
+        pendingFileResult = null
+    }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -243,6 +265,10 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("ERROR", e.message, null)
                     }
+                }
+                "pickFile" -> {
+                    pendingFileResult = result
+                    filePickerLauncher.launch(arrayOf("application/json", "*/*"))
                 }
                 "stopAdhan" -> {
                     AdhanBroadcastReceiver.activeStop?.invoke()

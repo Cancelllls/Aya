@@ -1,6 +1,8 @@
 part of 'settings_screen.dart';
 
 extension SettingsBackupSection on _SettingsScreenState {
+  static const _platform = MethodChannel('com.quran.aya/system');
+
   List<Widget> _buildBackupSection(ThemeData theme) {
     final isArabic = TranslationService.isArabic;
     return [
@@ -53,26 +55,9 @@ extension SettingsBackupSection on _SettingsScreenState {
                   ),
                   onTap: () async {
                     try {
-                      final result = await FilePicker.platform.pickFiles(
-                        type: FileType.any,
-                      );
-                      if (result == null || result.files.isEmpty) return;
-
-                      final path = result.files.single.path;
-                      if (path == null) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isArabic
-                                    ? "تعذر الوصول للملف المحدد"
-                                    : "Could not access the selected file",
-                              ),
-                            ),
-                          );
-                        }
-                        return;
-                      }
+                      final path = await _platform
+                          .invokeMethod<String?>('pickFile');
+                      if (path == null || path.isEmpty) return;
 
                       final content =
                           await BackupService.readBackupFromPath(path);
