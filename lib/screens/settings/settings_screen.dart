@@ -11,8 +11,10 @@ import '../../services/notification_service.dart';
 import '../../models/prayer_models.dart';
 import '../quran_download_screen.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/adhan_audio_service.dart';
 import '../../services/reciters_cache_service.dart';
+import '../../version.dart';
 import '../about_screen.dart';
 import '../qiraat_screen.dart';
 
@@ -61,11 +63,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   // Permissions and wake lock
   bool _exactAlarmPermitted = true;
   bool _keepScreenAwake = false;
-
-  // Focus lock
-  int _focusLockDuration = 0;
-  bool _focusAutoStart = false;
-  String _focusLockType = 'app_only'; // app_only vs whole_phone
 
   bool _morningAzkarReminder = true;
   bool _eveningAzkarReminder = true;
@@ -129,18 +126,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     _keepScreenAwake = widget.storage.getBool(
       'keep_screen_awake',
       defaultValue: false,
-    );
-    _focusLockDuration = widget.storage.getInt(
-      'focus_lock_duration',
-      defaultValue: 0,
-    );
-    _focusAutoStart = widget.storage.getBool(
-      'focus_auto_start',
-      defaultValue: false,
-    );
-    _focusLockType = widget.storage.getString(
-      'focus_lock_type',
-      defaultValue: 'app_only',
     );
 
     _morningAzkarReminder = widget.storage.getBool(
@@ -266,26 +251,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     } catch (_) {}
   }
 
-  Future<void> _changeFocusDuration(int? val) async {
-    if (val != null) {
-      setState(() {
-        _focusLockDuration = val;
-        if (val == 0) _focusAutoStart = false;
-      });
-      await widget.storage.setInt('focus_lock_duration', val);
-      if (val == 0) {
-        await widget.storage.setBool('focus_auto_start', false);
-      }
-    }
-  }
-
-  Future<void> _toggleFocusAutoStart(bool val) async {
-    setState(() {
-      _focusAutoStart = val;
-    });
-    await widget.storage.setBool('focus_auto_start', val);
-  }
-
   Future<void> _toggleUse24hFormat(bool val) async {
     setState(() {
       _use24hFormat = val;
@@ -365,15 +330,6 @@ class _SettingsScreenState extends State<SettingsScreen>
         _athanStopGesture = val;
       });
       await widget.storage.setString('athan_stop_gesture', val);
-    }
-  }
-
-  Future<void> _changeFocusLockType(String? val) async {
-    if (val != null) {
-      setState(() {
-        _focusLockType = val;
-      });
-      await widget.storage.setString('focus_lock_type', val);
     }
   }
 
@@ -541,6 +497,39 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     );
                   }),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  Text(
+                    TranslationService.isArabic
+                        ? "أو تبرع عبر باي بال:"
+                        : "Or donate via PayPal:",
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF003087),
+                      side: const BorderSide(color: Color(0xFF003087)),
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.payment),
+                    label: const Text(
+                      'paypal.me/Cancells',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      launchUrl(
+                        Uri.parse('https://www.paypal.me/Cancells'),
+                        mode: LaunchMode.externalApplication,
+                      );
+                    },
+                  ),
                 ],
               ),
             );
@@ -763,9 +752,6 @@ class _SettingsScreenState extends State<SettingsScreen>
                   _autoBookmark = true;
                   _immersiveReader = false;
                   _keepScreenAwake = false;
-                  _focusLockDuration = 0;
-                  _focusAutoStart = false;
-                  _focusLockType = 'app_only';
                   _use24hFormat = false;
                   _swipeSurahNavigation = true;
                   _preAdhanAlertMode = 'vibrate';
@@ -819,8 +805,8 @@ class _SettingsScreenState extends State<SettingsScreen>
           ..._buildNotificationsSection(theme),
           ..._buildAudioSection(theme),
           ..._buildPermissionsSection(theme),
-          ..._buildFocusLockSection(theme),
           ..._buildBackupSection(theme),
+          ..._buildFocusLockSection(theme),
           const SizedBox(height: 40),
 
           // App info credits
@@ -839,7 +825,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  TranslationService.t('version_premium'),
+                  '${TranslationService.t('version_prefix')} $appVersion',
                   style: TextStyle(
                     color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                     fontSize: 11,
