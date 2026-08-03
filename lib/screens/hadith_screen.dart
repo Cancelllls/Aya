@@ -166,7 +166,7 @@ class _HadithScreenState extends State<HadithScreen> {
   void initState() {
     super.initState();
     _displayLang = TranslationService.isArabic ? 'ara' : 'eng';
-    _scrollController.addListener(_loadMoreIfNeeded);
+    _scrollController.addListener(_checkLoadMore);
     // If opened from a bookmark, switch to that book
     if (widget.initialBookId != null) {
       final found = hadithBooks
@@ -302,19 +302,15 @@ class _HadithScreenState extends State<HadithScreen> {
     }
   }
 
-  Future<void> _loadMoreIfNeeded() async {
+  Future<void> _checkLoadMore() async {
     if (_loadingMore || !_hasMore || _activeSearchQuery.isNotEmpty) return;
-    if (!_scrollController.hasClients) return;
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
-
-    final currentScroll = _scrollController.position.pixels;
-    // Pre-load next batch when user reaches 60% of what's loaded
-    if (currentScroll > maxScroll * 0.6) {
+    final loaded = _hadithList.length;
+    // Load more when user is within 2 pages of the end of loaded data
+    // Load more when within 1 page of end AND not already at total
+    if (_currentPage * _pageSize + _pageSize >= loaded && loaded < _totalHadiths) {
       _loadingMore = true;
       final db = await DatabaseService.getInstance();
-      final nextPage = _hadithList.length ~/ 75 + 1;
+      final nextPage = loaded ~/ 75;
       await _loadHadithPage(db, _selectedBook.id, nextPage);
     }
   }
@@ -1416,7 +1412,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           : null,
                     ),
                     Text(
-                      "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $totalPages",
+                      "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $_totalPages",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.bodyLarge?.color,
@@ -1428,10 +1424,11 @@ class _HadithScreenState extends State<HadithScreen> {
                         size: 16,
                         color: theme.primaryColor,
                       ),
-                      onPressed: _currentPage < totalPages
+                      onPressed: _currentPage < _totalPages
                           ? () {
                               setState(() => _currentPage++);
                               _scrollController.jumpTo(0.0);
+                              _checkLoadMore();
                             }
                           : null,
                     ),
