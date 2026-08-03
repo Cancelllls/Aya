@@ -195,7 +195,7 @@ class _QiblaScreenState extends State<QiblaScreen>
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 border: Border.all(
-                  color: Theme.of(context).dividerColor.withOpacity(0.12),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -208,7 +208,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                   Container(
                     width: 1,
                     height: 40,
-                    color: Theme.of(context).dividerColor.withOpacity(0.12),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
                   ),
                   _buildStatColumn(
                     TranslationService.t('qibla_angle'),
@@ -243,7 +243,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                             ? const Color(0xFF10B981)
                             : (Theme.of(context).textTheme.bodyMedium?.color ??
                                       Colors.white)
-                                  .withOpacity(0.7),
+                                  .withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -274,7 +274,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                                       ? const Color(0xFF10B981)
                                       : const Color(
                                           0xFFE5C158,
-                                        ).withOpacity(0.5),
+                                        ).withValues(alpha: 0.5),
                                   width: isAligned ? 4 : 2,
                                 ),
                                 boxShadow: [
@@ -283,7 +283,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                                         (isAligned
                                                 ? const Color(0xFF10B981)
                                                 : const Color(0xFFE5C158))
-                                            .withOpacity(isAligned ? 0.3 : 0.1),
+                                            .withValues(alpha: isAligned ? 0.3 : 0.1),
                                     blurRadius: isAligned ? 40 : 20,
                                   ),
                                 ],
@@ -357,7 +357,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                                       (isAligned
                                               ? const Color(0xFF10B981)
                                               : const Color(0xFFE5C158))
-                                          .withOpacity(0.6),
+                                          .withValues(alpha: 0.6),
                                   blurRadius: 8,
                                 ),
                               ],
@@ -389,7 +389,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                         color:
                             (Theme.of(context).textTheme.bodyMedium?.color ??
                                     Colors.white)
-                                .withOpacity(0.38),
+                                .withValues(alpha: 0.38),
                       ),
                     ),
                     if (!_hasSensor) ...[
@@ -407,7 +407,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                           color:
                               (Theme.of(context).textTheme.bodyMedium?.color ??
                                       Colors.white)
-                                  .withOpacity(0.24),
+                                  .withValues(alpha: 0.24),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -423,7 +423,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                                           context,
                                         ).textTheme.bodyMedium?.color ??
                                         Colors.white)
-                                    .withOpacity(0.24),
+                                    .withValues(alpha: 0.24),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -435,7 +435,7 @@ class _QiblaScreenState extends State<QiblaScreen>
             const SizedBox(height: 16),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE5C158).withOpacity(0.08),
+                backgroundColor: const Color(0xFFE5C158).withValues(alpha: 0.08),
                 foregroundColor: const Color(0xFFE5C158),
                 side: const BorderSide(color: Color(0xFFE5C158), width: 1),
                 padding: const EdgeInsets.symmetric(
@@ -498,7 +498,7 @@ class _QiblaScreenState extends State<QiblaScreen>
               color:
                   (Theme.of(context).textTheme.bodyMedium?.color ??
                           Colors.white)
-                      .withOpacity(0.38),
+                      .withValues(alpha: 0.38),
               letterSpacing: 0.5,
             ),
           ),
@@ -530,14 +530,14 @@ class CompassDialPainter extends CustomPainter {
 
     // Draw outer golden ring
     final outerRingPaint = Paint()
-      ..color = const Color(0xFFE5C158).withOpacity(0.3)
+      ..color = const Color(0xFFE5C158).withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     canvas.drawCircle(center, radius - 8, outerRingPaint);
 
     // Draw inner golden ring
     final innerRingPaint = Paint()
-      ..color = const Color(0xFFE5C158).withOpacity(0.15)
+      ..color = const Color(0xFFE5C158).withValues(alpha: 0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawCircle(center, radius - 24, innerRingPaint);
@@ -551,7 +551,7 @@ class CompassDialPainter extends CustomPainter {
           color: color,
           fontSize: 16,
           fontWeight: FontWeight.w900,
-          shadows: [Shadow(color: color.withOpacity(0.4), blurRadius: 6)],
+          shadows: [Shadow(color: color.withValues(alpha: 0.4), blurRadius: 6)],
         ),
       );
       paintText.layout();
@@ -572,26 +572,26 @@ class CompassDialPainter extends CustomPainter {
     drawLabel(
       "E",
       pi / 2,
-      (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+      (theme.textTheme.bodyMedium?.color ?? Colors.white).withValues(alpha: 0.7),
     );
     drawLabel(
       "S",
       pi,
-      (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+      (theme.textTheme.bodyMedium?.color ?? Colors.white).withValues(alpha: 0.7),
     );
     drawLabel(
       "W",
       3 * pi / 2,
-      (theme.textTheme.bodyMedium?.color ?? Colors.white).withOpacity(0.7),
+      (theme.textTheme.bodyMedium?.color ?? Colors.white).withValues(alpha: 0.7),
     );
 
     // Draw dial ticks
     final tickPaint = Paint()
-      ..color = const Color(0xFFE5C158).withOpacity(0.2)
+      ..color = const Color(0xFFE5C158).withValues(alpha: 0.2)
       ..strokeWidth = 1.5;
 
     final majorTickPaint = Paint()
-      ..color = const Color(0xFFE5C158).withOpacity(0.5)
+      ..color = const Color(0xFFE5C158).withValues(alpha: 0.5)
       ..strokeWidth = 2.5;
 
     for (int i = 0; i < 360; i += 10) {

@@ -122,12 +122,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           color: theme.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: theme.primaryColor.withOpacity(0.2)),
+            side: BorderSide(color: theme.primaryColor.withValues(alpha: 0.2)),
           ),
           child: ListTile(
             onTap: () => _navigateToQuranBookmark(sNum, aNum),
             leading: CircleAvatar(
-              backgroundColor: theme.primaryColor.withOpacity(0.2),
+              backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
               child: Icon(Icons.menu_book, color: theme.primaryColor, size: 20),
             ),
             title: Text(
@@ -176,7 +176,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           color: theme.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: theme.primaryColor.withOpacity(0.2)),
+            side: BorderSide(color: theme.primaryColor.withValues(alpha: 0.2)),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
@@ -229,7 +229,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       Icon(
                         Icons.open_in_new,
                         size: 12,
-                        color: theme.primaryColor.withOpacity(0.6),
+                        color: theme.primaryColor.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -238,7 +238,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                             : 'Tap to go to hadith',
                         style: TextStyle(
                           fontSize: 11,
-                          color: theme.primaryColor.withOpacity(0.6),
+                          color: theme.primaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -269,7 +269,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             indicatorColor: const Color(0xFFE5C158),
             labelColor: const Color(0xFFE5C158),
             unselectedLabelColor: theme.textTheme.bodyMedium?.color
-                ?.withOpacity(0.5),
+                ?.withValues(alpha: 0.5),
             tabs: [
               Tab(
                 text: TranslationService.isArabic ? "القرآن الكريم" : "Quran",

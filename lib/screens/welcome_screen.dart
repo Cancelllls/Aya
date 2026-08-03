@@ -83,13 +83,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
     final notifOk = await NotificationService().checkPermissions();
-    // Always require explicit user grant — never trust auto-grant from canScheduleExactAlarms().
-    // Android 12-14 sometimes returns true by default for apps targeting lower SDKs.
-    // Only mark granted if the user previously completed onboarding AND granted it.
-    final alreadyOnboarded = widget.storage.getBool('first_time_v2') == false;
-    final exactAlarmOk = alreadyOnboarded
-        ? (await _platform.invokeMethod<int>('checkExactAlarmPermission') ?? 0) == 1
-        : false;
+    // Never trust auto-grant — always require explicit user action.
+    final exactAlarmOk = await _platform.invokeMethod<bool>(
+      'checkExactAlarmPermission',
+    ) ??
+        false;
     if (mounted) {
       setState(() {
         _locationGranted = locOk;
@@ -262,10 +260,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               top: 12,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5C158).withOpacity(0.1),
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFFE5C158).withOpacity(0.3),
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -324,7 +322,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE5C158).withOpacity(
+                      color: const Color(0xFFE5C158).withValues(alpha: 
                         0.06 + 0.04 * sin(_logoController.value * 2 * pi),
                       ),
                       blurRadius: 30,
@@ -370,7 +368,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               color: isDark
                   ? (Theme.of(context).textTheme.bodyMedium?.color ??
                             Colors.white)
-                        .withOpacity(0.3)
+                        .withValues(alpha: 0.3)
                   : Colors.black38,
               height: 1.5,
             ),
@@ -507,7 +505,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFFE5C158).withOpacity(0.12),
+              color: const Color(0xFFE5C158).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
@@ -707,8 +705,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isGranted
-                    ? Colors.green.withOpacity(0.12)
-                    : theme.primaryColor.withOpacity(0.08),
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : theme.primaryColor.withValues(alpha: 0.08),
               ),
               child: Icon(
                 icon,
@@ -802,7 +800,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 decoration: BoxDecoration(
                   color: _currentPage == index
                       ? const Color(0xFFE5C158)
-                      : const Color(0xFFE5C158).withOpacity(0.2),
+                      : const Color(0xFFE5C158).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
               );

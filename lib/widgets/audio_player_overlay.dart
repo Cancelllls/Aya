@@ -33,10 +33,10 @@ class AudioPlayerOverlay extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.cardColor.withOpacity(0.90),
+                  color: theme.cardColor.withValues(alpha: 0.90),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFE5C158).withOpacity(0.4),
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                 ),
@@ -87,7 +87,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: theme.textTheme.bodyMedium?.color
-                                        ?.withOpacity(0.6),
+                                        ?.withValues(alpha: 0.6),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -220,7 +220,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                                               .textTheme
                                               .bodyMedium
                                               ?.color
-                                              ?.withOpacity(0.5),
+                                              ?.withValues(alpha: 0.5),
                                         ),
                                       ),
                                     Expanded(
@@ -247,7 +247,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                                             ),
                                             inactiveColor: const Color(
                                               0xFFE5C158,
-                                            ).withOpacity(0.3),
+                                            ).withValues(alpha: 0.3),
                                             onChanged: (val) {
                                               if (!isSplit) {
                                                 AudioManager
@@ -305,7 +305,7 @@ class AudioPlayerOverlay extends StatelessWidget {
                                               .textTheme
                                               .bodyMedium
                                               ?.color
-                                              ?.withOpacity(0.5),
+                                              ?.withValues(alpha: 0.5),
                                         ),
                                       ),
                                   ],

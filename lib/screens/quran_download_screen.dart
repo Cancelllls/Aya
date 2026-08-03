@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../data/reciters_data.dart';
-import 'package:path_provider/path_provider.dart';
+import '../services/reciters_cache_service.dart';
 import '../models/quran_models.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
@@ -23,6 +21,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
   bool _isLoadingList = true;
   double _totalSpaceMB = 0.0;
   late String _reciter;
+  String _cachedReciterLabel = '';
 
   @override
   void initState() {
@@ -31,10 +30,35 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       'default_reciter',
       defaultValue: 'ar.alafasy',
     );
+    _loadReciterLabel();
     _loadSurahList();
     QuranDownloadService.instance.initStates(_reciter);
     QuranDownloadService.instance.calculateCounts(widget.storage);
     QuranDownloadService.instance.addListener(_onDownloadServiceUpdate);
+  }
+
+  Future<void> _loadReciterLabel() async {
+    if (_reciter.startsWith('mp3quran_server_')) {
+      final server = _reciter.substring(16);
+      try {
+        final list = await RecitersCacheService.getAllReciters();
+        for (final r in list) {
+          final moshafs = r['moshaf'] as List;
+          for (final m in moshafs) {
+            if (m['server'] == server) {
+              _cachedReciterLabel = '${r['name']} (${m['name']})';
+              if (mounted) setState(() {});
+              return;
+            }
+          }
+        }
+      } catch (_) {}
+      _cachedReciterLabel = TranslationService.isArabic
+          ? 'تلاوة غير معروفة'
+          : 'Unknown Reciter';
+    } else {
+      _cachedReciterLabel = _reciter;
+    }
   }
 
   @override
@@ -108,7 +132,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                 color:
                     (Theme.of(context).textTheme.bodyMedium?.color ??
                             Colors.white)
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -175,12 +199,12 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       color: theme.cardColor,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFFE5C158).withOpacity(0.2),
+                        color: const Color(0xFFE5C158).withValues(alpha: 0.2),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).shadowColor.withOpacity(0.1),
+                          color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -214,7 +238,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: theme.textTheme.bodyMedium?.color
-                                        ?.withOpacity(0.6),
+                                        ?.withValues(alpha: 0.6),
                                   ),
                                 ),
                                 Text(
@@ -224,7 +248,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: theme.textTheme.bodyMedium?.color
-                                        ?.withOpacity(0.5),
+                                        ?.withValues(alpha: 0.5),
                                   ),
                                 ),
                               ],
@@ -238,7 +262,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(
                                     0xFFE5C158,
-                                  ).withOpacity(0.12),
+                                  ).withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
@@ -259,7 +283,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                             value: overallProgress,
                             backgroundColor: Theme.of(
                               context,
-                            ).dividerColor.withOpacity(0.12),
+                            ).dividerColor.withValues(alpha: 0.12),
                             color: const Color(0xFFE5C158),
                             minHeight: 6,
                           ),
@@ -318,15 +342,17 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                       storage: widget.storage,
                                       currentReciter: _reciter,
                                       onReciterChanged: (id) {
-                                        setState(() => _reciter = id);
+                                        _reciter = id;
+                                        setState(() {});
                                         widget.storage.setString(
                                           'default_reciter',
                                           id,
                                         );
+                                        _loadReciterLabel();
                                         QuranDownloadService.instance
                                             .calculateCounts(widget.storage);
                                         QuranDownloadService.instance
-                                            .initStates(_reciter);
+                                            .initStates(id);
                                       },
                                     ),
                                   );
@@ -364,41 +390,19 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                 }
 
                 if (index == 1) {
-                  String reciterName = '';
-                  try {
-                    final isAr = TranslationService.isArabic;
-                    final data = isAr ? recitersDataAr : recitersDataEn;
-                    final list = data['reciters'] as List;
-                    bool found = false;
-                    for (final r in list) {
-                      final moshafs = r['moshaf'] as List;
-                      for (final m in moshafs) {
-                        if ('mp3quran_server_${m['server']}' == _reciter) {
-                          reciterName = '${r['name']} (${m['name']})';
-                          found = true;
-                          break;
-                        }
-                      }
-                      if (found) break;
-                    }
-                    if (!found) {
-                      reciterName = TranslationService.isArabic
-                          ? 'تلاوة غير معروفة'
-                          : 'Unknown Reciter';
-                    }
-                  } catch (e) {
-                    reciterName = TranslationService.isArabic
-                        ? 'تلاوة غير معروفة'
-                        : 'Unknown Reciter';
-                  }
+                  final reciterName = _cachedReciterLabel.isNotEmpty
+                      ? _cachedReciterLabel
+                      : (TranslationService.isArabic
+                            ? 'تلاوة غير معروفة'
+                            : 'Unknown Reciter');
 
                   return Card(
-                    color: const Color(0xFFE5C158).withOpacity(0.15),
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.15),
                     margin: const EdgeInsets.only(bottom: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: const Color(0xFFE5C158).withOpacity(0.5),
+                        color: const Color(0xFFE5C158).withValues(alpha: 0.5),
                         width: 1,
                       ),
                     ),
@@ -423,7 +427,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: theme.textTheme.bodyMedium?.color
-                                        ?.withOpacity(0.7),
+                                        ?.withValues(alpha: 0.7),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -482,7 +486,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                       "${surah.englishName} • ${surah.numberOfAyahs} ${TranslationService.isArabic ? 'آية' : 'verses'} • ${TranslationService.t('juz')} ${surah.startingJuz} • ${TranslationService.t('hizb')} ${surah.startingHizb}",
                       style: TextStyle(
                         fontSize: 11,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                           0.5,
                         ),
                       ),
@@ -503,7 +507,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -540,7 +544,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                           color:
                               (Theme.of(context).textTheme.bodyMedium?.color ??
                                       Colors.white)
-                                  .withOpacity(0.7),
+                                  .withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -575,7 +579,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
               value: state.progress,
               strokeWidth: 2.5,
               color: const Color(0xFFE5C158),
-              backgroundColor: Theme.of(context).dividerColor.withOpacity(0.12),
+              backgroundColor: Theme.of(context).dividerColor.withValues(alpha: 0.12),
             ),
           ),
           const SizedBox(width: 12),
@@ -590,7 +594,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
               color:
                   (Theme.of(context).textTheme.bodyMedium?.color ??
                           Colors.white)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
               size: 18,
             ),
             onPressed: () =>
@@ -685,7 +689,7 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.dividerColor.withOpacity(0.4),
+              color: theme.dividerColor.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -705,7 +709,7 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
                 : "Download any full Tafsir for offline reading",
             style: TextStyle(
               fontSize: 11,
-              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
             ),
             textAlign: TextAlign.center,
           ),
@@ -727,13 +731,13 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? const Color(0xFFE5C158).withOpacity(0.08)
+                      ? const Color(0xFFE5C158).withValues(alpha: 0.08)
                       : theme.cardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isActive
-                        ? const Color(0xFFE5C158).withOpacity(0.5)
-                        : theme.dividerColor.withOpacity(0.15),
+                        ? const Color(0xFFE5C158).withValues(alpha: 0.5)
+                        : theme.dividerColor.withValues(alpha: 0.15),
                     width: isActive ? 1.5 : 1,
                   ),
                 ),
@@ -747,8 +751,8 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
                       leading: CircleAvatar(
                         radius: 18,
                         backgroundColor: isFull
-                            ? Colors.green.withOpacity(0.15)
-                            : const Color(0xFFE5C158).withOpacity(0.1),
+                            ? Colors.green.withValues(alpha: 0.15)
+                            : const Color(0xFFE5C158).withValues(alpha: 0.1),
                         child: Icon(
                           isFull ? Icons.check_circle : Icons.book_outlined,
                           size: 18,
@@ -774,7 +778,7 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
                             style: TextStyle(
                               fontSize: 11,
                               fontStyle: FontStyle.italic,
-                              color: theme.primaryColor.withOpacity(0.7),
+                              color: theme.primaryColor.withValues(alpha: 0.7),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -795,7 +799,7 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
                                   : count > 0
                                   ? Colors.orange
                                   : theme.textTheme.bodyMedium?.color
-                                        ?.withOpacity(0.45),
+                                        ?.withValues(alpha: 0.45),
                             ),
                           ),
                         ],
@@ -881,7 +885,7 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
                             minHeight: 4,
                             backgroundColor: const Color(
                               0xFFE5C158,
-                            ).withOpacity(0.15),
+                            ).withValues(alpha: 0.15),
                             color: const Color(0xFFE5C158),
                           ),
                         ),
@@ -955,19 +959,11 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
   }
 
   Future<int> _countDownloadedSurahs(String reciter) async {
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final reciterDir = Directory('${dir.path}/quran_audio/$reciter');
-      if (!await reciterDir.exists()) return 0;
-      final files = reciterDir.listSync();
-      int count = 0;
-      for (var f in files) {
-        if (f.path.endsWith('.mp3')) count++;
-      }
-      return count > 114 ? 114 : count;
-    } catch (_) {
-      return 0;
-    }
+    // Use cached count when available; scan filesystem only on first lookup
+    final svc = QuranDownloadService.instance;
+    final cached = svc.getCountForReciter(reciter);
+    if (cached > 0) return cached;
+    return svc.updateCountForReciter(reciter);
   }
 
   Future<void> _fetchAndLoad() async {
@@ -986,9 +982,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
 
     // Fetch dynamic reciters
     try {
-      final isAr = TranslationService.isArabic;
-      final data = isAr ? recitersDataAr : recitersDataEn;
-      final list = data['reciters'] as List;
+      final list = await RecitersCacheService.getAllReciters();
       for (final r in list) {
         final moshafs = r['moshaf'] as List;
         for (final m in moshafs) {
@@ -1019,6 +1013,12 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
 
     final isAr = TranslationService.isArabic;
     reciters.sort((a, b) {
+      // Sort by Qira'ah first, then by reciter name — so the UI group
+      // headers render cleanly.
+      final quraaA = isAr ? a['quraaAr']! : a['quraaEn']!;
+      final quraaB = isAr ? b['quraaAr']! : b['quraaEn']!;
+      final cmp = quraaA.compareTo(quraaB);
+      if (cmp != 0) return cmp;
       final nameA = isAr ? a['nameAr']! : a['nameEn']!;
       final nameB = isAr ? b['nameAr']! : b['nameEn']!;
       return nameA.compareTo(nameB);
@@ -1069,7 +1069,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.dividerColor.withOpacity(0.4),
+              color: theme.dividerColor.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1089,7 +1089,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                 : "Download Quran recitations to listen offline",
             style: TextStyle(
               fontSize: 11,
-              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
             ),
             textAlign: TextAlign.center,
           ),
@@ -1143,13 +1143,13 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                         margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? const Color(0xFFE5C158).withOpacity(0.08)
+                          ? const Color(0xFFE5C158).withValues(alpha: 0.08)
                           : theme.cardColor,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isActive
-                            ? const Color(0xFFE5C158).withOpacity(0.5)
-                            : theme.dividerColor.withOpacity(0.15),
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.5)
+                            : theme.dividerColor.withValues(alpha: 0.15),
                         width: isActive ? 1.5 : 1,
                       ),
                     ),
@@ -1163,8 +1163,8 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                           leading: CircleAvatar(
                             radius: 18,
                             backgroundColor: isFull
-                                ? Colors.green.withOpacity(0.15)
-                                : const Color(0xFFE5C158).withOpacity(0.1),
+                                ? Colors.green.withValues(alpha: 0.15)
+                                : const Color(0xFFE5C158).withValues(alpha: 0.1),
                             child: Icon(
                               isFull ? Icons.check_circle : Icons.person,
                               size: 18,
@@ -1189,7 +1189,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: theme.textTheme.bodyMedium?.color
-                                      ?.withOpacity(0.7),
+                                      ?.withValues(alpha: 0.7),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1211,7 +1211,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                                       : count > 0
                                       ? Colors.orange
                                       : theme.textTheme.bodyMedium?.color
-                                            ?.withOpacity(0.45),
+                                            ?.withValues(alpha: 0.45),
                                 ),
                               ),
                             ],
@@ -1252,7 +1252,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                                 minHeight: 4,
                                 backgroundColor: const Color(
                                   0xFFE5C158,
-                                ).withOpacity(0.15),
+                                ).withValues(alpha: 0.15),
                                 color: const Color(0xFFE5C158),
                               ),
                             ),

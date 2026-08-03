@@ -6,14 +6,14 @@ extension SettingsPermissionsSection on _SettingsScreenState {
       // Section Permissions
       _buildSectionHeader(TranslationService.t('system_settings_permissions')),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color:
                 (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -31,7 +31,7 @@ extension SettingsPermissionsSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
                   title: Text(TranslationService.t('exact_alarms')),
@@ -64,7 +64,7 @@ extension SettingsPermissionsSection on _SettingsScreenState {
                         color: _exactAlarmPermitted
                             ? (Theme.of(context).textTheme.bodyMedium?.color ??
                                       Colors.white)
-                                  .withOpacity(0.3)
+                                  .withValues(alpha: 0.3)
                             : const Color(0xFFE5C158),
                       ),
                     ],

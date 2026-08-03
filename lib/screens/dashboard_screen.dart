@@ -9,6 +9,7 @@ import '../widgets/welcome_header.dart';
 import '../widgets/grid_service_card.dart';
 import '../widgets/prayer_bar_card.dart';
 import '../widgets/quick_access_pill.dart';
+import '../widgets/prayers_countdown_card.dart';
 import '../services/notification_service.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
@@ -176,27 +177,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return 'Isha';
   }
 
-  String _formatTime(String time24h) {
-    final clean = time24h.split(' ')[0].trim();
-    final use24h = widget.storage.getBool(
-      'use_24h_format',
-      defaultValue: false,
-    );
-    if (use24h) return clean;
-    final parts = clean.split(':');
-    if (parts.length < 2) return clean;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return clean;
-    final isPm = hour >= 12;
-    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
-    final displayMinute = minute.toString().padLeft(2, '0');
-    final suffix = isPm
-        ? (TranslationService.isArabic ? "م" : "PM")
-        : (TranslationService.isArabic ? "ص" : "AM");
-    return "$displayHour:$displayMinute $suffix";
-  }
-
   Future<void> _loadPrayerTimes() async {
     try {
       setState(() {
@@ -244,6 +224,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _startCountdownTimer() {
+    // Fire immediately so the countdown never shows 00:00:00
+    if (_prayerData != null) _calculateNextPrayer();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_prayerData != null) {
         _calculateNextPrayer();
@@ -506,14 +488,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = twoDigits(duration.inHours);
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$hours:$minutes:$seconds";
-  }
-
   @override
   Widget build(BuildContext context) {
     final location = widget.storage.getLocation();
@@ -536,8 +510,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.15),
-                  border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                  color: Colors.orange.withValues(alpha: 0.15),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -567,7 +541,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 16),
             ],
 
-            // Live Countdown Card
+            // Live Countdown + Prayer Times (self-contained widget)
             _isLoading
                 ? const Center(
                     child: Padding(
@@ -583,7 +557,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: theme.cardColor,
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -616,89 +590,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   )
-                : Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      border: Border.all(
-                        color: const Color(0xFFE5C158).withOpacity(0.15),
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(
-                            context,
-                          ).shadowColor.withOpacity(0.05),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            TranslationService.t('live_countdown'),
-                            style: const TextStyle(
-                              color: Color(0xFF10B981),
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "${TranslationService.t('time_until')} ${TranslationService.t(_nextPrayerName.toLowerCase())}",
-                          style: TextStyle(
-                            color: theme.textTheme.titleMedium?.color
-                                ?.withOpacity(0.7),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _formatDuration(_nextPrayerCountdown),
-                          style: const TextStyle(
-                            color: Color(0xFFE5C158),
-                            fontSize: 42,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                            fontFeatures: [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Divider(color: theme.dividerColor),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildInfoColumn(
-                              theme,
-                              TranslationService.t('sunrise'),
-                              _prayerData?.sunrise ?? "--:--",
-                            ),
-                            _buildInfoColumn(
-                              theme,
-                              TranslationService.t('fajr'),
-                              _prayerData?.fajr ?? "--:--",
-                            ),
-                            _buildInfoColumn(
-                              theme,
-                              TranslationService.t('sunset'),
-                              _prayerData?.sunset ?? "--:--",
-                            ),
-                          ],
-                        ),
-                      ],
+                : _prayerData == null
+                ? const SizedBox.shrink()
+                : PrayersCountdownCard(
+                    data: _prayerData!,
+                    use24h: widget.storage.getBool(
+                      'use_24h_format',
+                      defaultValue: false,
                     ),
                   ),
             const SizedBox(height: 24),
@@ -872,7 +770,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 11,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                           0.8,
                         ),
                       ),
@@ -943,28 +841,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  Widget _buildInfoColumn(ThemeData theme, String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
-            fontSize: 10,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _formatTime(value),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-}
-
-extension ColorsExtension on Colors {
-  static const Color whitee70 = Color(0xB3FFFFFF);
 }

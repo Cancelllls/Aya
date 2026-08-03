@@ -6,14 +6,14 @@ extension SettingsFocusLockSection on _SettingsScreenState {
       // Section Focus Lock
       _buildSectionHeader(TranslationService.t('focus_prayer_lock')),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color:
                 (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -105,7 +105,7 @@ extension SettingsFocusLockSection on _SettingsScreenState {
                 if (_focusLockDuration > 0) ...[
                   Divider(
                     height: 1,
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                   ListTile(
                     title: Text(
@@ -155,7 +155,7 @@ extension SettingsFocusLockSection on _SettingsScreenState {
                   ),
                   Divider(
                     height: 1,
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                   SwitchListTile(
                     title: Text(TranslationService.t('focus_setting_auto')),

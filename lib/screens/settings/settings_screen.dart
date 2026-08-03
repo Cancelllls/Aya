@@ -12,6 +12,7 @@ import '../../models/prayer_models.dart';
 import '../quran_download_screen.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../../services/adhan_audio_service.dart';
+import '../../services/reciters_cache_service.dart';
 import '../about_screen.dart';
 import '../qiraat_screen.dart';
 
@@ -83,6 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
+  Timer? _rescheduleTimer;
   @override
   void initState() {
     super.initState();
@@ -220,6 +222,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   void dispose() {
+    // Flush any pending alarm reschedule before leaving settings
+    _rescheduleTimer?.cancel();
+    _rescheduleAlarms();
     AdhanAudioService.instance.stopPreview();
     _purchaseSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -308,7 +313,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         _preAdhanDuration = val;
       });
       await widget.storage.setInt('pre_adhan_duration', val);
-      await _rescheduleAlarms();
+      _debouncedReschedule();
     }
   }
 
@@ -324,7 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           TranslationService.currentLanguage,
         );
       }
-      await _rescheduleAlarms();
+      _debouncedReschedule();
     }
   }
 
@@ -335,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('adhan_alert_mode', val);
       if (val == 'real_reciter' || val == 'vibrate_and_voice') {}
-      await _rescheduleAlarms();
+      _debouncedReschedule();
     }
   }
 
@@ -346,7 +351,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('adhan_reciter', val);
 
-      await _rescheduleAlarms();
+      _debouncedReschedule();
 
       // Auto-play the newly selected reciter
       await AdhanAudioService.instance.stopPreview();
@@ -586,6 +591,14 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
   }
 
+  /// Debounced wrapper — batches rapid-fire settings toggles into one reschedule.
+  void _debouncedReschedule() {
+    _rescheduleTimer?.cancel();
+    _rescheduleTimer = Timer(const Duration(seconds: 2), () {
+      _rescheduleAlarms();
+    });
+  }
+
   Future<void> _rescheduleAlarms() async {
     try {
       final loc = widget.storage.getLocation();
@@ -609,7 +622,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setInt('calc_method', val);
       widget.onThemeChanged();
-      await _rescheduleAlarms();
+      _debouncedReschedule();
     }
   }
 
@@ -620,7 +633,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setInt('asr_method', val);
       widget.onThemeChanged();
-      await _rescheduleAlarms();
+      _debouncedReschedule();
     }
   }
 
@@ -679,7 +692,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                   color:
                       (Theme.of(context).textTheme.bodyMedium?.color ??
                               Colors.white)
-                          .withOpacity(0.7),
+                          .withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -828,7 +841,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 Text(
                   TranslationService.t('version_premium'),
                   style: TextStyle(
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                     fontSize: 11,
                   ),
                 ),
@@ -841,7 +854,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     color:
                         (Theme.of(context).textTheme.bodyMedium?.color ??
                                 Colors.white)
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                   ),
                 ),
               ],

@@ -15,6 +15,7 @@ import 'translation_service.dart';
 import 'quran_verses.dart';
 import 'adhan_audio_service.dart';
 import 'database_service.dart';
+import '../core/adhan_native_controller.dart';
 import 'offline_prayer_service.dart';
 
 @pragma('vm:entry-point')
@@ -235,27 +236,25 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
+      // Adhan channel is created natively in AdhanBroadcastReceiver (v4).
+      // Pre-adhan / tracker / ramadan channels created here.
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'adhan_native_v1',
-          'Athan Alarms',
-          description: 'Prayer time athan alerts with sound',
-          importance: Importance.max,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound('default_adhan'),
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-        ),
-      );
-      await androidPlugin.createNotificationChannel(
-        const AndroidNotificationChannel(
-          'pre_adhan_native_v2',
+          'pre_adhan_native_v3',
           'Pre-Athan Alerts',
           description: 'Reminders before prayer time',
           importance: Importance.max,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound('default_pre_adhan'),
           enableVibration: true,
           audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      // Exact alarm permission warning channel
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'exact_alarm_warning',
+          'Permission Required',
+          description: 'Alerts when exact alarm permission is missing',
+          importance: Importance.high,
         ),
       );
     }
@@ -352,6 +351,48 @@ class NotificationService {
     return (androidGranted ?? false) || (iosGranted ?? false);
   }
 
+  /// Check whether the device can schedule exact alarms (Android 12+).
+  /// Returns true if granted or on a platform where it isn't required.
+  static Future<bool> canScheduleExactAlarms() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      const platform = MethodChannel('com.quran.aya/system');
+      return await platform.invokeMethod<bool>('checkExactAlarmPermission') ??
+          false;
+    } catch (_) {
+      return true; // Don't block scheduling on check failure
+    }
+  }
+
+  /// Show a system notification telling the user to grant exact alarm
+  /// permission (mirrors Five Prayers' CannotScheduleExactAlarmNotification).
+  static Future<void> _warnMissingExactAlarmPermission() async {
+    try {
+      final plugin = FlutterLocalNotificationsPlugin();
+      const androidDetails = AndroidNotificationDetails(
+        'exact_alarm_warning',
+        'Permission Required',
+        channelDescription: 'Alerts when exact alarm permission is missing',
+        importance: Importance.high,
+      );
+      const details = NotificationDetails(android: androidDetails);
+      await plugin.zonedSchedule(
+        id: 9001,
+        title: TranslationService.isArabic
+            ? 'مطلوب إذن المنبهات الدقيقة'
+            : 'Exact Alarm Permission Required',
+        body: TranslationService.isArabic
+            ? 'بدون هذا الإذن، لن يتم تشغيل الأذان في موعده. امنحه من الإعدادات.'
+            : 'Without this permission, Adhan will not play. Grant it in Settings.',
+        scheduledDate: tz.TZDateTime.now(tz.local).add(
+          const Duration(seconds: 2),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        notificationDetails: details,
+      );
+    } catch (_) {}
+  }
+
   Future<void> schedulePrayerAlarms(
     PrayerTimeData prayerData,
     StorageService storage,
@@ -364,6 +405,15 @@ class NotificationService {
         prayerData.maghrib.isNotEmpty &&
         prayerData.isha.isNotEmpty;
     if (!isValid) return;
+
+    // Guard: all prayer-critical notifications (adhan, pre-adhan, tracker,
+    // ramadan, islamic events) use exact alarms. Skip everything and warn
+    // once if the permission is missing (mirrors Five Prayers).
+    final canSchedule = await canScheduleExactAlarms();
+    if (!canSchedule) {
+      await _warnMissingExactAlarmPermission();
+      return;
+    }
 
     // Cancel all existing prayer notifications
     final List<Future<void>> cancelFutures = [];
@@ -425,33 +475,6 @@ class NotificationService {
       return filename.replaceAll('.mp3', '');
     }
 
-    // Build notification details per prayer (fajr uses different reciter)
-    NotificationDetails _buildAdhanDetails(String prayerName) {
-      final soundName = _getAdhanSound(prayerName);
-      return NotificationDetails(
-        android: AndroidNotificationDetails(
-          'adhan_native_v1',
-          'Athan Alarms',
-          channelDescription: 'Prayer time athan alerts with sound',
-          importance: Importance.max,
-          priority: Priority.high,
-          playSound: soundName.isNotEmpty,
-          sound: soundName.isNotEmpty
-              ? RawResourceAndroidNotificationSound(soundName)
-              : null,
-          enableVibration: adhanMode != 'silent',
-          vibrationPattern: adhanMode != 'silent'
-              ? Int64List.fromList([0, 1000, 500, 1000, 500, 500])
-              : null,
-          icon: 'ic_notification',
-          color: const Color(0xFF0F766E),
-          visibility: NotificationVisibility.public,
-          fullScreenIntent: adhanMode != 'silent',
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-        ),
-      );
-    }
-
     int id = 1;
 
     for (final entry in prayersToSchedule.entries) {
@@ -490,39 +513,20 @@ class NotificationService {
         final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
         final notificationId = id + (dayOffset * 10);
 
-        // === ADHAN NOTIFICATION (sound played by Android OS natively) ===
+        // === ADHAN — native AlarmManager → MediaPlayer + silent notification ===
+        // (Five-Prayers model: notification is just a card, audio is separate)
         if (adhanMode != 'off') {
           try {
-            await _notificationsPlugin.zonedSchedule(
+            await AdhanNativeController.instance.schedulePrayerAlarm(
               id: notificationId,
-              title: isAr
+              time: scheduledDate,
+              mp3ResName: _getAdhanSound(name),
+              prayerName: isAr
                   ? 'حان الآن موعد صلاة $localizedName'
-                  : 'Time for $localizedName',
-              body: isAr
-                  ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
-                  : 'It is time for the $localizedName prayer.',
-              scheduledDate: tzDateTime,
-              notificationDetails: _buildAdhanDetails(name),
-              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-              payload: 'prayer_times',
+                  : 'Time for $localizedName prayer',
+              enableVibration: adhanMode != 'silent',
             );
-          } catch (_) {
-            try {
-              await _notificationsPlugin.zonedSchedule(
-                id: notificationId,
-                title: isAr
-                    ? 'حان الآن موعد صلاة $localizedName'
-                    : 'Time for $localizedName',
-                body: isAr
-                    ? 'حان الآن موعد صلاة $localizedName حسب التوقيت المحلي لمدينتك.'
-                    : 'It is time for the $localizedName prayer.',
-                scheduledDate: tzDateTime,
-                notificationDetails: _buildAdhanDetails(name),
-                androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-                payload: 'prayer_times',
-              );
-            } catch (_) {}
-          }
+          } catch (_) {}
         }
 
         // === PRE-ADHAN NOTIFICATION ===
@@ -535,7 +539,7 @@ class NotificationService {
             final preNotificationId = notificationId + 2000;
 
             final preAndroidDetails = AndroidNotificationDetails(
-              'pre_adhan_native_v2',
+              'pre_adhan_native_v3',
               'Pre-Athan Alerts',
               channelDescription: 'Reminders before prayer time',
               importance: Importance.max,
@@ -558,7 +562,6 @@ class NotificationService {
               color: const Color(0xFF0F766E),
               visibility: NotificationVisibility.public,
               audioAttributesUsage: AudioAttributesUsage.alarm,
-              fullScreenIntent: preAdhanAlertMode != 'silent',
             );
 
             final preDetails = NotificationDetails(
@@ -811,15 +814,20 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    // 1. Morning Azkar
+    // 1. Morning Azkar — scheduled after Fajr
     if (storage.getBool('morning_azkar_reminder', defaultValue: true)) {
-      final scheduledTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        7,
-        0,
-      ); // 7:00 AM
+      final fajrStr = storage.getString('widget_prayer_fajr');
+      DateTime scheduledTime;
+      if (fajrStr.isNotEmpty) {
+        final parts = fajrStr.split(' ')[0].split(':');
+        final h = int.tryParse(parts[0]) ?? 7;
+        final m = int.tryParse(parts[1]) ?? 0;
+        scheduledTime = DateTime(now.year, now.month, now.day, h, m).add(
+          const Duration(minutes: 15),
+        ); // 15 min after Fajr
+      } else {
+        scheduledTime = DateTime(now.year, now.month, now.day, 7, 0);
+      }
       final tzDateTime = _nextOccurrence(scheduledTime);
       try {
         await _notificationsPlugin.zonedSchedule(
@@ -854,15 +862,20 @@ class NotificationService {
       }
     }
 
-    // 2. Evening Azkar
+    // 2. Evening Azkar — scheduled after Maghrib
     if (storage.getBool('evening_azkar_reminder', defaultValue: true)) {
-      final scheduledTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        17,
-        0,
-      ); // 5:00 PM
+      final maghribStr = storage.getString('widget_prayer_maghrib');
+      DateTime scheduledTime;
+      if (maghribStr.isNotEmpty) {
+        final parts = maghribStr.split(' ')[0].split(':');
+        final h = int.tryParse(parts[0]) ?? 17;
+        final m = int.tryParse(parts[1]) ?? 0;
+        scheduledTime = DateTime(now.year, now.month, now.day, h, m).add(
+          const Duration(minutes: 15),
+        ); // 15 min after Maghrib
+      } else {
+        scheduledTime = DateTime(now.year, now.month, now.day, 17, 0);
+      }
       final tzDateTime = _nextOccurrence(scheduledTime);
       try {
         await _notificationsPlugin.zonedSchedule(

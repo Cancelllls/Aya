@@ -6,14 +6,14 @@ extension SettingsAudioSection on _SettingsScreenState {
       // Section Audio & Quran
       _buildSectionHeader(TranslationService.t('recitations')),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color:
                 (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -31,7 +31,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(
@@ -50,7 +50,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(
@@ -69,7 +69,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(
@@ -88,7 +88,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
                   leading: const Icon(
@@ -105,7 +105,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                     color:
                         (Theme.of(context).textTheme.bodyMedium?.color ??
                                 Colors.white)
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                   ),
                   onTap: () {
                     Navigator.push(
@@ -119,7 +119,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: (Theme.of(context).dividerColor).withOpacity(0.1),
+                  color: (Theme.of(context).dividerColor).withValues(alpha: 0.1),
                 ),
                 ListTile(
                   leading: const Icon(
@@ -144,7 +144,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                     color:
                         (Theme.of(context).textTheme.bodyMedium?.color ??
                                 Colors.white)
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                   ),
                   onTap: () {
                     Navigator.push(
@@ -152,6 +152,73 @@ extension SettingsAudioSection on _SettingsScreenState {
                       MaterialPageRoute(
                         builder: (context) => const QiraatScreen(),
                       ),
+                    );
+                  },
+                ),
+                Divider(
+                  height: 1,
+                  color: (Theme.of(context).dividerColor).withValues(alpha: 0.1),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: RecitersCacheService.loadingNotifier,
+                  builder: (context, loading, _) {
+                    return ListTile(
+                      leading: loading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFFE5C158),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.refresh,
+                              color: Color(0xFFE5C158),
+                            ),
+                      title: Text(
+                        TranslationService.isArabic
+                            ? 'تحديث قائمة القراء'
+                            : 'Refresh Reciters List',
+                      ),
+                      subtitle: Text(
+                        TranslationService.isArabic
+                            ? 'جلب أحدث قائمة القراء من الخادم'
+                            : 'Fetch the latest reciter list from the server',
+                      ),
+                      onTap: loading
+                          ? null
+                          : () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              try {
+                                await RecitersCacheService.refresh();
+                                if (mounted) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        TranslationService.isArabic
+                                            ? 'تم تحديث قائمة القراء بنجاح'
+                                            : 'Reciters list refreshed successfully',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (_) {
+                                if (mounted) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        TranslationService.isArabic
+                                            ? 'فشل تحديث قائمة القراء'
+                                            : 'Failed to refresh reciters list',
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                     );
                   },
                 ),

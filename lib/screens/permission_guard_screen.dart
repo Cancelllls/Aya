@@ -223,7 +223,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: theme.primaryColor.withValues(alpha: 0.1),
                 ),
                 child: Icon(
                   Icons.security_rounded,
@@ -395,8 +395,8 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isGranted
-                    ? Colors.green.withOpacity(0.12)
-                    : theme.primaryColor.withOpacity(0.08),
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : theme.primaryColor.withValues(alpha: 0.08),
               ),
               child: Icon(
                 icon,

@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
+import '../services/hadith_database_service.dart';
 import 'hadith_explanation_screen.dart';
 
 class HadithBook {
@@ -220,17 +221,14 @@ class _HadithScreenState extends State<HadithScreen> {
     final db = await DatabaseService.getInstance();
 
     // Seed from bundled asset if not yet downloaded
-    bool isDownloaded = await db.isHadithBookDownloaded(bookId, _displayLang);
+    bool isDownloaded = await db.hadith.isHadithBookDownloaded(bookId, _displayLang);
     if (!isDownloaded) {
       try {
         final jsonString = await DefaultAssetBundle.of(context)
             .loadString('assets/hadith/$_displayLang-$bookId.json');
-        final data = jsonDecode(jsonString);
-        List<dynamic> hadiths = data['hadiths'] ?? [];
-        if (hadiths.isEmpty && data['hadith'] != null) {
-          hadiths = data['hadith'] as List<dynamic>;
-        }
-        await db.insertHadithBook(bookId, _displayLang, hadiths);
+        // Parse JSON in background isolate — keeps spinner smooth
+        final hadiths = await HadithDatabaseService.parseHadithJson(jsonString);
+        await db.hadith.insertHadithBook(bookId, _displayLang, hadiths);
         isDownloaded = true;
       } catch (e) {
         print("Failed to seed bundled hadith: $e");
@@ -239,7 +237,7 @@ class _HadithScreenState extends State<HadithScreen> {
 
     if (isDownloaded) {
       // Get total count for pagination UI
-      _totalHadiths = await db.getHadithCount(bookId, _displayLang);
+      _totalHadiths = await db.hadith.getHadithCount(bookId, _displayLang);
       await _loadHadithPage(db, bookId, 0);
       return;
     }
@@ -249,9 +247,10 @@ class _HadithScreenState extends State<HadithScreen> {
       final url = 'https://cdn.jsdelivr.net/gh/Cancelllls/Islamic-Assets@main/hadith/$_displayLang-$bookId.json';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final List<dynamic> rawHadiths = decoded['hadiths'] ?? [];
-        await db.insertHadithBook(bookId, _displayLang, rawHadiths);
+        final rawHadiths = await HadithDatabaseService.parseHadithJson(
+          response.body,
+        );
+        await db.hadith.insertHadithBook(bookId, _displayLang, rawHadiths);
         await _loadHadithPage(db, bookId, 0);
       } else {
         throw Exception('Failed to load online data');
@@ -273,7 +272,7 @@ class _HadithScreenState extends State<HadithScreen> {
     if (page > 0) setState(() => _loadingMore = true);
 
     final offset = page * batchSize;
-    final results = await db.getHadiths(bookId, _displayLang, batchSize, offset);
+    final results = await db.hadith.getHadiths(bookId, _displayLang, batchSize, offset);
     await _loadGrades();
 
     if (mounted) {
@@ -329,10 +328,9 @@ class _HadithScreenState extends State<HadithScreen> {
           'https://cdn.jsdelivr.net/gh/Cancelllls/Islamic-Assets@main/hadith/$_displayLang-$bookId.json';
       final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        final hadiths = decoded['hadiths'] as List<dynamic>;
+        final hadiths = await HadithDatabaseService.parseHadithJson(res.body);
         final db = await DatabaseService.getInstance();
-        await db.insertHadithBook(bookId, _displayLang, hadiths);
+        await db.hadith.insertHadithBook(bookId, _displayLang, hadiths);
         messenger.showSnackBar(
           SnackBar(
             content: Text(
@@ -467,7 +465,7 @@ class _HadithScreenState extends State<HadithScreen> {
     }
 
     final db = await DatabaseService.getInstance();
-    final results = await db.searchAllHadiths(_displayLang, query, 100);
+    final results = await db.hadith.searchAllHadiths(_displayLang, query, 100);
 
     // Map book_id back to book display names and inject grades
     final mapped = <Map<String, dynamic>>[];
@@ -529,7 +527,7 @@ class _HadithScreenState extends State<HadithScreen> {
 
     // Not in cache — load from DB
     final db = await DatabaseService.getInstance();
-    final row = await db.getHadithByNumber(_selectedBook.id, _displayLang, num);
+    final row = await db.hadith.getHadithByNumber(_selectedBook.id, _displayLang, num);
     if (row != null && mounted) {
       await _loadGrades();
       final entry = {
@@ -634,6 +632,7 @@ class _HadithScreenState extends State<HadithScreen> {
         _activeSearchQuery = '';
         _searchController.clear();
         _hadithList = [];
+        _isLoading = true;
       });
       _loadSelectedBookData().then((_) {
         if (mounted) {
@@ -865,7 +864,7 @@ class _HadithScreenState extends State<HadithScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).shadowColor.withOpacity(0.15),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.15),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -884,7 +883,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           color:
                               (Theme.of(context).textTheme.bodyLarge?.color ??
                                       Colors.white)
-                                  .withOpacity(0.15),
+                                  .withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -959,7 +958,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           _loadSelectedBookData();
                         },
                         style: TextButton.styleFrom(
-                          backgroundColor: theme.primaryColor.withOpacity(0.12),
+                          backgroundColor: theme.primaryColor.withValues(alpha: 0.12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -1137,8 +1136,8 @@ class _HadithScreenState extends State<HadithScreen> {
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
                             color: isHighlighted
-                                ? const Color(0xFFE5C158).withOpacity(0.15)
-                                : theme.cardColor.withOpacity(0.7),
+                                ? const Color(0xFFE5C158).withValues(alpha: 0.15)
+                                : theme.cardColor.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isHighlighted
@@ -1147,7 +1146,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                               context,
                                             ).textTheme.bodyLarge?.color ??
                                             Colors.white)
-                                        .withOpacity(0.1),
+                                        .withValues(alpha: 0.1),
                               width: isHighlighted ? 2.0 : 1.0,
                             ),
                           ),
@@ -1190,7 +1189,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                                         vertical: 4,
                                                       ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.white.withOpacity(
+                                                    color: Colors.white.withValues(alpha: 
                                                       0.15,
                                                     ),
                                                     borderRadius:
@@ -1217,7 +1216,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                                     decoration: BoxDecoration(
                                                       color: const Color(
                                                         0xFFE5C158,
-                                                      ).withOpacity(0.15),
+                                                      ).withValues(alpha: 0.15),
                                                       borderRadius:
                                                           BorderRadius.circular(6),
                                                     ),
@@ -1311,10 +1310,10 @@ class _HadithScreenState extends State<HadithScreen> {
                                                             ),
                                                         decoration: BoxDecoration(
                                                           color: color
-                                                              .withOpacity(0.1),
+                                                              .withValues(alpha: 0.1),
                                                           border: Border.all(
                                                             color: color
-                                                                .withOpacity(
+                                                                .withValues(alpha: 
                                                                   0.5,
                                                                 ),
                                                           ),

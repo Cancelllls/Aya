@@ -6,14 +6,14 @@ extension SettingsAppearanceSection on _SettingsScreenState {
       // Section Appearance
       _buildSectionHeader(TranslationService.t('appearance')),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color:
                 (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -102,7 +102,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
                   title: Text(
@@ -144,7 +144,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
                   title: Text(TranslationService.t('quran_font')),
@@ -186,7 +186,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
 
                 ListTile(
@@ -281,7 +281,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(
@@ -300,7 +300,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(

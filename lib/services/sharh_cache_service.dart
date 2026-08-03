@@ -63,7 +63,7 @@ class SharhCacheService {
     int newCount = 0;
 
     // Count total hadiths
-    final hadiths = await db.getHadiths(bookId, displayLang, 100000, 0);
+    final hadiths = await db.hadith.getHadiths(bookId, displayLang, 100000, 0);
     final total = hadiths.length;
 
     onLog('📖 $bookId: $total hadiths');
@@ -348,7 +348,7 @@ class SharhCacheService {
     final totals = <String, int>{};
     for (var bookId in ['bukhari', 'muslim', 'tirmidhi', 'abudawud', 'nasai', 'ibnmajah']) {
       try {
-        final hadiths = await db.getHadiths(bookId, 'ara', 100000, 0);
+        final hadiths = await db.hadith.getHadiths(bookId, 'ara', 100000, 0);
         totals[bookId] = hadiths.length;
       } catch (_) {
         totals[bookId] = 0;
@@ -374,7 +374,7 @@ class SharhCacheService {
   Future<int> pendingForBook(String bookId) async {
     final cache = await _loadCache();
     final db = await DatabaseService.getInstance();
-    final hadiths = await db.getHadiths(bookId, 'ara', 100000, 0);
+    final hadiths = await db.hadith.getHadiths(bookId, 'ara', 100000, 0);
     final prefix = '$bookId:';
     int pending = 0;
     for (var h in hadiths) {

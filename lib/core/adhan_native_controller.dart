@@ -9,11 +9,17 @@ class AdhanNativeController {
   Future<void> schedulePrayerAlarm({
     required int id,
     required DateTime time,
+    required String mp3ResName,
+    required String prayerName,
+    bool enableVibration = true,
   }) async {
     try {
       await _channel.invokeMethod('scheduleExactAlarm', {
         'id': id,
         'timestamp': time.millisecondsSinceEpoch,
+        'mp3ResName': mp3ResName,
+        'prayerName': prayerName,
+        'enableVibration': enableVibration,
       });
     } on PlatformException {
       print("Failed to schedule native alarm: '\${e.message}'.");

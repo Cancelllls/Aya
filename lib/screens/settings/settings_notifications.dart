@@ -10,14 +10,14 @@ extension SettingsNotificationsSection on _SettingsScreenState {
             : "Notifications & Alerts",
       ),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color:
                 (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -67,7 +67,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 if (_preAdhanDuration > 0)
                   ListTile(
@@ -143,12 +143,12 @@ extension SettingsNotificationsSection on _SettingsScreenState {
 
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 if (_preAdhanDuration > 0)
                   Divider(
                     height: 1,
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                 ListTile(
                   title: Text(
@@ -229,7 +229,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                     _adhanAlertMode == 'vibrate_and_voice') ...[
                   Divider(
                     height: 1,
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                   ListTile(
                     title: Text(
@@ -343,7 +343,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   ),
                   Divider(
                     height: 1,
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                   ListTile(
                     title: Text(
@@ -416,7 +416,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 ],
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(TranslationService.t('morning_azkar_reminder')),
@@ -430,7 +430,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(TranslationService.t('evening_azkar_reminder')),
@@ -444,7 +444,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 ),
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
                   title: Text(TranslationService.t('todays_verse_reminder')),
@@ -467,12 +467,12 @@ extension SettingsNotificationsSection on _SettingsScreenState {
         TranslationService.isArabic ? "رمضان" : "Ramadan",
       ),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
+            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -489,7 +489,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   onChanged: (val) {
                     setState(() => _ramadanImsakEnabled = val);
                     widget.storage.setBool('ramadan_imsak_enabled', val);
-                    _rescheduleAlarms();
+                    _debouncedReschedule();
                   },
                 ),
                 if (_ramadanImsakEnabled)
@@ -517,13 +517,13 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                           if (val != null) {
                             setState(() => _ramadanImsakOffset = val);
                             widget.storage.setInt('ramadan_imsak_offset', val);
-                            _rescheduleAlarms();
+                            _debouncedReschedule();
                           }
                         },
                       ),
                     ),
                   ),
-                Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                Divider(height: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
                 SwitchListTile(
                   title: Text(TranslationService.isArabic ? "تنبيه الإفطار" : "Iftar Reminder"),
                   subtitle: Text(TranslationService.isArabic ? "تنبيه عند أذان المغرب في رمضان" : "Alert at Maghrib during Ramadan"),
@@ -532,7 +532,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   onChanged: (val) {
                     setState(() => _ramadanIftarEnabled = val);
                     widget.storage.setBool('ramadan_iftar_enabled', val);
-                    _rescheduleAlarms();
+                    _debouncedReschedule();
                   },
                 ),
               ],
@@ -546,12 +546,12 @@ extension SettingsNotificationsSection on _SettingsScreenState {
         TranslationService.isArabic ? "المناسبات الإسلامية" : "Islamic Events",
       ),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withOpacity(0.1),
+            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -568,7 +568,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
               onChanged: (val) {
                 setState(() => _islamicEventsEnabled = val);
                 widget.storage.setBool('islamic_events_enabled', val);
-                _rescheduleAlarms();
+                _debouncedReschedule();
               },
             ),
           ),

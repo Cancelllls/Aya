@@ -37,7 +37,7 @@ class QuickAccessPill extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5C158).withOpacity(0.12),
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: const Color(0xFFE5C158), size: 20),
@@ -61,7 +61,7 @@ class QuickAccessPill extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
                           0.6,
                         ),
                       ),
@@ -74,7 +74,7 @@ class QuickAccessPill extends StatelessWidget {
                     ? Icons.chevron_left
                     : Icons.chevron_right,
                 size: 16,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
               ),
             ],
           ),

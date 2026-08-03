@@ -193,16 +193,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       }
     }
 
-    int daysInPeriod = DateTime.now().difference(start).inDays + 1;
-    if (daysInPeriod < 0) daysInPeriod = 0;
-    int maxDays = end.difference(start).inDays + 1;
-    final validDays = daysInPeriod > maxDays ? maxDays : daysInPeriod;
-    int expectedTotal = validDays * 5;
-
-    int total = expectedTotal;
-
-    missed = total - prayed;
-    if (missed < 0) missed = 0;
+    // Only count actual tracked data, not theoretical calendar days.
+    // "missed" means prayers the user explicitly toggled to 0 (unmarked).
+    final int total = prayed + missed;
 
     _stats[period] = {'prayed': prayed, 'missed': missed, 'total': total};
   }
@@ -287,10 +280,10 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         backgroundColor: Colors.transparent,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+          indicatorColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
           indicatorWeight: 2,
-          labelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
-          unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(
+          labelColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+          unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
             0.5,
           ),
           tabs: [
@@ -398,7 +391,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.4),
+                                ?.withValues(alpha: 0.4),
                           ),
                         ),
                       ),
@@ -444,7 +437,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               final isToday = _formatDate(DateTime.now()) == dateStr;
 
               Color completeColor = theme.primaryColor;
-              Color incompleteColor = theme.dividerColor.withOpacity(0.1);
+              Color incompleteColor = theme.dividerColor.withValues(alpha: 0.1);
 
               return GestureDetector(
                 onTap: () {
@@ -492,7 +485,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         ),
 
         // Selected Day Details
-        Divider(color: theme.dividerColor.withOpacity(0.1), height: 1),
+        Divider(color: theme.dividerColor.withValues(alpha: 0.1), height: 1),
         Expanded(
           flex: 6,
           child: SingleChildScrollView(
@@ -534,7 +527,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                   letterSpacing: 1.2,
                   color: isToday
                       ? theme.textTheme.bodyLarge?.color
-                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                 ),
               ),
               if (isToday) ...[
@@ -545,7 +538,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -568,7 +561,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     side: BorderSide(
-                      color: theme.primaryColor.withOpacity(0.5),
+                      color: theme.primaryColor.withValues(alpha: 0.5),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -647,7 +640,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     return InkWell(
       onTap: () => _togglePrayerForDate(date, prayerKey, status),
       splashColor: Colors.transparent,
-      highlightColor: theme.textTheme.bodyLarge?.color?.withOpacity(0.05),
+      highlightColor: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
@@ -657,7 +650,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               size: 20,
               color: isCompleted
                   ? theme.primaryColor
-                  : theme.textTheme.bodyMedium?.color?.withOpacity(0.2),
+                  : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.2),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -668,10 +661,10 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                   fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
                   color: isCompleted
                       ? theme.primaryColor
-                      : theme.textTheme.bodyMedium?.color?.withOpacity(0.4),
+                      : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
                   decoration: null,
                   decorationColor: theme.textTheme.bodyMedium?.color
-                      ?.withOpacity(0.4),
+                      ?.withValues(alpha: 0.4),
                 ),
               ),
             ),
@@ -681,7 +674,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3),
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
                 ),
               ),
           ],
@@ -805,7 +798,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                           painter: PrayerPiePainter(
                             prayers: prayersDone,
                             completeColor: theme.primaryColor,
-                            incompleteColor: theme.dividerColor.withOpacity(
+                            incompleteColor: theme.dividerColor.withValues(alpha: 
                               0.1,
                             ),
                             backgroundColor: theme.scaffoldBackgroundColor,
@@ -824,7 +817,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                                                 context,
                                               ).textTheme.bodyLarge?.color ??
                                               Colors.white)
-                                          .withOpacity(0.9),
+                                          .withValues(alpha: 0.9),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -899,7 +892,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.5,
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
             Text(
@@ -917,7 +910,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: prayedPct,
-            backgroundColor: theme.textTheme.bodyMedium?.color?.withOpacity(
+            backgroundColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
               0.1,
             ),
             valueColor: AlwaysStoppedAnimation<Color>(
@@ -962,7 +955,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
             fontSize: 10,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,

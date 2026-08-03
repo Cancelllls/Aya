@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dorar_hadith/dorar_hadith.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
@@ -90,7 +88,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       try {
         final db = await DatabaseService.getInstance();
         final lang = widget.displayLang == 'eng' ? 'eng' : 'ara';
-        final row = await db.getHadithByNumber(widget.bookId!, lang, widget.hadithNumber!);
+        final row = await db.hadith.getHadithByNumber(widget.bookId!, lang, widget.hadithNumber!);
         if (row != null) {
           final txt = lang == 'ara'
               ? (row['arabic'] as String? ?? '')
@@ -235,19 +233,22 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       }
 
       if (widget.displayLang == 'eng' && parsed.isNotEmpty) {
-        final List<Map<String, String>> translatedParsed = [];
-        for (var item in parsed) {
-          translatedParsed.add({
-            'text': await _translateOrCache(item['text'] ?? ''),
-            'explanation': await _translateOrCache(item['explanation'] ?? ''),
-            'grading': await _translateOrCache(item['grading'] ?? ''),
-          });
-        }
         if (mounted) {
           setState(() {
-            _parsedExplanations = translatedParsed;
+            _parsedExplanations = parsed;
             _isLoading = false;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                TranslationService.isArabic
+                    ? 'لا تتوفر ترجمة إنجليزية موثوقة لهذا الشرح. يُعرض النص العربي.'
+                    : 'No reliable English translation is available for this explanation. Showing Arabic text.',
+              ),
+              backgroundColor: Colors.orange.withValues(alpha: 0.9),
+              duration: const Duration(seconds: 4),
+            ),
+          );
         }
         return;
       }
@@ -359,14 +360,14 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.search_off_rounded, size: 64,
-                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.3)),
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
               Text(
                 isArabic
                     ? "لم نجد شرحاً لهذا الحديث في قاعدة البيانات."
                     : "No explanation found in our database.",
                 style: TextStyle(fontSize: 16,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -406,7 +407,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: theme.primaryColor.withOpacity(0.2)),
+            side: BorderSide(color: theme.primaryColor.withValues(alpha: 0.2)),
           ),
           color: theme.cardColor,
           child: Padding(
@@ -419,7 +420,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                   decoration: BoxDecoration(
                     color: theme.scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                   ),
                   child: Text(
                     item['text'] ?? '',
@@ -436,7 +437,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                     ),
                     child: Text(
                       item['explanation']!,
@@ -474,7 +475,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE5C158).withOpacity(0.1),
+                color: const Color(0xFFE5C158).withValues(alpha: 0.1),
               ),
               child: Icon(icon, size: 64, color: const Color(0xFFE5C158)),
             ),
@@ -506,9 +507,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -550,7 +551,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     : 'Search online instead',
                 style: TextStyle(
                   fontSize: 13,
-                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -620,7 +621,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: theme.primaryColor.withOpacity(0.05),
+          color: theme.primaryColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(grading, style: TextStyle(
@@ -635,9 +636,9 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
       textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
       child: Container(
         decoration: BoxDecoration(
-          color: theme.primaryColor.withOpacity(0.03),
+          color: theme.primaryColor.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.primaryColor.withOpacity(0.1)),
+          border: Border.all(color: theme.primaryColor.withValues(alpha: 0.1)),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -653,8 +654,8 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: isGrade
-                          ? const Color(0xFFE5C158).withOpacity(0.2)
-                          : theme.primaryColor.withOpacity(0.1),
+                          ? const Color(0xFFE5C158).withValues(alpha: 0.2)
+                          : theme.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(e.key, style: TextStyle(fontSize: 11,
@@ -679,29 +680,4 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
     );
   }
 
-  String _makeKey(String text) {
-    return base64Encode(utf8.encode(text.trim())).substring(0, 200);
-  }
-
-  Future<String> _translateOrCache(String text) async {
-    if (text.trim().isEmpty) return text;
-    final key = _makeKey(text);
-    final db = await DatabaseService.getInstance();
-    final cached = await db.getCachedTranslation(key);
-    if (cached != null) return cached;
-
-    try {
-      final url = Uri.parse(
-        'https://lingva.ml/api/v1/ar/en/${Uri.encodeComponent(text)}',
-      );
-      final res = await http.get(url).timeout(const Duration(seconds: 10));
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        final translated = decoded['translation'] as String? ?? text;
-        await db.cacheTranslation(key, text, translated, 'en');
-        return translated;
-      }
-    } catch (_) {}
-    return text;
-  }
 }

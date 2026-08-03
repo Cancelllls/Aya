@@ -42,11 +42,11 @@ class PrayerBarCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isCurrent
-            ? const Color(0xFFE5C158).withOpacity(0.12)
+            ? const Color(0xFFE5C158).withValues(alpha: 0.12)
             : theme.cardColor,
         border: Border.all(
           color: isCurrent
-              ? const Color(0xFFE5C158).withOpacity(0.5)
+              ? const Color(0xFFE5C158).withValues(alpha: 0.5)
               : theme.dividerColor,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -58,7 +58,7 @@ class PrayerBarCard extends StatelessWidget {
             icon,
             color: isCurrent
                 ? const Color(0xFFE5C158)
-                : theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
             size: 18,
           ),
           const SizedBox(height: 8),
@@ -69,7 +69,7 @@ class PrayerBarCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: isCurrent
                   ? const Color(0xFFE5C158)
-                  : theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 4),

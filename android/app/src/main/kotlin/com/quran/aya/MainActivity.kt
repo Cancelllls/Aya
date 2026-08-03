@@ -10,39 +10,19 @@ import android.view.WindowManager
 import android.provider.Settings
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.speech.tts.TextToSpeech
 import android.os.Vibrator
 import android.os.VibrationEffect
-import java.util.Locale
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.app.PendingIntent
 
-class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEventListener {
+class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.quran.aya/system"
-    private var tts: TextToSpeech? = null
-    private var channel: MethodChannel? = null
-    private var sensorManager: SensorManager? = null
-    private var accelerometer: Sensor? = null
-    private var lastZ = 0.0f
-    private var adhanMediaPlayer: android.media.MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize Text-To-Speech
-        tts = TextToSpeech(this, this)
-        
-        // Initialize Sensors
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        
-        // Natively support up to 144Hz screens by requesting the highest refresh rate mode
+        // Natively support up to 144Hz screens
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.decorView.post {
                 try {
@@ -56,54 +36,36 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                             window.attributes = params
                         }
                     }
-                } catch (e: Exception) {
-                    // Ignore if display mode selection is unsupported
-                }
+                } catch (_: Exception) {}
             }
         } else {
             try {
                 val params = window.attributes
                 params.preferredRefreshRate = 144f
                 window.attributes = params
-            } catch (e: Exception) {}
+            } catch (_: Exception) {}
         }
-    }
-
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale("ar")
-        }
-    }
-
-    private fun speak(text: String, lang: String) {
-        try {
-            tts?.language = Locale(lang)
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
-        } catch (e: Exception) {}
-    }
-
-    override fun onDestroy() {
-        try {
-            tts?.stop()
-            tts?.shutdown()
-        } catch (e: Exception) {}
-        super.onDestroy()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        
+
         val mc = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
-        channel = mc
-        
         val adhanChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.adhan.app/alarm")
+
         adhanChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "scheduleExactAlarm" -> {
                     val timestamp = call.argument<Long>("timestamp")
                     val id = call.argument<Int>("id")
                     if (timestamp != null && id != null) {
-                        scheduleExactAlarm(timestamp, id)
+                        scheduleExactAlarm(
+                            timestamp = timestamp,
+                            id = id,
+                            mp3ResName = call.argument<String>("mp3ResName") ?: "",
+                            prayerName = call.argument<String>("prayerName") ?: "Prayer",
+                            enableVibration = call.argument<Boolean>("enableVibration") ?: true,
+                        )
                         result.success(true)
                     } else {
                         result.error("INVALID_ARGS", "Missing timestamp or id", null)
@@ -125,9 +87,9 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                 "checkExactAlarmPermission" -> {
                     val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                        if (alarmManager.canScheduleExactAlarms()) 1 else 0
+                        alarmManager.canScheduleExactAlarms()
                     } else {
-                        1 // No special permission needed on Android < 12
+                        true
                     }
                     result.success(granted)
                 }
@@ -135,8 +97,6 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         runOnUiThread {
                             var started = false
-                            // On Android 16/15, requesting SCHEDULE_EXACT_ALARM can sometimes block package parameters or fail.
-                            // We attempt to open the App Details Settings or Special App Access directly.
                             try {
                                 val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                                     data = Uri.fromParts("package", packageName, null)
@@ -151,9 +111,7 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                                     }
                                     startActivity(intent)
                                     started = true
-                                } catch (ex: Exception) {
-                                    // Fallback to details
-                                }
+                                } catch (_: Exception) {}
                             }
                             if (!started) {
                                 try {
@@ -162,7 +120,7 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     }
                                     startActivity(intent)
-                                } catch (e: Exception) {}
+                                } catch (_: Exception) {}
                             }
                         }
                         result.success(true)
@@ -189,7 +147,6 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                             startActivity(intent)
                             result.success(true)
                         } catch (e: Exception) {
-                            // Fallback to general settings screen
                             try {
                                 val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -249,12 +206,6 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                     }
                     result.success(true)
                 }
-                "speak" -> {
-                    val text = call.argument<String>("text") ?: ""
-                    val lang = call.argument<String>("lang") ?: "ar"
-                    speak(text, lang)
-                    result.success(true)
-                }
                 "updateWidget" -> {
                     try {
                         val widgetProviders = arrayOf(
@@ -283,77 +234,38 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                         result.error("ERROR", e.message, null)
                     }
                 }
+                "stopAdhan" -> {
+                    AdhanBroadcastReceiver.activeStop?.invoke()
+                    result.success(true)
+                }
                 "getTimeZoneName" -> {
                     result.success(java.util.TimeZone.getDefault().id)
                 }
-                "stopAdhan" -> {
-                    stopAdhanAudio()
-                    result.success(true)
-                }
-                else -> {
-                    result.notImplemented()
-                }
+                else -> result.notImplemented()
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        accelerometer?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        sensorManager?.unregisterListener(this)
-    }
-
-    override fun onSensorChanged(event: SensorEvent?) {
-        if (event == null) return
-        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            val z = event.values[2]
-            if (z < -8.5f && lastZ >= -8.5f) {
-                runOnUiThread {
-                    channel?.invokeMethod("phoneFlippedFaceDown", null)
-                }
-            }
-            lastZ = z
-        }
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-
-    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
-        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP) {
-            runOnUiThread {
-                channel?.invokeMethod("volumeKeyPressed", null)
-            }
-        }
-        return super.onKeyDown(keyCode, event)
-    }
-
-    private fun scheduleExactAlarm(timestamp: Long, id: Int) {
+    private fun scheduleExactAlarm(
+        timestamp: Long,
+        id: Int,
+        mp3ResName: String,
+        prayerName: String,
+        enableVibration: Boolean,
+    ) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, AdhanBroadcastReceiver::class.java).apply {
             putExtra("ALARM_ID", id)
+            putExtra("MP3_RES_NAME", mp3ResName)
+            putExtra("PRAYER_NAME", prayerName)
+            putExtra("ENABLE_VIBRATION", enableVibration)
         }
-
         val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            id,
-            intent,
+            this, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-        // Use setExactAndAllowWhileIdle instead of setAlarmClock
-        // to avoid hijacking the system clock tile.
-        // The notification channel's Importance.max + fullScreenIntent + alarm audio
-        // usage already ensures the device wakes and plays sound.
         alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            timestamp,
-            pendingIntent
+            AlarmManager.RTC_WAKEUP, timestamp, pendingIntent
         )
     }
 
@@ -373,7 +285,6 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
             Intent().setComponent(ComponentName("com.htc.pitroad", "com.htc.pitroad.landingpage.HTCLandingPageActivity")),
             Intent().setComponent(ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.MainActivity"))
         )
-
         for (intent in intents) {
             try {
                 if (packageManager.resolveActivity(intent, 0) != null) {
@@ -381,26 +292,14 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener, SensorEvent
                     startActivity(intent)
                     return
                 }
-            } catch (e: Exception) {
-                // Try next
-            }
+            } catch (_: Exception) {}
         }
-        
-        // Fallback to standard settings
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = Uri.fromParts("package", packageName, null)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)
-        } catch (e: Exception) {}
-    }
-
-    private fun stopAdhanAudio() {
-        try {
-            adhanMediaPlayer?.stop()
-            adhanMediaPlayer?.release()
-            adhanMediaPlayer = null
-        } catch (e: Exception) {}
+        } catch (_: Exception) {}
     }
 }

@@ -42,6 +42,37 @@ class QuranDownloadService extends ChangeNotifier {
   final Map<int, SurahDownloadState> _downloadStates = {};
   final Map<int, http.Client> _activeClients = {};
 
+  /// Cached per-reciter download counts — avoids scanning the filesystem
+  /// every time the reciter picker opens.
+  final Map<String, int> _countCache = {};
+
+  int getCountForReciter(String reciterId) {
+    return _countCache[reciterId] ?? 0;
+  }
+
+  Future<int> updateCountForReciter(String reciterId) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final reciterDir = Directory('${dir.path}/quran_audio/$reciterId');
+      if (!await reciterDir.exists()) {
+        _countCache[reciterId] = 0;
+        return 0;
+      }
+      int count = 0;
+      await for (final entity in reciterDir.list()) {
+        if (entity.path.endsWith('.mp3')) count++;
+      }
+      final safe = count > 114 ? 114 : count;
+      _countCache[reciterId] = safe;
+      return safe;
+    } catch (_) {
+      _countCache[reciterId] = 0;
+      return 0;
+    }
+  }
+
+  void invalidateCountCache() => _countCache.clear();
+
   bool _isDownloadingAll = false;
   bool get isDownloadingAll => _isDownloadingAll;
 
@@ -124,6 +155,7 @@ class QuranDownloadService extends ChangeNotifier {
       if (await file.exists()) {
         await file.delete();
       }
+      _countCache.remove(reciter);
       _downloadStates[surahNum] = SurahDownloadState(
         surahNum: surahNum,
         status: DownloadStatus.notDownloaded,
@@ -140,6 +172,7 @@ class QuranDownloadService extends ChangeNotifier {
       if (await audioDir.exists()) {
         await audioDir.delete(recursive: true);
       }
+      _countCache.remove(reciter);
       await initStates(reciter);
     } catch (_) {}
   }

@@ -90,76 +90,34 @@ extension SurahReaderActions on _SurahReaderScreenState {
           duration: Duration.zero,
           alignment: 0.0,
         );
-      } else if (attempt < 20) {
-        int maxRendered = -1;
-        int minRendered = 99999;
-
-        final keysToCheck = _readingMode == 'continuous'
-            ? _pageKeys
-            : _ayahKeys;
-        for (final k in keysToCheck.keys) {
-          if (keysToCheck[k]?.currentContext != null) {
-            if (k > maxRendered) maxRendered = k;
-            if (k < minRendered) minRendered = k;
-          }
-        }
-
-        final targetIndex = _readingMode == 'continuous'
-            ? ((ayahNum - 1) ~/ 5)
-            : ayahNum;
-
-        if (maxRendered != -1 && targetIndex > maxRendered) {
-          currentGuess += 800;
-          if (currentGuess > _scrollController.position.maxScrollExtent) {
-            currentGuess = _scrollController.position.maxScrollExtent;
-          }
-          _scrollController.jumpTo(currentGuess);
-        } else if (minRendered != 99999 && targetIndex < minRendered) {
-          currentGuess -= 800;
-          if (currentGuess < 0) currentGuess = 0;
-          _scrollController.jumpTo(currentGuess);
-        } else {
-          currentGuess += 500;
-          _scrollController.jumpTo(currentGuess);
-        }
-
-        Future.delayed(
-          const Duration(milliseconds: 50),
-          () => performSearch(attempt + 1, currentGuess),
-        );
-      }
-    }
-
-    void startSearch(int attempt) {
-      if (!mounted || _scrollToAyahSequence != currentSequence) return;
-      if (!_scrollController.hasClients) {
-        if (attempt < 20) {
-          Future.delayed(
-            const Duration(milliseconds: 100),
-            () => startSearch(attempt + 1),
-          );
-        }
         return;
       }
 
-      double initialGuess = 0;
-      if (_readingMode == 'continuous') {
-        initialGuess = ((ayahNum - 1) ~/ 5) * 400.0 * _fontSizeMultiplier;
-      } else {
-        initialGuess =
-            (ayahNum - 1) *
-            (_readingMode == 'translation' ? 400.0 : 200.0) *
-            _fontSizeMultiplier;
+      if (attempt >= 20) return;
+
+      final totalItemCount = _readingMode == 'continuous'
+          ? (_ayahList.length / 5).ceil()
+          : _ayahList.length + 1; // +1 for bismillah header
+      final targetIndex = _readingMode == 'continuous'
+          ? ((ayahNum - 1) ~/ 5)
+          : ayahNum; // index 0 is bismillah, ayah 1 is index 1
+
+      if (totalItemCount > 0) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        currentGuess = maxScroll > 0
+            ? ((targetIndex / totalItemCount) * maxScroll)
+                .clamp(0.0, maxScroll)
+            : currentGuess + 600;
+        _scrollController.jumpTo(currentGuess);
       }
 
-      _scrollController.jumpTo(initialGuess);
       Future.delayed(
         const Duration(milliseconds: 50),
-        () => performSearch(0, initialGuess),
+        () => performSearch(attempt + 1, currentGuess),
       );
     }
 
-    startSearch(0);
+    performSearch(0, 0);
   }
 
   void _changeFontSize(double delta) {

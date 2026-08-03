@@ -24,11 +24,13 @@ class SurahPagerScreen extends StatefulWidget {
 class _SurahPagerScreenState extends State<SurahPagerScreen> {
   late PageController _pageController;
   int _currentPage = 0;
+  int _speedLevel = 2;
 
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialSurah.number - 1;
+    _speedLevel = widget.storage.getInt('autoscroll_speed', defaultValue: 2);
     _pageController = PageController(initialPage: _currentPage);
   }
 
@@ -38,10 +40,19 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     super.dispose();
   }
 
+  void _onSpeedChanged(int speed) {
+    widget.storage.setInt('autoscroll_speed', speed);
+    setState(() => _speedLevel = speed);
+  }
+
   @override
   Widget build(BuildContext context) {
     final surahData = allOfflineSurahs[_currentPage];
     final theme = Theme.of(context);
+
+    final speedLabels = TranslationService.isArabic
+        ? ['بطيء جداً', 'بطيء', 'متوسط', 'سريع', 'سريع جداً']
+        : ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'];
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -57,13 +68,62 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
               surahData.name,
               style: TextStyle(
                 fontSize: 11,
-                color: theme.appBarTheme.foregroundColor?.withOpacity(0.7),
+                color: theme.appBarTheme.foregroundColor?.withValues(alpha: 0.7),
               ),
             ),
           ],
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(38),
+          child: Container(
+            height: 38,
+            color: theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                const Icon(Icons.speed, color: Color(0xFFE5C158), size: 14),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    speedLabels[_speedLevel.clamp(0, 4)],
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                for (var i = 1; i <= 5; i++)
+                  GestureDetector(
+                    onTap: () => _onSpeedChanged(i),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _speedLevel == i
+                            ? const Color(0xFFE5C158)
+                            : const Color(0xFFE5C158).withValues(alpha: 0.15),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$i',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: _speedLevel == i
+                              ? Colors.black
+                              : const Color(0xFFE5C158),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: PageView.builder(
         controller: _pageController,
@@ -88,7 +148,9 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                 ? widget.initialAyahNumber
                 : null,
             isInsidePager: true,
-            hideAppBar: true, // app bar is handled by the pager
+            hideAppBar: true,
+            hideAutoScrollBar: true,
+            speedLevel: _speedLevel,
             onGoToNext: () {
               if (index < 113) {
                 _pageController.animateToPage(

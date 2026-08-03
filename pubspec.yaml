@@ -93,6 +93,7 @@ flutter:
     - assets/quran/
     - assets/hadith/
     - assets/changelog.json
+    - assets/timestamps/
     - assets/fonts/
 
   fonts:

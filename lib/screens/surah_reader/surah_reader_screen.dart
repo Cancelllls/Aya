@@ -11,7 +11,7 @@ import '../../models/quran_models.dart';
 import '../../services/api_service.dart';
 import '../../services/local_quran_service.dart';
 import '../../models/offline_surahs.dart';
-import '../../data/reciters_data.dart';
+import '../../services/reciters_cache_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/audio_manager.dart';
@@ -73,6 +73,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   Timer? _resumeTimer;
   bool _isAutoScrollPaused = false;
   bool _hideContinuousBorders = false;
+  bool _tafsirLoaded = false;
+  Timer? _savePositionTimer;
 
   bool _isLoadingReciters = false;
   List<dynamic> _dynamicReciters = [];
@@ -134,6 +136,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       overlays: SystemUiOverlay.values,
     );
     AudioManager.instance.playState.removeListener(_onPlayStateChanged);
+    _savePositionTimer?.cancel();
     _ticker?.dispose();
     _resumeTimer?.cancel();
     _scrollController.dispose();
@@ -260,7 +263,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               "${_currentSurah.name} • ${_getHizbRangeText()}",
               style: TextStyle(
                 fontSize: 11,
-                color: theme.appBarTheme.foregroundColor?.withOpacity(0.7),
+                color: theme.appBarTheme.foregroundColor?.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -287,11 +290,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 ? "تغيير نمط العرض"
                 : "Change View Mode",
             color: theme.cardColor,
-            onSelected: (mode) {
+            onSelected: (mode) async {
               setState(() {
                 _readingMode = mode;
                 widget.storage.setString('reading_mode', mode);
               });
+              if (mode == 'tafseer') {
+                await _ensureTafsirLoaded();
+              }
             },
             itemBuilder: (context) => [
               PopupMenuItem(
@@ -438,7 +444,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
                                   color: theme.textTheme.bodyMedium?.color
-                                      ?.withOpacity(0.8),
+                                      ?.withValues(alpha: 0.8),
                                 ),
                               ),
 
@@ -588,7 +594,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: theme.textTheme.bodyMedium?.color
-                                      ?.withOpacity(0.8),
+                                      ?.withValues(alpha: 0.8),
                                 ),
                               ),
                               if (_isLoadingReciters)
@@ -845,7 +851,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
                                   color: theme.textTheme.bodyMedium?.color
-                                      ?.withOpacity(0.8),
+                                      ?.withValues(alpha: 0.8),
                                 ),
                               ),
                               Row(
@@ -1200,7 +1206,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                       horizontal: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.withOpacity(0.9),
+                                      color: Colors.orange.withValues(alpha: 0.9),
                                       borderRadius: BorderRadius.circular(20),
                                       boxShadow: const [
                                         BoxShadow(

@@ -170,17 +170,17 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
       child: Container(
         height: 58,
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(0.95),
+          color: Theme.of(context).cardColor.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             // ignore: deprecated_member_use
-            color: const Color(0xFFE5C158).withOpacity(0.4),
+            color: const Color(0xFFE5C158).withValues(alpha: 0.4),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
               // ignore: deprecated_member_use
-              color: Theme.of(context).shadowColor.withOpacity(0.2),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -239,7 +239,7 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
                           ),
                           decoration: BoxDecoration(
                             // ignore: deprecated_member_use
-                            color: const Color(0xFFE5C158).withOpacity(0.15),
+                            color: const Color(0xFFE5C158).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -267,10 +267,10 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5C158).withOpacity(0.15),
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFE5C158).withOpacity(0.5),
+                      color: const Color(0xFFE5C158).withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -304,8 +304,8 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
                 color: isDark
                     ? (Theme.of(context).textTheme.bodyLarge?.color ??
                               Colors.white)
-                          .withOpacity(0.06)
-                    : Theme.of(context).shadowColor.withOpacity(0.06),
+                          .withValues(alpha: 0.06)
+                    : Theme.of(context).shadowColor.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

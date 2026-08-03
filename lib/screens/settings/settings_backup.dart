@@ -6,13 +6,13 @@ extension SettingsBackupSection on _SettingsScreenState {
     return [
       _buildSectionHeader(isArabic ? "النسخ الاحتياطي" : "Backup & Restore"),
       Card(
-        color: theme.cardColor.withOpacity(0.7),
+        color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
-                .withOpacity(0.1),
+                .withValues(alpha: 0.1),
           ),
         ),
         child: ClipRRect(
@@ -98,7 +98,7 @@ extension SettingsBackupSection on _SettingsScreenState {
                                       'Or move the file to Downloads for auto-detection.',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+                                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                               ),
                             ),
                           ],

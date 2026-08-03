@@ -61,7 +61,7 @@ class ChangelogDialog {
                         .textTheme
                         .bodyMedium
                         ?.color
-                        ?.withOpacity(0.5),
+                        ?.withValues(alpha: 0.5),
                   ),
                 ),
               ],
