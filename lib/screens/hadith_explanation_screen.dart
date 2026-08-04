@@ -44,6 +44,13 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
   }
 
   Future<void> _fetchExplanation() async {
+    // Grading goes directly to Dorar — always fresh, no cache.
+    // Explanation (sharh) checks offline cache → CDN → Dorar.
+    if (!widget.isSharh) {
+      await _fetchFromDorar();
+      return;
+    }
+
     // 1. Check offline sharh cache first
     if (widget.bookId != null && widget.hadithNumber != null) {
       try {
