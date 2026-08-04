@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/translation_service.dart';
 import '../version.dart';
 
@@ -150,6 +151,26 @@ class AboutScreen extends StatelessWidget {
                             : "Special Thanks to AYA",
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+                        child: const Icon(Icons.code, color: Color(0xFFE5C158), size: 20),
+                      ),
+                      title: const Text(
+                        "github.com/Cancelllls/Aya",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        isArabic ? "المستودع مفتوح المصدر" : "Open-source repository",
+                      ),
+                      onTap: () async {
+                        final url = Uri.parse('https://github.com/Cancelllls/Aya');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
                     ),
                   ],
                 ),
