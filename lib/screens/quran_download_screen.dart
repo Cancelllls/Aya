@@ -986,24 +986,27 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
       });
     }
 
-    // Fetch dynamic reciters
+    // Fetch dynamic reciters — dedup by server URL since the
+    // same reciter may appear in multiple riwayat from the API.
     try {
       final list = await RecitersCacheService.getAllReciters();
+      final seenServers = <String>{};
+      // Pre-populate with static reciter IDs so we don't duplicate them
+      for (final r in availableReciters) {
+        seenServers.add(r.id);
+      }
       for (final r in list) {
         final moshafs = r['moshaf'] as List;
         for (final m in moshafs) {
           final server = m['server'] as String;
-          final moshafName = m['name'] as String;
-          final reciterName = r['name'] as String;
-
-          // Skip redundant server if it was already in static list somehow
-          if (!reciters.any((x) => x['id'] == 'mp3quran_server_$server')) {
+          final id = 'mp3quran_server_$server';
+          if (seenServers.add(id)) {
             reciters.add({
-              'id': 'mp3quran_server_$server',
-              'nameAr': reciterName,
-              'nameEn': reciterName,
-              'quraaAr': moshafName,
-              'quraaEn': moshafName,
+              'id': id,
+              'nameAr': r['name'] as String,
+              'nameEn': r['name'] as String,
+              'quraaAr': m['name'] as String,
+              'quraaEn': m['name'] as String,
             });
           }
         }
