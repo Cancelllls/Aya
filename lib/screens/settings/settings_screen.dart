@@ -10,6 +10,7 @@ import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../models/prayer_models.dart';
 import '../quran_download_screen.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/adhan_audio_service.dart';
@@ -274,20 +275,29 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _changePreAdhanDuration(int? val) async {
     if (val != null) {
+      final wasOff = _preAdhanDuration == 0;
       setState(() {
         _preAdhanDuration = val;
       });
       await widget.storage.setInt('pre_adhan_duration', val);
+      if (val > 0 && wasOff) {
+        await _ensureAdhanPermissions();
+      }
       _debouncedReschedule();
     }
   }
 
   Future<void> _changePreAdhanAlertMode(String? val) async {
     if (val != null) {
+      // If turning ON from OFF, check exact alarm permission first
+      final wasOff = _preAdhanAlertMode == 'off';
       setState(() {
         _preAdhanAlertMode = val;
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
+      if (val != 'off' && wasOff) {
+        await _ensureExactAlarmPermission();
+      }
       if (val == 'voice' || val == 'vibrate_and_voice') {
         await AdhanAudioService.instance.stopPreview();
         await AdhanAudioService.instance.playPreAdhanPreview(
@@ -300,13 +310,96 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _changeAdhanAlertMode(String? val) async {
     if (val != null) {
+      // If turning ON from OFF, check exact alarm permission first
+      final wasOff = _adhanAlertMode == 'off';
       setState(() {
         _adhanAlertMode = val;
       });
       await widget.storage.setString('adhan_alert_mode', val);
-      if (val == 'real_reciter' || val == 'vibrate_and_voice') {}
+      if (val != 'off' && wasOff) {
+        await _ensureExactAlarmPermission();
+      }
       _debouncedReschedule();
     }
+  }
+
+  /// When the user turns adhan/pre-adhan ON, ensure all permissions
+  /// are granted — mirrors the onboarding permission flow.
+  Future<void> _ensureAdhanPermissions() async {
+    final canSchedule = await NotificationService.canScheduleExactAlarms();
+    final hasNotif = await NotificationService().checkPermissions();
+    final hasLocation = (await Geolocator.checkPermission()) !=
+        LocationPermission.denied;
+
+    final missing = <String>[];
+    if (!canSchedule) missing.add(
+      TranslationService.isArabic
+          ? 'منح المنبهات الدقيقة'
+          : 'Exact Alarm schedule',
+    );
+    if (!hasNotif) missing.add(
+      TranslationService.isArabic ? 'منح الإشعارات' : 'Notification access',
+    );
+    if (!hasLocation) missing.add(
+      TranslationService.isArabic ? 'منح إذن الموقع' : 'Location permission',
+    );
+
+    if (missing.isEmpty) return;
+
+    if (mounted) {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          title: Text(
+            TranslationService.isArabic
+                ? "صلاحيات مطلوبة"
+                : "Permissions Required",
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE5C158)),
+          ),
+          content: Text(
+            TranslationService.isArabic
+                ? "لتشغيل الأذان بدقة في الخلفية، يجب منح الصلاحيات التالية:\n\n${missing.join('\n')}"
+                : "For the adhan to work reliably in the background, the following permissions are needed:\n\n${missing.join('\n')}",
+            style: const TextStyle(height: 1.6, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(TranslationService.t('cancel')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE5C158),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                TranslationService.isArabic ? "منح الصلاحيات" : "Grant Permissions",
+                style: const TextStyle(color: Colors.black),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (result == true) {
+        if (!hasNotif) {
+          await NotificationService().requestPermissions();
+        }
+        if (!canSchedule) {
+          await _platform.invokeMethod('requestExactAlarmPermission');
+        }
+        if (!hasLocation) {
+          await Geolocator.requestPermission();
+        }
+      }
+    }
+  }
+
+  /// If exact alarm permission is missing, request it now
+  /// (opens Android settings for the user to grant it).
+  Future<void> _ensureExactAlarmPermission() async {
+    await _ensureAdhanPermissions();
   }
 
   Future<void> _changeAdhanReciter(String? val) async {

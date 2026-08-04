@@ -1,17 +1,27 @@
 import '../services/translation_service.dart';
 
-/// Remove Arabic diacritics and normalize alef variants for search.
+/// Remove Arabic diacritics and normalize for search.
 ///
-/// Normalizes:  أ إ آ → ا   (hamza variants)
-///              ٱ      → ا   (alef wasla)
-///              ة      → ه   (teh marbuta)
-///              ى      → ي   (alef maksura, end-of-word)
+/// Normalizes:  أ إ آ ٱ ء → ا   (hamza variants, alef wasla, bare hamza)
+///              َ ً ُ ٌ ِ ٍ ْ ّ   → removed (diacritics)
+///              ۖ ۗ ۘ ۙ ۚ ۛ ۜ ۢ ۣ ۤ ۥ ۦ ۧ ۨ ۩ → removed (Quran annotation marks)
+///              ة               → ه   (teh marbuta)
+///              ى               → ي   (alef maksura)
+///
+/// Consecutive alefs are collapsed (ءَا → اا → ا).
 String stripTashkeel(String input) {
-  return input
-      .replaceAll(RegExp(r'[ً-ٰٟ]'), '') // diacritics (fatha, damma, kasra, etc.)
-      .replaceAll(RegExp(r'[أإآٱ]'), 'ا') // alef normalization
-      .replaceAll('ة', 'ه') // teh marbuta → hah
-      .replaceAll('ى', 'ي'); // alef maksura → yeh
+  var result = input
+      .replaceAll(RegExp(r'[ً-ٰٟۖ-ۭ]'), '')
+      .replaceAll(RegExp(r'[أإآٱء]'), 'ا')
+      .replaceAll('ة', 'ه')
+      .replaceAll('ى', 'ي')
+      .replaceAll('ـ', '') // tatweel (kashida)
+      .replaceAll('﻿', ''); // BOM (byte-order mark from JSON)
+  // Collapse consecutive alefs (e.g. ءَا → اا → ا)
+  while (result.contains('اا')) {
+    result = result.replaceAll('اا', 'ا');
+  }
+  return result;
 }
 
 /// Format a "HH:mm (TZ)" prayer-time string to 12h or 24h display.

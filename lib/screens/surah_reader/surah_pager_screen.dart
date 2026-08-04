@@ -243,8 +243,20 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                         if (v != 'hafs') {
                           dynamicReciters = await RecitersCacheService.getRecitersForRiwayah(_riwayahIdFor(v));
                           _dynamicReciters = dynamicReciters;
+                          // Auto-select first reciter as default for this Qira'ah
+                          if (dynamicReciters.isNotEmpty) {
+                            final first = dynamicReciters.first;
+                            final moshafs = first['moshaf'] as List;
+                            if (moshafs.isNotEmpty) {
+                              final server = moshafs[0]['server'] as String;
+                              final newId = 'mp3quran_server_$server';
+                              storedReciter = newId;
+                              _onReciterChanged(newId);
+                            }
+                          }
+                        } else {
+                          storedReciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
                         }
-                        storedReciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
                         setModalState(() => loadingReciters = false);
                       },
                     )),
