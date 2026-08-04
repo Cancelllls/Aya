@@ -228,14 +228,6 @@ flutter build apk --release --target-platform=android-arm64
 flutter build ios --release --no-codesign
 ```
 
-### Bundled Timestamps (One-Time)
-
-The per-ayah audio timestamps for 12 Hafs reciters are bundled in `assets/timestamps/` (5.7 MB). To regenerate them after adding a new reciter:
-
-```bash
-dart run tools/generate_timestamps.dart
-```
-
 ---
 
 ## License

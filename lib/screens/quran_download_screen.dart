@@ -946,6 +946,33 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
   List<Map<String, String>> _allReciters = [];
   bool _loading = true;
   String? _downloading;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
+  /// Strip tartil/mujawwad suffixes so reciters group by Qira'ah only.
+  static String canonicalQiraah(String name) {
+    return name
+        .replaceAll(RegExp(r'\s*-\s*المصحف المجود'), '')
+        .replaceAll(RegExp(r'\s*-\s*المصحف المعلم'), '')
+        .replaceAll(RegExp(r'\s*-\s*مرتل'), '')
+        .replaceAll(RegExp(r'\s*-\s*رواية.*'), '')
+        .replaceAll(RegExp(r'\s*-\s*Almusshaf.*'), '')
+        .replaceAll(RegExp(r'\s*-\s*Murattal'), '')
+        .replaceAll(RegExp(r'\s*-\s*Mujawwad'), '')
+        .replaceAll(RegExp(r'\s*-\s*Muallim'), '')
+        .replaceAll(RegExp(r'\s*-\s*Mojawwad'), '')
+        .trim();
+  }
+
+  List<Map<String, String>> _filteredReciters() {
+    if (_searchQuery.isEmpty) return _allReciters;
+    final q = _searchQuery;
+    final isAr = TranslationService.isArabic;
+    return _allReciters.where((r) {
+      return (isAr ? r['nameAr']! : r['nameEn']!).toLowerCase().contains(q) ||
+          (isAr ? r['quraaAr']! : r['quraaEn']!).toLowerCase().contains(q);
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -956,6 +983,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
 
   @override
   void dispose() {
+    _searchCtrl.dispose();
     QuranDownloadService.instance.removeListener(_onServiceUpdate);
     super.dispose();
   }
@@ -1103,29 +1131,65 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: TextField(
+              controller: _searchCtrl,
+              style: TextStyle(fontSize: 13, color: theme.textTheme.bodyLarge?.color),
+              decoration: InputDecoration(
+                hintText: isAr ? "ابحث عن مقرئ..." : "Search reciters...",
+                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFFE5C158)),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16),
+                        onPressed: () { _searchCtrl.clear(); setState(() => _searchQuery = ''); },
+                      )
+                    : null,
+                filled: true, fillColor: theme.cardColor,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.2))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.2))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5C158))),
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v.trim().toLowerCase()),
+            ),
+          ),
+          const SizedBox(height: 8),
           if (_loading)
             const Padding(
               padding: EdgeInsets.all(24),
               child: CircularProgressIndicator(color: Color(0xFFE5C158)),
             )
+          else if (_searchQuery.isNotEmpty && _filteredReciters().isEmpty)
+            Expanded(
+              child: Center(
+                child: Text(
+                  isAr ? "لا توجد نتائج" : "No results",
+                  style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4)),
+                ),
+              ),
+            )
           else
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.zero,
-                itemCount: _allReciters.length,
+                itemCount: _filteredReciters().length,
                 itemBuilder: (context, index) {
-                  final reciter = _allReciters[index];
+                  final filtered = _filteredReciters();
+                  final reciter = filtered[index];
                   final rId = reciter['id']!;
                   final rName = isAr ? reciter['nameAr']! : reciter['nameEn']!;
                   final rQuraa = isAr
                       ? reciter['quraaAr']!
                       : reciter['quraaEn']!;
 
-                  // Group header: show Qira'at name when it changes
+                  // Group header: canonical Qira'ah name (no tartil/mujawwad)
+                  final rQuraaClean = canonicalQiraah(rQuraa);
                   final prevQuraa = index > 0
-                      ? (isAr ? _allReciters[index - 1]['quraaAr']! : _allReciters[index - 1]['quraaEn']!)
+                      ? canonicalQiraah(isAr ? filtered[index - 1]['quraaAr']! : filtered[index - 1]['quraaEn']!)
                       : '';
-                  final showHeader = rQuraa != prevQuraa;
+                  final showHeader = rQuraaClean != prevQuraa;
 
                   final count = _counts[rId] ?? 0;
                   final isFull = count >= 114;
@@ -1140,7 +1204,7 @@ class _ReciterPickerSheetState extends State<_ReciterPickerSheet> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8, bottom: 8, right: 8),
                           child: Text(
-                            rQuraa,
+                            rQuraaClean,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,

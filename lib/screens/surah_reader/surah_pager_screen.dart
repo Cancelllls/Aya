@@ -62,36 +62,35 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     }
   }
 
-  String _reciterKey([String? script]) => 'default_reciter_${script ?? _quranScriptType}';
+  /// Save reciter for current Qira'ah AND sync to global default_reciter
+  /// (used by AudioManager for playback).
+  void _saveReciter(String val) {
+    widget.storage.setString('default_reciter_$_quranScriptType', val);
+    widget.storage.setString('default_reciter', val);
+    if (mounted) setState(() {});
+  }
 
-  /// Read reciter for a Qira'ah, falling back to the legacy single key
-  /// for existing installs that haven't been migrated yet.
+  /// Read reciter for a Qira'ah. Falls back to global default_reciter for
+  /// Hafs, otherwise returns empty string (auto-select first available).
   String _getReciterFor(String script) {
-    final val = widget.storage.getString(_reciterKey(script));
-    if (val.isNotEmpty) return val;
-    // Fallback: migrate from old single-key storage
+    final perKey = widget.storage.getString('default_reciter_$script');
+    if (perKey != null && perKey.isNotEmpty) return perKey;
+    // For Hafs, try legacy global key
     if (script == 'hafs') {
       final old = widget.storage.getString('default_reciter');
-      if (old.isNotEmpty && !old.startsWith('mp3quran_server_')) return old;
+      if (old != null && old.isNotEmpty && !old.startsWith('mp3quran_server_')) {
+        return old;
+      }
     }
     return script == 'hafs' ? 'ar.alafasy' : '';
   }
 
   void _onQiraahChanged(String val) {
     widget.storage.setString('quran_script_type', val);
-    if (val == 'hafs' &&
-        widget.storage.getString(_reciterKey('hafs')).isEmpty) {
-      widget.storage.setString(_reciterKey('hafs'), 'ar.alafasy');
-    }
     setState(() {
       _quranScriptType = val;
       _reloadKey++;
     });
-  }
-
-  void _onReciterChanged(String val) {
-    widget.storage.setString(_reciterKey(), val);
-    if (mounted) setState(() {});
   }
 
   void _changeFontSize(double delta) {
@@ -280,8 +279,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                         if (v != 'hafs') {
                           dynamicReciters = await RecitersCacheService.getRecitersForRiwayah(_riwayahIdFor(v));
                           _dynamicReciters = dynamicReciters;
-                          // Restore previously chosen reciter for this Qira'ah,
-                          // or auto-select first if none stored.
+                          // Select previously chosen reciter for this Qira'ah
                           final prev = _getReciterFor(v);
                           if (prev.isNotEmpty && dynamicReciters.any((r) {
                             final m = r['moshaf'] as List;
@@ -289,17 +287,15 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                           })) {
                             storedReciter = prev;
                           } else if (dynamicReciters.isNotEmpty) {
-                            final first = dynamicReciters.first;
-                            final moshafs = first['moshaf'] as List;
-                            if (moshafs.isNotEmpty) {
-                              final server = moshafs[0]['server'] as String;
-                              final newId = 'mp3quran_server_$server';
-                              storedReciter = newId;
-                              _onReciterChanged(newId);
+                            final m = dynamicReciters[0]['moshaf'] as List;
+                            if (m.isNotEmpty) {
+                              storedReciter = 'mp3quran_server_${m[0]['server']}';
+                              _saveReciter(storedReciter);
                             }
                           }
                         } else {
                           storedReciter = _getReciterFor('hafs');
+                          _saveReciter(storedReciter);
                         }
                         setModalState(() => loadingReciters = false);
                       },
@@ -316,7 +312,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                             dropdownColor: theme.cardColor, underline: const SizedBox(), icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
                             items: (List.from(availableReciters)..sort((a, b) => TranslationService.isArabic ? a.nameAr.compareTo(b.nameAr) : a.nameEn.compareTo(b.nameEn)))
                                 .map<DropdownMenuItem<String>>((r) => DropdownMenuItem(value: r.id, child: Text(TranslationService.isArabic ? r.nameAr : r.nameEn, overflow: TextOverflow.ellipsis))).toList(),
-                            onChanged: (v) { if (v != null) { storedReciter = v; _onReciterChanged(v); setModalState(() {}); } },
+                            onChanged: (v) { if (v != null) { storedReciter = v; _saveReciter(v); setModalState(() {}); } },
                           ))
                         : SizedBox(width: 170, child: DropdownButton<String>(isExpanded: true,
                             value: (() {
@@ -328,7 +324,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                             items: (dynamicReciters.where((r) => (r['moshaf'] as List).isNotEmpty).toList()
                               ..sort((a, b) => (a['name'] as String).compareTo(b['name'] as String)))
                               .map((r) => DropdownMenuItem<String>(value: (r['moshaf'][0]['server'] as String), child: Text(r['name'] as String, overflow: TextOverflow.ellipsis))).toList(),
-                            onChanged: (v) { if (v != null) { storedReciter = 'mp3quran_server_$v'; _onReciterChanged('mp3quran_server_$v'); setModalState(() {}); } },
+                            onChanged: (v) { if (v != null) { storedReciter = 'mp3quran_server_$v'; _saveReciter('mp3quran_server_$v'); setModalState(() {}); } },
                           )),
                   ]),
                   const SizedBox(height: 20),
