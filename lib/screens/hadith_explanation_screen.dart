@@ -31,6 +31,17 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
   String _error = '';
   List<Map<String, String>> _parsedExplanations = [];
 
+  /// Auto-detect Arabic text and force RTL regardless of display language.
+  static bool _isArabic(String text) {
+    return RegExp(r'[؀-ۿ]').hasMatch(text);
+  }
+
+  /// Pick text direction based on actual content, not display language.
+  TextDirection _td(String text) {
+    if (_isArabic(text)) return TextDirection.rtl;
+    return widget.displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl;
+  }
+
   // CDN download state
   bool _offeringDownload = false;
   bool _downloading = false;
@@ -434,7 +445,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                     style: TextStyle(fontSize: 16, height: 1.6,
                         fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
                     textAlign: TextAlign.start,
-                    textDirection: widget.displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+                    textDirection: _td(item['text'] ?? ''),
                   ),
                 ),
                 if ((item['explanation'] ?? '').isNotEmpty) ...[
@@ -451,7 +462,7 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
                       style: TextStyle(fontSize: 15, height: 1.6,
                           color: theme.textTheme.bodyLarge?.color),
                       textAlign: TextAlign.start,
-                      textDirection: widget.displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+                      textDirection: _td(item['text'] ?? ''),
                     ),
                   ),
                 ],
@@ -611,6 +622,8 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
 
   Widget _buildBeautifulGrading(String grading, ThemeData theme, String displayLang) {
     if (grading.trim().isEmpty) return const SizedBox();
+    final txtDir = _isArabic(grading) ? TextDirection.rtl
+        : (displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl);
 
     final Map<String, String> parsed = {};
     final parts = grading.split(RegExp(r'\n|\|'));
@@ -634,13 +647,13 @@ class _HadithExplanationScreenState extends State<HadithExplanationScreen> {
         child: Text(grading, style: TextStyle(
           fontSize: 13, height: 1.6, color: theme.textTheme.bodyMedium?.color),
           textAlign: TextAlign.start,
-          textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+          textDirection: txtDir,
         ),
       );
     }
 
     return Directionality(
-      textDirection: displayLang == 'eng' ? TextDirection.ltr : TextDirection.rtl,
+      textDirection: txtDir,
       child: Container(
         decoration: BoxDecoration(
           color: theme.primaryColor.withValues(alpha: 0.03),

@@ -62,10 +62,26 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     }
   }
 
+  String _reciterKey([String? script]) => 'default_reciter_${script ?? _quranScriptType}';
+
+  /// Read reciter for a Qira'ah, falling back to the legacy single key
+  /// for existing installs that haven't been migrated yet.
+  String _getReciterFor(String script) {
+    final val = widget.storage.getString(_reciterKey(script));
+    if (val.isNotEmpty) return val;
+    // Fallback: migrate from old single-key storage
+    if (script == 'hafs') {
+      final old = widget.storage.getString('default_reciter');
+      if (old.isNotEmpty && !old.startsWith('mp3quran_server_')) return old;
+    }
+    return script == 'hafs' ? 'ar.alafasy' : '';
+  }
+
   void _onQiraahChanged(String val) {
     widget.storage.setString('quran_script_type', val);
-    if (val == 'hafs') {
-      widget.storage.setString('default_reciter', 'ar.alafasy');
+    if (val == 'hafs' &&
+        widget.storage.getString(_reciterKey('hafs')).isEmpty) {
+      widget.storage.setString(_reciterKey('hafs'), 'ar.alafasy');
     }
     setState(() {
       _quranScriptType = val;
@@ -74,7 +90,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   }
 
   void _onReciterChanged(String val) {
-    widget.storage.setString('default_reciter', val);
+    widget.storage.setString(_reciterKey(), val);
     if (mounted) setState(() {});
   }
 
@@ -112,6 +128,27 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark_border, color: Color(0xFFE5C158)),
+            onPressed: () {
+              widget.storage.addBookmark(
+                surahData.number,
+                surahData.englishName,
+                1,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    TranslationService.isArabic
+                        ? 'تم حفظ علامة لسورة ${surahData.name}'
+                        : 'Bookmarked Surah ${surahData.englishName}',
+                  ),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+            tooltip: TranslationService.isArabic ? 'حفظ علامة' : 'Bookmark',
+          ),
           PopupMenuButton<String>(
             icon: Icon(
               Icons.chrome_reader_mode,
@@ -181,7 +218,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
           );
 
           return SurahReaderScreen(
-            key: ValueKey('surah_${_reloadKey}_$surahNum'),
+            key: ValueKey('surah_${_reloadKey}_$_readingMode$_quranScriptType${_fontSizeMultiplier.toStringAsFixed(1)}_$surahNum'),
             surah: surah,
             storage: widget.storage,
             initialAyahNumber: surahNum == widget.initialSurah.number
@@ -210,7 +247,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
 
   void _showReadingSettings(BuildContext context, ThemeData theme) {
     // Read fresh from storage every time the popup opens
-    String storedReciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+    String storedReciter = _getReciterFor(_quranScriptType);
     bool loadingReciters = false;
     List<dynamic> dynamicReciters = List.from(_dynamicReciters);
 
@@ -243,8 +280,15 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                         if (v != 'hafs') {
                           dynamicReciters = await RecitersCacheService.getRecitersForRiwayah(_riwayahIdFor(v));
                           _dynamicReciters = dynamicReciters;
-                          // Auto-select first reciter as default for this Qira'ah
-                          if (dynamicReciters.isNotEmpty) {
+                          // Restore previously chosen reciter for this Qira'ah,
+                          // or auto-select first if none stored.
+                          final prev = _getReciterFor(v);
+                          if (prev.isNotEmpty && dynamicReciters.any((r) {
+                            final m = r['moshaf'] as List;
+                            return m.isNotEmpty && ('mp3quran_server_${m[0]['server']}' == prev);
+                          })) {
+                            storedReciter = prev;
+                          } else if (dynamicReciters.isNotEmpty) {
                             final first = dynamicReciters.first;
                             final moshafs = first['moshaf'] as List;
                             if (moshafs.isNotEmpty) {
@@ -255,7 +299,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                             }
                           }
                         } else {
-                          storedReciter = widget.storage.getString('default_reciter', defaultValue: 'ar.alafasy');
+                          storedReciter = _getReciterFor('hafs');
                         }
                         setModalState(() => loadingReciters = false);
                       },

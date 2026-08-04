@@ -281,7 +281,12 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setInt('pre_adhan_duration', val);
       if (val > 0 && wasOff) {
-        await _ensureAdhanPermissions();
+        final granted = await _ensureAdhanPermissions();
+        if (!granted) {
+          setState(() { _preAdhanDuration = 0; });
+          await widget.storage.setInt('pre_adhan_duration', 0);
+          return;
+        }
       }
       _debouncedReschedule();
     }
@@ -296,7 +301,15 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('pre_adhan_alert_mode', val);
       if (val != 'off' && wasOff) {
-        await _ensureExactAlarmPermission();
+        final granted = await _ensureAdhanPermissions();
+        if (!granted) {
+          // User refused — revert to OFF
+          setState(() {
+            _preAdhanAlertMode = 'off';
+          });
+          await widget.storage.setString('pre_adhan_alert_mode', 'off');
+          return;
+        }
       }
       if (val == 'voice' || val == 'vibrate_and_voice') {
         await AdhanAudioService.instance.stopPreview();
@@ -310,44 +323,59 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _changeAdhanAlertMode(String? val) async {
     if (val != null) {
-      // If turning ON from OFF, check exact alarm permission first
+      // If turning ON from OFF, check all permissions first
       final wasOff = _adhanAlertMode == 'off';
       setState(() {
         _adhanAlertMode = val;
       });
       await widget.storage.setString('adhan_alert_mode', val);
       if (val != 'off' && wasOff) {
-        await _ensureExactAlarmPermission();
+        final granted = await _ensureAdhanPermissions();
+        if (!granted) {
+          // User refused — revert to OFF
+          setState(() {
+            _adhanAlertMode = 'off';
+          });
+          await widget.storage.setString('adhan_alert_mode', 'off');
+          return;
+        }
       }
       _debouncedReschedule();
     }
   }
 
-  /// When the user turns adhan/pre-adhan ON, ensure all permissions
-  /// are granted — mirrors the onboarding permission flow.
-  Future<void> _ensureAdhanPermissions() async {
-    final canSchedule = await NotificationService.canScheduleExactAlarms();
-    final hasNotif = await NotificationService().checkPermissions();
-    final hasLocation = (await Geolocator.checkPermission()) !=
-        LocationPermission.denied;
+  /// Strict permission gate — loops until all 3 permissions are granted
+  /// or the user explicitly cancels. Mirrors onboarding exactly:
+  /// exact-alarm on API 31+, notification, and location **always** (not just while-in-use).
+  ///
+  /// Returns true if all permissions were granted, false if user cancelled.
+  Future<bool> _ensureAdhanPermissions() async {
+    while (mounted) {
+      final perm = await Geolocator.checkPermission();
+      final hasLocation = perm == LocationPermission.always;
+      final hasNotif = await NotificationService().checkPermissions();
+      final canSchedule = await NotificationService.canScheduleExactAlarms();
 
-    final missing = <String>[];
-    if (!canSchedule) missing.add(
-      TranslationService.isArabic
-          ? 'منح المنبهات الدقيقة'
-          : 'Exact Alarm schedule',
-    );
-    if (!hasNotif) missing.add(
-      TranslationService.isArabic ? 'منح الإشعارات' : 'Notification access',
-    );
-    if (!hasLocation) missing.add(
-      TranslationService.isArabic ? 'منح إذن الموقع' : 'Location permission',
-    );
+      final missing = <String>[];
+      if (!canSchedule) missing.add(
+        TranslationService.isArabic
+            ? 'المنبهات الدقيقة (Alarms & Reminders)'
+            : 'Exact Alarm schedule',
+      );
+      if (!hasNotif) missing.add(
+        TranslationService.isArabic ? 'الإشعارات' : 'Notification access',
+      );
+      if (!hasLocation) missing.add(
+        TranslationService.isArabic
+            ? 'الموقع (السماح دائماً)'
+            : 'Location (Allow all the time)',
+      );
 
-    if (missing.isEmpty) return;
+      if (missing.isEmpty) return true;
 
-    if (mounted) {
-      final result = await showDialog<bool>(
+      if (!mounted) return false;
+
+      final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
@@ -359,8 +387,8 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           content: Text(
             TranslationService.isArabic
-                ? "لتشغيل الأذان بدقة في الخلفية، يجب منح الصلاحيات التالية:\n\n${missing.join('\n')}"
-                : "For the adhan to work reliably in the background, the following permissions are needed:\n\n${missing.join('\n')}",
+                ? "لتشغيل الأذان بدقة في الخلفية، يجب منح الصلاحيات التالية:\n• ${missing.join('\n• ')}\n\nسيتم فتح إعدادات الهاتف لكل صلاحية."
+                : "For the adhan to work reliably in the background, the following must be granted:\n• ${missing.join('\n• ')}\n\nSettings will open for each one.",
             style: const TextStyle(height: 1.6, fontSize: 14),
           ),
           actions: [
@@ -382,24 +410,24 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
       );
 
-      if (result == true) {
-        if (!hasNotif) {
-          await NotificationService().requestPermissions();
-        }
-        if (!canSchedule) {
-          await _platform.invokeMethod('requestExactAlarmPermission');
-        }
-        if (!hasLocation) {
-          await Geolocator.requestPermission();
-        }
-      }
-    }
-  }
+      if (ok != true) return false; // user cancelled
 
-  /// If exact alarm permission is missing, request it now
-  /// (opens Android settings for the user to grant it).
-  Future<void> _ensureExactAlarmPermission() async {
-    await _ensureAdhanPermissions();
+      // Request each missing permission — these open system settings
+      if (!hasNotif) {
+        await NotificationService().requestPermissions();
+      }
+      if (!canSchedule) {
+        await _platform.invokeMethod('requestExactAlarmPermission');
+        // Give the user time to toggle the switch
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+      if (!hasLocation) {
+        await Geolocator.openAppSettings();
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+      // Loop back and re-check
+    }
+    return false;
   }
 
   Future<void> _changeAdhanReciter(String? val) async {
