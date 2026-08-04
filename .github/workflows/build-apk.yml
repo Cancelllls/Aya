@@ -9,7 +9,8 @@ on:
       - 'releases/**'
 
 jobs:
-  build:
+  # ── Google Play Build (IAP) ──────────────────────────────────────────
+  google-play:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -18,7 +19,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-          fetch-tags: true
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -30,43 +30,135 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true  # <-- enables Gradle + pub caching
+          cache: true
 
       - name: Set Version
         id: version
         run: |
-          RUN_NUM=${{ github.run_number }}
-          MAJOR=1
-          MINOR=$((RUN_NUM / 100))
-          PATCH=$((RUN_NUM % 100))
-          VER="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "tag=$VER" >> $GITHUB_OUTPUT
-          echo "display=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
-          echo "const appVersion = '${MAJOR}.${MINOR}.${PATCH}';" > lib/version.dart
-          VERSION_CODE=$((RUN_NUM))
-          sed -i "s/^version: .*/version: ${MAJOR}.${MINOR}.${PATCH}+${VERSION_CODE}/" pubspec.yaml
+          VER=$(grep -oP "const appVersion = '\K[^']+" lib/version.dart)
+          echo "tag=v${VER}" >> $GITHUB_OUTPUT
+          echo "display=${VER}" >> $GITHUB_OUTPUT
+          VERSION_CODE=${{ github.run_number }}
+          sed -i "s/^version: .*/version: ${VER}+${VERSION_CODE}/" pubspec.yaml
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Split APKs
-        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/debug-info
+      - name: Build Google Play APKs
+        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/debug-info --dart-define=GOOGLE_PLAY=true
 
-      - name: Upload APK Artifacts
+      - name: Rename APKs for Google Play
+        run: |
+          mkdir -p release_apks
+          for arch in armeabi-v7a arm64-v8a x86_64; do
+            cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
+               release_apks/Aya-v${{ steps.version.outputs.display }}-googleplay-${arch}.apk
+          done
+
+      - name: Upload Google Play APKs
         uses: actions/upload-artifact@v4
         with:
-          name: app-releases
-          path: |
-            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            build/app/outputs/flutter-apk/app-x86_64-release.apk
+          name: google-play-apks
+          path: release_apks/
+
+  # ── F-Droid / Open Source Build (PayPal only, no IAP) ────────────────
+  fdroid:
+    runs-on: ubuntu-latest
+    needs: google-play
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set Version
+        id: version
+        run: |
+          VER=$(grep -oP "const appVersion = '\K[^']+" lib/version.dart)
+          echo "tag=v${VER}" >> $GITHUB_OUTPUT
+          echo "display=${VER}" >> $GITHUB_OUTPUT
+          VERSION_CODE=${{ github.run_number }}
+          sed -i "s/^version: .*/version: ${VER}+${VERSION_CODE}/" pubspec.yaml
+
+      - name: Strip Google IAP for F-Droid
+        run: |
+          # Remove in_app_purchase dependency
+          sed -i '/in_app_purchase/d' pubspec.yaml
+          # Delete the IAP wrapper (will fail compile if referenced)
+          rm -f lib/donation/google_play_donation.dart
+          # Build with --dart-define=GOOGLE_PLAY=false (default, so kIsGooglePlay=false)
+          # The kIsGooglePlay check at the call site always guards the import,
+          # so removing the file is safe.
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build F-Droid APKs
+        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/debug-info
+
+      - name: Rename APKs for F-Droid
+        run: |
+          mkdir -p release_apks
+          for arch in armeabi-v7a arm64-v8a x86_64; do
+            cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
+               release_apks/Aya-v${{ steps.version.outputs.display }}-fdroid-${arch}.apk
+          done
+
+      - name: Upload F-Droid APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-apks
+          path: release_apks/
+
+  # ── Release ───────────────────────────────────────────────────────────
+  release:
+    runs-on: ubuntu-latest
+    needs: [google-play, fdroid]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set Version
+        id: version
+        run: |
+          VER=$(grep -oP "const appVersion = '\K[^']+" lib/version.dart)
+          echo "tag=v${VER}" >> $GITHUB_OUTPUT
+          echo "display=${VER}" >> $GITHUB_OUTPUT
+
+      - name: Download Google Play APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: google-play-apks
+          path: apks/
+
+      - name: Download F-Droid APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: fdroid-apks
+          path: apks/
 
       - name: Generate Changelog
         id: changelog
-        env:
-          VERSION: ${{ steps.version.outputs.display }}
         run: |
-          CHANGELOG=$(python3 tools/gen_changelog.py "$VERSION")
+          CHANGELOG=$(python3 tools/gen_changelog.py "${{ steps.version.outputs.display }}")
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -75,13 +167,21 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: Release ${{ steps.version.outputs.tag }}
+          name: Release v${{ steps.version.outputs.display }}
           body: |
+            ## 📦 Two Builds Available
+
+            | Variant | Description |
+            |---------|-------------|
+            | **googleplay** | Google Play Store — in-app purchase donations |
+            | **fdroid** | F-Droid / IzzyOnDroid / Open Source — no IAP, no Play Services |
+
             ## What's Changed
             ${{ steps.changelog.outputs.body }}
+
+            ## APKs
+            All APKs are signed with the same debug key. F-Droid will re-sign on their end.
           files: |
-            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            build/app/outputs/flutter-apk/app-x86_64-release.apk
+            apks/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

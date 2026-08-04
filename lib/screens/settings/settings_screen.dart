@@ -11,10 +11,11 @@ import '../../services/notification_service.dart';
 import '../../models/prayer_models.dart';
 import '../quran_download_screen.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/adhan_audio_service.dart';
 import '../../services/reciters_cache_service.dart';
+import '../../donation/flavor.dart';
+import '../../donation/google_play_donation.dart';
 import '../../version.dart';
 import '../about_screen.dart';
 import '../qiraat_screen.dart';
@@ -48,7 +49,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   static const _platform = MethodChannel('com.quran.aya/system');
 
   String _themePreset = 'dark';
-  StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
   String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-amiri';
   String _tafsirEdition = 'ar.muyassar';
@@ -192,18 +192,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
 
     _checkPermissions();
-    final purchaseUpdated = InAppPurchase.instance.purchaseStream;
-    _purchaseSubscription = purchaseUpdated.listen(
-      (purchaseDetailsList) {
-        _listenToPurchaseUpdated(purchaseDetailsList);
-      },
-      onDone: () {
-        _purchaseSubscription?.cancel();
-      },
-      onError: (error) {
-        // handle error here
-      },
-    );
   }
 
   @override
@@ -212,7 +200,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     _rescheduleTimer?.cancel();
     _rescheduleAlarms();
     AdhanAudioService.instance.stopPreview();
-    _purchaseSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -468,193 +455,71 @@ class _SettingsScreenState extends State<SettingsScreen>
     } catch (_) {}
   }
 
-  void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
-    for (var purchaseDetails in purchaseDetailsList) {
-      if (purchaseDetails.status == PurchaseStatus.pending) {
-        // Show pending dialog
-      } else if (purchaseDetails.status == PurchaseStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.isArabic
-                  ? "فشلت عملية الدعم، يرجى المحاولة مرة أخرى."
-                  : "Support donation failed. Please try again.",
-            ),
-          ),
-        );
-      } else if (purchaseDetails.status == PurchaseStatus.purchased ||
-          purchaseDetails.status == PurchaseStatus.restored) {
-        // Complete donation!
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.green,
-            content: Text(
-              TranslationService.isArabic
-                  ? "تقبل الله منكم! شكراً جزيلاً لدعمكم الكريم."
-                  : "Thank you for your generous support!",
-            ),
-          ),
-        );
-      }
-      if (purchaseDetails.pendingCompletePurchase) {
-        InAppPurchase.instance.completePurchase(purchaseDetails);
-      }
-    }
-  }
-
-  Future<void> _supportProject(double amount) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final bool available = await InAppPurchase.instance.isAvailable();
-    if (!available) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "متجر Google Play غير متوفر حالياً."
-                : "Google Play Store is currently unavailable.",
-          ),
-        ),
-      );
-      return;
-    }
-
-    // Dynamic product ID based on amount
-    final String productId = 'support_donation_${amount.toInt()}';
-
-    final ProductDetailsResponse response = await InAppPurchase.instance
-        .queryProductDetails({productId});
-    if (response.notFoundIDs.contains(productId) ||
-        response.productDetails.isEmpty) {
-      // Fallback message if localized products are not configured in Play Console yet
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "جاري إرسال طلب الدعم بقيمة \$$amount عبر Google Play..."
-                : "Initiating support for \$$amount via Google Play...",
-          ),
-        ),
-      );
-      // Simulate launch request or handle gracefully
-      return;
-    }
-
-    final ProductDetails productDetails = response.productDetails.first;
-    final PurchaseParam purchaseParam = PurchaseParam(
-      productDetails: productDetails,
-    );
-
-    try {
-      await InAppPurchase.instance.buyConsumable(purchaseParam: purchaseParam);
-    } catch (_) {}
-  }
-
   void _showDonateDialog() {
+    final isAr = TranslationService.isArabic;
     showDialog(
       context: context,
       builder: (context) {
-        return FutureBuilder<ProductDetailsResponse>(
-          future: InAppPurchase.instance.queryProductDetails({
-            'support_donation_1',
-            'support_donation_5',
-            'support_donation_10',
-            'support_donation_20',
-            'support_donation_50',
-          }),
-          builder: (context, snapshot) {
-            final products = snapshot.data?.productDetails ?? [];
-            final productMap = {for (var p in products) p.id: p};
-
-            return AlertDialog(
-              backgroundColor: Theme.of(context).cardColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Text(
-                TranslationService.isArabic
-                    ? "دعم وتطوير التطبيق"
-                    : "Support Project & Development",
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            isAr ? "دعم وتطوير التطبيق" : "Support Project & Development",
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isAr
+                    ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
+                    : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 13, height: 1.4),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    TranslationService.isArabic
-                        ? "تطبيق آية مجاني وخالٍ تماماً من الإعلانات صدقة جارية. يمكنك المساهمة في دعم خوادم وتطوير التطبيق:"
-                        : "Aya is completely free and ad-free as a continuous charity. You can support server costs and development:",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, height: 1.4),
-                  ),
-                  const SizedBox(height: 20),
-                  ...[1.0, 5.0, 10.0, 20.0, 50.0].map((val) {
-                    final productId = 'support_donation_${val.toInt()}';
-                    final product = productMap[productId];
-                    final displayPrice =
-                        product?.price ?? '\$${val.toInt()} USD';
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE5C158),
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size(double.infinity, 44),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _supportProject(val);
-                        },
-                        child: Text(
-                          TranslationService.isArabic
-                              ? "دعم بقيمة $displayPrice"
-                              : "Support $displayPrice",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Text(
-                    TranslationService.isArabic
-                        ? "أو تبرع عبر باي بال:"
-                        : "Or donate via PayPal:",
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF003087),
-                      side: const BorderSide(color: Color(0xFF003087)),
-                      minimumSize: const Size(double.infinity, 44),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: const Icon(Icons.payment),
-                    label: const Text(
-                      'paypal.me/Cancells',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      launchUrl(
-                        Uri.parse('https://www.paypal.me/Cancells'),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                  ),
-                ],
+              const SizedBox(height: 20),
+              if (kIsGooglePlay) ...[
+                FutureBuilder<Widget?>(
+                  future: GooglePlayDonation.buildIapButtons(context),
+                  builder: (ctx, snap) => snap.data ?? const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 12),
+              ],
+              Text(
+                isAr ? "تبرع عبر باي بال:" : "Donate via PayPal:",
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
               ),
-            );
-          },
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF003087),
+                  side: const BorderSide(color: Color(0xFF003087)),
+                  minimumSize: const Size(double.infinity, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.payment),
+                label: const Text(
+                  'paypal.me/Cancells',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  launchUrl(
+                    Uri.parse('https://www.paypal.me/Cancells'),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+              ),
+            ],
+          ),
         );
       },
     );
