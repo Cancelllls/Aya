@@ -49,3 +49,4 @@ app.*.map.json
 tools/sharh_cache.json
 tools/sharh_data/
 releases/
+tools/sharh_cache.json.gz
