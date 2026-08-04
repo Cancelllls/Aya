@@ -1,0 +1,56 @@
+Categories:
+  - Religion
+License: MIT
+AuthorName: Abdalrahman Samir
+AuthorEmail: abdalraman.samir2001@gmail.com
+WebSite: https://github.com/Cancelllls/Aya
+SourceCode: https://github.com/Cancelllls/Aya
+IssueTracker: https://github.com/Cancelllls/Aya/issues
+Changelog: https://github.com/Cancelllls/Aya/releases
+
+AutoName: Aya
+Summary: Quran, Hadith, Prayer Times, Adhan, Azkar — offline-first Islamic companion
+Description: |
+  Aya is a comprehensive, offline-first Islamic companion app built with Flutter.
+
+  • Quran — 10 Qira'at (Hafs, Warsh, Qalun, etc.) with per-ayah audio sync
+    for 12 reciters. 6 tafsir editions. Continuous mushaf or ayah-by-ayah
+    reading. Arabic search with full diacritic normalization.
+
+  • Hadith — 13 collections (Bukhari, Muslim, Abu Dawud, Tirmidhi, Nasai,
+    Ibn Majah, Malik, Riyad as-Salihin, and more). FTS5 full-text search.
+    Grading and explanation from Dorar.net.
+
+  • Prayer Times — 14 calculation methods, fully offline via adhan library.
+    Native AlarmManager scheduling with Five Prayers-style MediaPlayer +
+    MediaSession for reliable adhan playback.
+
+  • Azkar — 11 categories (morning, evening, post-prayer, sleep, protection,
+    forgiveness, 99 Names of Allah, custom). Counter tracking with haptics.
+
+  • Qibla compass, prayer tracker with statistics, 8 home screen widgets,
+    Ramadan alerts, digital tasbih, full backup/restore.
+
+  Completely free and ad-free. No account required. Everything works offline.
+
+RepoType: git
+Repo: https://github.com/Cancelllls/Aya.git
+
+Builds:
+  - versionName: '1.1.0'
+    versionCode: 1
+    commit: v1.1.0
+    subdir: .
+    sudo: apt-get update && apt-get install -y git unzip
+    gradle:
+      - yes
+    srclibs:
+      - flutter@stable
+    prebuild:
+      - echo "flutter.sdk=$$flutter$$" > local.properties
+    build: $$flutter$$/bin/flutter build apk --release
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.1.0'
+CurrentVersionCode: 1
