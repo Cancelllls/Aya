@@ -1,0 +1,38 @@
+Aya is a comprehensive, offline-first Islamic companion app built with Flutter. It provides everything a Muslim needs for daily worship in one elegant, ad-free interface.
+
+<b>Prayer Times & Adhan</b>
+• 14 calculation methods with offline fallback — no internet required
+• Native adhan playback with 8 reciters (Mishary, Abdul Basit, Madinah, and more)
+• Per-prayer adhan toggle with fajr-specific reciter
+• Pre-adhan reminders (5/10/15/20 min before) with vibrate/voice/both modes
+• Flip-to-silence and volume-key stop gestures
+
+<b>Quran Reader</b>
+• 10 Qira'at supported — Hafs, Warsh, Qaloon, Shu'bah, Duri, Susi, Bazzi, Qunbul, Hisham, Ibn Dhakwan
+• 12 reciters with per-ayah timestamp sync — bundled offline
+• 6 tafsir editions — Al-Muyassar, Al-Jalalayn, Al-Qurtubi, Ibn Abbas, Al-Waseet, Al-Baghawi
+• Continuous mushaf mode or ayah-by-ayah reading
+• Auto-bookmarking and full-text Arabic/English verse search
+
+<b>Hadith</b>
+• 13 collections — Bukhari, Muslim, Abu Dawud, Tirmidhi, Nasai, Ibn Majah, Malik, and more
+• Arabic & English with grading badges (Sahih, Hasan, Da'if)
+• FTS5 full-text search across all books
+• Hadith explanation (Sharh) and grading (Takhreej)
+
+<b>Azkar & Supplications</b>
+• 11 categories — Morning, Evening, Post-Prayer, Daily Duas, 99 Names of Allah, and more
+• 60+ authentic adhkar with Arabic, transliteration, translation, and references
+• Digital Tasbih counter with custom presets
+
+<b>Additional Features</b>
+• Prayer Tracker with daily/monthly/yearly views and statistics
+• Qibla Compass with Kaaba alignment detection
+• 8 home screen widgets — Prayer Times, Verse of the Day, Dhikr, Hadith, Tasbih, Hijri Date, Next Prayer, Asma ul Husna
+• Audio download manager for offline Quran listening
+• 6 theme presets — Dark, Light, Sepia, OLED Black, Adaptive Dark and Light
+• Full Arabic and English interface with RTL/LTR support
+• 100% offline-first — Quran, Hadith, Azkar, Prayer Times, and Adhan all work without internet
+
+<b>Open Source</b>
+Aya is free, open-source software with no ads. Licensed under MIT.

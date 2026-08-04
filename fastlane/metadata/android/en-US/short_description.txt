@@ -1,0 +1,1 @@
+Quran reader with 10 Qira'at, 13 Hadith collections, accurate prayer times with adhan, azkar, qibla compass, and prayer tracker. Fully offline.

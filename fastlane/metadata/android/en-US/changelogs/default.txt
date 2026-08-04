@@ -1,0 +1,13 @@
+Aya — Islamic Companion App
+
+Quran · Hadith · Prayer Times · Adhan · Azkar · Qibla · Tracker
+
+• 10 Qira'at Quran reader with audio sync
+• 13 Hadith collections with FTS5 search
+• 14 prayer time calculation methods
+• Native adhan with 8 reciters
+• 8 home screen widgets
+• 6 theme presets, full AR/EN support
+• 100% offline-first
+
+Free, open-source, ad-free. MIT License.

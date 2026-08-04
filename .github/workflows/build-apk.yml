@@ -34,7 +34,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add lib/version.dart
+          git add lib/version.dart pubspec.yaml
           git commit -m "chore: bump version to v${NEW} [skip ci]"
           git push origin main
 
@@ -65,10 +65,7 @@ jobs:
 
       - name: Set Version
         run: |
-          VER="${{ needs.bump.outputs.version }}"
-          VERSION_CODE=${{ github.run_number }}
-          sed -i "s/^version: .*/version: ${VER}+${VERSION_CODE}/" pubspec.yaml
-          echo "Building Google Play APK for v${VER} (code ${VERSION_CODE})"
+          echo "Building Google Play APK for v${{ needs.bump.outputs.version }}"
 
       - name: Install dependencies
         run: flutter pub get
