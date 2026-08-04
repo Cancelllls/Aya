@@ -11,7 +11,7 @@ class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
   static Future<void>? _seeding;
-  static const int _version = 8;
+  static const int _version = 9;
   // Keep in sync with android/app/build.gradle.kts applicationId
   static const String _packageName = 'com.quran.aya';
 
@@ -359,6 +359,20 @@ class DatabaseService {
         'INSERT INTO hadiths_fts(search_arabic, search_english) '
         'SELECT search_arabic, search_english FROM hadiths',
       );
+    }
+
+    if (oldVersion < 9) {
+      // Re-normalize text_arabic_clean to include alef variant normalization
+      final rows = await db.query('ayahs', columns: ['id', 'text_arabic']);
+      final batch = db.batch();
+      for (final r in rows) {
+        batch.update('ayahs', {
+          'text_arabic_clean': stripTashkeel(
+            (r['text_arabic'] as String?) ?? '',
+          ).toLowerCase(),
+        }, where: 'id = ?', whereArgs: [r['id']]);
+      }
+      await batch.commit(noResult: true);
     }
 
     if (oldVersion < 2) {

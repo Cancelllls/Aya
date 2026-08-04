@@ -1,9 +1,17 @@
 import '../services/translation_service.dart';
 
-/// Remove Arabic diacritics (tashkeel) from [input].
+/// Remove Arabic diacritics and normalize alef variants for search.
+///
+/// Normalizes:  أ إ آ → ا   (hamza variants)
+///              ٱ      → ا   (alef wasla)
+///              ة      → ه   (teh marbuta)
+///              ى      → ي   (alef maksura, end-of-word)
 String stripTashkeel(String input) {
-  const tashkeelRegex = r'[ً-ٰٟ]';
-  return input.replaceAll(RegExp(tashkeelRegex), '');
+  return input
+      .replaceAll(RegExp(r'[ً-ٰٟ]'), '') // diacritics (fatha, damma, kasra, etc.)
+      .replaceAll(RegExp(r'[أإآٱ]'), 'ا') // alef normalization
+      .replaceAll('ة', 'ه') // teh marbuta → hah
+      .replaceAll('ى', 'ي'); // alef maksura → yeh
 }
 
 /// Format a "HH:mm (TZ)" prayer-time string to 12h or 24h display.
