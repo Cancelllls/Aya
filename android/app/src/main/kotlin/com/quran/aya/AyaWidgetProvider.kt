@@ -58,7 +58,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
 
             // Styling colors and backgrounds dynamically for active highlighting
             val activeBg = R.drawable.active_prayer_background
-            val transBg = 0
+            val transBg = R.drawable.widget_transparent_bg
 
             // Fajr container active style
             if (activePrayer == "Fajr") {

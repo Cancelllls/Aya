@@ -22,5 +22,7 @@
     
     <string name="widget_asma_label">Aya - Asma ul Husna</string>
     <string name="widget_asma_description">Displays one of the 99 Names of Allah.</string>
+    <string name="widget_combined_label">Aya - Prayer Countdown</string>
+    <string name="widget_combined_description">Live countdown to next prayer with all prayer times.</string>
     <string name="adhan_playing">Adhan is playing — tap to open the app</string>
 </resources>

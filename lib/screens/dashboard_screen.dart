@@ -40,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _hasError = false;
   String _nextPrayerName = '-';
   Duration _nextPrayerCountdown = Duration.zero;
+  DateTime? _nextPrayerTime;
   Timer? _timer;
   Map<String, dynamic>? _lastLoadedLocation;
   int? _lastLoadedCalcMethod;
@@ -286,6 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _nextPrayerName = nextPrayerName;
       _nextPrayerCountdown = nextPrayerTime!.difference(now);
+      _nextPrayerTime = nextPrayerTime;
     });
     _updateWidgetPreferences();
   }
@@ -479,6 +481,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final nextDisplay = _formatWidgetNextDisplay(_nextPrayerCountdown);
     final lastDisplay = prefs.getString('widget_widget_next_display');
+
+    // Save next prayer epoch for combined countdown widget
+    if (_nextPrayerTime != null) {
+      await prefs.setInt(
+        'widget_next_prayer_epoch',
+        _nextPrayerTime!.millisecondsSinceEpoch,
+      );
+    }
+
     if (nextDisplay != lastDisplay) {
       await prefs.setString('widget_widget_next_display', nextDisplay);
       try {

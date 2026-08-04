@@ -244,6 +244,7 @@ class MainActivity : FlutterActivity() {
                             AyaHijriWidgetProvider::class.java,
                             AyaNextPrayerWidgetProvider::class.java,
                             AyaAsmaulHusnaWidgetProvider::class.java,
+                            AyaCombinedWidgetProvider::class.java,
                         )
                         val appWidgetManager = AppWidgetManager.getInstance(context)
                         for (provider in widgetProviders) {
