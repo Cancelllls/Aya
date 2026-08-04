@@ -29,18 +29,22 @@ class RecitersCacheService {
 
   /// Return reciters whose moshaf list includes entries matching [riwayahId],
   /// loading from disk cache or network on first call.
+  /// Results are deduplicated by reciter name.
   static Future<List<Map<String, dynamic>>> getRecitersForRiwayah(
     int riwayahId,
   ) async {
     final all = await _ensureLoaded();
+    final seen = <String>{};
     final filtered = <Map<String, dynamic>>[];
     for (final r in all) {
+      final name = r['name'] as String;
+      if (!seen.add(name)) continue; // same reciter from a different riwayah
       final moshafs = (r['moshaf'] as List)
           .where((m) => (m['rewaya_id'] as int) == riwayahId)
           .toList();
       if (moshafs.isNotEmpty) {
         filtered.add({
-          'name': r['name'],
+          'name': name,
           'moshaf': moshafs,
         });
       }
@@ -92,6 +96,7 @@ class RecitersCacheService {
     final lang = TranslationService.isArabic ? 'ar' : 'en';
     final client = http.Client();
     final all = <Map<String, dynamic>>[];
+    final seen = <String>{}; // dedup by reciter name across riwayat
 
     try {
       // Fetch list of riwayat
@@ -115,7 +120,7 @@ class RecitersCacheService {
             j++) {
           final rw = riwayatList[j] as Map<String, dynamic>;
           final riwayahId = rw['id'] as int;
-          batch.add(_fetchRecitersForRiwayah(client, riwayahId, lang, all));
+          batch.add(_fetchRecitersForRiwayah(client, riwayahId, lang, all, seen));
         }
         await Future.wait(batch);
         // Small delay between batches to be kind to the server
@@ -135,6 +140,7 @@ class RecitersCacheService {
     int riwayahId,
     String lang,
     List<Map<String, dynamic>> sink,
+    Set<String> seen,
   ) async {
     try {
       final uri = Uri.parse(
@@ -148,7 +154,11 @@ class RecitersCacheService {
       final reciters = (data['reciters'] as List?) ?? [];
 
       for (final r in reciters) {
-        sink.add(Map<String, dynamic>.from(r as Map));
+        // Dedup by name across riwayat — the same reciter often records
+        // in multiple Qira'at and the API returns them under each riwayah.
+        if (seen.add(r['name'] as String)) {
+          sink.add(Map<String, dynamic>.from(r as Map));
+        }
       }
     } catch (_) {
       // Skip this riwayah — the rest will still be available
@@ -168,7 +178,9 @@ class RecitersCacheService {
       if (!await file.exists()) return null;
       final content = await file.readAsString();
       final decoded = jsonDecode(content) as Map<String, dynamic>;
-      // Invalidate cache after 7 days
+      // Invalidate cache after 7 days or if it's from before the dedup fix
+      final cacheVersion = decoded['_v'] as int? ?? 0;
+      if (cacheVersion < 2) return null;
       final cachedAt = decoded['_cached_at'] as int? ?? 0;
       if (DateTime.now().millisecondsSinceEpoch - cachedAt >
           const Duration(days: 7).inMilliseconds) {
@@ -185,6 +197,7 @@ class RecitersCacheService {
     try {
       final file = await _cacheFile();
       final wrapper = {
+        '_v': 2,
         '_cached_at': DateTime.now().millisecondsSinceEpoch,
         'reciters': reciters,
       };
