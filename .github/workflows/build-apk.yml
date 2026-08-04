@@ -96,13 +96,12 @@ jobs:
 
       - name: Strip Google IAP for F-Droid
         run: |
-          # Remove in_app_purchase dependency
+          # Remove in_app_purchase dependency from pubspec
           sed -i '/in_app_purchase/d' pubspec.yaml
-          # Delete the IAP wrapper (will fail compile if referenced)
-          rm -f lib/donation/google_play_donation.dart
-          # Build with --dart-define=GOOGLE_PLAY=false (default, so kIsGooglePlay=false)
-          # The kIsGooglePlay check at the call site always guards the import,
-          # so removing the file is safe.
+          # Replace the IAP wrapper with the stub so settings_screen.dart's
+          # import still resolves. The stub has the same public API — all
+          # calls are guarded by kIsGooglePlay at runtime.
+          cp lib/donation/google_play_donation_stub.dart lib/donation/google_play_donation.dart
 
       - name: Install dependencies
         run: flutter pub get
