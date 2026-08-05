@@ -53,4 +53,4 @@ tools/sharh_cache.json.gz
 
 # Signing keys
 /android/key.properties
-/android/app/upload-keystore.jks
+/android/upload-keystore.jks
