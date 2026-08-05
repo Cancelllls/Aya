@@ -137,7 +137,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          echo "$KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
           cat > android/key.properties << EOF
           storePassword=${STORE_PASSWORD}
           keyPassword=${KEY_PASSWORD}
