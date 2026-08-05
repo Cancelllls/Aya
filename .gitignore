@@ -50,3 +50,7 @@ tools/sharh_cache.json
 tools/sharh_data/
 releases/
 tools/sharh_cache.json.gz
+
+# Signing keys
+/android/key.properties
+/android/app/upload-keystore.jks
