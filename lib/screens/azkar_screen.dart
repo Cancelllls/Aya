@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/azkar_data.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
+import '../widgets/share_card_dialog.dart';
 
 class AzkarScreen extends StatefulWidget {
   final StorageService storage;
@@ -212,6 +214,248 @@ class _AzkarScreenState extends State<AzkarScreen>
           ),
         ],
       ),
+  void _editMyAzkar(int index) {
+    if (index < 0 || index >= _myAzkar.length) return;
+    final item = _myAzkar[index];
+
+    final arabicCtrl = TextEditingController(text: item.arabic);
+    final translitCtrl = TextEditingController(text: item.transliteration);
+    final translationCtrl = TextEditingController(text: item.translation);
+    final countCtrl = TextEditingController(text: item.count.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationService.isArabic ? "تعديل الذكر" : "Edit Dhikr"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: arabicCtrl,
+                maxLines: 3,
+                textDirection: TextDirection.rtl,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic ? "نص الذكر" : "Arabic Text",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: translitCtrl,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic
+                      ? "النطق اللاتيني (اختياري)"
+                      : "Transliteration (Optional)",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: translationCtrl,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic
+                      ? "الترجمة (اختياري)"
+                      : "Translation (Optional)",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: countCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: TranslationService.isArabic ? "عدد المرات" : "Count",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(TranslationService.isArabic ? "إلغاء" : "Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (arabicCtrl.text.trim().isEmpty) return;
+              setState(() {
+                _myAzkar[index] = AzkarItem(
+                  id: item.id,
+                  arabic: arabicCtrl.text.trim(),
+                  transliteration: translitCtrl.text.trim(),
+                  translation: translationCtrl.text.trim(),
+                  count: int.tryParse(countCtrl.text) ?? item.count,
+                  reference: item.reference,
+                );
+              });
+              _saveMyAzkar();
+              Navigator.pop(ctx);
+            },
+            child: Text(TranslationService.isArabic ? "حفظ" : "Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMyAzkarOptionsSheet(int index, AzkarItem item) {
+    final isAr = TranslationService.isArabic;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "تعديل الذكر" : "Edit Dhikr"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _editMyAzkar(index);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: Text(isAr ? "حذف الذكر" : "Delete Dhikr"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteMyAzkar(index);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "مشاركة كصورة" : "Share as Image"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showDialog(
+                    context: context,
+                    builder: (_) => ShareCardDialog(
+                      title: isAr ? 'ذكر مخصص' : 'Custom Dhikr',
+                      categoryOrSource: isAr ? 'أذكاري' : 'My Azkar',
+                      mainText: item.arabic,
+                      translationText: item.translation.isNotEmpty ? item.translation : null,
+                      footnote: '${item.count}x',
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "مشاركة كنص" : "Share Text"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  SharePlus.instance.share(
+                    ShareParams(
+                      text: '${item.arabic}\n\n— ${isAr ? "أذكاري" : "My Azkar"} • Aya App',
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.copy_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "نسخ" : "Copy Text"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Clipboard.setData(ClipboardData(text: item.arabic));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr ? 'تم نسخ الذكر' : 'Dhikr copied to clipboard',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+  void _showAzkarOptionsSheet(AzkarItem item) {
+    final isAr = TranslationService.isArabic;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "مشاركة كصورة" : "Share as Image"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showDialog(
+                    context: context,
+                    builder: (_) => ShareCardDialog(
+                      title: isAr ? 'ذكر ودعاء' : 'Dhikr',
+                      categoryOrSource: item.category,
+                      mainText: item.arabic,
+                      translationText: item.translation.isNotEmpty ? item.translation : null,
+                      footnote: '${item.count}x • ${item.reference}',
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "مشاركة كنص" : "Share Text"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  SharePlus.instance.share(
+                    ShareParams(
+                      text: '${item.arabic}\n\n${item.translation}\n\n— ${item.category} • Aya App',
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.copy_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "نسخ" : "Copy Text"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Clipboard.setData(ClipboardData(text: item.arabic));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr ? 'تم نسخ الذكر' : 'Dhikr copied to clipboard',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -634,150 +878,153 @@ class _AzkarScreenState extends State<AzkarScreen>
               final currentCount = _countsCache[item.id] ?? item.count;
               final isDone = currentCount == 0;
 
-              return Card(
-                color: theme.cardColor,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: isDone
-                        ? const Color(0xFF10B981).withValues(alpha: 0.5)
-                        : (Theme.of(context).textTheme.bodyLarge?.color ??
-                                  Colors.white)
-                              .withValues(alpha: 0.04),
-                    width: isDone ? 1.5 : 1.0,
+              return GestureDetector(
+                onLongPress: () => _showAzkarOptionsSheet(item),
+                child: Card(
+                  color: theme.cardColor,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: isDone
+                          ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                          : (Theme.of(context).textTheme.bodyLarge?.color ??
+                                    Colors.white)
+                                .withValues(alpha: 0.04),
+                      width: isDone ? 1.5 : 1.0,
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Card Top Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE5C158).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              "${TranslationService.t('read')} ${item.count} ${TranslationService.t('times')}",
-                              style: const TextStyle(
-                                color: Color(0xFFE5C158),
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          // Interactive decrement counter
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isDone
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFFE5C158),
-                              foregroundColor: isDone
-                                  ? Theme.of(context).textTheme.bodyLarge?.color
-                                  : Colors.black,
-                              elevation: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Card Top Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE5C158).withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                            ),
-                            icon: Icon(
-                              isDone ? Icons.check : Icons.fingerprint,
-                              size: 14,
-                            ),
-                            label: Text(
-                              isDone
-                                  ? TranslationService.t('done')
-                                  : "$currentCount ${TranslationService.t('remaining')}",
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                              child: Text(
+                                "${TranslationService.t('read')} ${item.count} ${TranslationService.t('times')}",
+                                style: const TextStyle(
+                                  color: Color(0xFFE5C158),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                            onPressed: isDone
-                                ? null
-                                : () => _decrementCount(item.id, item.count),
+                            // Interactive decrement counter
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDone
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFFE5C158),
+                                foregroundColor: isDone
+                                    ? Theme.of(context).textTheme.bodyLarge?.color
+                                    : Colors.black,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              icon: Icon(
+                                isDone ? Icons.check : Icons.fingerprint,
+                                size: 14,
+                              ),
+                              label: Text(
+                                isDone
+                                    ? TranslationService.t('done')
+                                    : "$currentCount ${TranslationService.t('remaining')}",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: isDone
+                                  ? null
+                                  : () => _decrementCount(item.id, item.count),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Arabic text (Right Aligned)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            item.arabic,
+                            textDirection: TextDirection.rtl,
+                            style: const TextStyle(
+                              fontFamily: 'Amiri',
+                              fontSize: 22,
+                              height: 1.8,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        if ((_showTransliteration &&
+                                item.transliteration.isNotEmpty) ||
+                            (_showTranslation &&
+                                item.translation.isNotEmpty)) ...[
+                          Divider(
+                            color: Theme.of(
+                              context,
+                            ).dividerColor.withValues(alpha: 0.1),
+                          ),
+                          const SizedBox(height: 8),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Arabic text (Right Aligned)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          item.arabic,
-                          textDirection: TextDirection.rtl,
-                          style: const TextStyle(
-                            fontFamily: 'Amiri',
-                            fontSize: 22,
-                            height: 1.8,
-                            fontWeight: FontWeight.bold,
+                        // Transliteration (Italicized)
+                        if (_showTransliteration &&
+                            item.transliteration.isNotEmpty) ...[
+                          Text(
+                            item.transliteration,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withValues(alpha: 0.6),
+                              height: 1.4,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if ((_showTransliteration &&
-                              item.transliteration.isNotEmpty) ||
-                          (_showTranslation &&
-                              item.translation.isNotEmpty)) ...[
-                        Divider(
-                          color: Theme.of(
-                            context,
-                          ).dividerColor.withValues(alpha: 0.1),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      // Transliteration (Italicized)
-                      if (_showTransliteration &&
-                          item.transliteration.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                        ],
+                        // English Translation
+                        if (_showTranslation && item.translation.isNotEmpty) ...[
+                          Text(
+                            item.translation,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.textTheme.bodyMedium?.color
+                                  ?.withValues(alpha: 0.8),
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        // Reference citation
                         Text(
-                          item.transliteration,
+                          "${TranslationService.isArabic ? 'المصدر' : 'Source'}: ${item.reference}",
                           style: TextStyle(
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.6),
-                            height: 1.4,
+                            fontSize: 10,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
+                              0.4,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 12),
                       ],
-                      // English Translation
-                      if (_showTranslation && item.translation.isNotEmpty) ...[
-                        Text(
-                          item.translation,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.8),
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      // Reference citation
-                      Text(
-                        "${TranslationService.isArabic ? 'المصدر' : 'Source'}: ${item.reference}",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
-                            0.4,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               );
@@ -952,79 +1199,147 @@ class _AzkarScreenState extends State<AzkarScreen>
                 final currentCount = _countsCache[item.id] ?? item.count;
                 final isDone = currentCount == 0;
 
-                return Card(
-                  color: theme.cardColor,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: isDone
-                          ? const Color(0xFF10B981).withValues(alpha: 0.5)
-                          : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.04),
-                      width: isDone ? 1.5 : 1.0,
+                return GestureDetector(
+                  onLongPress: () => _showMyAzkarOptionsSheet(index, item),
+                  child: Card(
+                    color: theme.cardColor,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: isDone
+                            ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                            : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.04),
+                        width: isDone ? 1.5 : 1.0,
+                      ),
                     ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item.arabic,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Amiri', height: 2.0),
-                                textDirection: TextDirection.rtl,
-                                textAlign: TextAlign.right,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => _deleteMyAzkar(index),
-                              child: Icon(Icons.delete_outline, size: 18, color: Colors.redAccent.withValues(alpha: 0.6)),
-                            ),
-                          ],
-                        ),
-                        if (_showTransliteration && item.transliteration.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(item.transliteration, style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5), fontStyle: FontStyle.italic)),
-                        ],
-                        if (_showTranslation && item.translation.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(item.translation, style: TextStyle(fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6))),
-                        ],
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "${TranslationService.isArabic ? 'العدد' : 'Count'}: $currentCount / ${item.count}",
-                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
-                            ),
-                            GestureDetector(
-                              onTap: isDone ? null : () => _decrementCount(item.id, item.count),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Card Top Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isDone ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFE5C158).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFFE5C158).withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  isDone
-                                      ? (TranslationService.isArabic ? "تم" : "✓ Done")
-                                      : (TranslationService.isArabic ? "اضغط" : "Tap"),
-                                  style: TextStyle(
-                                    fontSize: 13,
+                                  "${TranslationService.t('read')} ${item.count} ${TranslationService.t('times')}",
+                                  style: const TextStyle(
+                                    color: Color(0xFFE5C158),
+                                    fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: isDone ? const Color(0xFF10B981) : const Color(0xFFE5C158),
                                   ),
                                 ),
                               ),
+                              // Interactive decrement counter
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isDone
+                                      ? const Color(0xFF10B981)
+                                      : const Color(0xFFE5C158),
+                                  foregroundColor: isDone
+                                      ? Theme.of(context).textTheme.bodyLarge?.color
+                                      : Colors.black,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                icon: Icon(
+                                  isDone ? Icons.check : Icons.fingerprint,
+                                  size: 14,
+                                ),
+                                label: Text(
+                                  isDone
+                                      ? TranslationService.t('done')
+                                      : "$currentCount ${TranslationService.t('remaining')}",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: isDone
+                                    ? null
+                                    : () => _decrementCount(item.id, item.count),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Arabic text (Right Aligned)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              item.arabic,
+                              textDirection: TextDirection.rtl,
+                              style: const TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: 22,
+                                height: 1.8,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          if ((_showTransliteration && item.transliteration.isNotEmpty) ||
+                              (_showTranslation && item.translation.isNotEmpty)) ...[
+                            Divider(
+                              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                            ),
+                            const SizedBox(height: 8),
                           ],
-                        ),
-                      ],
+
+                          // Transliteration
+                          if (_showTransliteration && item.transliteration.isNotEmpty) ...[
+                            Text(
+                              item.transliteration,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          // Translation
+                          if (_showTranslation && item.translation.isNotEmpty) ...[
+                            Text(
+                              item.translation,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          // Source Citation
+                          Text(
+                            "${TranslationService.isArabic ? 'المصدر' : 'Source'}: ${item.reference.isNotEmpty ? item.reference : (TranslationService.isArabic ? 'أذكار مخصصة' : 'Custom Dhikr')}",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

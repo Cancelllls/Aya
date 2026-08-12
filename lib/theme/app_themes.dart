@@ -1,342 +1,571 @@
 import 'package:flutter/material.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'app_colors.dart';
 
-/// Returns the ThemeData for the given [themeName].
-/// Supported values: 'dark', 'light', 'sepia', 'black', 'dark_monet', 'white_monet'.
-ThemeData buildThemeData(String themeName) {
+/// Returns authentic Material 3 ThemeData for [themeName], adopting
+/// device wallpaper dynamic palettes ([lightDynamic] / [darkDynamic]) on Android 12+.
+ThemeData buildThemeData(
+  String themeName, {
+  ColorScheme? lightDynamic,
+  ColorScheme? darkDynamic,
+}) {
   switch (themeName) {
     case 'light':
-      return _buildLightTheme();
+      return _buildM3LightTheme(dynamicScheme: lightDynamic);
     case 'sepia':
-      return _buildSepiaTheme();
+      return _buildM3SepiaTheme();
     case 'black':
-      return _buildBlackTheme();
+      return _buildM3OledBlackTheme();
     case 'dark_monet':
-      return _buildDarkMonetTheme();
+      return _buildM3DarkMonetTheme(dynamicScheme: darkDynamic);
     case 'white_monet':
-      return _buildWhiteMonetTheme();
+      return _buildM3WhiteMonetTheme(dynamicScheme: lightDynamic);
     case 'dark':
     default:
-      return _buildDarkTheme();
+      return _buildM3DarkTheme(dynamicScheme: darkDynamic);
   }
 }
 
-ThemeData _buildLightTheme() {
+// -----------------------------------------------------------------------------
+// 1. Material 3 Adaptive Light Theme
+// -----------------------------------------------------------------------------
+ThemeData _buildM3LightTheme({ColorScheme? dynamicScheme}) {
+  final colorScheme = (dynamicScheme != null)
+      ? dynamicScheme.harmonized()
+      : ColorScheme.fromSeed(
+          seedColor: AppColors.teal,
+          brightness: Brightness.light,
+          primary: AppColors.teal,
+          onPrimary: Colors.white,
+          secondary: const Color(0xFFB45309), // Amber accent
+          onSecondary: Colors.white,
+          surface: Colors.white,
+          onSurface: const Color(0xFF0F172A),
+          surfaceContainerHighest: const Color(0xFFF1F5F9),
+          outline: const Color(0xFFCBD5E1),
+        );
+
   return ThemeData(
+    useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xFFFAF9F5),
-    primaryColor: AppColors.teal,
-    cardColor: Colors.white,
-    canvasColor: Colors.white,
-    chipTheme: const ChipThemeData(backgroundColor: Color(0xFFF1F5F9)),
-    textTheme: const TextTheme(
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: colorScheme.surfaceContainerLowest,
+    primaryColor: colorScheme.primary,
+    cardColor: colorScheme.surface,
+    canvasColor: colorScheme.surface,
+    dividerColor: colorScheme.outlineVariant,
+
+    // M3 Typography
+    textTheme: TextTheme(
       bodyLarge: TextStyle(
-        color: Color(0xFF1E293B),
+        color: colorScheme.onSurface,
         fontWeight: FontWeight.w500,
+        fontSize: 16,
       ),
-      bodyMedium: TextStyle(color: Color(0xFF64748B)),
+      bodyMedium: TextStyle(
+        color: colorScheme.onSurfaceVariant,
+        fontSize: 14,
+      ),
+      titleLarge: TextStyle(
+        color: colorScheme.onSurface,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+      ),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.white,
-      foregroundColor: AppColors.teal,
+
+    // M3 AppBar
+    appBarTheme: AppBarTheme(
+      centerTitle: true,
+      backgroundColor: colorScheme.surfaceContainerLowest,
+      foregroundColor: colorScheme.primary,
       elevation: 0,
-      iconTheme: IconThemeData(color: Color(0xFFB45309)),
+      scrolledUnderElevation: 1,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: IconThemeData(color: colorScheme.primary),
+      titleTextStyle: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
     ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Colors.white,
-      selectedItemColor: Color(0xFFB45309),
-      unselectedItemColor: Color(0xFF94A3B8),
+
+    // M3 Cards
+    cardTheme: CardThemeData(
+      color: colorScheme.surface,
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.05),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant, width: 1),
+      ),
+    ),
+
+    // M3 Dialogs
+    dialogTheme: DialogThemeData(
+      backgroundColor: colorScheme.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+    ),
+
+    // M3 Bottom Sheets
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: colorScheme.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
       elevation: 8,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
     ),
-    dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-    dividerColor: const Color(0xFFE2E8F0),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
+
+    // M3 Chips
+    chipTheme: ChipThemeData(
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      disabledColor: colorScheme.surfaceContainerLow,
+      selectedColor: colorScheme.primaryContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+      ),
+      side: BorderSide.none,
+      labelStyle: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+
+    // M3 Input Fields
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFB45309), width: 2),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.primary, width: 2),
       ),
-      filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
+    ),
+
+    // M3 Buttons
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
       ),
+    ),
+
+    // M3 Navigation Bar
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: colorScheme.surface,
+      selectedItemColor: colorScheme.primary,
+      unselectedItemColor: colorScheme.onSurfaceVariant,
+      elevation: 8,
+      type: BottomNavigationBarType.fixed,
     ),
   );
 }
 
-ThemeData _buildSepiaTheme() {
+// -----------------------------------------------------------------------------
+// 2. Material 3 Adaptive Dark Theme (Default)
+// -----------------------------------------------------------------------------
+ThemeData _buildM3DarkTheme({ColorScheme? dynamicScheme}) {
+  final colorScheme = (dynamicScheme != null)
+      ? dynamicScheme.harmonized()
+      : ColorScheme.fromSeed(
+          seedColor: AppColors.gold,
+          brightness: Brightness.dark,
+          primary: AppColors.gold,
+          onPrimary: Colors.black,
+          secondary: AppColors.teal,
+          onSecondary: Colors.white,
+          surface: const Color(0xFF101622),
+          onSurface: const Color(0xFFF8FAFC),
+          surfaceContainerHighest: const Color(0xFF1E293B),
+          outline: const Color(0xFF2A3A55),
+        );
+
   return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: colorScheme.surfaceContainerLowest,
+    primaryColor: colorScheme.primary,
+    cardColor: colorScheme.surface,
+    canvasColor: colorScheme.surface,
+    dividerColor: colorScheme.outlineVariant,
+
+    // M3 Typography
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(
+        color: colorScheme.onSurface,
+        fontWeight: FontWeight.w500,
+        fontSize: 16,
+      ),
+      bodyMedium: TextStyle(
+        color: colorScheme.onSurfaceVariant,
+        fontSize: 14,
+      ),
+      titleLarge: TextStyle(
+        color: colorScheme.onSurface,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+      ),
+    ),
+
+    // M3 AppBar
+    appBarTheme: AppBarTheme(
+      centerTitle: true,
+      backgroundColor: colorScheme.surfaceContainerLowest,
+      foregroundColor: colorScheme.primary,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: IconThemeData(color: colorScheme.primary),
+      titleTextStyle: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+    // M3 Cards
+    cardTheme: CardThemeData(
+      color: colorScheme.surface,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant, width: 1),
+      ),
+    ),
+
+    // M3 Dialogs
+    dialogTheme: DialogThemeData(
+      backgroundColor: colorScheme.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+    ),
+
+    // M3 Bottom Sheets
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: colorScheme.surfaceContainerHigh,
+      surfaceTintColor: Colors.transparent,
+      elevation: 10,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+    ),
+
+    // M3 Chips
+    chipTheme: ChipThemeData(
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      disabledColor: colorScheme.surfaceContainerLow,
+      selectedColor: colorScheme.primaryContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      side: BorderSide.none,
+      labelStyle: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+
+    // M3 Input Fields
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+      ),
+    ),
+
+    // M3 Buttons
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+      ),
+    ),
+
+    // M3 Navigation Bar
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: colorScheme.surfaceContainerLow,
+      selectedItemColor: colorScheme.primary,
+      unselectedItemColor: colorScheme.onSurfaceVariant,
+      elevation: 8,
+      type: BottomNavigationBarType.fixed,
+    ),
+  );
+}
+
+// -----------------------------------------------------------------------------
+// 3. Material 3 Sepia Theme (Warm Parchment / Paper)
+// -----------------------------------------------------------------------------
+ThemeData _buildM3SepiaTheme() {
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: const Color(0xFF8C5A2B),
     brightness: Brightness.light,
+    primary: const Color(0xFF8C5A2B),
+    onPrimary: Colors.white,
+    surface: const Color(0xFFFDF6E3),
+    onSurface: const Color(0xFF4A3B2C),
+    surfaceContainerHighest: const Color(0xFFEBE0C5),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    colorScheme: colorScheme,
     scaffoldBackgroundColor: const Color(0xFFF4ECD8),
     primaryColor: const Color(0xFF8C5A2B),
     cardColor: const Color(0xFFFDF6E3),
     canvasColor: const Color(0xFFFDF6E3),
-    chipTheme: const ChipThemeData(backgroundColor: Color(0xFFEBE0C5)),
+    dividerColor: const Color(0xFFE5DABF),
+
     textTheme: const TextTheme(
-      bodyLarge: TextStyle(
-        color: Color(0xFF4A3B2C),
-        fontWeight: FontWeight.w500,
-      ),
+      bodyLarge: TextStyle(color: Color(0xFF4A3B2C), fontWeight: FontWeight.w500),
       bodyMedium: TextStyle(color: Color(0xFF7A6451)),
     ),
+
     appBarTheme: const AppBarTheme(
+      centerTitle: true,
       backgroundColor: Color(0xFFF4ECD8),
       foregroundColor: Color(0xFF8C5A2B),
       elevation: 0,
+      scrolledUnderElevation: 1,
+      surfaceTintColor: Colors.transparent,
       iconTheme: IconThemeData(color: Color(0xFF8C5A2B)),
     ),
+
+    cardTheme: CardThemeData(
+      color: const Color(0xFFFDF6E3),
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.05),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE5DABF), width: 1),
+      ),
+    ),
+
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFFFDF6E3),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    ),
+
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Color(0xFFFDF6E3),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+    ),
+
+    chipTheme: ChipThemeData(
+      backgroundColor: const Color(0xFFEBE0C5),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      side: BorderSide.none,
+      labelStyle: const TextStyle(color: Color(0xFF4A3B2C), fontWeight: FontWeight.w600),
+    ),
+
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFFFDF6E3),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFDCD0B2)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFDCD0B2)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF8C5A2B), width: 2),
+      ),
+    ),
+
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFFFDF6E3),
       selectedItemColor: Color(0xFF8C5A2B),
       unselectedItemColor: Color(0xFFB09D8A),
       elevation: 8,
-    ),
-    dialogTheme: const DialogThemeData(
-      backgroundColor: Color(0xFFFDF6E3),
-    ),
-    dividerColor: const Color(0xFFEBE0C5),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFD3C5A8)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFD3C5A8)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF8C5A2B), width: 2),
-      ),
-      filled: true,
-      fillColor: const Color(0xFFFDF6E3),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      type: BottomNavigationBarType.fixed,
     ),
   );
 }
 
-ThemeData _buildBlackTheme() {
-  return ThemeData(
+// -----------------------------------------------------------------------------
+// 4. Material 3 OLED Black Theme
+// -----------------------------------------------------------------------------
+ThemeData _buildM3OledBlackTheme() {
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: AppColors.gold,
     brightness: Brightness.dark,
+    primary: AppColors.gold,
+    onPrimary: Colors.black,
+    surface: const Color(0xFF0D0D0D),
+    onSurface: const Color(0xFFE5E5E5),
+    surfaceContainerHighest: const Color(0xFF1F1F1F),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: colorScheme,
     scaffoldBackgroundColor: Colors.black,
     primaryColor: AppColors.gold,
-    cardColor: const Color(0xFF0D0D0D),
-    canvasColor: const Color(0xFF0D0D0D),
-    chipTheme: const ChipThemeData(backgroundColor: Color(0xFF262626)),
+    cardColor: const Color(0xFF121212),
+    canvasColor: const Color(0xFF121212),
+    dividerColor: const Color(0xFF262626),
+
     textTheme: const TextTheme(
-      bodyLarge: TextStyle(
-        color: Color(0xFFF8FAFC),
-        fontWeight: FontWeight.w500,
-      ),
+      bodyLarge: TextStyle(color: Color(0xFFE5E5E5), fontWeight: FontWeight.w500),
       bodyMedium: TextStyle(color: Color(0xFFA3A3A3)),
     ),
+
     appBarTheme: const AppBarTheme(
+      centerTitle: true,
       backgroundColor: Colors.black,
       foregroundColor: AppColors.gold,
       elevation: 0,
+      scrolledUnderElevation: 1,
+      surfaceTintColor: Colors.transparent,
       iconTheme: IconThemeData(color: AppColors.gold),
     ),
+
+    cardTheme: CardThemeData(
+      color: const Color(0xFF121212),
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFF262626), width: 1),
+      ),
+    ),
+
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFF171717),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    ),
+
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Color(0xFF171717),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+    ),
+
+    chipTheme: ChipThemeData(
+      backgroundColor: const Color(0xFF262626),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      side: BorderSide.none,
+      labelStyle: const TextStyle(color: Color(0xFFE5E5E5), fontWeight: FontWeight.w600),
+    ),
+
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF121212),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF333333)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF333333)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.gold, width: 2),
+      ),
+    ),
+
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Colors.black,
       selectedItemColor: AppColors.gold,
-      unselectedItemColor: Color(0xFF525252),
+      unselectedItemColor: Color(0xFF737373),
       elevation: 8,
-    ),
-    dialogTheme: const DialogThemeData(
-      backgroundColor: Color(0xFF1A1A1A),
-    ),
-    dividerColor: const Color(0xFF262626),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF404040)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF404040)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.gold, width: 2),
-      ),
-      filled: true,
-      fillColor: const Color(0xFF0D0D0D),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      type: BottomNavigationBarType.fixed,
     ),
   );
 }
 
-ThemeData _buildDarkMonetTheme() {
-  return ThemeData(
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF0D1211),
-    primaryColor: const Color(0xFF14B8A6),
-    cardColor: const Color(0xFF161F1E),
-    canvasColor: const Color(0xFF161F1E),
-    chipTheme: const ChipThemeData(backgroundColor: Color(0xFF233331)),
-    textTheme: const TextTheme(
-      bodyLarge: TextStyle(
-        color: Color(0xFFF2F4F3),
-        fontWeight: FontWeight.w500,
-      ),
-      bodyMedium: TextStyle(color: Color(0xFF869A96)),
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF0D1211),
-      foregroundColor: Color(0xFF14B8A6),
-      elevation: 0,
-      iconTheme: IconThemeData(color: Color(0xFF14B8A6)),
-    ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFF0F1514),
-      selectedItemColor: Color(0xFF14B8A6),
-      unselectedItemColor: Color(0xFF4C5D5A),
-      elevation: 8,
-    ),
-    dialogTheme: const DialogThemeData(
-      backgroundColor: Color(0xFF1D2927),
-    ),
-    dividerColor: const Color(0xFF233331),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2D4341)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2D4341)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF14B8A6), width: 2),
-      ),
-      filled: true,
-      fillColor: const Color(0xFF161F1E),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
-    ),
-  );
+// -----------------------------------------------------------------------------
+// 5. Material 3 Dark Monet (Emerald Teal) Theme
+// -----------------------------------------------------------------------------
+ThemeData _buildM3DarkMonetTheme({ColorScheme? dynamicScheme}) {
+  final colorScheme = (dynamicScheme != null)
+      ? dynamicScheme.harmonized()
+      : ColorScheme.fromSeed(
+          seedColor: const Color(0xFF14B8A6),
+          brightness: Brightness.dark,
+          primary: const Color(0xFF14B8A6),
+          onPrimary: Colors.black,
+          surface: const Color(0xFF101918),
+          onSurface: const Color(0xFFF2F4F3),
+          surfaceContainerHighest: const Color(0xFF1C2B29),
+        );
+
+  return _buildM3DarkTheme(dynamicScheme: colorScheme);
 }
 
-ThemeData _buildWhiteMonetTheme() {
-  return ThemeData(
-    brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xFFF2F6F4),
-    primaryColor: AppColors.teal,
-    cardColor: Colors.white,
-    canvasColor: Colors.white,
-    chipTheme: const ChipThemeData(backgroundColor: Color(0xFFE2E8F0)),
-    textTheme: const TextTheme(
-      bodyLarge: TextStyle(
-        color: Color(0xFF1F2927),
-        fontWeight: FontWeight.w500,
-      ),
-      bodyMedium: TextStyle(color: Color(0xFF5A7571)),
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFF2F6F4),
-      foregroundColor: AppColors.teal,
-      elevation: 0,
-      iconTheme: IconThemeData(color: AppColors.teal),
-    ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Colors.white,
-      selectedItemColor: AppColors.teal,
-      unselectedItemColor: Color(0xFF94A3B8),
-      elevation: 8,
-    ),
-    dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-    dividerColor: const Color(0xFFE2E8F0),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFB2CFCA)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFB2CFCA)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.teal, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
-    ),
-  );
-}
+// -----------------------------------------------------------------------------
+// 6. Material 3 Light Monet Theme
+// -----------------------------------------------------------------------------
+ThemeData _buildM3WhiteMonetTheme({ColorScheme? dynamicScheme}) {
+  final colorScheme = (dynamicScheme != null)
+      ? dynamicScheme.harmonized()
+      : ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0D9488),
+          brightness: Brightness.light,
+          primary: AppColors.teal,
+          onPrimary: Colors.white,
+          surface: Colors.white,
+          onSurface: const Color(0xFF1F2927),
+          surfaceContainerHighest: const Color(0xFFE2ECE9),
+        );
 
-ThemeData _buildDarkTheme() {
-  return ThemeData(
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF07090E),
-    primaryColor: AppColors.teal,
-    cardColor: const Color(0xFF111520),
-    canvasColor: const Color(0xFF111520),
-    chipTheme: const ChipThemeData(backgroundColor: Color(0xFF1E293B)),
-    textTheme: const TextTheme(
-      bodyLarge: TextStyle(
-        color: Color(0xFFF8FAFC),
-        fontWeight: FontWeight.w500,
-      ),
-      bodyMedium: TextStyle(color: Color(0xFF94A3B8)),
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF07090E),
-      foregroundColor: AppColors.gold,
-      elevation: 0,
-      iconTheme: IconThemeData(color: AppColors.gold),
-    ),
-    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFF0D101A),
-      selectedItemColor: AppColors.gold,
-      unselectedItemColor: Color(0xFF475569),
-      elevation: 8,
-    ),
-    dialogTheme: const DialogThemeData(
-      backgroundColor: Color(0xFF161C2C),
-    ),
-    dividerColor: const Color(0xFF1E293B),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2A3A55)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2A3A55)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.gold, width: 2),
-      ),
-      filled: true,
-      fillColor: const Color(0xFF111520),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
-    ),
-  );
+  return _buildM3LightTheme(dynamicScheme: colorScheme);
 }

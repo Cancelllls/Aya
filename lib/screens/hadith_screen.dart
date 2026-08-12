@@ -13,6 +13,7 @@ import '../services/translation_service.dart';
 import '../services/database_service.dart';
 import '../services/hadith_database_service.dart';
 import 'hadith_explanation_screen.dart';
+import '../widgets/share_card_dialog.dart';
 
 class HadithBook {
   final String id;
@@ -752,6 +753,39 @@ class _HadithScreenState extends State<HadithScreen> {
                       : 'Source: ${_selectedBook.nameEn}';
                   SharePlus.instance.share(
                     ShareParams(text: '$text\n\n— $ref • Aya App'),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.image_outlined,
+                  color: Color(0xFFE5C158),
+                ),
+                title: Text(
+                  TranslationService.isArabic
+                      ? "مشاركة كصورة"
+                      : "Share as Image",
+                ),
+                subtitle: Text(
+                  TranslationService.isArabic
+                      ? "تصميم صورة أنيقة للحديث"
+                      : "Create styled Hadith image card",
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  final text = (h['arabic'] ?? h['english'] ?? '').toString();
+                  final translation = (h['english'] ?? '').toString();
+                  showDialog(
+                    context: context,
+                    builder: (_) => ShareCardDialog(
+                      title: TranslationService.isArabic ? 'حديث شريف' : 'Hadith',
+                      categoryOrSource: _selectedBook.nameAr,
+                      mainText: text,
+                      translationText: _displayLang == 'eng' ? translation : null,
+                      footnote: h['hadithNumber'] != null
+                          ? 'حديث رقم ${h['hadithNumber']}'
+                          : null,
+                    ),
                   );
                 },
               ),

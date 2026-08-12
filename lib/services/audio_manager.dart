@@ -9,6 +9,7 @@ import 'storage_service.dart';
 import 'translation_service.dart';
 import '../models/offline_surahs.dart';
 import 'qdc_audio_service.dart';
+import 'notification_service.dart';
 
 class AudioPlayState {
   final int surahNum;
@@ -69,6 +70,19 @@ class AudioManager {
         } catch (_) {}
       }
     }
+
+    playState.addListener(() {
+      final state = playState.value;
+      if (state.isPlaying || state.isLoading) {
+        NotificationService().showAudioMediaNotification(
+          title: state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
+          subtitle: state.subtitle,
+          isPlaying: state.isPlaying,
+        );
+      } else {
+        NotificationService().cancelAudioMediaNotification();
+      }
+    });
   }
 
   void _setupPlayer(AudioPlayer p) {

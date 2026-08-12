@@ -136,16 +136,25 @@ class AudioPlayerOverlay extends StatelessWidget {
                               const Duration(seconds: 10),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          IconButton(
-                            icon: Icon(
-                              Icons.close,
-                              size: 18,
-                              color: isDark ? Colors.white60 : Colors.black54,
+                          const SizedBox(width: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : Colors.black.withValues(alpha: 0.06),
+                              shape: BoxShape.circle,
                             ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => AudioManager.instance.stop(),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
+                              padding: const EdgeInsets.all(6),
+                              constraints: const BoxConstraints(),
+                              tooltip: 'Stop Audio / إيقاف الصوت',
+                              onPressed: () => AudioManager.instance.stop(),
+                            ),
                           ),
                         ],
                       ),

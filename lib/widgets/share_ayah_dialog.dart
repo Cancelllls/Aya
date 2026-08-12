@@ -1,0 +1,330 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import '../models/quran_models.dart';
+import '../services/translation_service.dart';
+
+class ShareAyahDialog extends StatefulWidget {
+  final Ayah ayah;
+  final String surahName;
+  final int surahNumber;
+
+  const ShareAyahDialog({
+    super.key,
+    required this.ayah,
+    required this.surahName,
+    required this.surahNumber,
+  });
+
+  @override
+  State<ShareAyahDialog> createState() => _ShareAyahDialogState();
+}
+
+class _ShareAyahDialogState extends State<ShareAyahDialog> {
+  final GlobalKey _globalKey = GlobalKey();
+  bool _isGenerating = false;
+  int _selectedThemeIndex = 0;
+
+  final List<Map<String, dynamic>> _themes = [
+    {
+      'nameAr': 'ذهبي وداكن',
+      'nameEn': 'Dark Gold',
+      'bgColor': const Color(0xFF141921),
+      'borderColor': const Color(0xFFE5C158),
+      'textColor': Colors.white,
+      'accentColor': const Color(0xFFE5C158),
+    },
+    {
+      'nameAr': 'زمرّدي مذهب',
+      'nameEn': 'Emerald',
+      'bgColor': const Color(0xFF0F261C),
+      'borderColor': const Color(0xFF81C784),
+      'textColor': const Color(0xFFE8F5E9),
+      'accentColor': const Color(0xFF81C784),
+    },
+    {
+      'nameAr': 'نيلي ملكي',
+      'nameEn': 'Royal Navy',
+      'bgColor': const Color(0xFF0D1B2A),
+      'borderColor': const Color(0xFF64B5F6),
+      'textColor': const Color(0xFFE3F2FD),
+      'accentColor': const Color(0xFF64B5F6),
+    },
+    {
+      'nameAr': 'ورقي كريمي',
+      'nameEn': 'Parchment',
+      'bgColor': const Color(0xFFFBF8EE),
+      'borderColor': const Color(0xFFB08968),
+      'textColor': const Color(0xFF3D2C1E),
+      'accentColor': const Color(0xFF7F5539),
+    },
+  ];
+
+  Future<void> _captureAndShareImage() async {
+    setState(() => _isGenerating = true);
+    try {
+      final boundary =
+          _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final buffer = byteData.buffer.asUint8List();
+      final tempDir = await getTemporaryDirectory();
+      final filePath =
+          '${tempDir.path}/ayah_${widget.surahNumber}_${widget.ayah.numberInSurah}_${DateTime.now().millisecondsSinceEpoch}.png';
+      final file = File(filePath);
+      await file.writeAsBytes(buffer);
+
+      final isAr = TranslationService.isArabic;
+      final ref = '${widget.surahName} ${widget.surahNumber}:${widget.ayah.numberInSurah}';
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(filePath)],
+          text: isAr ? 'آية من القرآن الكريم — $ref' : 'Ayah from Quran — $ref',
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? 'تعذر مشاركة الصورة'
+                  : 'Failed to share image: $e',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGenerating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeConfig = _themes[_selectedThemeIndex];
+    final isAr = TranslationService.isArabic;
+    final theme = Theme.of(context);
+
+    return Dialog(
+      backgroundColor: theme.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isAr ? 'مشاركة الآية كصورة' : 'Share Verse as Image',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Live Image Preview Card wrapped in RepaintBoundary
+            RepaintBoundary(
+              key: _globalKey,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: themeConfig['bgColor'] as Color,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header Motif
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.star_outline_rounded,
+                          color: themeConfig['accentColor'] as Color,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} ${widget.ayah.numberInSurah}',
+                          style: TextStyle(
+                            color: themeConfig['accentColor'] as Color,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.star_outline_rounded,
+                          color: themeConfig['accentColor'] as Color,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Arabic Verse Text
+                    Text(
+                      widget.ayah.text,
+                      textDirection: TextDirection.rtl,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Amiri',
+                        fontSize: 22,
+                        height: 2.0,
+                        fontWeight: FontWeight.bold,
+                        color: themeConfig['textColor'] as Color,
+                      ),
+                    ),
+
+                    // Translation (If present)
+                    if (widget.ayah.translation.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        widget.ayah.translation,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: (themeConfig['textColor'] as Color).withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // Footer branding
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 1,
+                          color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Aya App • تطبيق آية',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 30,
+                          height: 1,
+                          color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Theme Style Picker
+            SizedBox(
+              height: 34,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _themes.length,
+                itemBuilder: (ctx, idx) {
+                  final t = _themes[idx];
+                  final isSelected = idx == _selectedThemeIndex;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedThemeIndex = idx),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: (t['bgColor'] as Color),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? (t['accentColor'] as Color)
+                              : Colors.grey.withValues(alpha: 0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        isAr ? t['nameAr'] : t['nameEn'],
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: t['textColor'] as Color,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Share Action Button
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE5C158),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _isGenerating ? null : _captureAndShareImage,
+                icon: _isGenerating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.black,
+                        ),
+                      )
+                    : const Icon(Icons.share, color: Colors.black),
+                label: Text(
+                  isAr ? 'مشاركة الصورة' : 'Share Image',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

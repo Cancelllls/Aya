@@ -10,6 +10,7 @@ import 'services/translation_service.dart';
 import 'services/notification_service.dart';
 import 'services/api_service.dart';
 import 'services/audio_manager.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'theme/app_themes.dart';
 import 'screens/splash_screen.dart';
 
@@ -86,34 +87,46 @@ class _AyaAppState extends State<AyaApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeData = buildThemeData(_activeTheme).copyWith(
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        },
-      ),
-    );
-    return MaterialApp(
-      title: 'Aya - Islamic App',
-      debugShowCheckedModeBanner: false,
-      theme: themeData,
-      locale: Locale(TranslationService.currentLanguage),
-      supportedLocales: [const Locale('ar'), const Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      builder: (context, child) {
-        return Directionality(
-          textDirection: TranslationService.isArabic
-              ? TextDirection.rtl
-              : TextDirection.ltr,
-          child: child ?? const SizedBox.shrink(),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        final themeData = buildThemeData(
+          _activeTheme,
+          lightDynamic: lightDynamic,
+          darkDynamic: darkDynamic,
+        ).copyWith(
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            },
+          ),
+        );
+
+        return MaterialApp(
+          title: 'Aya - Islamic App',
+          debugShowCheckedModeBanner: false,
+          theme: themeData,
+          locale: Locale(TranslationService.currentLanguage),
+          supportedLocales: const [Locale('ar'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (context, child) {
+            return Directionality(
+              textDirection: TranslationService.isArabic
+                  ? TextDirection.rtl
+                  : TextDirection.ltr,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          home: SplashScreen(
+            storage: widget.storage,
+            onThemeChanged: _updateTheme,
+          ),
         );
       },
-      home: SplashScreen(storage: widget.storage, onThemeChanged: _updateTheme),
     );
   }
 }

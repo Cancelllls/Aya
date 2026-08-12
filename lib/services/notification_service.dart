@@ -282,6 +282,18 @@ class NotificationService {
           stopActiveAthan();
           return;
         }
+        if (response.actionId == 'action_toggle_audio') {
+          try {
+            const MethodChannel('com.quran.aya/system').invokeMethod('toggleAudio');
+          } catch (_) {}
+          return;
+        }
+        if (response.actionId == 'action_stop_audio') {
+          try {
+            const MethodChannel('com.quran.aya/system').invokeMethod('stopAudio');
+          } catch (_) {}
+          return;
+        }
         if (response.actionId == 'action_prayed' ||
             response.actionId == 'action_missed') {
           final payload = response.payload;
@@ -1030,5 +1042,57 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return tz.TZDateTime.from(scheduled, tz.local);
+  }
+
+  Future<void> showAudioMediaNotification({
+    required String title,
+    required String subtitle,
+    required bool isPlaying,
+  }) async {
+    final isAr = TranslationService.isArabic;
+
+    final androidDetails = AndroidNotificationDetails(
+      'aya_media_playback',
+      'Media Playback / مشغل الصوت',
+      channelDescription: 'Lock screen and notification controls for Quran audio playback',
+      importance: Importance.high,
+      priority: Priority.high,
+      ongoing: isPlaying,
+      autoCancel: false,
+      showWhen: false,
+      icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
+      color: const Color(0xFFE5C158),
+      actions: [
+        AndroidNotificationAction(
+          'action_toggle_audio',
+          isPlaying ? (isAr ? 'إيقاف مؤقت' : 'Pause') : (isAr ? 'تشغيل' : 'Play'),
+          showsUserInterface: false,
+        ),
+        AndroidNotificationAction(
+          'action_stop_audio',
+          isAr ? 'إنهاء' : 'Stop',
+          showsUserInterface: false,
+        ),
+      ],
+    );
+
+    final notificationDetails = NotificationDetails(android: androidDetails);
+
+    try {
+      await _notificationsPlugin.show(
+        id: 8888,
+        title: title,
+        body: subtitle,
+        notificationDetails: notificationDetails,
+        payload: 'audio_media_player',
+      );
+    } catch (_) {}
+  }
+
+  Future<void> cancelAudioMediaNotification() async {
+    try {
+      await _notificationsPlugin.cancel(id: 8888);
+    } catch (_) {}
   }
 }

@@ -65,6 +65,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   /// Save reciter for current Qira'ah AND sync to global default_reciter
   /// (used by AudioManager for playback).
   void _saveReciter(String val) {
+    AudioManager.instance.stop();
     widget.storage.setString('default_reciter_$_quranScriptType', val);
     widget.storage.setString('default_reciter', val);
     if (mounted) setState(() {});
