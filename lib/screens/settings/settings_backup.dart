@@ -104,6 +104,89 @@ extension SettingsBackupSection on _SettingsScreenState {
                     }
                   },
                 ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.cleaning_services, color: Color(0xFFE5C158)),
+                  title: Text(isArabic ? "إدارة التخزين والتخزين المؤقت" : "Storage & Cache Management"),
+                  subtitle: Text(
+                    isArabic
+                        ? "مسح الملفات المؤقتة وذاكرة التخزين التلقائية"
+                        : "Clear temporary audio & system cache files",
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  onTap: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: Theme.of(context).cardColor,
+                        title: Text(
+                          isArabic ? "مسح ذاكرة التخزين؟" : "Clear Cache?",
+                          style: const TextStyle(
+                            color: Color(0xFFE5C158),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        content: Text(
+                          isArabic
+                              ? "سيتم حذف الملفات المؤقتة فقط. لن تفقد إشاراتك أو إعداداتك."
+                              : "This will only delete temporary files. Your bookmarks and settings will remain safe.",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text(TranslationService.t('cancel')),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE5C158),
+                            ),
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: Text(
+                              isArabic ? "مسح" : "Clear",
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      try {
+                        final tempDir = await getTemporaryDirectory();
+                        if (await tempDir.exists()) {
+                          final entities = tempDir.listSync();
+                          for (final entity in entities) {
+                            try {
+                              entity.deleteSync(recursive: true);
+                            } catch (_) {}
+                          }
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isArabic
+                                    ? "✅ تم مسح ذاكرة التخزين المؤقت."
+                                    : "✅ Temporary cache cleared.",
+                              ),
+                              backgroundColor: const Color(0xFFE5C158),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${isArabic ? "فشل" : "Failed"}: $e'),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
+                ),
               ],
             ),
           ),

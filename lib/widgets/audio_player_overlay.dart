@@ -200,8 +200,9 @@ class AudioPlayerOverlay extends StatelessWidget {
                                 String twoDigitSeconds = twoDigits(
                                   d.inSeconds.remainder(60),
                                 );
-                                if (d.inHours > 0)
+                                if (d.inHours > 0) {
                                   return "${d.inHours}:$twoDigitMinutes:$twoDigitSeconds";
+                                }
                                 return "$twoDigitMinutes:$twoDigitSeconds";
                               }
 
@@ -259,20 +260,23 @@ class AudioPlayerOverlay extends StatelessWidget {
                                               }
                                             },
                                             onChangeStart: (val) {
-                                              if (!isSplit)
+                                              if (!isSplit) {
                                                 AudioManager
                                                         .instance
                                                         .isSeeking =
                                                     true;
+                                              }
                                             },
                                             onChangeEnd: (val) async {
                                               if (isSplit) {
                                                 int targetAyah =
                                                     val.floor() + 1;
-                                                if (targetAyah > totalAyahs)
+                                                if (targetAyah > totalAyahs) {
                                                   targetAyah = totalAyahs;
-                                                if (targetAyah < 1)
+                                                }
+                                                if (targetAyah < 1) {
                                                   targetAyah = 1;
+                                                }
 
                                                 AudioManager.instance
                                                     .seekToAyahInSplitMode(

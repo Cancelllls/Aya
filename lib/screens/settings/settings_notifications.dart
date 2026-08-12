@@ -419,6 +419,77 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
+                  title: Text(
+                    TranslationService.isArabic
+                        ? "كتم الصوت التلقائي أثناء الصلاة (DND)"
+                        : "Auto Silence (DND) During Prayer",
+                  ),
+                  subtitle: Text(
+                    TranslationService.isArabic
+                        ? "تفعيل وضع عدم الإزعاج تلقائياً عند دخول وقت الصلاة"
+                        : "Automatically enable Do Not Disturb mode at prayer time",
+                  ),
+                  activeThumbColor: const Color(0xFFE5C158),
+                  value: _autoDndEnabled,
+                  onChanged: (val) async {
+                    if (val && !_dndPolicyPermitted) {
+                      await _requestDndPermission();
+                    }
+                    setState(() => _autoDndEnabled = val);
+                    await widget.storage.setBool('auto_dnd_enabled', val);
+                  },
+                ),
+                if (_autoDndEnabled) ...[
+                  Divider(
+                    height: 1,
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                  ),
+                  ListTile(
+                    title: Text(
+                      TranslationService.isArabic
+                          ? "مدة كتم الصوت"
+                          : "Auto Silence Duration",
+                    ),
+                    subtitle: Text(
+                      TranslationService.isArabic
+                          ? "مدة تفعيل وضع عدم الإزعاج بالدقائق"
+                          : "Minutes to keep phone in Do Not Disturb mode",
+                    ),
+                    trailing: SizedBox(
+                      width: 160,
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: _autoDndDuration,
+                        underline: const SizedBox(),
+                        dropdownColor: theme.cardColor,
+                        items: [15, 20, 30, 45].map((mins) {
+                          return DropdownMenuItem<int>(
+                            value: mins,
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                TranslationService.isArabic
+                                    ? "$mins دقيقة"
+                                    : "$mins Minutes",
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) async {
+                          if (val != null) {
+                            setState(() => _autoDndDuration = val);
+                            await widget.storage.setInt('auto_dnd_duration', val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+                SwitchListTile(
                   title: Text(TranslationService.t('morning_azkar_reminder')),
                   activeThumbColor: const Color(0xFFE5C158),
                   value: _morningAzkarReminder,

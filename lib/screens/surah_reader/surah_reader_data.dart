@@ -82,7 +82,7 @@ extension SurahReaderData on _SurahReaderScreenState {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoadingReciters = false);
+        updateState(() => _isLoadingReciters = false);
         if (modalSetState != null) modalSetState(() {});
       }
     }
@@ -91,7 +91,7 @@ extension SurahReaderData on _SurahReaderScreenState {
   Future<void> _loadAllSurahs() async {
     try {
       final list = await ApiService.fetchSurahList();
-      setState(() {
+      updateState(() {
         _allSurahs = list;
       });
     } catch (_) {}
@@ -106,11 +106,11 @@ extension SurahReaderData on _SurahReaderScreenState {
       await ApiService.fetchTafsirForSurah(_currentSurah.number, _ayahList);
     } catch (_) {}
     _tafsirLoaded = true;
-    if (mounted) setState(() {});
+    updateState(() {});
   }
 
   Future<void> _loadAyahs() async {
-    setState(() {
+    updateState(() {
       _isLoading = true;
       _tafsirLoaded = false;
     });
@@ -142,7 +142,7 @@ extension SurahReaderData on _SurahReaderScreenState {
           }
         }
       }
-      setState(() {
+      updateState(() {
         _ayahList = list;
         _isLoading = false;
       });
@@ -167,7 +167,7 @@ extension SurahReaderData on _SurahReaderScreenState {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        updateState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${TranslationService.t('failed_load_verses')}: $e'),

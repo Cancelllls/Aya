@@ -278,6 +278,37 @@ class MainActivity : FlutterActivity() {
                 "getTimeZoneName" -> {
                     result.success(java.util.TimeZone.getDefault().id)
                 }
+                "checkNotificationPolicyAccess" -> {
+                    val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                    val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        nm.isNotificationPolicyAccessGranted
+                    } else {
+                        true
+                    }
+                    result.success(granted)
+                }
+                "requestNotificationPolicyAccess" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
+                    result.success(true)
+                }
+                "setDoNotDisturbMode" -> {
+                    val enable = call.argument<Boolean>("enabled") ?: false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                        if (nm.isNotificationPolicyAccessGranted) {
+                            val filter = if (enable) android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY else android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+                            nm.setInterruptionFilter(filter)
+                        }
+                    }
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }

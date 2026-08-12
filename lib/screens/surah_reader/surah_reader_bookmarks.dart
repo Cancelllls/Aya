@@ -66,10 +66,6 @@ extension SurahReaderBookmarks on _SurahReaderScreenState {
     });
   }
 
-  void _flushPositionSave() {
-    _savePositionTimer?.cancel();
-  }
-
   void _toggleBookmark() async {
     if (_isBookmarked) {
       await widget.storage.removeBookmark(_currentSurah.number);

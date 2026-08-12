@@ -260,17 +260,57 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    ayah.text,
-                    textDirection: TextDirection.rtl,
-                    textAlign: TextAlign.justify,
-                    style: _getArabicTextStyle(
-                      22 * _fontSizeMultiplier,
-                      height: 2.1,
-                      fontWeight: FontWeight.bold,
-                    ),
+                GestureDetector(
+                  onTap: () => _toggleAyahMasking(ayah.numberInSurah),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: (_isHifzMode && !_unmaskedAyahs.contains(ayah.numberInSurah))
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE5C158).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFE5C158).withValues(alpha: 0.4),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.visibility_off_outlined,
+                                  color: Color(0xFFE5C158),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  TranslationService.isArabic
+                                      ? "انقر لكشف الآية (وضع الحفظ والتسميع)"
+                                      : "Tap to reveal verse (Hifz Mode)",
+                                  style: const TextStyle(
+                                    color: Color(0xFFE5C158),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Text(
+                            ayah.text,
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.justify,
+                            style: _getArabicTextStyle(
+                              22 * _fontSizeMultiplier,
+                              height: 2.1,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 if (_readingMode == 'translation') ...[

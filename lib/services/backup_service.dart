@@ -23,7 +23,7 @@ class BackupService {
     ];
     for (var key in strKeys) {
       final v = storage.getString(key);
-      if (v != null && v.isNotEmpty) settings[key] = v;
+      if (v.isNotEmpty) settings[key] = v;
     }
     final intKeys = ['calc_method', 'asr_method', 'first_day_of_week', 'pre_adhan_duration', 'focus_lock_duration'];
     for (var key in intKeys) {
@@ -38,7 +38,7 @@ class BackupService {
     ];
     for (var key in boolKeys) {
       final v = storage.getBool(key);
-      if (v != null) settings[key] = v;
+      settings[key] = v;
     }
 
     final azkar = storage.getStringList('custom_dhikrs') ?? [];

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -71,6 +70,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   bool _isBookmarked = false;
   int? _bookmarkedAyahNumber;
   int? _lastScrolledAyah;
+  bool _isHifzMode = false;
+  final Set<int> _unmaskedAyahs = {};
 
   Ticker? _ticker;
   double _scrollSpeed = 1.0;
@@ -207,6 +208,43 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     return "$juzText • $hizbText";
   }
 
+  void _toggleHifzMode() {
+    setState(() {
+      _isHifzMode = !_isHifzMode;
+      _unmaskedAyahs.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isHifzMode
+              ? (TranslationService.isArabic
+                  ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
+                  : "Hifz Mode enabled (tap verse to reveal)")
+              : (TranslationService.isArabic
+                  ? "تم إيقاف وضع التسميع والحفظ"
+                  : "Hifz Mode disabled"),
+        ),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFFE5C158),
+      ),
+    );
+  }
+
+  void _toggleAyahMasking(int ayahNum) {
+    if (!_isHifzMode) return;
+    setState(() {
+      if (_unmaskedAyahs.contains(ayahNum)) {
+        _unmaskedAyahs.remove(ayahNum);
+      } else {
+        _unmaskedAyahs.add(ayahNum);
+      }
+    });
+  }
+
+  void updateState(VoidCallback fn) {
+    if (mounted) setState(fn);
+  }
+
   void _navigateToSurahWithAnimation(int nextSurahNum, bool goingForward) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
@@ -272,6 +310,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(
+              _isHifzMode ? Icons.school : Icons.school_outlined,
+              color: _isHifzMode
+                  ? const Color(0xFFE5C158)
+                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.7),
+            ),
+            onPressed: _toggleHifzMode,
+            tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
+          ),
           IconButton(
             icon: Icon(
               _isBookmarked ? Icons.bookmark : Icons.bookmark_border,

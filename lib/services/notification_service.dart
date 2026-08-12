@@ -464,7 +464,7 @@ class NotificationService {
       defaultValue: 'mishary',
     );
 
-    String _getAdhanSound(String prayerName) {
+    String getAdhanSound(String prayerName) {
       if (adhanMode == 'silent' || adhanMode == 'vibrate') return '';
       final isFajr = prayerName == 'Fajr' || prayerName == 'fajr';
       final reciter = isFajr ? fajrReciter : adhanReciter;
@@ -520,7 +520,7 @@ class NotificationService {
             await AdhanNativeController.instance.schedulePrayerAlarm(
               id: notificationId,
               time: scheduledDate,
-              mp3ResName: _getAdhanSound(name),
+              mp3ResName: getAdhanSound(name),
               prayerName: isAr
                   ? 'حان الآن موعد صلاة $localizedName'
                   : 'Time for $localizedName prayer',
@@ -614,7 +614,7 @@ class NotificationService {
             final imsakTime = scheduledDate.subtract(Duration(minutes: imsakOffset));
             if (imsakTime.isAfter(now)) {
               final tzImsakTime = tz.TZDateTime.from(imsakTime, tz.local);
-              final imsakSoundName = _getAdhanSound(name);
+              final imsakSoundName = getAdhanSound(name);
               try {
                 await _notificationsPlugin.zonedSchedule(
                   id: notificationId + 7000,

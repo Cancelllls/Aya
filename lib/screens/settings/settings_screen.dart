@@ -12,6 +12,7 @@ import '../../models/prayer_models.dart';
 import '../quran_download_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../services/adhan_audio_service.dart';
 import '../../services/reciters_cache_service.dart';
 import '../../donation/flavor.dart';
@@ -63,6 +64,10 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   // Permissions and wake lock
   bool _exactAlarmPermitted = true;
+  bool _batteryOptIgnored = true;
+  bool _notificationPermitted = true;
+  bool _locationPermitted = true;
+  bool _dndPolicyPermitted = true;
   bool _keepScreenAwake = false;
 
   bool _morningAzkarReminder = true;
@@ -82,6 +87,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
+  bool _autoDndEnabled = false;
+  int _autoDndDuration = 20;
   Timer? _rescheduleTimer;
   @override
   void initState() {
@@ -190,6 +197,14 @@ class _SettingsScreenState extends State<SettingsScreen>
       'athan_stop_gesture',
       defaultValue: 'both',
     );
+    _autoDndEnabled = widget.storage.getBool(
+      'auto_dnd_enabled',
+      defaultValue: false,
+    );
+    _autoDndDuration = widget.storage.getInt(
+      'auto_dnd_duration',
+      defaultValue: 20,
+    );
 
     _checkPermissions();
   }
@@ -216,9 +231,26 @@ class _SettingsScreenState extends State<SettingsScreen>
       final alarm =
           await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
           true;
-      setState(() {
-        _exactAlarmPermitted = alarm;
-      });
+      final battery =
+          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
+          true;
+      final notif = await NotificationService().checkPermissions();
+      final locPerm = await Geolocator.checkPermission();
+      final loc =
+          locPerm == LocationPermission.always ||
+          locPerm == LocationPermission.whileInUse;
+      final dnd =
+          await _platform.invokeMethod<bool>('checkNotificationPolicyAccess') ??
+          true;
+      if (mounted) {
+        setState(() {
+          _exactAlarmPermitted = alarm;
+          _batteryOptIgnored = battery;
+          _notificationPermitted = notif;
+          _locationPermitted = loc;
+          _dndPolicyPermitted = dnd;
+        });
+      }
     } catch (_) {}
   }
 
@@ -226,6 +258,34 @@ class _SettingsScreenState extends State<SettingsScreen>
     try {
       await _platform.invokeMethod('requestExactAlarmPermission');
       Future.delayed(const Duration(seconds: 2), _checkPermissions);
+    } catch (_) {}
+  }
+
+  Future<void> _requestBatteryOptimization() async {
+    try {
+      await _platform.invokeMethod('requestDisableBatteryOptimization');
+      Future.delayed(const Duration(seconds: 2), _checkPermissions);
+    } catch (_) {}
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    try {
+      await NotificationService().requestPermissions();
+      Future.delayed(const Duration(seconds: 1), _checkPermissions);
+    } catch (_) {}
+  }
+
+  Future<void> _requestLocationPermission() async {
+    try {
+      await Geolocator.openAppSettings();
+      Future.delayed(const Duration(seconds: 1), _checkPermissions);
+    } catch (_) {}
+  }
+
+  Future<void> _requestDndPermission() async {
+    try {
+      await _platform.invokeMethod('requestNotificationPolicyAccess');
+      Future.delayed(const Duration(seconds: 1), _checkPermissions);
     } catch (_) {}
   }
 
