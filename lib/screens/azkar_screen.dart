@@ -386,6 +386,9 @@ class _AzkarScreenState extends State<AzkarScreen>
           ),
         );
       },
+    );
+  }
+
   void _showAzkarOptionsSheet(AzkarItem item) {
     final isAr = TranslationService.isArabic;
     showModalBottomSheet(
