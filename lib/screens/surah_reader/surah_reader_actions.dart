@@ -59,7 +59,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
                           margin: const EdgeInsets.only(right: 6),
                           child: ChoiceChip(
                             label: Text(
-                              isAr ? edition.name : edition.englishName,
+                              isAr ? edition.name : edition.mufassirEn,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

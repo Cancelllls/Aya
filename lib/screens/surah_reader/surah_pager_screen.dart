@@ -3,6 +3,7 @@ import '../../models/quran_models.dart';
 import '../../services/storage_service.dart';
 import '../../services/reciters_cache_service.dart';
 import '../../services/translation_service.dart';
+import '../../services/audio_manager.dart';
 import '../../models/offline_surahs.dart';
 import 'surah_reader_screen.dart';
 
