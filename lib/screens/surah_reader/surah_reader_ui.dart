@@ -439,19 +439,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 baseStyle: verseStyle,
                 context: context,
                 isEnabled: _isTajweedEnabled,
+                ayahRecognizer: tapRec,
               );
-              for (final s in rawSpans) {
-                if (s is TextSpan) {
-                  spans.add(TextSpan(
-                    text: s.text,
-                    children: s.children,
-                    style: s.style,
-                    recognizer: tapRec,
-                  ));
-                } else {
-                  spans.add(s);
-                }
-              }
+              spans.addAll(rawSpans);
             }
 
             spans.add(

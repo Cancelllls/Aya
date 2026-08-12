@@ -87,51 +87,73 @@ class TajweedService {
     required TextStyle baseStyle,
     required BuildContext context,
     required bool isEnabled,
+    GestureRecognizer? ayahRecognizer,
   }) {
     if (!isEnabled || text.isEmpty) {
-      return [TextSpan(text: text, style: baseStyle)];
+      return [TextSpan(text: text, style: baseStyle, recognizer: ayahRecognizer)];
     }
 
     final spans = <InlineSpan>[];
     final chars = text.runes.map((r) => String.fromCharCode(r)).toList();
     int i = 0;
+    // Buffer for normal (non-Tajweed) characters — kept together to preserve
+    // Arabic ligature shaping. Flushed as a single span when a Tajweed rule
+    // character is encountered.
+    final StringBuffer normalBuf = StringBuffer();
+
+    void flushNormal() {
+      if (normalBuf.isNotEmpty) {
+        spans.add(TextSpan(
+          text: normalBuf.toString(),
+          style: baseStyle,
+          recognizer: ayahRecognizer,
+        ));
+        normalBuf.clear();
+      }
+    }
 
     while (i < chars.length) {
       final ch = chars[i];
 
       // Check Ghunnah: نّ or مّ
       if ((ch == 'ن' || ch == 'م') && i + 1 < chars.length && chars[i + 1] == 'ّ') {
+        flushNormal();
         final segment = ch + chars[i + 1];
         spans.add(_buildRuleSpan(
           text: segment,
           baseStyle: baseStyle,
           rule: TajweedRuleInfo.rules[TajweedRuleType.ghunnah]!,
           context: context,
+          ayahRecognizer: ayahRecognizer,
         ));
         i += 2;
         continue;
       }
 
-      // Check Qalqalah: ק, ط, ب, ج, د with sukun (ْ) or free-standing stop
+      // Check Qalqalah: ق, ط, ب, ج, د with sukun (ْ)
       if ('قطبجد'.contains(ch) && i + 1 < chars.length && chars[i + 1] == 'ْ') {
+        flushNormal();
         final segment = ch + chars[i + 1];
         spans.add(_buildRuleSpan(
           text: segment,
           baseStyle: baseStyle,
           rule: TajweedRuleInfo.rules[TajweedRuleType.qalqalah]!,
           context: context,
+          ayahRecognizer: ayahRecognizer,
         ));
         i += 2;
         continue;
       }
 
-      // Check Madd: آ, ۤ, ٰ, ~, ~
-      if ('آٰۤ'.contains(ch) || ch == '~' || ch == 'ٓ') {
+      // Check Madd: آ, ۤ, ٰ, ٓ
+      if ('آٰۤ'.contains(ch) || ch == '~' || ch == 'ٓ') {
+        flushNormal();
         spans.add(_buildRuleSpan(
           text: ch,
           baseStyle: baseStyle,
           rule: TajweedRuleInfo.rules[TajweedRuleType.madd]!,
           context: context,
+          ayahRecognizer: ayahRecognizer,
         ));
         i++;
         continue;
@@ -139,21 +161,24 @@ class TajweedService {
 
       // Check Iqlab: small mim (ۘ or ۣ or ۢ)
       if (ch == 'ۘ' || ch == 'ۣ' || ch == 'ۢ') {
+        flushNormal();
         spans.add(_buildRuleSpan(
           text: ch,
           baseStyle: baseStyle,
           rule: TajweedRuleInfo.rules[TajweedRuleType.iqlab]!,
           context: context,
+          ayahRecognizer: ayahRecognizer,
         ));
         i++;
         continue;
       }
 
-      // Fallback: normal character
-      spans.add(TextSpan(text: ch, style: baseStyle));
+      // Normal character — buffer it (preserves Arabic ligatures)
+      normalBuf.write(ch);
       i++;
     }
 
+    flushNormal();
     return spans;
   }
 
@@ -162,19 +187,18 @@ class TajweedService {
     required TextStyle baseStyle,
     required TajweedRuleInfo rule,
     required BuildContext context,
+    GestureRecognizer? ayahRecognizer,
   }) {
-    final recognizer = TapGestureRecognizer()
-      ..onTap = () {
-        showTajweedRuleSheet(context, rule);
-      };
-
+    // If we have an ayah tap recognizer, use it (so tapping a colored letter
+    // triggers the ayah action sheet, not the Tajweed info sheet).
+    // The Tajweed info sheet is accessible from within the ayah action sheet.
     return TextSpan(
       text: text,
       style: baseStyle.copyWith(
         color: rule.color,
         fontWeight: FontWeight.bold,
       ),
-      recognizer: recognizer,
+      recognizer: ayahRecognizer,
     );
   }
 
