@@ -214,6 +214,9 @@ class _AzkarScreenState extends State<AzkarScreen>
           ),
         ],
       ),
+    );
+  }
+
   void _editMyAzkar(int index) {
     if (index < 0 || index >= _myAzkar.length) return;
     final item = _myAzkar[index];
@@ -419,7 +422,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                     context: context,
                     builder: (_) => ShareCardDialog(
                       title: isAr ? 'ذكر ودعاء' : 'Dhikr',
-                      categoryOrSource: item.category,
+                      categoryOrSource: item.reference,
                       mainText: item.arabic,
                       translationText: item.translation.isNotEmpty ? item.translation : null,
                       footnote: '${item.count}x • ${item.reference}',
@@ -434,7 +437,7 @@ class _AzkarScreenState extends State<AzkarScreen>
                   Navigator.pop(ctx);
                   SharePlus.instance.share(
                     ShareParams(
-                      text: '${item.arabic}\n\n${item.translation}\n\n— ${item.category} • Aya App',
+                      text: '${item.arabic}\n\n${item.translation}\n\n— ${item.reference} • Aya App',
                     ),
                   );
                 },
