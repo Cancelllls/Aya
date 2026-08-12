@@ -30,60 +30,64 @@ ThemeData buildThemeData(
 // 1. Material 3 Adaptive Light Theme
 // -----------------------------------------------------------------------------
 ThemeData _buildM3LightTheme({ColorScheme? dynamicScheme}) {
-  final colorScheme = (dynamicScheme != null)
-      ? dynamicScheme.harmonized()
-      : ColorScheme.fromSeed(
-          seedColor: AppColors.teal,
-          brightness: Brightness.light,
-          primary: AppColors.teal,
-          onPrimary: Colors.white,
-          secondary: const Color(0xFFB45309), // Amber accent
-          onSecondary: Colors.white,
-          surface: Colors.white,
-          onSurface: const Color(0xFF0F172A),
-          surfaceContainerHighest: const Color(0xFFF1F5F9),
-          outline: const Color(0xFFCBD5E1),
-        );
+  final colorScheme =
+      (dynamicScheme != null && dynamicScheme.brightness == Brightness.light)
+          ? dynamicScheme.harmonized()
+          : ColorScheme.fromSeed(
+              seedColor: AppColors.teal,
+              brightness: Brightness.light,
+              primary: AppColors.teal,
+              onPrimary: Colors.white,
+              secondary: const Color(0xFFB45309), // Amber accent
+              onSecondary: Colors.white,
+              surface: Colors.white,
+              onSurface: const Color(0xFF0F172A),
+              surfaceContainerLowest: const Color(0xFFF8FAFC),
+              surfaceContainerHigh: Colors.white,
+              surfaceContainerHighest: const Color(0xFFF1F5F9),
+              outline: const Color(0xFFCBD5E1),
+              outlineVariant: const Color(0xFFE2E8F0),
+            );
 
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surfaceContainerLowest,
+    scaffoldBackgroundColor: const Color(0xFFF8FAFC),
     primaryColor: colorScheme.primary,
-    cardColor: colorScheme.surface,
-    canvasColor: colorScheme.surface,
-    dividerColor: colorScheme.outlineVariant,
+    cardColor: Colors.white,
+    canvasColor: Colors.white,
+    dividerColor: const Color(0xFFE2E8F0),
 
     // M3 Typography
-    textTheme: TextTheme(
+    textTheme: const TextTheme(
       bodyLarge: TextStyle(
-        color: colorScheme.onSurface,
+        color: Color(0xFF0F172A),
         fontWeight: FontWeight.w500,
         fontSize: 16,
       ),
       bodyMedium: TextStyle(
-        color: colorScheme.onSurfaceVariant,
+        color: Color(0xFF475569),
         fontSize: 14,
       ),
       titleLarge: TextStyle(
-        color: colorScheme.onSurface,
+        color: Color(0xFF0F172A),
         fontWeight: FontWeight.bold,
         fontSize: 20,
       ),
     ),
 
     // M3 AppBar
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       centerTitle: true,
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      foregroundColor: colorScheme.primary,
+      backgroundColor: Color(0xFFF8FAFC),
+      foregroundColor: AppColors.teal,
       elevation: 0,
       scrolledUnderElevation: 1,
       surfaceTintColor: Colors.transparent,
-      iconTheme: IconThemeData(color: colorScheme.primary),
+      iconTheme: IconThemeData(color: AppColors.teal),
       titleTextStyle: TextStyle(
-        color: colorScheme.onSurface,
+        color: Color(0xFF0F172A),
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
@@ -91,19 +95,19 @@ ThemeData _buildM3LightTheme({ColorScheme? dynamicScheme}) {
 
     // M3 Cards
     cardTheme: CardThemeData(
-      color: colorScheme.surface,
+      color: Colors.white,
       elevation: 1,
-      shadowColor: Colors.black.withValues(alpha: 0.05),
+      shadowColor: Colors.black.withValues(alpha: 0.04),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outlineVariant, width: 1),
+        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
       ),
     ),
 
     // M3 Dialogs
     dialogTheme: DialogThemeData(
-      backgroundColor: colorScheme.surfaceContainerHigh,
+      backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       elevation: 6,
       shape: RoundedRectangleBorder(
@@ -112,11 +116,11 @@ ThemeData _buildM3LightTheme({ColorScheme? dynamicScheme}) {
     ),
 
     // M3 Bottom Sheets
-    bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: colorScheme.surfaceContainerHigh,
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       elevation: 8,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
     ),

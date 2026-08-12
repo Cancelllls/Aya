@@ -130,6 +130,34 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: Icon(
+              _readingMode == 'hifz' ? Icons.school : Icons.school_outlined,
+              color: _readingMode == 'hifz'
+                  ? const Color(0xFFE5C158)
+                  : (theme.appBarTheme.iconTheme?.color ?? Colors.white).withValues(alpha: 0.8),
+            ),
+            onPressed: () {
+              final newMode = _readingMode == 'hifz' ? 'continuous' : 'hifz';
+              setState(() => _readingMode = newMode);
+              widget.storage.setString('reading_mode', newMode);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    newMode == 'hifz'
+                        ? (TranslationService.isArabic
+                              ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
+                              : "Hifz Mode Enabled (Tap verse to reveal)")
+                        : (TranslationService.isArabic
+                              ? "تم إيقاف وضع التسميع والحفظ"
+                              : "Hifz Mode Disabled"),
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
+          ),
+          IconButton(
             icon: const Icon(Icons.bookmark_border, color: Color(0xFFE5C158)),
             onPressed: () {
               widget.storage.addBookmark(
@@ -168,6 +196,14 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                   Icon(Icons.menu_book, color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
                   const SizedBox(width: 8),
                   Text(TranslationService.isArabic ? "المصحف المتصل" : "Continuous", style: TextStyle(color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'continuous' ? FontWeight.bold : null)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'hifz',
+                child: Row(children: [
+                  Icon(Icons.school, color: _readingMode == 'hifz' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
+                  const SizedBox(width: 8),
+                  Text(TranslationService.isArabic ? "وضع التسميع والحفظ" : "Memorization (Hifz)", style: TextStyle(color: _readingMode == 'hifz' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'hifz' ? FontWeight.bold : null)),
                 ]),
               ),
               PopupMenuItem(

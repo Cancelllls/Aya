@@ -49,6 +49,13 @@ class AudioManager {
   int _surahNum = 0;
   String _surahName = '';
   late StorageService _storage;
+  final NotificationService _notificationService = NotificationService();
+  Timer? _autoBookmarkTimer;
+
+  // Playlist & sequence state for non-QDC per-ayah reciters
+  List<Ayah> _currentPlaylist = [];
+  int _currentIndex = 0;
+  bool _isPerAyahSequenceMode = false;
 
   // QDC Timestamps for the current Surah
   Map<int, List<dynamic>>? _currentTimestamps;
@@ -74,13 +81,13 @@ class AudioManager {
     playState.addListener(() {
       final state = playState.value;
       if (state.isPlaying || state.isLoading) {
-        NotificationService().showAudioMediaNotification(
+        _notificationService.showAudioMediaNotification(
           title: state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
           subtitle: state.subtitle,
           isPlaying: state.isPlaying,
         );
       } else {
-        NotificationService().cancelAudioMediaNotification();
+        _notificationService.cancelAudioMediaNotification();
       }
     });
   }
@@ -161,15 +168,70 @@ class AudioManager {
             defaultValue: true,
           );
           if (autoBookmark) {
-            _storage.addBookmark(_surahNum, _surahName, detectedAyah);
+            _autoBookmarkTimer?.cancel();
+            final sNum = _surahNum;
+            final sName = _surahName;
+            final aNum = detectedAyah;
+            _autoBookmarkTimer = Timer(const Duration(milliseconds: 1500), () {
+              _storage.addBookmark(sNum, sName, aNum);
+            });
           }
         }
       }
     });
 
     p.onPlayerComplete.listen((_) {
-      stop();
+      if (_isPerAyahSequenceMode && _currentIndex + 1 < _currentPlaylist.length) {
+        _currentIndex++;
+        _playNextAyahInSequence();
+      } else {
+        _isPerAyahSequenceMode = false;
+        stop();
+      }
     });
+  }
+
+  Future<void> _playNextAyahInSequence() async {
+    if (_currentIndex < 0 || _currentIndex >= _currentPlaylist.length) {
+      _isPerAyahSequenceMode = false;
+      stop();
+      return;
+    }
+
+    final ayah = _currentPlaylist[_currentIndex];
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
+    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+
+    final url = ApiService.buildAyahAudioUrl(
+      ayah.number,
+      _surahNum,
+      ayah.numberInSurah,
+      reciter: reciter,
+      quranScriptType: quranScriptType,
+    );
+
+    playState.value = AudioPlayState(
+      surahNum: _surahNum,
+      ayahNum: ayah.numberInSurah,
+      isPlaying: true,
+      title: _surahName,
+      subtitle: TranslationService.isArabic
+          ? "الآية ${ayah.numberInSurah}"
+          : "Ayah ${ayah.numberInSurah}",
+      isLoading: false,
+    );
+
+    try {
+      await _player.stop();
+      await _player.setVolume(1.0);
+      await _player.play(UrlSource(url));
+    } catch (_) {
+      _isPerAyahSequenceMode = false;
+      stop();
+    }
   }
 
   void seekToAyahInSplitMode(int targetAyahNum) {
@@ -189,12 +251,24 @@ class AudioManager {
   ) async {
     _surahNum = surahNum;
     _surahName = surahName;
-    int initialAyahNum = 1;
-    if (index >= 0 && index < ayahs.length) {
-      initialAyahNum = ayahs[index].numberInSurah;
-    }
+    _currentPlaylist = ayahs;
+    _currentIndex = (index >= 0 && index < ayahs.length) ? index : 0;
 
-    playSurahWithSync(surahNum, surahName, initialAyahNum: initialAyahNum);
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
+
+    isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
+
+    if (!isTimestampSyncMode && !reciter.startsWith('mp3quran_server_')) {
+      _isPerAyahSequenceMode = true;
+      _playNextAyahInSequence();
+    } else {
+      _isPerAyahSequenceMode = false;
+      int initialAyahNum = ayahs[_currentIndex].numberInSurah;
+      playSurahWithSync(surahNum, surahName, initialAyahNum: initialAyahNum);
+    }
   }
 
   void playSurahWithSync(
@@ -202,6 +276,7 @@ class AudioManager {
     String surahName, {
     int initialAyahNum = 0,
   }) async {
+    _isPerAyahSequenceMode = false;
     final reciter = _storage.getString(
       'default_reciter',
       defaultValue: 'ar.alafasy',
@@ -280,7 +355,23 @@ class AudioManager {
   }
 
   void playSurah(int surahNum, String surahName, List<Ayah> ayahs) async {
-    playSurahWithSync(surahNum, surahName);
+    _currentPlaylist = ayahs;
+    _currentIndex = 0;
+    final reciter = _storage.getString(
+      'default_reciter',
+      defaultValue: 'ar.alafasy',
+    );
+
+    isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
+
+    if (!isTimestampSyncMode && !reciter.startsWith('mp3quran_server_')) {
+      _surahNum = surahNum;
+      _surahName = surahName;
+      _isPerAyahSequenceMode = true;
+      _playNextAyahInSequence();
+    } else {
+      playSurahWithSync(surahNum, surahName);
+    }
   }
 
   void playAdhan(String adhanPath) async {
@@ -358,6 +449,7 @@ class AudioManager {
   }
 
   void stop() async {
+    _isPerAyahSequenceMode = false;
     final pos = await _player.getCurrentPosition();
     if (pos != null) {
       _storage.saveLastAudioTimestamp(pos.inMilliseconds);

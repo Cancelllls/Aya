@@ -70,6 +70,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
       child: Column(
         children: [
           Hero(
+            key: ValueKey('hero_surah_${_currentSurah.number}'),
             tag: 'surah_name_${_currentSurah.number}',
             child: Material(
               color: Colors.transparent,
@@ -115,19 +116,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
         playState.ayahNum == ayah.numberInSurah;
     final isHighlighted = isBookmarked || isPlaying;
 
-    return VisibilityDetector(
-      key: Key('ayah_${ayah.numberInSurah}'),
-      onVisibilityChanged: (info) {
-        if (info.visibleFraction > 0.5) {
-          _debouncedSavePosition(
-            _currentSurah.number,
-            ayah.numberInSurah,
-          );
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
         key: key,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
@@ -294,57 +285,51 @@ extension SurahReaderUi on _SurahReaderScreenState {
                             opacity: _unmaskedAyahs.contains(ayah.numberInSurah) ? 0.0 : 1.0,
                             child: IgnorePointer(
                               ignoring: _unmaskedAyahs.contains(ayah.numberInSurah),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF1E293B)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFFE5C158).withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Center(
                                   child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: isDark
-                                          ? Colors.black.withValues(alpha: 0.5)
-                                          : Colors.white.withValues(alpha: 0.6),
-                                      borderRadius: BorderRadius.circular(10),
+                                      color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: const Color(0xFFE5C158).withValues(alpha: 0.4),
-                                        width: 1.5,
+                                        color: const Color(0xFFE5C158).withValues(alpha: 0.5),
+                                        width: 1,
                                       ),
                                     ),
-                                    child: Center(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.visibility_off_outlined,
+                                          color: Color(0xFFE5C158),
+                                          size: 16,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE5C158).withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: const Color(0xFFE5C158).withValues(alpha: 0.5),
-                                            width: 1,
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          TranslationService.isArabic
+                                              ? "انقر لكشف الآية (وضع الحفظ)"
+                                              : "Tap to reveal verse (Hifz Mode)",
+                                          style: const TextStyle(
+                                            color: Color(0xFFE5C158),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.visibility_off_outlined,
-                                              color: Color(0xFFE5C158),
-                                              size: 16,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              TranslationService.isArabic
-                                                  ? "انقر لكشف الآية (وضع الحفظ)"
-                                                  : "Tap to reveal verse (Hifz Mode)",
-                                              style: const TextStyle(
-                                                color: Color(0xFFE5C158),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -391,8 +376,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildContinuousLayout(AudioPlayState playState) {
@@ -447,33 +431,55 @@ extension SurahReaderUi on _SurahReaderScreenState {
 
           final key = _pageKeys.putIfAbsent(pageIndex, () => GlobalKey());
 
-          final oldRecs = _pageRecognizers[pageIndex];
-          if (oldRecs != null) {
-            for (var r in oldRecs) {
-              r.dispose();
-            }
-            oldRecs.clear();
+          // Fix #1: Reuse existing recognizers — only rebuild when the surah
+          // changes (handled in _loadAyahs). Closures capture `this`, so
+          // _selectedAyahs is always fresh at tap-time without re-creation.
+          if (_pageRecognizers.containsKey(pageIndex)) {
+            // Recognizers exist: rebuild only the spans for highlight state,
+            // then fall through to render the chunk with existing recognizers.
+          } else {
+            _pageRecognizers[pageIndex] = [];
           }
-          final List<TapGestureRecognizer> pageRecs = [];
-          _pageRecognizers[pageIndex] = pageRecs;
+          final List<GestureRecognizer> pageRecs = _pageRecognizers[pageIndex]!;
+          final bool needsRecognizers = pageRecs.isEmpty;
 
           final List<InlineSpan> spans = [];
-          for (var ayah in chunk) {
+          for (int i = 0; i < chunk.length; i++) {
+            final ayah = chunk[i];
             final isBookmarked = _bookmarkedAyahNumber == ayah.numberInSurah;
             final isPlaying =
                 playState.isPlaying &&
                 playState.surahNum == _currentSurah.number &&
                 playState.ayahNum == ayah.numberInSurah;
-            final isHighlighted = isBookmarked || isPlaying;
+            final isSelected = _selectedAyahs.contains(ayah.numberInSurah);
+            final isHighlighted = isBookmarked || isPlaying || isSelected;
 
-            final recognizer = TapGestureRecognizer()
-              ..onTap = () => _showAyahActionSheet(ayah);
-            pageRecs.add(recognizer);
+            // Fix #1: only create recognizers on first build of this page.
+            // On re-builds (e.g. selection change), reuse the cached ones.
+            final TapGestureRecognizer tapRec;
+            final LongPressGestureRecognizer longPressRec;
+            if (needsRecognizers) {
+              tapRec = TapGestureRecognizer()
+                ..onTap = () {
+                  if (_selectedAyahs.isNotEmpty) {
+                    _toggleAyahSelection(ayah.numberInSurah);
+                  } else {
+                    _showAyahActionSheet(ayah);
+                  }
+                };
+              longPressRec = LongPressGestureRecognizer()
+                ..onLongPress = () => _toggleAyahSelection(ayah.numberInSurah);
+              pageRecs.add(tapRec);
+              pageRecs.add(longPressRec);
+            } else {
+              tapRec = pageRecs[i * 2] as TapGestureRecognizer;
+              longPressRec = pageRecs[i * 2 + 1] as LongPressGestureRecognizer;
+            }
 
             spans.add(
               TextSpan(
                 text: "${ayah.text} ",
-                recognizer: recognizer,
+                recognizer: tapRec,
                 style: _getArabicTextStyle(
                   22 * _fontSizeMultiplier,
                   height: 2.1,
@@ -481,7 +487,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       ? const Color(0xFFE5C158)
                       : theme.textTheme.bodyLarge?.color,
                   fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
-                  backgroundColor: isPlaying
+                  backgroundColor: isSelected
+                      ? const Color(0xFFE5C158).withValues(alpha: 0.25)
+                      : isPlaying
                       // ignore: deprecated_member_use
                       ? const Color(0xFFE5C158).withValues(alpha: 0.3)
                       : isBookmarked

@@ -5,11 +5,52 @@ extension SurahReaderActions on _SurahReaderScreenState {
     if (ayah.tafseer.isEmpty) {
       await _ensureTafsirLoaded();
     }
-    String currentEdition = 'ar.muyassar';
+
+    // Fix #3: Pre-fetch all editions concurrently BEFORE opening the sheet.
+    // This avoids firing HTTP requests inside itemBuilder (side-effect in build)
+    // and ensures all 6 tafsirs load in parallel with a single loading indicator.
     final Map<String, String> loadedTafsirs = {
       'ar.muyassar': ayah.tafseer,
     };
-    bool isLoadingTafsir = false;
+
+    // Show a transient loading snack while fetching non-cached editions.
+    final needsFetch = availableTafsirs
+        .where((e) => !ApiService.isTafsirCached(e.identifier, _currentSurah.number, ayah.numberInSurah))
+        .toList();
+
+    if (needsFetch.isNotEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic ? 'جاري تحميل التفاسير...' : 'Loading tafsirs…',
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: const Color(0xFFE5C158),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    // Fetch all editions concurrently, bounded by availableTafsirs count (6).
+    final results = await Future.wait(
+      availableTafsirs.map((e) async {
+        if (loadedTafsirs.containsKey(e.identifier) &&
+            loadedTafsirs[e.identifier]!.isNotEmpty) {
+          return MapEntry(e.identifier, loadedTafsirs[e.identifier]!);
+        }
+        final text = await ApiService.fetchTafsirTextForAyah(
+          e.identifier,
+          _currentSurah.number,
+          ayah.numberInSurah,
+        );
+        return MapEntry(e.identifier, text);
+      }),
+    );
+    for (final entry in results) {
+      loadedTafsirs[entry.key] = entry.value;
+    }
+
+    if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
@@ -19,116 +60,125 @@ extension SurahReaderActions on _SurahReaderScreenState {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            final isAr = TranslationService.isArabic;
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.65,
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        final isAr = TranslationService.isArabic;
+        final theme = Theme.of(context);
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Modal Title Bar
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "${_currentSurah.name} - ${isAr ? 'آية' : 'Ayah'} ${ayah.numberInSurah}",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: theme.primaryColor,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+                      Text(
+                        isAr ? 'جميع التفاسير المتاحة' : 'All Available Tafsirs',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // Horizontal Tab Bar for ALL available Tafsir books
-                  SizedBox(
-                    height: 36,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: availableTafsirs.length,
-                      itemBuilder: (context, idx) {
-                        final edition = availableTafsirs[idx];
-                        final isSelected = edition.identifier == currentEdition;
-                        return Container(
-                          margin: const EdgeInsets.only(right: 6),
-                          child: ChoiceChip(
-                            label: Text(
-                              isAr ? edition.name : edition.mufassirEn,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? Colors.black : Theme.of(context).textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                            selected: isSelected,
-                            selectedColor: const Color(0xFFE5C158),
-                            backgroundColor: Theme.of(context).colorScheme.surface,
-                            onSelected: (selected) async {
-                              if (!selected) return;
-                              setSheetState(() {
-                                currentEdition = edition.identifier;
-                              });
-
-                              if (!loadedTafsirs.containsKey(edition.identifier)) {
-                                setSheetState(() {
-                                  isLoadingTafsir = true;
-                                });
-                                try {
-                                  final tempAyahs = _ayahList.map((a) => Ayah(
-                                    number: a.number,
-                                    numberInSurah: a.numberInSurah,
-                                    text: a.text,
-                                    translation: a.translation,
-                                    juz: a.juz,
-                                    hizb: a.hizb,
-                                    tafseer: '',
-                                  )).toList();
-                                  await ApiService.fetchTafsirForSurah(
-                                    _currentSurah.number,
-                                    tempAyahs,
-                                  );
-                                  final target = tempAyahs.firstWhere(
-                                    (a) => a.numberInSurah == ayah.numberInSurah,
-                                    orElse: () => ayah,
-                                  );
-                                  loadedTafsirs[edition.identifier] = target.tafseer;
-                                } catch (_) {}
-                                setSheetState(() {
-                                  isLoadingTafsir = false;
-                                });
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Expanded(
-                    child: isLoadingTafsir
-                        ? const Center(child: CircularProgressIndicator(color: Color(0xFFE5C158)))
-                        : SingleChildScrollView(
-                            child: Text(
-                              (loadedTafsirs[currentEdition]?.isNotEmpty ?? false)
-                                  ? loadedTafsirs[currentEdition]!
-                                  : (isAr
-                                      ? 'التفسير غير متوفر حالياً لهذه الآية.'
-                                      : 'Tafseer is not available for this verse.'),
-                              textDirection: TextDirection.rtl,
-                              style: _getArabicTextStyle(18, height: 1.8),
-                            ),
-                          ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-            );
-          },
+              const SizedBox(height: 14),
+
+              // Stacked Vertical List — all data is pre-loaded (fix #3).
+              Expanded(
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: availableTafsirs.length,
+                  itemBuilder: (context, idx) {
+                    final edition = availableTafsirs[idx];
+                    final tafsirText = loadedTafsirs[edition.identifier] ?? '';
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFFE5C158).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Edition Header
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5C158).withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isAr ? edition.name : edition.mufassirEn,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFE5C158),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    isAr ? edition.mufassir : edition.name,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                            // Edition Content Body — pre-loaded, no spinner needed.
+                            Text(
+                              tafsirText.isNotEmpty
+                                  ? tafsirText
+                                  : (isAr ? 'لا يوجد تفسير متاح' : 'No tafsir available'),
+                              textDirection: TextDirection.rtl,
+                              style: _getArabicTextStyle(16, height: 1.8),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -317,5 +367,57 @@ extension SurahReaderActions on _SurahReaderScreenState {
         );
       },
     );
+  }
+
+  void _toggleAyahSelection(int num) {
+    setState(() {
+      if (_selectedAyahs.contains(num)) {
+        _selectedAyahs.remove(num);
+      } else {
+        _selectedAyahs.add(num);
+      }
+    });
+  }
+
+  void _clearAyahSelection() {
+    setState(() {
+      _selectedAyahs.clear();
+    });
+  }
+
+  void _copySelectedAyahsText() {
+    if (_selectedAyahs.isEmpty) return;
+    final sorted = _selectedAyahs.toList()..sort();
+    final selectedTextList = _ayahList
+        .where((a) => sorted.contains(a.numberInSurah))
+        .map((a) => "${a.text} ﴿${a.numberInSurah}﴾")
+        .join("\n");
+    final ref = "${_currentSurah.name} (${sorted.first}-${sorted.last})";
+    Clipboard.setData(ClipboardData(text: "$selectedTextList\n\n— $ref"));
+    _clearAyahSelection();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          TranslationService.isArabic
+              ? "تم نسخ الآيات المحددة"
+              : "Selected verses copied",
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _shareSelectedAyahsText() {
+    if (_selectedAyahs.isEmpty) return;
+    final sorted = _selectedAyahs.toList()..sort();
+    final selectedTextList = _ayahList
+        .where((a) => sorted.contains(a.numberInSurah))
+        .map((a) => "${a.text} ﴿${a.numberInSurah}﴾")
+        .join("\n");
+    final ref = "${_currentSurah.name} (${sorted.first}-${sorted.last})";
+    SharePlus.instance.share(
+      ShareParams(text: "$selectedTextList\n\n— $ref • Aya"),
+    );
+    _clearAyahSelection();
   }
 }

@@ -120,6 +120,10 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  String? _lastAudioTitle;
+  String? _lastAudioSubtitle;
+  bool? _lastAudioIsPlaying;
+
   static const List<int> islamicVibrationPattern = [
     0,
     300,
@@ -1049,6 +1053,15 @@ class NotificationService {
     required String subtitle,
     required bool isPlaying,
   }) async {
+    if (_lastAudioTitle == title &&
+        _lastAudioSubtitle == subtitle &&
+        _lastAudioIsPlaying == isPlaying) {
+      return;
+    }
+    _lastAudioTitle = title;
+    _lastAudioSubtitle = subtitle;
+    _lastAudioIsPlaying = isPlaying;
+
     final isAr = TranslationService.isArabic;
 
     final androidDetails = AndroidNotificationDetails(
@@ -1091,6 +1104,9 @@ class NotificationService {
   }
 
   Future<void> cancelAudioMediaNotification() async {
+    _lastAudioTitle = null;
+    _lastAudioSubtitle = null;
+    _lastAudioIsPlaying = null;
     try {
       await _notificationsPlugin.cancel(id: 8888);
     } catch (_) {}

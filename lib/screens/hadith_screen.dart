@@ -773,18 +773,27 @@ class _HadithScreenState extends State<HadithScreen> {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  final text = (h['arabic'] ?? h['english'] ?? '').toString();
-                  final translation = (h['english'] ?? '').toString();
+                  final isEng = _displayLang == 'eng' || !TranslationService.isArabic;
+                  final mainText = isEng
+                      ? (h['english'] ?? h['arabic'] ?? '').toString()
+                      : (h['arabic'] ?? h['english'] ?? '').toString();
+                  final secondaryText = isEng
+                      ? (h['arabic'] != null && h['arabic'] != mainText ? h['arabic'].toString() : null)
+                      : (h['english'] != null && h['english'] != mainText ? h['english'].toString() : null);
+                  final bookName = isEng ? _selectedBook.nameEn : _selectedBook.nameAr;
+                  final numStr = h['number'] ?? h['hadithNumber'] ?? '';
+                  final footnoteText = numStr.toString().isNotEmpty
+                      ? (isEng ? 'Hadith No. $numStr • $bookName' : 'حديث رقم $numStr • $bookName')
+                      : bookName;
+
                   showDialog(
                     context: context,
                     builder: (_) => ShareCardDialog(
-                      title: TranslationService.isArabic ? 'حديث شريف' : 'Hadith',
-                      categoryOrSource: _selectedBook.nameAr,
-                      mainText: text,
-                      translationText: _displayLang == 'eng' ? translation : null,
-                      footnote: h['hadithNumber'] != null
-                          ? 'حديث رقم ${h['hadithNumber']}'
-                          : null,
+                      title: isEng ? 'Hadith' : 'حديث شريف',
+                      categoryOrSource: bookName,
+                      mainText: mainText,
+                      translationText: secondaryText,
+                      footnote: footnoteText,
                     ),
                   );
                 },

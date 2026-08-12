@@ -1,3 +1,4 @@
+import 'package:http/http.dart' as http;
 import 'offline_prayer_service.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -199,6 +200,89 @@ class ApiService {
     for (final a in ayahs) {
       a.tafseer = lookup[a.numberInSurah] ?? '';
     }
+  }
+
+  static final Map<String, String> _tafsirMemoryCache = {};
+  static const int _maxTafsirCacheEntries = 500;
+
+  static void _setTafsirCache(String key, String text) {
+    if (_tafsirMemoryCache.length >= _maxTafsirCacheEntries) {
+      _tafsirMemoryCache.remove(_tafsirMemoryCache.keys.first);
+    }
+    _tafsirMemoryCache[key] = text;
+  }
+
+  /// Returns true if the tafsir for this ayah is already in the memory cache.
+  static bool isTafsirCached(String editionId, int surahNumber, int ayahNumber) {
+    return _tafsirMemoryCache.containsKey('$editionId:$surahNumber:$ayahNumber');
+  }
+
+  /// Fetch specific Tafsir text for a single Ayah given an edition ID.
+  static Future<String> fetchTafsirTextForAyah(
+    String editionId,
+    int surahNumber,
+    int ayahNumber,
+  ) async {
+    final cacheKey = '$editionId:$surahNumber:$ayahNumber';
+    if (_tafsirMemoryCache.containsKey(cacheKey)) {
+      return _tafsirMemoryCache[cacheKey]!;
+    }
+
+    // Fix #2: Use single-ayah SQL query (O(1)) instead of full-surah scan.
+    if (editionId == 'ar.muyassar') {
+      final db = await DatabaseService.getInstance();
+      final text = await db.getTafsirForAyah(surahNumber, ayahNumber);
+      if (text.isNotEmpty) {
+        _setTafsirCache(cacheKey, text);
+        return text;
+      }
+    }
+
+    try {
+      final url =
+          'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/$editionId/$surahNumber/$ayahNumber.json';
+      final res =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final text = (data['text'] as String? ?? '').trim();
+        if (text.isNotEmpty) {
+          _setTafsirCache(cacheKey, text);
+          return text;
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final tafsirMap = {
+        'ar.muyassar': 16,
+        'ar.jalalayn': 91,
+        'ar.qurtubi': 90,
+        'ar.miqbas': 93,
+        'ar.waseet': 169,
+        'ar.baghawi': 94,
+      };
+      final tId = tafsirMap[editionId] ?? 16;
+      final url =
+          'https://api.quran.com/api/v4/tafsirs/$tId/by_ayah/$surahNumber:$ayahNumber';
+      final res =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final rawText = data['tafsir']?['text'] as String? ?? '';
+        final cleanText = rawText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+        if (cleanText.isNotEmpty) {
+          _setTafsirCache(cacheKey, cleanText);
+          return cleanText;
+        }
+      }
+    } catch (_) {}
+
+    // Fix #2: Final fallback also uses single-ayah query.
+    final db = await DatabaseService.getInstance();
+    final text = await db.getTafsirForAyah(surahNumber, ayahNumber);
+    _setTafsirCache(cacheKey, text);
+    return text;
   }
 
   // ─── Reverse Geocoding ───────────────────────────────────────────────────

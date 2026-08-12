@@ -277,7 +277,14 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _requestLocationPermission() async {
     try {
-      await Geolocator.openAppSettings();
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.whileInUse ||
+          perm == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+      }
       Future.delayed(const Duration(seconds: 1), _checkPermissions);
     } catch (_) {}
   }

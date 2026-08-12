@@ -107,7 +107,7 @@ class _ShareCardDialogState extends State<ShareCardDialog> {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(filePath)],
-          text: isAr ? '$ref — تطبيق آية' : '$ref — Aya App',
+          text: isAr ? '$ref — آية' : '$ref — Aya',
         ),
       );
     } catch (e) {
@@ -281,7 +281,7 @@ class _ShareCardDialogState extends State<ShareCardDialog> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Aya App • تطبيق آية',
+                              'Aya • آية',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

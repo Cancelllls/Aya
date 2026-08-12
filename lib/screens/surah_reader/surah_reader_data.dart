@@ -146,6 +146,16 @@ extension SurahReaderData on _SurahReaderScreenState {
         _ayahList = list;
         _isLoading = false;
       });
+      // Compute hizb/juz range once after load (fix #5).
+      _computeHizbRangeText();
+      // Discard recognizers from the previous surah so they are rebuilt
+      // fresh for new ayahs. Within a surah, itemBuilder reuses them (fix #1).
+      for (var recs in _pageRecognizers.values) {
+        for (var r in recs) { r.dispose(); }
+      }
+      _pageRecognizers.clear();
+      _pageKeys.clear();
+      _ayahKeys.clear();
 
       if (widget.initialAyahNumber != null && widget.initialAyahNumber! > 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

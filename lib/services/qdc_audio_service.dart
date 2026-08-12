@@ -6,24 +6,46 @@ import 'package:path_provider/path_provider.dart';
 
 class QdcAudioService {
   // Map of AlQuran.cloud / Mp3Quran string IDs to QDC integer IDs.
-  // Only reciters whose timestamps are bundled in assets/timestamps/.
+  // Includes aliases so both AlQuran.cloud and QDC ID formats map correctly.
   static final Map<String, int> _qdcReciterMap = {
     'ar.alafasy': 7,
     'ar.abdulbasitmurattal': 2,
+    'ar.abdulsamad': 2,
     'ar.abdulbasitmujawwad': 1,
     'ar.sudais': 3,
+    'ar.abdurrahmaansudais': 3,
     'ar.shatri': 4,
+    'ar.shaatree': 4,
     'ar.rifai': 5,
+    'ar.hanirifai': 5,
     'ar.husary': 12,
     'ar.husarymujawwad': 6,
     'ar.minshawimujawwad': 8,
     'ar.hudhaify': 11,
     'ar.ayyoub': 10,
+    'ar.muhammadayyoub': 10,
     'ar.minshawi': 9,
   };
 
   static int? getQdcReciterId(String reciter) {
     return _qdcReciterMap[reciter];
+  }
+
+  static String getCanonicalReciterId(String reciter) {
+    switch (reciter) {
+      case 'ar.abdurrahmaansudais':
+        return 'ar.sudais';
+      case 'ar.abdulsamad':
+        return 'ar.abdulbasitmurattal';
+      case 'ar.shaatree':
+        return 'ar.shatri';
+      case 'ar.hanirifai':
+        return 'ar.rifai';
+      case 'ar.muhammadayyoub':
+        return 'ar.ayyoub';
+      default:
+        return reciter;
+    }
   }
 
   /// Load timestamp JSON from the best available source.
@@ -32,9 +54,10 @@ class QdcAudioService {
     String reciter,
     int surahNum,
   ) async {
-    // 1. Try bundled asset (pre-packaged with the APK, from tools/generate_timestamps.dart)
+    final canonical = getCanonicalReciterId(reciter);
+    // 1. Try bundled asset (pre-packaged with the APK)
     try {
-      final assetPath = 'assets/timestamps/$reciter/$surahNum.json';
+      final assetPath = 'assets/timestamps/$canonical/$surahNum.json';
       final content = await rootBundle.loadString(assetPath);
       return jsonDecode(content) as Map<String, dynamic>;
     } catch (_) {
@@ -45,12 +68,11 @@ class QdcAudioService {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final cacheFile = File(
-        '${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json',
+        '${dir.path}/quran_audio/$canonical/timestamps_$surahNum.json',
       );
       if (await cacheFile.exists()) {
         final content = await cacheFile.readAsString();
         final decoded = jsonDecode(content) as Map<String, dynamic>;
-        // Invalidate cache entries that look malformed (missing audio_url)
         if (!decoded.containsKey('audio_url')) {
           await cacheFile.delete();
           return null;
@@ -69,9 +91,10 @@ class QdcAudioService {
     Map<String, dynamic> data,
   ) async {
     try {
+      final canonical = getCanonicalReciterId(reciter);
       final dir = await getApplicationDocumentsDirectory();
       final cacheFile = File(
-        '${dir.path}/quran_audio/$reciter/timestamps_$surahNum.json',
+        '${dir.path}/quran_audio/$canonical/timestamps_$surahNum.json',
       );
       await cacheFile.parent.create(recursive: true);
       await cacheFile.writeAsString(jsonEncode(data));

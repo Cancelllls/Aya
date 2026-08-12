@@ -89,11 +89,18 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
   bool _isLoadingReciters = false;
   List<dynamic> _dynamicReciters = [];
+  final Set<int> _selectedAyahs = {};
+
+  // ── Cached computed values ──────────────────────────────────
+  /// Cached selected Quran font — read once from storage, never per-ayah.
+  String _selectedFont = 'font-amiri';
+  /// Cached Hizb/Juz range string for AppBar — recomputed only on ayah load.
+  String _hizbRangeText = '';
 
   final AutoScrollController _scrollController = AutoScrollController();
   final Map<int, GlobalKey> _ayahKeys = {};
   final Map<int, GlobalKey> _pageKeys = {};
-  final Map<int, List<TapGestureRecognizer>> _pageRecognizers = {};
+  final Map<int, List<GestureRecognizer>> _pageRecognizers = {};
   double? _horizontalDragStartX;
   int _scrollToAyahSequence = 0;
 
@@ -116,6 +123,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     // Use pager-provided overrides if available, otherwise read from storage
     _readingMode = widget.readingMode ??
         widget.storage.getString('reading_mode', defaultValue: 'continuous');
+    // Sync hifz mode from pager's readingMode ('hifz' = activate hifz mode)
+    if (_readingMode == 'hifz') {
+      _isHifzMode = true;
+      _readingMode = 'continuous'; // Display via continuous layout with hifz overlay
+    }
     _quranScriptType = widget.quranScriptType ??
         widget.storage.getString('quran_script_type', defaultValue: 'hafs');
     _hideContinuousBorders = widget.storage.getBool(
@@ -131,6 +143,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _isTajweedEnabled = widget.storage.getBool(
       'setting_tajweed_enabled',
       defaultValue: true,
+    );
+    // Cache font once — avoids repeated SharedPrefs reads per-ayah (fix #4).
+    _selectedFont = widget.storage.getString(
+      'quran_font',
+      defaultValue: 'font-amiri',
     );
     _loadAyahs();
     _fetchDynamicReciters(_quranScriptType);
@@ -166,11 +183,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     FontWeight? fontWeight,
     Color? backgroundColor,
   }) {
-    final String selectedFont = widget.storage.getString(
-      'quran_font',
-      defaultValue: 'font-amiri',
-    );
-    if (selectedFont == 'font-scheherazade') {
+    // Use cached font — never read SharedPrefs per-ayah (fix #4).
+    if (_selectedFont == 'font-scheherazade') {
       return TextStyle(
         fontFamily: 'Scheherazade New',
         fontSize: fontSize,
@@ -190,30 +204,29 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     );
   }
 
-  String _getHizbRangeText() {
+  /// Returns the cached Hizb/Juz range string (fix #5).
+  /// Call [_computeHizbRangeText] after loading ayahs to refresh.
+  String _getHizbRangeText() => _hizbRangeText;
+
+  void _computeHizbRangeText() {
     if (_ayahList.isEmpty) {
-      return "${TranslationService.t('juz')} ${_currentSurah.startingJuz} • ${TranslationService.t('hizb')} ${_currentSurah.startingHizb}";
+      _hizbRangeText =
+          "${TranslationService.t('juz')} ${_currentSurah.startingJuz} • "
+          "${TranslationService.t('hizb')} ${_currentSurah.startingHizb}";
+      return;
     }
     final uniqueJuz = _ayahList.map((e) => e.juz).toSet().toList()..sort();
     final uniqueHizb = _ayahList.map((e) => e.hizb).toSet().toList()..sort();
 
-    final String juzText;
-    if (uniqueJuz.length == 1) {
-      juzText = "${TranslationService.t('juz')} ${uniqueJuz.first}";
-    } else {
-      juzText =
-          "${TranslationService.t('juz')} ${uniqueJuz.first}-${uniqueJuz.last}";
-    }
+    final String juzText = uniqueJuz.length == 1
+        ? "${TranslationService.t('juz')} ${uniqueJuz.first}"
+        : "${TranslationService.t('juz')} ${uniqueJuz.first}-${uniqueJuz.last}";
 
-    final String hizbText;
-    if (uniqueHizb.length == 1) {
-      hizbText = "${TranslationService.t('hizb')} ${uniqueHizb.first}";
-    } else {
-      hizbText =
-          "${TranslationService.t('hizb')} ${uniqueHizb.first}-${uniqueHizb.last}";
-    }
+    final String hizbText = uniqueHizb.length == 1
+        ? "${TranslationService.t('hizb')} ${uniqueHizb.first}"
+        : "${TranslationService.t('hizb')} ${uniqueHizb.first}-${uniqueHizb.last}";
 
-    return "$juzText • $hizbText";
+    _hizbRangeText = "$juzText • $hizbText";
   }
 
   void _toggleHifzMode() {
@@ -1016,6 +1029,55 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             children: [
                               Column(
                                 children: [
+                                  // Multi-selection action bar
+                                  if (_selectedAyahs.isNotEmpty)
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE5C158),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.15),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.close, color: Colors.black),
+                                            onPressed: _clearAyahSelection,
+                                            tooltip: TranslationService.isArabic ? "إلغاء التحديد" : "Clear Selection",
+                                          ),
+                                          Text(
+                                            TranslationService.isArabic
+                                                ? "${_selectedAyahs.length} آيات محددة"
+                                                : "${_selectedAyahs.length} Selected",
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          IconButton(
+                                            icon: const Icon(Icons.copy, color: Colors.black),
+                                            onPressed: _copySelectedAyahsText,
+                                            tooltip: TranslationService.isArabic ? "نسخ" : "Copy",
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.share, color: Colors.black),
+                                            onPressed: _shareSelectedAyahsText,
+                                            tooltip: TranslationService.isArabic ? "مشاركة" : "Share",
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   if (playState.title.isNotEmpty)
                                     _buildTopMiniPlayer(
                                       theme,
@@ -1140,86 +1202,67 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   Expanded(
                                     child: _readingMode == 'continuous'
                                         ? _buildContinuousLayout(playState)
-                                        : ListView.builder(
-                                            controller: _scrollController,
-                                            physics:
-                                                const BouncingScrollPhysics(),
-                                            padding: EdgeInsets.only(
-                                              top: 8,
-                                              bottom:
-                                                  16.0 +
-                                                  MediaQuery.of(
-                                                    context,
-                                                  ).padding.bottom +
-                                                  58.0 +
-                                                  16.0,
-                                            ),
-                                            itemCount: _ayahList.length + 1,
-                                            itemBuilder: (context, index) {
-                                              if (index == 0) {
-                                                if (_currentSurah.number == 9) {
-                                                  return const SizedBox.shrink();
+                                        : NotificationListener<ScrollNotification>(
+                                            onNotification: (notification) {
+                                              if (notification is ScrollEndNotification) {
+                                                if (_ayahList.isNotEmpty && _scrollController.hasClients) {
+                                                  final offset = _scrollController.offset;
+                                                  final approxIndex = (offset / 160.0).floor().clamp(0, _ayahList.length - 1);
+                                                  _debouncedSavePosition(_currentSurah.number, _ayahList[approxIndex].numberInSurah);
                                                 }
-
-                                                bool hasBismillahEmbedded =
-                                                    false;
-                                                if (_ayahList.isNotEmpty) {
-                                                  hasBismillahEmbedded =
-                                                      Ayah.startsWithBasmalah(
-                                                        _ayahList.first.text,
-                                                      );
-                                                }
-
-                                                if (hasBismillahEmbedded) {
-                                                  return const SizedBox.shrink();
-                                                }
-                                                return Container(
-                                                  alignment: Alignment.center,
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        vertical: 24,
-                                                      ),
-                                                  child: Text(
-                                                    "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                                    style: _getArabicTextStyle(
-                                                      30,
-                                                      color: const Color(
-                                                        0xFFE5C158,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                );
                                               }
-                                              final ayah = _ayahList[index - 1];
-                                              final showHizbHeader =
-                                                  index == 1 ||
-                                                  (index > 1 &&
-                                                      ayah.hizb != 0 &&
-                                                      ayah.hizb !=
-                                                          _ayahList[index - 2]
-                                                              .hizb) ||
-                                                  (index > 1 &&
-                                                      ayah.hizb == 0 &&
-                                                      ayah.juz !=
-                                                          _ayahList[index - 2]
-                                                              .juz);
-                                              return Column(
-                                                children: [
-                                                  if (showHizbHeader)
-                                                    _buildHizbDivider(
-                                                      ayah.hizb,
-                                                      ayah.juz,
-                                                    ),
-                                                  _buildAyahCard(
-                                                    ayah,
-                                                    theme,
-                                                    playState,
-                                                  ),
-                                                ],
-                                              );
+                                              return false;
                                             },
+                                            child: ListView.builder(
+                                              controller: _scrollController,
+                                              physics: const BouncingScrollPhysics(),
+                                              padding: EdgeInsets.only(
+                                                top: 8,
+                                                bottom: 16.0 + MediaQuery.of(context).padding.bottom + 58.0 + 16.0,
+                                              ),
+                                              itemCount: _ayahList.length + 1,
+                                              itemBuilder: (context, index) {
+                                                if (index == 0) {
+                                                  if (_currentSurah.number == 9) {
+                                                    return const SizedBox.shrink();
+                                                  }
+                                                  bool hasBismillahEmbedded = false;
+                                                  if (_ayahList.isNotEmpty) {
+                                                    hasBismillahEmbedded = Ayah.startsWithBasmalah(_ayahList.first.text);
+                                                  }
+                                                  if (hasBismillahEmbedded) {
+                                                    return const SizedBox.shrink();
+                                                  }
+                                                  return Container(
+                                                    alignment: Alignment.center,
+                                                    padding: const EdgeInsets.symmetric(vertical: 24),
+                                                    child: Text(
+                                                      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                                                      style: _getArabicTextStyle(
+                                                        30,
+                                                        color: const Color(0xFFE5C158),
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                                final ayah = _ayahList[index - 1];
+                                                final showHizbHeader = index == 1 ||
+                                                    (index > 1 && ayah.hizb != 0 && ayah.hizb != _ayahList[index - 2].hizb) ||
+                                                    (index > 1 && ayah.hizb == 0 && ayah.juz != _ayahList[index - 2].juz);
+                                                return Column(
+                                                  children: [
+                                                    if (showHizbHeader)
+                                                      _buildHizbDivider(ayah.hizb, ayah.juz),
+                                                    _buildAyahCard(
+                                                      ayah,
+                                                      theme,
+                                                      playState,
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
                                           ),
                                   ),
                                 ],

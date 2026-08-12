@@ -254,13 +254,63 @@ class DatabaseService {
     int oldVersion,
     int newVersion,
   ) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE prayer_tracker (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT UNIQUE NOT NULL,
+          fajr INTEGER DEFAULT 0,
+          dhuhr INTEGER DEFAULT 0,
+          asr INTEGER DEFAULT 0,
+          maghrib INTEGER DEFAULT 0,
+          isha INTEGER DEFAULT 0
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX idx_prayer_tracker_date ON prayer_tracker(date)',
+      );
+    }
+
+    if (oldVersion < 3) {
+      await db.execute('DROP TABLE IF EXISTS ayahs');
+      await db.execute('DROP TABLE IF EXISTS surahs');
+
+      // Quran Surahs table
+      await db.execute('''
+        CREATE TABLE surahs (
+          number INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          englishName TEXT NOT NULL,
+          englishNameTranslation TEXT NOT NULL,
+          numberOfAyahs INTEGER NOT NULL,
+          revelationType TEXT NOT NULL
+        )
+      ''');
+
+      // Quran Ayahs table
+      await db.execute('''
+        CREATE TABLE ayahs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          surah_number INTEGER NOT NULL,
+          ayah_number INTEGER NOT NULL,
+          global_number INTEGER NOT NULL,
+          text_arabic TEXT NOT NULL,
+          text_english TEXT NOT NULL,
+          tafsir TEXT,
+          juz INTEGER,
+          hizb INTEGER,
+          FOREIGN KEY (surah_number) REFERENCES surahs (number)
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_ayahs_surah ON ayahs(surah_number)');
+    }
+
     if (oldVersion < 4) {
       // Add text_arabic_clean column if it doesn't exist
       try {
         await db.execute(
           'ALTER TABLE ayahs ADD COLUMN text_arabic_clean TEXT DEFAULT ""',
         );
-        // We could populate it, but a quick re-seed might be better, or we can just update it
         final List<Map<String, dynamic>> allAyahs = await db.query(
           'ayahs',
           columns: ['id', 'text_arabic'],
@@ -308,8 +358,7 @@ class DatabaseService {
           )
         ''');
         await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     if (oldVersion < 6) {
@@ -323,29 +372,23 @@ class DatabaseService {
             created_at INTEGER NOT NULL
           )
         ''');
-        // Clean up zombie hadith_books entries (book exists but 0 hadiths)
         await db.execute('''
           DELETE FROM hadith_books WHERE book_id NOT IN (
             SELECT DISTINCT book_id FROM hadiths
           )
         ''');
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     if (oldVersion < 7) {
       try {
-        // Force re-seed of Muslim: wipe existing data to fix blank hadiths
-        // caused by JSON field name mismatch in older app versions
         await db.execute(
           "DELETE FROM hadiths WHERE book_id IN ('ara_muslim', 'eng_muslim')",
         );
         await db.execute(
           "DELETE FROM hadith_books WHERE book_id IN ('ara_muslim', 'eng_muslim')",
         );
-      } catch (e) {
-        // v7 upgrade error — hadith re-seed skipped
-      }
+      } catch (e) {}
     }
 
     if (oldVersion < 8) {
@@ -362,7 +405,6 @@ class DatabaseService {
     }
 
     if (oldVersion < 9) {
-      // Re-normalize text_arabic_clean to include alef variant normalization
       final rows = await db.query('ayahs', columns: ['id', 'text_arabic']);
       final batch = db.batch();
       for (final r in rows) {
@@ -373,56 +415,6 @@ class DatabaseService {
         }, where: 'id = ?', whereArgs: [r['id']]);
       }
       await batch.commit(noResult: true);
-    }
-
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE prayer_tracker (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          date TEXT UNIQUE NOT NULL,
-          fajr INTEGER DEFAULT 0,
-          dhuhr INTEGER DEFAULT 0,
-          asr INTEGER DEFAULT 0,
-          maghrib INTEGER DEFAULT 0,
-          isha INTEGER DEFAULT 0
-        )
-      ''');
-      await db.execute(
-        'CREATE INDEX idx_prayer_tracker_date ON prayer_tracker(date)',
-      );
-    }
-    if (oldVersion < 3) {
-      await db.execute('DROP TABLE IF EXISTS ayahs');
-      await db.execute('DROP TABLE IF EXISTS surahs');
-
-      // Quran Surahs table
-      await db.execute('''
-        CREATE TABLE surahs (
-          number INTEGER PRIMARY KEY,
-          name TEXT NOT NULL,
-          englishName TEXT NOT NULL,
-          englishNameTranslation TEXT NOT NULL,
-          numberOfAyahs INTEGER NOT NULL,
-          revelationType TEXT NOT NULL
-        )
-      ''');
-
-      // Quran Ayahs table
-      await db.execute('''
-        CREATE TABLE ayahs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          surah_number INTEGER NOT NULL,
-          ayah_number INTEGER NOT NULL,
-          global_number INTEGER NOT NULL,
-          text_arabic TEXT NOT NULL,
-          text_english TEXT NOT NULL,
-          tafsir TEXT,
-          juz INTEGER,
-          hizb INTEGER,
-          FOREIGN KEY (surah_number) REFERENCES surahs (number)
-        )
-      ''');
-      await db.execute('CREATE INDEX idx_ayahs_surah ON ayahs(surah_number)');
     }
   }
 
@@ -537,15 +529,33 @@ class DatabaseService {
     );
   }
 
+  /// Fetch tafsir text for a single ayah — O(1) via idx_ayahs_surah (fix #2).
+  Future<String> getTafsirForAyah(int surahNumber, int ayahNumber) async {
+    final db = _database!;
+    await _ensureQuranSeeded();
+    final rows = await db.query(
+      'ayahs',
+      columns: ['tafsir'],
+      where: 'surah_number = ? AND ayah_number = ?',
+      whereArgs: [surahNumber, ayahNumber],
+      limit: 1,
+    );
+    if (rows.isEmpty) return '';
+    return (rows.first['tafsir'] as String?) ?? '';
+  }
+
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
     final db = _database!;
     await _ensureQuranSeeded();
     final queryClean = stripTashkeel(query).toLowerCase();
     final searchPattern = '%$queryClean%';
 
+    // Fix #9: Select explicit columns excluding heavy 'tafsir' text column
     final results = await db.rawQuery(
       '''
-      SELECT ayahs.*, surahs.name as surah_name, surahs.englishName as surah_englishName 
+      SELECT ayahs.id, ayahs.surah_number, ayahs.ayah_number, ayahs.global_number,
+             ayahs.text_arabic, ayahs.text_arabic_clean, ayahs.text_english,
+             ayahs.juz, ayahs.hizb, surahs.name as surah_name, surahs.englishName as surah_englishName 
       FROM ayahs 
       JOIN surahs ON ayahs.surah_number = surahs.number 
       WHERE ayahs.text_arabic_clean LIKE ? OR LOWER(ayahs.text_english) LIKE ?
@@ -619,17 +629,15 @@ class DatabaseService {
 
   Future<void> addBookmark(int surah, String name, int ayah) async {
     final db = _database!;
-
-    // Remove any existing bookmark for this surah first so we only keep the last one.
-    // This prevents the reciter from flooding the bookmarks list with every ayah played.
-    await db.delete('bookmarks', where: 'surah_number = ?', whereArgs: [surah]);
-
-    await db.insert('bookmarks', {
+    final batch = db.batch();
+    batch.delete('bookmarks', where: 'surah_number = ?', whereArgs: [surah]);
+    batch.insert('bookmarks', {
       'surah_number': surah,
       'surah_name': name,
       'ayah_number': ayah,
       'created_at': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await batch.commit(noResult: true);
   }
 
   Future<void> removeBookmark(int surah, {int? ayah}) async {

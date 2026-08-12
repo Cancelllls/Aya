@@ -39,15 +39,6 @@ extension SettingsPermissionsSection on _SettingsScreenState {
                 ),
                 _buildDivider(),
                 _buildPermissionStatusTile(
-                  title: isAr ? "تحسين البطارية" : "Battery Optimization",
-                  subtitle: isAr
-                      ? "السماح بالعمل في الخلفية لتشغيل الأذان"
-                      : "Allow background execution for adhan alarms",
-                  isGranted: _batteryOptIgnored,
-                  onTap: _requestBatteryOptimization,
-                ),
-                _buildDivider(),
-                _buildPermissionStatusTile(
                   title: isAr ? "الإشعارات" : "Notifications",
                   subtitle: isAr
                       ? "إشعارات الأذان والتهجُّد والأذكار اليومية"
@@ -61,6 +52,17 @@ extension SettingsPermissionsSection on _SettingsScreenState {
                   subtitle: isAr
                       ? "حساب مواقيت الصلاة واتجاه القبلة تلقائياً"
                       : "Auto-calculate prayer times and Qibla direction",
+                  isGranted: _locationPermitted,
+                  onTap: _requestLocationPermission,
+                ),
+                _buildDivider(),
+                _buildPermissionStatusTile(
+                  title: isAr
+                      ? "السماح بالموقع طوال الوقت"
+                      : "Allow Location All the Time",
+                  subtitle: isAr
+                      ? "ضروري لدقة مواقيت الصلاة والأذان في الخلفية"
+                      : "Required for background Adhan and accurate prayer times",
                   isGranted: _locationPermitted,
                   onTap: _requestLocationPermission,
                 ),

@@ -27,6 +27,8 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   final GlobalKey _globalKey = GlobalKey();
   bool _isGenerating = false;
   int _selectedThemeIndex = 0;
+  String _langMode = 'both'; // 'both', 'ar_only', 'en_only'
+  bool _includeTafsir = false;
 
   final List<Map<String, dynamic>> _themes = [
     {
@@ -113,216 +115,303 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
     final isAr = TranslationService.isArabic;
     final theme = Theme.of(context);
 
+    final showArabic = _langMode == 'both' || _langMode == 'ar_only';
+    final showEnglish = _langMode == 'both' || _langMode == 'en_only';
+    final hasTafsir = _includeTafsir && widget.ayah.tafseer.trim().isNotEmpty;
+
     return Dialog(
       backgroundColor: theme.cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isAr ? 'مشاركة الآية كصورة' : 'Share Verse as Image',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Live Image Preview Card wrapped in RepaintBoundary
-            RepaintBoundary(
-              key: _globalKey,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: themeConfig['bgColor'] as Color,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
-                    width: 2,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isAr ? 'مشاركة الآية كصورة' : 'Share Verse as Image',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header Motif
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.star_outline_rounded,
-                          color: themeConfig['accentColor'] as Color,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} ${widget.ayah.numberInSurah}',
-                          style: TextStyle(
-                            color: themeConfig['accentColor'] as Color,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.star_outline_rounded,
-                          color: themeConfig['accentColor'] as Color,
-                          size: 16,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-                    // Arabic Verse Text
-                    Text(
-                      widget.ayah.text,
-                      textDirection: TextDirection.rtl,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 22,
-                        height: 2.0,
-                        fontWeight: FontWeight.bold,
-                        color: themeConfig['textColor'] as Color,
+              // Filter Toggles (Language & Tafsir)
+              Column(
+                children: [
+                  // Language ChoiceChips
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ChoiceChip(
+                        label: Text(isAr ? 'العربية فقط' : 'Arabic Only'),
+                        selected: _langMode == 'ar_only',
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) {
+                          if (val) setState(() => _langMode = 'ar_only');
+                        },
                       ),
-                    ),
-
-                    // Translation (If present)
-                    if (widget.ayah.translation.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        widget.ayah.translation,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                          color: (themeConfig['textColor'] as Color).withValues(alpha: 0.85),
-                        ),
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: Text(isAr ? 'الإنجليزية' : 'English Only'),
+                        selected: _langMode == 'en_only',
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) {
+                          if (val) setState(() => _langMode = 'en_only');
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: Text(isAr ? 'كلاهما' : 'Both'),
+                        selected: _langMode == 'both',
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) {
+                          if (val) setState(() => _langMode = 'both');
+                        },
                       ),
                     ],
-
-                    const SizedBox(height: 16),
-
-                    // Footer branding
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 30,
-                          height: 1,
-                          color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(height: 8),
+                  // Include Tafsir Switch
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FilterChip(
+                        avatar: Icon(
+                          _includeTafsir
+                              ? Icons.auto_stories
+                              : Icons.auto_stories_outlined,
+                          size: 16,
+                          color: _includeTafsir ? Colors.black : Colors.grey,
                         ),
-                        const SizedBox(width: 10),
+                        label: Text(isAr ? 'تضمين التفسير' : 'Include Tafsir'),
+                        selected: _includeTafsir,
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) => setState(() => _includeTafsir = val),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Live Image Preview Card wrapped in RepaintBoundary
+              RepaintBoundary(
+                key: _globalKey,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: themeConfig['bgColor'] as Color,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header Motif
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.star_outline_rounded,
+                            color: themeConfig['accentColor'] as Color,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} ${widget.ayah.numberInSurah}',
+                            style: TextStyle(
+                              color: themeConfig['accentColor'] as Color,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.star_outline_rounded,
+                            color: themeConfig['accentColor'] as Color,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Arabic Verse Text
+                      if (showArabic)
                         Text(
-                          'Aya App • تطبيق آية',
+                          widget.ayah.text,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 10,
-                            color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Amiri',
+                            fontSize: 22,
+                            height: 2.0,
+                            fontWeight: FontWeight.bold,
+                            color: themeConfig['textColor'] as Color,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 30,
-                          height: 1,
-                          color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+
+                      // Translation (If enabled & present)
+                      if (showEnglish && widget.ayah.translation.isNotEmpty) ...[
+                        if (showArabic) const SizedBox(height: 12),
+                        Text(
+                          widget.ayah.translation,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.5,
+                            color: (themeConfig['textColor'] as Color).withValues(alpha: 0.85),
+                          ),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
-            const SizedBox(height: 16),
-
-            // Theme Style Picker
-            SizedBox(
-              height: 34,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _themes.length,
-                itemBuilder: (ctx, idx) {
-                  final t = _themes[idx];
-                  final isSelected = idx == _selectedThemeIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedThemeIndex = idx),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: (t['bgColor'] as Color),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? (t['accentColor'] as Color)
-                              : Colors.grey.withValues(alpha: 0.3),
-                          width: isSelected ? 2 : 1,
+                      // Tafsir (If enabled & present)
+                      if (hasTafsir) ...[
+                        const SizedBox(height: 14),
+                        Divider(
+                          color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+                          thickness: 1,
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.ayah.tafseer,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Amiri',
+                            fontSize: 13,
+                            height: 1.7,
+                            color: (themeConfig['textColor'] as Color).withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 16),
+
+                      // Footer branding (Aya • آية)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 30,
+                            height: 1,
+                            color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Aya • آية',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Container(
+                            width: 30,
+                            height: 1,
+                            color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        isAr ? t['nameAr'] : t['nameEn'],
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: t['textColor'] as Color,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Share Action Button
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE5C158),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: _isGenerating ? null : _captureAndShareImage,
-                icon: _isGenerating
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.black,
-                        ),
-                      )
-                    : const Icon(Icons.share, color: Colors.black),
-                label: Text(
-                  isAr ? 'مشاركة الصورة' : 'Share Image',
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Theme Style Picker
+              SizedBox(
+                height: 34,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _themes.length,
+                  itemBuilder: (ctx, idx) {
+                    final t = _themes[idx];
+                    final isSelected = idx == _selectedThemeIndex;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedThemeIndex = idx),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (t['bgColor'] as Color),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected
+                                ? (t['accentColor'] as Color)
+                                : Colors.grey.withValues(alpha: 0.3),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Text(
+                          isAr ? t['nameAr'] : t['nameEn'],
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: t['textColor'] as Color,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Share Action Button
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE5C158),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _isGenerating ? null : _captureAndShareImage,
+                  icon: _isGenerating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const Icon(Icons.share, color: Colors.black),
+                  label: Text(
+                    isAr ? 'مشاركة الصورة' : 'Share Image',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
