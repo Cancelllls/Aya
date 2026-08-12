@@ -1,56 +1,13 @@
 part of 'surah_reader_screen.dart';
 
 extension SurahReaderActions on _SurahReaderScreenState {
-  void _showTafseerDialog(Ayah ayah) async {
-    if (ayah.tafseer.isEmpty) {
-      await _ensureTafsirLoaded();
+  void _showTafseerDialog(Ayah ayah) {
+    final Map<String, String> loadedTafsirs = {};
+    if (ayah.tafseer.trim().isNotEmpty) {
+      loadedTafsirs['ar.muyassar'] = ayah.tafseer;
     }
 
-    // Fix #3: Pre-fetch all editions concurrently BEFORE opening the sheet.
-    // This avoids firing HTTP requests inside itemBuilder (side-effect in build)
-    // and ensures all 6 tafsirs load in parallel with a single loading indicator.
-    final Map<String, String> loadedTafsirs = {
-      'ar.muyassar': ayah.tafseer,
-    };
-
-    // Show a transient loading snack while fetching non-cached editions.
-    final needsFetch = availableTafsirs
-        .where((e) => !ApiService.isTafsirCached(e.identifier, _currentSurah.number, ayah.numberInSurah))
-        .toList();
-
-    if (needsFetch.isNotEmpty && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic ? 'جاري تحميل التفاسير...' : 'Loading tafsirs…',
-          ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: const Color(0xFFE5C158),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-
-    // Fetch all editions concurrently, bounded by availableTafsirs count (6).
-    final results = await Future.wait(
-      availableTafsirs.map((e) async {
-        if (loadedTafsirs.containsKey(e.identifier) &&
-            loadedTafsirs[e.identifier]!.isNotEmpty) {
-          return MapEntry(e.identifier, loadedTafsirs[e.identifier]!);
-        }
-        final text = await ApiService.fetchTafsirTextForAyah(
-          e.identifier,
-          _currentSurah.number,
-          ayah.numberInSurah,
-        );
-        return MapEntry(e.identifier, text);
-      }),
-    );
-    for (final entry in results) {
-      loadedTafsirs[entry.key] = entry.value;
-    }
-
-    if (!mounted) return;
+    String selectedLang = 'all'; // 'all', 'ar', 'en'
 
     showModalBottomSheet(
       context: context,
@@ -63,122 +20,206 @@ extension SurahReaderActions on _SurahReaderScreenState {
         final isAr = TranslationService.isArabic;
         final theme = Theme.of(context);
 
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Modal Title Bar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, sheetSetState) {
+            final filteredTafsirs = availableTafsirs.where((e) {
+              if (selectedLang == 'ar') return e.language == 'ar';
+              if (selectedLang == 'en') return e.language == 'en';
+              return true;
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.80,
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Modal Title Bar
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "${_currentSurah.name} - ${isAr ? 'آية' : 'Ayah'} ${ayah.numberInSurah}",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: theme.primaryColor,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${_currentSurah.name} - ${isAr ? 'آية' : 'Ayah'} ${ayah.numberInSurah}",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: theme.primaryColor,
+                            ),
+                          ),
+                          Text(
+                            isAr ? 'جميع التفاسير المتاحة' : 'Available Tafsirs',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        isAr ? 'جميع التفاسير المتاحة' : 'All Available Tafsirs',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                  const SizedBox(height: 10),
+
+                  // Language Filter Bar (ALL | AR | EN)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ChoiceChip(
+                        label: Text(isAr ? 'الكل' : 'All'),
+                        selected: selectedLang == 'all',
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) {
+                          if (val) sheetSetState(() => selectedLang = 'all');
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text(isAr ? 'عربي فقط' : 'Arabic Only'),
+                        selected: selectedLang == 'ar',
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) {
+                          if (val) sheetSetState(() => selectedLang = 'ar');
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text(isAr ? 'English فقط' : 'English Only'),
+                        selected: selectedLang == 'en',
+                        selectedColor: const Color(0xFFE5C158),
+                        onSelected: (val) {
+                          if (val) sheetSetState(() => selectedLang = 'en');
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Vertical List of Editions
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: filteredTafsirs.length,
+                      itemBuilder: (context, idx) {
+                        final edition = filteredTafsirs[idx];
+                        final hasLoaded = loadedTafsirs.containsKey(edition.identifier);
+
+                        if (!hasLoaded) {
+                          // Fetch in background & trigger rebuild on load
+                          ApiService.fetchTafsirTextForAyah(
+                            edition.identifier,
+                            _currentSurah.number,
+                            ayah.numberInSurah,
+                          ).then((text) {
+                            if (context.mounted) {
+                              sheetSetState(() {
+                                loadedTafsirs[edition.identifier] = text;
+                              });
+                            }
+                          });
+                        }
+
+                        final tafsirText = loadedTafsirs[edition.identifier] ?? '';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFFE5C158).withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Edition Header
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: const Color(0xFFE5C158).withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        edition.language.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Color(0xFFE5C158),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        isAr ? edition.name : (edition.language == 'en' ? edition.name : edition.mufassirEn),
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  isAr ? edition.mufassir : edition.mufassirEn,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                const Divider(height: 16),
+                                if (!hasLoaded)
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12.0),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFFE5C158),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Text(
+                                    tafsirText.isNotEmpty ? tafsirText : (isAr ? 'التفسير غير متوفر لهذه الآية' : 'Tafsir not available'),
+                                    textDirection: edition.language == 'en' ? TextDirection.ltr : TextDirection.rtl,
+                                    style: TextStyle(
+                                      fontFamily: edition.language == 'en' ? null : 'Amiri',
+                                      fontSize: 14,
+                                      height: 1.8,
+                                      color: theme.textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-
-              // Stacked Vertical List — all data is pre-loaded (fix #3).
-              Expanded(
-                child: ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: availableTafsirs.length,
-                  itemBuilder: (context, idx) {
-                    final edition = availableTafsirs[idx];
-                    final tafsirText = loadedTafsirs[edition.identifier] ?? '';
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFFE5C158).withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Edition Header
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE5C158).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: const Color(0xFFE5C158).withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isAr ? edition.name : edition.mufassirEn,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFE5C158),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    isAr ? edition.mufassir : edition.name,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            const Divider(height: 1),
-                            const SizedBox(height: 12),
-                            // Edition Content Body — pre-loaded, no spinner needed.
-                            Text(
-                              tafsirText.isNotEmpty
-                                  ? tafsirText
-                                  : (isAr ? 'لا يوجد تفسير متاح' : 'No tafsir available'),
-                              textDirection: TextDirection.rtl,
-                              style: _getArabicTextStyle(16, height: 1.8),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

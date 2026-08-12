@@ -11,7 +11,7 @@ ThemeData buildThemeData(
 }) {
   switch (themeName) {
     case 'light':
-      return _buildM3LightTheme(dynamicScheme: lightDynamic);
+      return _buildM3LightTheme(dynamicScheme: null);
     case 'sepia':
       return _buildM3SepiaTheme();
     case 'black':
@@ -22,7 +22,7 @@ ThemeData buildThemeData(
       return _buildM3WhiteMonetTheme(dynamicScheme: lightDynamic);
     case 'dark':
     default:
-      return _buildM3DarkTheme(dynamicScheme: darkDynamic);
+      return _buildM3DarkTheme(dynamicScheme: null);
   }
 }
 

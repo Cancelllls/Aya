@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/quran_models.dart';
 import '../services/translation_service.dart';
+import '../services/api_service.dart';
 
 class ShareAyahDialog extends StatefulWidget {
   final Ayah ayah;
@@ -29,6 +30,33 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   int _selectedThemeIndex = 0;
   String _langMode = 'both'; // 'both', 'ar_only', 'en_only'
   bool _includeTafsir = false;
+  String _tafsirText = '';
+  bool _isLoadingTafsir = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tafsirText = widget.ayah.tafseer.trim();
+  }
+
+  void _onToggleTafsir(bool val) {
+    setState(() => _includeTafsir = val);
+    if (val && _tafsirText.isEmpty) {
+      setState(() => _isLoadingTafsir = true);
+      ApiService.fetchTafsirTextForAyah(
+        'ar.muyassar',
+        widget.surahNumber,
+        widget.ayah.numberInSurah,
+      ).then((text) {
+        if (mounted) {
+          setState(() {
+            _tafsirText = text;
+            _isLoadingTafsir = false;
+          });
+        }
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> _themes = [
     {
@@ -117,7 +145,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
 
     final showArabic = _langMode == 'both' || _langMode == 'ar_only';
     final showEnglish = _langMode == 'both' || _langMode == 'en_only';
-    final hasTafsir = _includeTafsir && widget.ayah.tafseer.trim().isNotEmpty;
 
     return Dialog(
       backgroundColor: theme.cardColor,
@@ -141,62 +168,48 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              // Filter Toggles (Language & Tafsir)
-              Column(
+              
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
-                  // Language ChoiceChips
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ChoiceChip(
-                        label: Text(isAr ? 'العربية فقط' : 'Arabic Only'),
-                        selected: _langMode == 'ar_only',
-                        selectedColor: const Color(0xFFE5C158),
-                        onSelected: (val) {
-                          if (val) setState(() => _langMode = 'ar_only');
-                        },
-                      ),
-                      const SizedBox(width: 6),
-                      ChoiceChip(
-                        label: Text(isAr ? 'الإنجليزية' : 'English Only'),
-                        selected: _langMode == 'en_only',
-                        selectedColor: const Color(0xFFE5C158),
-                        onSelected: (val) {
-                          if (val) setState(() => _langMode = 'en_only');
-                        },
-                      ),
-                      const SizedBox(width: 6),
-                      ChoiceChip(
-                        label: Text(isAr ? 'كلاهما' : 'Both'),
-                        selected: _langMode == 'both',
-                        selectedColor: const Color(0xFFE5C158),
-                        onSelected: (val) {
-                          if (val) setState(() => _langMode = 'both');
-                        },
-                      ),
-                    ],
+                  ChoiceChip(
+                    label: Text(isAr ? 'العربية فقط' : 'Arabic Only'),
+                    selected: _langMode == 'ar_only',
+                    selectedColor: const Color(0xFFE5C158),
+                    onSelected: (val) {
+                      if (val) setState(() => _langMode = 'ar_only');
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  // Include Tafsir Switch
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FilterChip(
-                        avatar: Icon(
-                          _includeTafsir
-                              ? Icons.auto_stories
-                              : Icons.auto_stories_outlined,
-                          size: 16,
-                          color: _includeTafsir ? Colors.black : Colors.grey,
-                        ),
-                        label: Text(isAr ? 'تضمين التفسير' : 'Include Tafsir'),
-                        selected: _includeTafsir,
-                        selectedColor: const Color(0xFFE5C158),
-                        onSelected: (val) => setState(() => _includeTafsir = val),
-                      ),
-                    ],
+                  ChoiceChip(
+                    label: Text(isAr ? 'الإنجليزية فقط' : 'English Only'),
+                    selected: _langMode == 'en_only',
+                    selectedColor: const Color(0xFFE5C158),
+                    onSelected: (val) {
+                      if (val) setState(() => _langMode = 'en_only');
+                    },
+                  ),
+                  ChoiceChip(
+                    label: Text(isAr ? 'كلاهما' : 'Both'),
+                    selected: _langMode == 'both',
+                    selectedColor: const Color(0xFFE5C158),
+                    onSelected: (val) {
+                      if (val) setState(() => _langMode = 'both');
+                    },
+                  ),
+                  FilterChip(
+                    avatar: Icon(
+                      _includeTafsir
+                          ? Icons.auto_stories
+                          : Icons.auto_stories_outlined,
+                      size: 16,
+                      color: _includeTafsir ? Colors.black : Colors.grey,
+                    ),
+                    label: Text(isAr ? 'تضمين التفسير' : 'Include Tafsir'),
+                    selected: _includeTafsir,
+                    selectedColor: const Color(0xFFE5C158),
+                    onSelected: _onToggleTafsir,
                   ),
                 ],
               ),
@@ -251,9 +264,9 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
 
-                      // Arabic Verse Text
+                      // Arabic Text (If enabled)
                       if (showArabic)
                         Text(
                           widget.ayah.text,
@@ -282,25 +295,40 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                         ),
                       ],
 
-                      // Tafsir (If enabled & present)
-                      if (hasTafsir) ...[
+                      // Tafsir (If enabled)
+                      if (_includeTafsir) ...[
                         const SizedBox(height: 14),
                         Divider(
                           color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
                           thickness: 1,
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          widget.ayah.tafseer,
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Amiri',
-                            fontSize: 13,
-                            height: 1.7,
-                            color: (themeConfig['textColor'] as Color).withValues(alpha: 0.9),
+                        if (_isLoadingTafsir)
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFFE5C158),
+                              ),
+                            ),
+                          )
+                        else
+                          Text(
+                            _tafsirText.isNotEmpty
+                                ? _tafsirText
+                                : (isAr ? 'التفسير الميسر غير متوفر' : 'Tafsir not available'),
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Amiri',
+                              fontSize: 13,
+                              height: 1.7,
+                              color: (themeConfig['textColor'] as Color).withValues(alpha: 0.9),
+                            ),
                           ),
-                        ),
                       ],
 
                       const SizedBox(height: 16),

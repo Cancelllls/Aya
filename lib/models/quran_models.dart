@@ -3,13 +3,15 @@ class TafsirEdition {
   final String name;
   final String mufassir; // Arabic scholar name
   final String mufassirEn; // English scholar name
+  final String language; // 'ar' or 'en'
 
   const TafsirEdition(
     this.identifier,
     this.name,
     this.mufassir,
-    this.mufassirEn,
-  );
+    this.mufassirEn, {
+    this.language = 'ar',
+  });
 }
 
 const List<TafsirEdition> availableTafsirs = [
@@ -18,36 +20,63 @@ const List<TafsirEdition> availableTafsirs = [
     'التفسير الميسر',
     'مجمع الملك فهد لطباعة المصحف الشريف',
     'King Fahd Quran Printing Complex',
+    language: 'ar',
   ),
   TafsirEdition(
     'ar.jalalayn',
     'تفسير الجلالين',
     'جلال الدين السيوطي وجلال الدين المحلي',
     'Jalal al-Din al-Suyuti & Jalal al-Din al-Mahalli',
+    language: 'ar',
   ),
   TafsirEdition(
     'ar.qurtubi',
     'تفسير القرطبي',
     'الإمام محمد بن أحمد القرطبي',
     'Imam Muhammad al-Qurtubi',
+    language: 'ar',
   ),
   TafsirEdition(
     'ar.miqbas',
     'تنوير المقباس من تفسير ابن عباس',
     'عبدالله بن عباس (رواية)',
     'Ibn Abbas (narrated)',
+    language: 'ar',
   ),
   TafsirEdition(
     'ar.waseet',
     'التفسير الوسيط',
     'مجمع البحوث الإسلامية بالأزهر',
     'Al-Azhar Islamic Research Academy',
+    language: 'ar',
   ),
   TafsirEdition(
     'ar.baghawi',
     'تفسير البغوي',
     'الإمام الحسين بن مسعود البغوي',
     'Imam al-Husayn al-Baghawi',
+    language: 'ar',
+  ),
+  TafsirEdition(
+    'en.ibnkathir',
+    'Tafsir Ibn Kathir (English)',
+    'إبن كثير',
+    'Hafiz Ibn Kathir',
+    language: 'en',
+  ),
+  TafsirEdition(
+    'en.jalalayn',
+    'Tafsir al-Jalalayn (English)',
+    'تفسير الجلالين (إنجليزية)',
+    'Jalal ad-Din al-Mahalli & al-Suyuti',
+    language: 'en',
+  ),
+  TafsirEdition(
+    'en.maududi',
+    'Tafheem-ul-Quran (English)',
+    'أبو الأعلى المودودي',
+    'Abul A\'la Maududi',
+    language: 'en',
   ),
 ];
 

@@ -432,17 +432,6 @@ extension SurahReaderUi on _SurahReaderScreenState {
           final key = _pageKeys.putIfAbsent(pageIndex, () => GlobalKey());
 
           // Fix #1: Reuse existing recognizers — only rebuild when the surah
-          // changes (handled in _loadAyahs). Closures capture `this`, so
-          // _selectedAyahs is always fresh at tap-time without re-creation.
-          if (_pageRecognizers.containsKey(pageIndex)) {
-            // Recognizers exist: rebuild only the spans for highlight state,
-            // then fall through to render the chunk with existing recognizers.
-          } else {
-            _pageRecognizers[pageIndex] = [];
-          }
-          final List<GestureRecognizer> pageRecs = _pageRecognizers[pageIndex]!;
-          final bool needsRecognizers = pageRecs.isEmpty;
-
           final List<InlineSpan> spans = [];
           for (int i = 0; i < chunk.length; i++) {
             final ayah = chunk[i];
@@ -453,63 +442,108 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 playState.ayahNum == ayah.numberInSurah;
             final isSelected = _selectedAyahs.contains(ayah.numberInSurah);
             final isHighlighted = isBookmarked || isPlaying || isSelected;
+            final isMaskedInHifz = _isHifzMode && !_unmaskedAyahs.contains(ayah.numberInSurah);
 
-            // Fix #1: only create recognizers on first build of this page.
-            // On re-builds (e.g. selection change), reuse the cached ones.
-            final TapGestureRecognizer tapRec;
-            final LongPressGestureRecognizer longPressRec;
-            if (needsRecognizers) {
-              tapRec = TapGestureRecognizer()
-                ..onTap = () {
-                  if (_selectedAyahs.isNotEmpty) {
-                    _toggleAyahSelection(ayah.numberInSurah);
-                  } else {
-                    _showAyahActionSheet(ayah);
-                  }
-                };
-              longPressRec = LongPressGestureRecognizer()
-                ..onLongPress = () => _toggleAyahSelection(ayah.numberInSurah);
-              pageRecs.add(tapRec);
-              pageRecs.add(longPressRec);
+            if (isMaskedInHifz) {
+              spans.add(
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: GestureDetector(
+                    onTap: () => _toggleAyahMasking(ayah.numberInSurah),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFE5C158).withValues(alpha: 0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.visibility_off_outlined,
+                            color: Color(0xFFE5C158),
+                            size: 15,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            TranslationService.isArabic
+                                ? 'آية ${ayah.numberInSurah} (انقر للكشف)'
+                                : 'Ayah ${ayah.numberInSurah} (Tap to reveal)',
+                            style: const TextStyle(
+                              color: Color(0xFFE5C158),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
             } else {
-              tapRec = pageRecs[i * 2] as TapGestureRecognizer;
-              longPressRec = pageRecs[i * 2 + 1] as LongPressGestureRecognizer;
+              spans.add(
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.baseline,
+                  baseline: TextBaseline.alphabetic,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_selectedAyahs.isNotEmpty) {
+                        _toggleAyahSelection(ayah.numberInSurah);
+                      } else if (_isHifzMode) {
+                        _toggleAyahMasking(ayah.numberInSurah);
+                      } else {
+                        _showAyahActionSheet(ayah);
+                      }
+                    },
+                    onLongPress: () => _toggleAyahSelection(ayah.numberInSurah),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.3)
+                            : isPlaying
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.22)
+                            : isBookmarked
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        "${ayah.text} ",
+                        textDirection: TextDirection.rtl,
+                        style: _getArabicTextStyle(
+                          22 * _fontSizeMultiplier,
+                          height: 2.1,
+                          color: isHighlighted
+                              ? const Color(0xFFE5C158)
+                              : theme.textTheme.bodyLarge?.color,
+                          fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+
+              spans.add(
+                TextSpan(
+                  text: " ﴿${ayah.numberInSurah}﴾ ",
+                  style: _getArabicTextStyle(
+                    20,
+                    color: const Color(0xFFE5C158),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
             }
-
-            spans.add(
-              TextSpan(
-                text: "${ayah.text} ",
-                recognizer: tapRec,
-                style: _getArabicTextStyle(
-                  22 * _fontSizeMultiplier,
-                  height: 2.1,
-                  color: isHighlighted
-                      ? const Color(0xFFE5C158)
-                      : theme.textTheme.bodyLarge?.color,
-                  fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
-                  backgroundColor: isSelected
-                      ? const Color(0xFFE5C158).withValues(alpha: 0.25)
-                      : isPlaying
-                      // ignore: deprecated_member_use
-                      ? const Color(0xFFE5C158).withValues(alpha: 0.3)
-                      : isBookmarked
-                      // ignore: deprecated_member_use
-                      ? const Color(0xFFE5C158).withValues(alpha: 0.15)
-                      : null,
-                ),
-              ),
-            );
-
-            spans.add(
-              TextSpan(
-                text: " ﴿${ayah.numberInSurah}﴾ ",
-                style: _getArabicTextStyle(
-                  20,
-                  color: const Color(0xFFE5C158),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            );
           }
 
           final int firstHizb = chunk.isNotEmpty ? chunk.first.hizb : 0;
