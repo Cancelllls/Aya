@@ -403,41 +403,56 @@ extension SurahReaderUi on _SurahReaderScreenState {
               fontWeight: FontWeight.bold,
             );
 
-            final rawSpans = TajweedService.buildSpans(
-              text: "${ayah.text} ",
-              baseStyle: verseStyle,
-              context: context,
-              isEnabled: _isTajweedEnabled,
-            );
+            final tapRec = TapGestureRecognizer()
+              ..onTap = () {
+                if (_selectedAyahs.isNotEmpty) {
+                  _toggleAyahSelection(ayah.numberInSurah);
+                } else if (_isHifzMode) {
+                  _toggleAyahMasking(ayah.numberInSurah);
+                } else {
+                  _showAyahActionSheet(ayah);
+                }
+              };
+            pageRecs.add(tapRec);
 
-            spans.add(
-              WidgetSpan(
-                alignment: PlaceholderAlignment.baseline,
-                baseline: TextBaseline.alphabetic,
-                child: GestureDetector(
-                  onTap: () {
-                    if (_selectedAyahs.isNotEmpty) {
-                      _toggleAyahSelection(ayah.numberInSurah);
-                    } else if (_isHifzMode) {
-                      _toggleAyahMasking(ayah.numberInSurah);
-                    } else {
-                      _showAyahActionSheet(ayah);
-                    }
-                  },
-                  onLongPress: () => _toggleAyahSelection(ayah.numberInSurah),
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: isMaskedInHifz ? 7.5 : 0.0,
-                      sigmaY: isMaskedInHifz ? 7.5 : 0.0,
-                    ),
-                    child: Text.rich(
-                      TextSpan(children: rawSpans),
-                      textDirection: TextDirection.rtl,
-                    ),
+            if (isMaskedInHifz) {
+              // Shadow-blur trick — text stays in layout but is visually blurred
+              spans.add(
+                TextSpan(
+                  text: "${ayah.text} ",
+                  style: verseStyle.copyWith(
+                    color: Colors.transparent,
+                    shadows: [
+                      Shadow(
+                        color: (theme.textTheme.bodyLarge?.color ?? Colors.white)
+                            .withValues(alpha: 0.55),
+                        blurRadius: 8,
+                      ),
+                    ],
                   ),
+                  recognizer: tapRec,
                 ),
-              ),
-            );
+              );
+            } else {
+              final rawSpans = TajweedService.buildSpans(
+                text: "${ayah.text} ",
+                baseStyle: verseStyle,
+                context: context,
+                isEnabled: _isTajweedEnabled,
+              );
+              for (final s in rawSpans) {
+                if (s is TextSpan) {
+                  spans.add(TextSpan(
+                    text: s.text,
+                    children: s.children,
+                    style: s.style,
+                    recognizer: tapRec,
+                  ));
+                } else {
+                  spans.add(s);
+                }
+              }
+            }
 
             spans.add(
               TextSpan(
@@ -447,6 +462,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   color: const Color(0xFFE5C158),
                   fontWeight: FontWeight.bold,
                 ),
+                recognizer: tapRec,
               ),
             );
           }
@@ -507,30 +523,37 @@ extension SurahReaderUi on _SurahReaderScreenState {
                             ),
                           ],
                         ),
-                  child: Container(
-                    margin: _hideContinuousBorders
-                        ? EdgeInsets.zero
-                        : const EdgeInsets.all(4),
-                    decoration: _hideContinuousBorders
-                        ? null
-                        : BoxDecoration(
-                            // ignore: deprecated_member_use
-                            border: Border.all(
-                              color: const Color(0xFFE5C158).withValues(alpha: 0.15),
-                              width: 1,
+                  child: GestureDetector(
+                    onLongPress: () {
+                      if (chunk.isNotEmpty) {
+                        _toggleAyahSelection(chunk.first.numberInSurah);
+                      }
+                    },
+                    child: Container(
+                      margin: _hideContinuousBorders
+                          ? EdgeInsets.zero
+                          : const EdgeInsets.all(4),
+                      decoration: _hideContinuousBorders
+                          ? null
+                          : BoxDecoration(
+                              // ignore: deprecated_member_use
+                              border: Border.all(
+                                color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 20,
-                    ),
-                    child: Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text.rich(
-                        TextSpan(children: spans),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 20,
+                      ),
+                      child: Directionality(
                         textDirection: TextDirection.rtl,
-                        textAlign: TextAlign.justify,
+                        child: Text.rich(
+                          TextSpan(children: spans),
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.justify,
+                        ),
                       ),
                     ),
                   ),

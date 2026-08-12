@@ -509,17 +509,25 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
               showModalBottomSheet(
                 context: context,
                 backgroundColor: theme.cardColor,
+                isScrollControlled: true,
+                useSafeArea: true,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 builder: (context) => StatefulBuilder(
                   builder: (context, setModalState) {
-                    return Container(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    return DraggableScrollableSheet(
+                      initialChildSize: 0.6,
+                      minChildSize: 0.4,
+                      maxChildSize: 0.92,
+                      expand: false,
+                      builder: (context, scrollController) => SingleChildScrollView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           Text(
                             TranslationService.t('reading_settings'),
                             style: const TextStyle(
@@ -966,14 +974,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               _toggleTajweedMode();
                             },
                           ),
+                          const SizedBox(height: 16),
                         ],
                       ),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
         ],
       ),
       body: GestureDetector(
