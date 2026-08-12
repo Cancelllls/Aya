@@ -268,15 +268,21 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       // Base Arabic Text Layer
                       Align(
                         alignment: Alignment.centerRight,
-                        child: Text(
-                          ayah.text,
+                        child: Text.rich(
+                          TextSpan(
+                            children: TajweedService.buildSpans(
+                              text: ayah.text,
+                              baseStyle: _getArabicTextStyle(
+                                22 * _fontSizeMultiplier,
+                                height: 2.1,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              context: context,
+                              isEnabled: _isTajweedEnabled,
+                            ),
+                          ),
                           textDirection: TextDirection.rtl,
                           textAlign: TextAlign.justify,
-                          style: _getArabicTextStyle(
-                            22 * _fontSizeMultiplier,
-                            height: 2.1,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
                       ),
                       // Frosted Glass Blur Mask Layer

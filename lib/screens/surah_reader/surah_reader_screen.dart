@@ -15,6 +15,7 @@ import '../../services/reciters_cache_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/audio_manager.dart';
+import '../../services/tajweed_service.dart';
 
 part 'surah_reader_audio.dart';
 part 'surah_reader_bookmarks.dart';
@@ -73,6 +74,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   int? _lastScrolledAyah;
   bool _isHifzMode = false;
   final Set<int> _unmaskedAyahs = {};
+  bool _isTajweedEnabled = true;
 
   Ticker? _ticker;
   double _scrollSpeed = 1.0;
@@ -125,6 +127,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     );
     _fontSizeMultiplier = widget.fontSizeMultiplier ??
         widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
+    _isTajweedEnabled = widget.storage.getBool(
+      'setting_tajweed_enabled',
+      defaultValue: true,
+    );
     _loadAyahs();
     _fetchDynamicReciters(_quranScriptType);
     _checkBookmarkStatus();
@@ -242,6 +248,23 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     });
   }
 
+  void _toggleTajweedMode() {
+    setState(() {
+      _isTajweedEnabled = !_isTajweedEnabled;
+    });
+    widget.storage.setBool('setting_tajweed_enabled', _isTajweedEnabled);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isTajweedEnabled
+              ? (TranslationService.isArabic ? 'تم تفعيل التجويد الملون' : 'Tajweed color highlighting enabled')
+              : (TranslationService.isArabic ? 'تم إيقاف التجويد الملون' : 'Tajweed color highlighting disabled'),
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   void updateState(VoidCallback fn) {
     if (mounted) setState(fn);
   }
@@ -320,6 +343,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ),
             onPressed: _toggleHifzMode,
             tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.palette_outlined,
+              color: _isTajweedEnabled
+                  ? const Color(0xFF26A69A)
+                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.5),
+            ),
+            onPressed: _toggleTajweedMode,
+            tooltip: TranslationService.isArabic ? "التجويد الملون" : "Color Tajweed",
           ),
           IconButton(
             icon: Icon(
