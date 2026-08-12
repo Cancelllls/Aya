@@ -1,10 +1,13 @@
 package com.quran.aya
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import android.util.Log
 
 class AyaTasbihWidgetProvider : AppWidgetProvider() {
 
@@ -16,58 +19,59 @@ class AyaTasbihWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == "com.quran.aya.INCREMENT_TASBIH") {
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            var count = prefs.getInt("flutter.widget_tasbih_count", 0)
-            val target = prefs.getInt("flutter.widget_tasbih_target", 33)
-            
-            count++
-            if (count > target) count = 0 // Reset or loop? Let's just increment or reset. Wait, let's just increment.
-            
-            // Just increment for now, or reset if it hits target. Let's do reset if it exceeds target.
-            if (count > target && target > 0) count = 1
-            
-            prefs.edit().putInt("flutter.widget_tasbih_count", count).apply()
+        try {
+            if (intent.action == "com.quran.aya.INCREMENT_TASBIH") {
+                val prefs = WidgetUtils.getPrefs(context)
+                var count = WidgetUtils.getSafeInt(prefs, "widget_tasbih_count", 0)
+                val target = WidgetUtils.getSafeInt(prefs, "widget_tasbih_target", 33)
 
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val componentName = android.content.ComponentName(context, AyaTasbihWidgetProvider::class.java)
-            val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
-            for (id in appWidgetIds) {
-                updateAppWidget(context, appWidgetManager, id)
+                count++
+                if (target > 0 && count > target) {
+                    count = 1
+                }
+
+                prefs.edit().putInt("flutter.widget_tasbih_count", count).apply()
+
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val componentName = ComponentName(context, AyaTasbihWidgetProvider::class.java)
+                val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+                for (id in appWidgetIds) {
+                    updateAppWidget(context, appWidgetManager, id)
+                }
             }
+        } catch (e: Throwable) {
+            Log.e("AyaTasbihWidgetProvider", "Error in onReceive: ${e.message}", e)
         }
     }
 
     companion object {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val views = RemoteViews(context.packageName, R.layout.aya_tasbih_widget)
+            try {
+                val views = RemoteViews(context.packageName, R.layout.aya_tasbih_widget)
+                val prefs = WidgetUtils.getPrefs(context)
 
-            // Read from SharedPreferences saved by Flutter
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
-            val appName = if (isArabic) "آية" else "Aya"
-            
-            // Get Tasbih details
-            val dhikrText = prefs.getString("flutter.widget_tasbih_dhikr", "سُبْحَانَ ٱللَّٰهِ") 
-                ?: "سُبْحَانَ ٱللَّٰهِ"
-            val count = prefs.getInt("flutter.widget_tasbih_count", 0)
-            val target = prefs.getInt("flutter.widget_tasbih_target", 33)
+                val dhikrText = WidgetUtils.getSafeString(prefs, "widget_tasbih_dhikr", "سُبْحَانَ ٱللَّٰهِ")
+                val count = WidgetUtils.getSafeInt(prefs, "widget_tasbih_count", 0)
+                val target = WidgetUtils.getSafeInt(prefs, "widget_tasbih_target", 33)
 
-            // Update text values
-            views.setTextViewText(R.id.widget_tasbih_dhikr, dhikrText)
-            views.setTextViewText(R.id.widget_tasbih_count, "$count / $target")
+                views.setTextViewText(R.id.widget_tasbih_dhikr, dhikrText)
+                views.setTextViewText(R.id.widget_tasbih_count, "$count / $target")
 
-            // Add click listener to the entire widget to increment
-            val intent = android.content.Intent(context, AyaTasbihWidgetProvider::class.java)
-            intent.action = "com.quran.aya.INCREMENT_TASBIH"
-            val pendingIntent = android.app.PendingIntent.getBroadcast(
-                context, 0, intent,
-                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+                val intent = Intent(context, AyaTasbihWidgetProvider::class.java).apply {
+                    action = "com.quran.aya.INCREMENT_TASBIH"
+                }
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
-            // Update app widget
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Throwable) {
+                Log.e("AyaTasbihWidgetProvider", "Error updating tasbih widget: ${e.message}", e)
+            }
         }
     }
 }

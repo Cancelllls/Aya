@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
+import android.util.Log
 
 class AyaVerseWidgetProvider : AppWidgetProvider() {
 
@@ -15,23 +16,27 @@ class AyaVerseWidgetProvider : AppWidgetProvider() {
 
     companion object {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val views = RemoteViews(context.packageName, R.layout.aya_verse_widget)
+            try {
+                val views = RemoteViews(context.packageName, R.layout.aya_verse_widget)
+                val prefs = WidgetUtils.getPrefs(context)
 
-            // Read from SharedPreferences saved by Flutter
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
-            val appName = if (isArabic) "آية" else "Aya"
-            
-            // Get verse details
-            val text = prefs.getString("flutter.widget_verse_text", "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ") ?: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ"
-            val ref = prefs.getString("flutter.widget_verse_ref", "سورة الرعد: ٢٨") ?: "سورة الرعد: ٢٨"
+                val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
+                val appName = if (isArabic) "آية" else "Aya"
 
-            // Update text values
-            views.setTextViewText(R.id.widget_verse_text, text)
-            views.setTextViewText(R.id.widget_verse_ref, ref)
+                val text = WidgetUtils.getSafeString(prefs, "widget_verse_text", "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ")
+                val ref = WidgetUtils.getSafeString(prefs, "widget_verse_ref", "سورة الرعد: ٢٨")
 
-            // Update app widget
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+                views.setTextViewText(R.id.widget_title, if (isArabic) "آية اليوم" else "Verse of the Day")
+                views.setTextViewText(R.id.widget_subtitle, appName)
+                views.setTextViewText(R.id.widget_verse_text, text)
+                views.setTextViewText(R.id.widget_verse_ref, ref)
+
+                WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
+
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Throwable) {
+                Log.e("AyaVerseWidgetProvider", "Error updating verse widget: ${e.message}", e)
+            }
         }
     }
 }

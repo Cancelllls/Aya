@@ -1,29 +1,37 @@
 package com.quran.aya
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import android.content.Intent
 import android.widget.RemoteViews
+import android.util.Log
 
 class AyaHijriWidgetProvider : AppWidgetProvider() {
+
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
-            val views = RemoteViews(context.packageName, R.layout.aya_hijri_widget)
-            
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
-            val appName = if (isArabic) "آية" else "Aya"
-            val hijriDate = prefs.getString("flutter.widget_hijri_date", "15 Ramadan 1447") ?: "15 Ramadan 1447"
-            
-            views.setTextViewText(R.id.hijri_date_text, hijriDate)
+            updateAppWidget(context, appWidgetManager, appWidgetId)
+        }
+    }
 
-            val intent = Intent(context, MainActivity::class.java)
-            val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            views.setOnClickPendingIntent(R.id.hijri_date_title, pendingIntent)
-            
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+    companion object {
+        fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            try {
+                val views = RemoteViews(context.packageName, R.layout.aya_hijri_widget)
+                val prefs = WidgetUtils.getPrefs(context)
+
+                val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
+                val hijriDate = WidgetUtils.getSafeString(prefs, "widget_hijri_date", "15 Ramadan 1447")
+
+                views.setTextViewText(R.id.hijri_date_title, if (isArabic) "التاريخ الهجري" else "Hijri Date")
+                views.setTextViewText(R.id.hijri_date_text, hijriDate)
+
+                WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
+
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Throwable) {
+                Log.e("AyaHijriWidgetProvider", "Error updating hijri widget: ${e.message}", e)
+            }
         }
     }
 }

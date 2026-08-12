@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
+import android.util.Log
 
 class AyaDhikrWidgetProvider : AppWidgetProvider() {
 
@@ -15,21 +16,20 @@ class AyaDhikrWidgetProvider : AppWidgetProvider() {
 
     companion object {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val views = RemoteViews(context.packageName, R.layout.aya_dhikr_widget)
+            try {
+                val views = RemoteViews(context.packageName, R.layout.aya_dhikr_widget)
+                val prefs = WidgetUtils.getPrefs(context)
 
-            // Read from SharedPreferences saved by Flutter
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
-            val appName = if (isArabic) "آية" else "Aya"
-            
-            // Get dhikr details
-            val text = prefs.getString("flutter.widget_dhikr_text", "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ") ?: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ"
+                val text = WidgetUtils.getSafeString(prefs, "widget_dhikr_text", "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ")
 
-            // Update text values
-            views.setTextViewText(R.id.widget_dhikr_text, text)
+                views.setTextViewText(R.id.widget_dhikr_text, text)
 
-            // Update app widget
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+                WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
+
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Throwable) {
+                Log.e("AyaDhikrWidgetProvider", "Error updating dhikr widget: ${e.message}", e)
+            }
         }
     }
 }

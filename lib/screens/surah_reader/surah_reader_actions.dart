@@ -236,6 +236,39 @@ extension SurahReaderActions on _SurahReaderScreenState {
     );
   }
 
+  void _shareSelectedAyahsAsImage() {
+    if (_selectedAyahs.isEmpty) return;
+    final sorted = _selectedAyahs.toList()..sort();
+    final firstAyahNum = sorted.first;
+    final ayah = _ayahList.firstWhere(
+      (a) => a.numberInSurah == firstAyahNum,
+      orElse: () => _ayahList.first,
+    );
+
+    final combinedText = sorted
+        .map((num) => _ayahList.firstWhere((a) => a.numberInSurah == num, orElse: () => ayah).text)
+        .join(' ');
+
+    final combinedAyah = Ayah(
+      number: ayah.number,
+      text: combinedText,
+      numberInSurah: sorted.length == 1 ? firstAyahNum : sorted.first,
+      juz: ayah.juz,
+      hizb: ayah.hizb,
+      translation: ayah.translation,
+      tafseer: ayah.tafseer,
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => ShareAyahDialog(
+        ayah: combinedAyah,
+        surahName: _currentSurah.name,
+        surahNumber: _currentSurah.number,
+      ),
+    );
+  }
+
   void _scrollToAyah(int ayahNum) {
     if (!mounted) return;
 
@@ -450,15 +483,49 @@ extension SurahReaderActions on _SurahReaderScreenState {
 
   void _shareSelectedAyahsText() {
     if (_selectedAyahs.isEmpty) return;
+    final isAr = TranslationService.isArabic;
     final sorted = _selectedAyahs.toList()..sort();
-    final selectedTextList = _ayahList
-        .where((a) => sorted.contains(a.numberInSurah))
-        .map((a) => "${a.text} ﴿${a.numberInSurah}﴾")
-        .join("\n");
-    final ref = "${_currentSurah.name} (${sorted.first}-${sorted.last})";
-    SharePlus.instance.share(
-      ShareParams(text: "$selectedTextList\n\n— $ref • Aya"),
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "مشاركة كصورة" : "Share as Image"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _shareSelectedAyahsAsImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.article_outlined, color: Color(0xFFE5C158)),
+                title: Text(isAr ? "مشاركة كنص" : "Share as Text"),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  final selectedTextList = _ayahList
+                      .where((a) => sorted.contains(a.numberInSurah))
+                      .map((a) => "${a.text} ﴿${a.numberInSurah}﴾")
+                      .join("\n");
+                  final ref = "${_currentSurah.name} (${sorted.first}-${sorted.last})";
+                  SharePlus.instance.share(
+                    ShareParams(text: "$selectedTextList\n\n— $ref • Aya"),
+                  );
+                  _clearAyahSelection();
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
-    _clearAyahSelection();
   }
 }

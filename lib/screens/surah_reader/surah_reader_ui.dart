@@ -385,8 +385,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
 
     const int chunkSize = 5;
     final int pageCount = (_ayahList.length / chunkSize).ceil();
-
-    return NotificationListener<ScrollNotification>(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is ScrollStartNotification &&
             notification.dragDetails != null) {
@@ -620,10 +621,13 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       horizontal: 20,
                       vertical: 20,
                     ),
-                    child: Text.rich(
-                      TextSpan(children: spans),
+                    child: Directionality(
                       textDirection: TextDirection.rtl,
-                      textAlign: TextAlign.justify,
+                      child: Text.rich(
+                        TextSpan(children: spans),
+                        textDirection: TextDirection.rtl,
+                        textAlign: TextAlign.justify,
+                      ),
                     ),
                   ),
                 ),
@@ -632,8 +636,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTopMiniPlayer(
     ThemeData theme,

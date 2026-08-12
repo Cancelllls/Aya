@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
 import android.graphics.Color
+import android.util.Log
 
 class AyaWidgetProvider : AppWidgetProvider() {
 
@@ -16,107 +17,71 @@ class AyaWidgetProvider : AppWidgetProvider() {
 
     companion object {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val views = RemoteViews(context.packageName, R.layout.aya_widget)
+            try {
+                val views = RemoteViews(context.packageName, R.layout.aya_widget)
+                val prefs = WidgetUtils.getPrefs(context)
 
-            // Read from SharedPreferences saved by Flutter
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val isArabic = prefs.getBoolean("flutter.widget_is_arabic", true)
-            val appName = if (isArabic) "آية" else "Aya"
-            
-            // Get prayer times
-            val fajr = prefs.getString("flutter.widget_prayer_fajr", "--:--") ?: "--:--"
-            val dhuhr = prefs.getString("flutter.widget_prayer_dhuhr", "--:--") ?: "--:--"
-            val asr = prefs.getString("flutter.widget_prayer_asr", "--:--") ?: "--:--"
-            val maghrib = prefs.getString("flutter.widget_prayer_maghrib", "--:--") ?: "--:--"
-            val isha = prefs.getString("flutter.widget_prayer_isha", "--:--") ?: "--:--"
-            
-            // Get status details
-            val nextName = prefs.getString("flutter.widget_next_prayer_name", "") ?: ""
-            val nextTime = prefs.getString("flutter.widget_widget_next_display", "") ?: "" // e.g. "Asr in 1h 10m" or "Maghrib 18:20"
-            val activePrayer = prefs.getString("flutter.widget_active_prayer", "") ?: ""
+                val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
+                val appName = if (isArabic) "آية" else "Aya"
 
-            // Update labels based on language
-            views.setTextViewText(R.id.widget_title, appName)
-            views.setTextViewText(R.id.widget_fajr_name, if (isArabic) "الفجر" else "Fajr")
-            views.setTextViewText(R.id.widget_dhuhr_name, if (isArabic) "الظهر" else "Dhuhr")
-            views.setTextViewText(R.id.widget_asr_name, if (isArabic) "العصر" else "Asr")
-            views.setTextViewText(R.id.widget_maghrib_name, if (isArabic) "المغرب" else "Maghrib")
-            views.setTextViewText(R.id.widget_isha_name, if (isArabic) "العشاء" else "Isha")
+                val fajr = WidgetUtils.getSafeString(prefs, "widget_prayer_fajr", "--:--")
+                val dhuhr = WidgetUtils.getSafeString(prefs, "widget_prayer_dhuhr", "--:--")
+                val asr = WidgetUtils.getSafeString(prefs, "widget_prayer_asr", "--:--")
+                val maghrib = WidgetUtils.getSafeString(prefs, "widget_prayer_maghrib", "--:--")
+                val isha = WidgetUtils.getSafeString(prefs, "widget_prayer_isha", "--:--")
 
-            // Update text values
-            views.setTextViewText(R.id.widget_fajr_time, fajr)
-            views.setTextViewText(R.id.widget_dhuhr_time, dhuhr)
-            views.setTextViewText(R.id.widget_asr_time, asr)
-            views.setTextViewText(R.id.widget_maghrib_time, maghrib)
-            views.setTextViewText(R.id.widget_isha_time, isha)
+                val nextName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
+                val nextTime = WidgetUtils.getSafeString(prefs, "widget_widget_next_display", "")
+                val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
 
-            if (nextName.isNotEmpty() && nextTime.isNotEmpty()) {
-                views.setTextViewText(R.id.widget_next_prayer, "$nextName: $nextTime")
-            } else {
-                views.setTextViewText(R.id.widget_next_prayer, appName)
+                views.setTextViewText(R.id.widget_title, appName)
+                views.setTextViewText(R.id.widget_fajr_name, if (isArabic) "الفجر" else "Fajr")
+                views.setTextViewText(R.id.widget_dhuhr_name, if (isArabic) "الظهر" else "Dhuhr")
+                views.setTextViewText(R.id.widget_asr_name, if (isArabic) "العصر" else "Asr")
+                views.setTextViewText(R.id.widget_maghrib_name, if (isArabic) "المغرب" else "Maghrib")
+                views.setTextViewText(R.id.widget_isha_name, if (isArabic) "العشاء" else "Isha")
+
+                views.setTextViewText(R.id.widget_fajr_time, fajr)
+                views.setTextViewText(R.id.widget_dhuhr_time, dhuhr)
+                views.setTextViewText(R.id.widget_asr_time, asr)
+                views.setTextViewText(R.id.widget_maghrib_time, maghrib)
+                views.setTextViewText(R.id.widget_isha_time, isha)
+
+                if (nextName.isNotEmpty() && nextTime.isNotEmpty()) {
+                    views.setTextViewText(R.id.widget_next_prayer, "$nextName: $nextTime")
+                } else {
+                    views.setTextViewText(R.id.widget_next_prayer, appName)
+                }
+
+                val activeBg = R.drawable.active_prayer_background
+                val transBg = R.drawable.widget_transparent_bg
+
+                fun safeSetStyle(containerId: Int, nameId: Int, timeId: Int, isActive: Boolean) {
+                    try {
+                        if (isActive) {
+                            views.setInt(containerId, "setBackgroundResource", activeBg)
+                            views.setTextColor(nameId, Color.BLACK)
+                            views.setTextColor(timeId, Color.BLACK)
+                        } else {
+                            views.setInt(containerId, "setBackgroundResource", transBg)
+                            views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
+                            views.setTextColor(timeId, Color.WHITE)
+                        }
+                    } catch (_: Throwable) {}
+                }
+
+                safeSetStyle(R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, activePrayer == "Fajr")
+                safeSetStyle(R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, activePrayer == "Dhuhr")
+                safeSetStyle(R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, activePrayer == "Asr")
+                safeSetStyle(R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, activePrayer == "Maghrib")
+                safeSetStyle(R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, activePrayer == "Isha")
+
+                WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
+
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Throwable) {
+                Log.e("AyaWidgetProvider", "Error updating widget: ${e.message}", e)
             }
-
-            // Styling colors and backgrounds dynamically for active highlighting
-            val activeBg = R.drawable.active_prayer_background
-            val transBg = R.drawable.widget_transparent_bg
-
-            // Fajr container active style
-            if (activePrayer == "Fajr") {
-                views.setInt(R.id.widget_fajr_container, "setBackgroundResource", activeBg)
-                views.setTextColor(R.id.widget_fajr_name, Color.BLACK)
-                views.setTextColor(R.id.widget_fajr_time, Color.BLACK)
-            } else {
-                views.setInt(R.id.widget_fajr_container, "setBackgroundResource", transBg)
-                views.setTextColor(R.id.widget_fajr_name, Color.parseColor("#80FFFFFF"))
-                views.setTextColor(R.id.widget_fajr_time, Color.WHITE)
-            }
-
-            // Dhuhr container active style
-            if (activePrayer == "Dhuhr") {
-                views.setInt(R.id.widget_dhuhr_container, "setBackgroundResource", activeBg)
-                views.setTextColor(R.id.widget_dhuhr_name, Color.BLACK)
-                views.setTextColor(R.id.widget_dhuhr_time, Color.BLACK)
-            } else {
-                views.setInt(R.id.widget_dhuhr_container, "setBackgroundResource", transBg)
-                views.setTextColor(R.id.widget_dhuhr_name, Color.parseColor("#80FFFFFF"))
-                views.setTextColor(R.id.widget_dhuhr_time, Color.WHITE)
-            }
-
-            // Asr container active style
-            if (activePrayer == "Asr") {
-                views.setInt(R.id.widget_asr_container, "setBackgroundResource", activeBg)
-                views.setTextColor(R.id.widget_asr_name, Color.BLACK)
-                views.setTextColor(R.id.widget_asr_time, Color.BLACK)
-            } else {
-                views.setInt(R.id.widget_asr_container, "setBackgroundResource", transBg)
-                views.setTextColor(R.id.widget_asr_name, Color.parseColor("#80FFFFFF"))
-                views.setTextColor(R.id.widget_asr_time, Color.WHITE)
-            }
-
-            // Maghrib container active style
-            if (activePrayer == "Maghrib") {
-                views.setInt(R.id.widget_maghrib_container, "setBackgroundResource", activeBg)
-                views.setTextColor(R.id.widget_maghrib_name, Color.BLACK)
-                views.setTextColor(R.id.widget_maghrib_time, Color.BLACK)
-            } else {
-                views.setInt(R.id.widget_maghrib_container, "setBackgroundResource", transBg)
-                views.setTextColor(R.id.widget_maghrib_name, Color.parseColor("#80FFFFFF"))
-                views.setTextColor(R.id.widget_maghrib_time, Color.WHITE)
-            }
-
-            // Isha container active style
-            if (activePrayer == "Isha") {
-                views.setInt(R.id.widget_isha_container, "setBackgroundResource", activeBg)
-                views.setTextColor(R.id.widget_isha_name, Color.BLACK)
-                views.setTextColor(R.id.widget_isha_time, Color.BLACK)
-            } else {
-                views.setInt(R.id.widget_isha_container, "setBackgroundResource", transBg)
-                views.setTextColor(R.id.widget_isha_name, Color.parseColor("#80FFFFFF"))
-                views.setTextColor(R.id.widget_isha_time, Color.WHITE)
-            }
-
-            // Update app widget
-            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 }
