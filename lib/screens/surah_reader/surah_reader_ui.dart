@@ -394,72 +394,50 @@ extension SurahReaderUi on _SurahReaderScreenState {
             final isHighlighted = isBookmarked || isPlaying || isSelected;
             final isMaskedInHifz = _isHifzMode && !_unmaskedAyahs.contains(ayah.numberInSurah);
 
-            final tapRec = TapGestureRecognizer()
-              ..onTap = () {
-                if (_selectedAyahs.isNotEmpty) {
-                  _toggleAyahSelection(ayah.numberInSurah);
-                } else if (_isHifzMode) {
-                  _toggleAyahMasking(ayah.numberInSurah);
-                } else {
-                  _showAyahActionSheet(ayah);
-                }
-              };
-            pageRecs.add(tapRec);
+            final verseStyle = _getArabicTextStyle(
+              22 * _fontSizeMultiplier,
+              height: 2.1,
+              color: isHighlighted
+                  ? const Color(0xFFE5C158)
+                  : theme.textTheme.bodyLarge?.color,
+              fontWeight: FontWeight.bold,
+            );
 
-            if (isMaskedInHifz) {
-              spans.add(
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.middle,
-                  child: GestureDetector(
-                    onTap: () => _toggleAyahMasking(ayah.numberInSurah),
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 7.5, sigmaY: 7.5),
-                      child: Text(
-                        "${ayah.text} ",
-                        textDirection: TextDirection.rtl,
-                        style: _getArabicTextStyle(
-                          22 * _fontSizeMultiplier,
-                          height: 2.1,
-                          color: theme.textTheme.bodyLarge?.color,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+            final rawSpans = TajweedService.buildSpans(
+              text: "${ayah.text} ",
+              baseStyle: verseStyle,
+              context: context,
+              isEnabled: _isTajweedEnabled,
+            );
+
+            spans.add(
+              WidgetSpan(
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
+                child: GestureDetector(
+                  onTap: () {
+                    if (_selectedAyahs.isNotEmpty) {
+                      _toggleAyahSelection(ayah.numberInSurah);
+                    } else if (_isHifzMode) {
+                      _toggleAyahMasking(ayah.numberInSurah);
+                    } else {
+                      _showAyahActionSheet(ayah);
+                    }
+                  },
+                  onLongPress: () => _toggleAyahSelection(ayah.numberInSurah),
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                      sigmaX: isMaskedInHifz ? 7.5 : 0.0,
+                      sigmaY: isMaskedInHifz ? 7.5 : 0.0,
+                    ),
+                    child: Text.rich(
+                      TextSpan(children: rawSpans),
+                      textDirection: TextDirection.rtl,
                     ),
                   ),
                 ),
-              );
-            } else {
-              final verseStyle = _getArabicTextStyle(
-                22 * _fontSizeMultiplier,
-                height: 2.1,
-                color: isHighlighted
-                    ? const Color(0xFFE5C158)
-                    : theme.textTheme.bodyLarge?.color,
-                fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
-              );
-
-              final rawSpans = TajweedService.buildSpans(
-                text: "${ayah.text} ",
-                baseStyle: verseStyle,
-                context: context,
-                isEnabled: _isTajweedEnabled,
-              );
-
-              for (final s in rawSpans) {
-                if (s is TextSpan) {
-                  spans.add(
-                    TextSpan(
-                      text: s.text,
-                      children: s.children,
-                      style: s.style,
-                      recognizer: tapRec,
-                    ),
-                  );
-                } else {
-                  spans.add(s);
-                }
-              }
-            }
+              ),
+            );
 
             spans.add(
               TextSpan(
@@ -469,7 +447,6 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   color: const Color(0xFFE5C158),
                   fontWeight: FontWeight.bold,
                 ),
-                recognizer: tapRec,
               ),
             );
           }

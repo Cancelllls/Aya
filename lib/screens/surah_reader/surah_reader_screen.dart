@@ -935,6 +935,37 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               ),
                             ],
                           ),
+                          const SizedBox(height: 12),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            activeColor: const Color(0xFFE5C158),
+                            title: Text(
+                              TranslationService.isArabic
+                                  ? 'التجويد الملون للأحرف'
+                                  : 'Color Tajweed Highlighting',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Text(
+                              TranslationService.isArabic
+                                  ? 'تفعيل أو إيقاف تلوين أحرف وقواعد التجويد'
+                                  : 'Toggle colored highlights for Tajweed rules',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: theme.textTheme.bodyMedium?.color
+                                    ?.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            value: _isTajweedEnabled,
+                            onChanged: (val) {
+                              setModalState(() {
+                                _isTajweedEnabled = val;
+                              });
+                              _toggleTajweedMode();
+                            },
+                          ),
                         ],
                       ),
                     );

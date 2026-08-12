@@ -66,6 +66,21 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
   }
 
   void _syncAutoScrollWithAudio() async {
+    if (_isAutoScrolling) {
+      _stopAutoScroll();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? 'تم إيقاف المزامنة والتمرير التلقائي'
+                : 'Auto-scroll & Sync disabled',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+      return;
+    }
+
     final player = AudioManager.instance.activePlayer;
     final duration = await player.getDuration();
     final position = await player.getCurrentPosition();
