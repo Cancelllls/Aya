@@ -257,43 +257,86 @@ extension SurahReaderUi on _SurahReaderScreenState {
                     alignment: Alignment.center,
                     children: [
                       // Base Arabic Text Layer
-                      // Ayah Arabic Text with Hifz Gaussian Blur Filter
-                      GestureDetector(
-                        onTap: () {
-                          if (_isHifzMode) {
-                            _toggleAyahMasking(ayah.numberInSurah);
-                          }
-                        },
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(
-                            sigmaX: (_isHifzMode && !_unmaskedAyahs.contains(ayah.numberInSurah))
-                                ? 7.5
-                                : 0.0,
-                            sigmaY: (_isHifzMode && !_unmaskedAyahs.contains(ayah.numberInSurah))
-                                ? 7.5
-                                : 0.0,
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text.rich(
+                          TextSpan(
+                            children: TajweedService.buildSpans(
+                              text: ayah.text,
+                              baseStyle: _getArabicTextStyle(
+                                22 * _fontSizeMultiplier,
+                                height: 2.1,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              context: context,
+                              isEnabled: _isTajweedEnabled,
+                            ),
                           ),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Text.rich(
-                              TextSpan(
-                                children: TajweedService.buildSpans(
-                                  text: ayah.text,
-                                  baseStyle: _getArabicTextStyle(
-                                    22 * _fontSizeMultiplier,
-                                    height: 2.1,
-                                    fontWeight: FontWeight.bold,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.justify,
+                        ),
+                      ),
+                      // Frosted Glass Blur Mask Layer
+                      if (_isHifzMode)
+                        Positioned.fill(
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeInOut,
+                            opacity: _unmaskedAyahs.contains(ayah.numberInSurah) ? 0.0 : 1.0,
+                            child: IgnorePointer(
+                              ignoring: _unmaskedAyahs.contains(ayah.numberInSurah),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF1E293B)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFFE5C158).withValues(alpha: 0.4),
+                                    width: 1.5,
                                   ),
-                                  context: context,
-                                  isEnabled: _isTajweedEnabled,
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: const Color(0xFFE5C158).withValues(alpha: 0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.visibility_off_outlined,
+                                          color: Color(0xFFE5C158),
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          TranslationService.isArabic
+                                              ? "انقر لكشف الآية (وضع الحفظ)"
+                                              : "Tap to reveal verse (Hifz Mode)",
+                                          style: const TextStyle(
+                                            color: Color(0xFFE5C158),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.justify,
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -401,26 +444,66 @@ extension SurahReaderUi on _SurahReaderScreenState {
             final isHighlighted = isBookmarked || isPlaying || isSelected;
             final isMaskedInHifz = _isHifzMode && !_unmaskedAyahs.contains(ayah.numberInSurah);
 
-            spans.add(
-              WidgetSpan(
-                alignment: PlaceholderAlignment.baseline,
-                baseline: TextBaseline.alphabetic,
-                child: GestureDetector(
-                  onTap: () {
-                    if (_selectedAyahs.isNotEmpty) {
-                      _toggleAyahSelection(ayah.numberInSurah);
-                    } else if (_isHifzMode) {
-                      _toggleAyahMasking(ayah.numberInSurah);
-                    } else {
-                      _showAyahActionSheet(ayah);
-                    }
-                  },
-                  onLongPress: () => _toggleAyahSelection(ayah.numberInSurah),
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: isMaskedInHifz ? 7.5 : 0.0,
-                      sigmaY: isMaskedInHifz ? 7.5 : 0.0,
+            if (isMaskedInHifz) {
+              spans.add(
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: GestureDetector(
+                    onTap: () => _toggleAyahMasking(ayah.numberInSurah),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFE5C158).withValues(alpha: 0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.visibility_off_outlined,
+                            color: Color(0xFFE5C158),
+                            size: 15,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            TranslationService.isArabic
+                                ? 'آية ${ayah.numberInSurah} (انقر للكشف)'
+                                : 'Ayah ${ayah.numberInSurah} (Tap to reveal)',
+                            style: const TextStyle(
+                              color: Color(0xFFE5C158),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ),
+                ),
+              );
+            } else {
+              spans.add(
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.baseline,
+                  baseline: TextBaseline.alphabetic,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_selectedAyahs.isNotEmpty) {
+                        _toggleAyahSelection(ayah.numberInSurah);
+                      } else if (_isHifzMode) {
+                        _toggleAyahMasking(ayah.numberInSurah);
+                      } else {
+                        _showAyahActionSheet(ayah);
+                      }
+                    },
+                    onLongPress: () => _toggleAyahSelection(ayah.numberInSurah),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
                       decoration: BoxDecoration(
@@ -448,19 +531,19 @@ extension SurahReaderUi on _SurahReaderScreenState {
                     ),
                   ),
                 ),
-              ),
-            );
+              );
 
-            spans.add(
-              TextSpan(
-                text: " ﴿${ayah.numberInSurah}﴾ ",
-                style: _getArabicTextStyle(
-                  20,
-                  color: const Color(0xFFE5C158),
-                  fontWeight: FontWeight.bold,
+              spans.add(
+                TextSpan(
+                  text: " ﴿${ayah.numberInSurah}﴾ ",
+                  style: _getArabicTextStyle(
+                    20,
+                    color: const Color(0xFFE5C158),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
 
           final int firstHizb = chunk.isNotEmpty ? chunk.first.hizb : 0;
