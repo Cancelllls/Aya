@@ -440,21 +440,21 @@ extension SurahReaderUi on _SurahReaderScreenState {
             pageRecs.add(ayahRec);
 
             if (isMaskedInHifz) {
-              // Shadow-blur trick — text stays in layout but is visually blurred
               spans.add(
-                TextSpan(
-                  text: "${ayah.text} ",
-                  style: verseStyle.copyWith(
-                    color: Colors.transparent,
-                    shadows: [
-                      Shadow(
-                        color: (theme.textTheme.bodyLarge?.color ?? Colors.white)
-                            .withValues(alpha: 0.55),
-                        blurRadius: 17, // +20% from 14
+                WidgetSpan(
+                  child: GestureDetector(
+                    onTap: () {
+                      _toggleAyahMasking(ayah.numberInSurah);
+                    },
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 7.5, sigmaY: 7.5),
+                      child: Text(
+                        "${ayah.text} ",
+                        style: verseStyle,
+                        textDirection: TextDirection.rtl,
                       ),
-                    ],
+                    ),
                   ),
-                  recognizer: ayahRec,
                 ),
               );
             } else {

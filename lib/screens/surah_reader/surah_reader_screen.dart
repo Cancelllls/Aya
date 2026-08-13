@@ -1277,66 +1277,75 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                   Expanded(
                                     child: _readingMode == 'continuous'
                                         ? _buildContinuousLayout(playState)
-                                        : NotificationListener<ScrollNotification>(
-                                            onNotification: (notification) {
-                                              if (notification is ScrollEndNotification) {
-                                                if (_ayahList.isNotEmpty && _scrollController.hasClients) {
-                                                  final offset = _scrollController.offset;
-                                                  final approxIndex = (offset / 160.0).floor().clamp(0, _ayahList.length - 1);
-                                                  _debouncedSavePosition(_currentSurah.number, _ayahList[approxIndex].numberInSurah);
-                                                }
-                                              }
-                                              return false;
-                                            },
-                                            child: ListView.builder(
-                                              controller: _scrollController,
-                                              physics: const BouncingScrollPhysics(),
-                                              padding: EdgeInsets.only(
-                                                top: 8,
-                                                bottom: 16.0 + MediaQuery.of(context).padding.bottom + 58.0 + 16.0,
+                                        : ValueListenableBuilder<bool>(
+                                            valueListenable: _hifzNotifier,
+                                            builder: (context, isHifz, _) => ValueListenableBuilder<Set<int>>(
+                                              valueListenable: _unmaskedNotifier,
+                                              builder: (context, unmasked, _) => ValueListenableBuilder<bool>(
+                                                valueListenable: _tajweedNotifier,
+                                                builder: (context, isTajweed, _) => NotificationListener<ScrollNotification>(
+                                                  onNotification: (notification) {
+                                                    if (notification is ScrollEndNotification) {
+                                                      if (_ayahList.isNotEmpty && _scrollController.hasClients) {
+                                                        final offset = _scrollController.offset;
+                                                        final approxIndex = (offset / 160.0).floor().clamp(0, _ayahList.length - 1);
+                                                        _debouncedSavePosition(_currentSurah.number, _ayahList[approxIndex].numberInSurah);
+                                                      }
+                                                    }
+                                                    return false;
+                                                  },
+                                                  child: ListView.builder(
+                                                    controller: _scrollController,
+                                                    physics: const BouncingScrollPhysics(),
+                                                    padding: EdgeInsets.only(
+                                                      top: 8,
+                                                      bottom: 16.0 + MediaQuery.of(context).padding.bottom + 58.0 + 16.0,
+                                                    ),
+                                                    itemCount: _ayahList.length + 1,
+                                                    itemBuilder: (context, index) {
+                                                      if (index == 0) {
+                                                        if (_currentSurah.number == 9) {
+                                                          return const SizedBox.shrink();
+                                                        }
+                                                        bool hasBismillahEmbedded = false;
+                                                        if (_ayahList.isNotEmpty) {
+                                                          hasBismillahEmbedded = Ayah.startsWithBasmalah(_ayahList.first.text);
+                                                        }
+                                                        if (hasBismillahEmbedded) {
+                                                          return const SizedBox.shrink();
+                                                        }
+                                                        return Container(
+                                                          alignment: Alignment.center,
+                                                          padding: const EdgeInsets.symmetric(vertical: 24),
+                                                          child: Text(
+                                                            "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                                                            style: _getArabicTextStyle(
+                                                              30,
+                                                              color: const Color(0xFFE5C158),
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                      final ayah = _ayahList[index - 1];
+                                                      final showHizbHeader = index == 1 ||
+                                                          (index > 1 && ayah.hizb != 0 && ayah.hizb != _ayahList[index - 2].hizb) ||
+                                                          (index > 1 && ayah.hizb == 0 && ayah.juz != _ayahList[index - 2].juz);
+                                                      return Column(
+                                                        children: [
+                                                          if (showHizbHeader)
+                                                            _buildHizbDivider(ayah.hizb, ayah.juz),
+                                                          _buildAyahCard(
+                                                            ayah,
+                                                            theme,
+                                                            playState,
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
                                               ),
-                                              itemCount: _ayahList.length + 1,
-                                              itemBuilder: (context, index) {
-                                                if (index == 0) {
-                                                  if (_currentSurah.number == 9) {
-                                                    return const SizedBox.shrink();
-                                                  }
-                                                  bool hasBismillahEmbedded = false;
-                                                  if (_ayahList.isNotEmpty) {
-                                                    hasBismillahEmbedded = Ayah.startsWithBasmalah(_ayahList.first.text);
-                                                  }
-                                                  if (hasBismillahEmbedded) {
-                                                    return const SizedBox.shrink();
-                                                  }
-                                                  return Container(
-                                                    alignment: Alignment.center,
-                                                    padding: const EdgeInsets.symmetric(vertical: 24),
-                                                    child: Text(
-                                                      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                                      style: _getArabicTextStyle(
-                                                        30,
-                                                        color: const Color(0xFFE5C158),
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                                final ayah = _ayahList[index - 1];
-                                                final showHizbHeader = index == 1 ||
-                                                    (index > 1 && ayah.hizb != 0 && ayah.hizb != _ayahList[index - 2].hizb) ||
-                                                    (index > 1 && ayah.hizb == 0 && ayah.juz != _ayahList[index - 2].juz);
-                                                return Column(
-                                                  children: [
-                                                    if (showHizbHeader)
-                                                      _buildHizbDivider(ayah.hizb, ayah.juz),
-                                                    _buildAyahCard(
-                                                      ayah,
-                                                      theme,
-                                                      playState,
-                                                    ),
-                                                  ],
-                                                );
-                                              },
                                             ),
                                           ),
                                   ),
