@@ -715,7 +715,7 @@ class AyahGestureRecognizer extends PrimaryPointerGestureRecognizer {
   void handlePrimaryPointer(PointerEvent event) {
     if (event is PointerUpEvent) {
       _timer?.cancel();
-      if (!_longPressFired && state != GestureRecognizerState.rejected) {
+      if (!_longPressFired) {
         resolve(GestureDisposition.accepted);
         if (onTap != null) onTap!();
       }
