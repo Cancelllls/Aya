@@ -328,14 +328,16 @@ extension SurahReaderUi on _SurahReaderScreenState {
 
     const int chunkSize = 5;
     final int pageCount = (_ayahList.length / chunkSize).ceil();
-    // ValueListenableBuilder reacts to hifz toggles without rebuilding the
+    // ValueListenableBuilder reacts to hifz and tajweed toggles without rebuilding the
     // whole screen — the ListView keeps its scroll position exactly.
     return ValueListenableBuilder<bool>(
       valueListenable: _hifzNotifier,
       builder: (context, isHifz, _) => ValueListenableBuilder<Set<int>>(
         valueListenable: _unmaskedNotifier,
-        builder: (context, unmasked, _) => Directionality(
-          textDirection: TextDirection.rtl,
+        builder: (context, unmasked, _) => ValueListenableBuilder<bool>(
+          valueListenable: _tajweedNotifier,
+          builder: (context, isTajweed, _) => Directionality(
+            textDirection: TextDirection.rtl,
           child: NotificationListener<ScrollNotification>(
           onNotification: (notification) {
             if (notification is ScrollStartNotification &&
@@ -561,8 +563,9 @@ extension SurahReaderUi on _SurahReaderScreenState {
       ),
     ),
         ),  // Directionality
+        ),  // ValueListenableBuilder<bool> (_tajweedNotifier)
       ),    // ValueListenableBuilder<Set<int>>
-    );      // ValueListenableBuilder<bool>
+    );      // ValueListenableBuilder<bool> (_hifzNotifier)
   }
 
   Widget _buildTopMiniPlayer(

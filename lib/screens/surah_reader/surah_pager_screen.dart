@@ -34,6 +34,8 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   // Hifz is a separate notifier — never part of _readingMode, so
   // toggling it never remounts or rebuilds the SurahReaderScreen.
   final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
+  // Tajweed notifier so toggling colored rules in settings updates the reader live
+  final ValueNotifier<bool> _tajweedNotifier = ValueNotifier(true);
 
   @override
   void initState() {
@@ -43,12 +45,14 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _readingMode = widget.storage.getString('reading_mode', defaultValue: 'continuous');
     _quranScriptType = widget.storage.getString('quran_script_type', defaultValue: 'hafs');
     _fontSizeMultiplier = widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
+    _tajweedNotifier.value = widget.storage.getBool('tajweed_enabled', defaultValue: true);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _hifzNotifier.dispose();
+    _tajweedNotifier.dispose();
     super.dispose();
   }
 
@@ -146,16 +150,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
               ),
               onPressed: () {
                 _hifzNotifier.value = !_hifzNotifier.value;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(_hifzNotifier.value
-                      ? (TranslationService.isArabic
-                          ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
-                          : "Hifz Mode Enabled (Tap verse to reveal)")
-                      : (TranslationService.isArabic
-                          ? "تم إيقاف وضع التسميع والحفظ"
-                          : "Hifz Mode Disabled")),
-                  duration: const Duration(seconds: 2),
-                ));
               },
               tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
             ),
@@ -261,6 +255,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
             hideAppBar: true,
             readingMode: _readingMode,
             hifzNotifier: _hifzNotifier,
+            tajweedNotifier: _tajweedNotifier,
             quranScriptType: _quranScriptType,
             fontSizeMultiplier: _fontSizeMultiplier,
             onGoToNext: () {
@@ -300,29 +295,28 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                 children: [
                   Text(TranslationService.t('reading_settings'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   const SizedBox(height: 16),
-                  // ── Tajweed toggle — top of sheet, always visible ──
-                  StatefulBuilder(
-                    builder: (ctx, setTajweedState) {
-                      // Read the current tajweed state from storage
-                      final isEnabled = widget.storage.getBool('tajweed_enabled', defaultValue: true);
+                  // ── Tajweed toggle — top of sheet, matches gold app theme ──
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _tajweedNotifier,
+                    builder: (ctx, isTajweed, _) {
                       return Container(
                         decoration: BoxDecoration(
-                          color: isEnabled
-                              ? const Color(0xFF26A69A).withValues(alpha: 0.12)
+                          color: isTajweed
+                              ? const Color(0xFFE5C158).withValues(alpha: 0.12)
                               : theme.dividerColor.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isEnabled
-                                ? const Color(0xFF26A69A).withValues(alpha: 0.4)
+                            color: isTajweed
+                                ? const Color(0xFFE5C158).withValues(alpha: 0.4)
                                 : theme.dividerColor,
                           ),
                         ),
                         child: SwitchListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          activeColor: const Color(0xFF26A69A),
+                          activeColor: const Color(0xFFE5C158),
                           secondary: Icon(
                             Icons.palette_outlined,
-                            color: isEnabled ? const Color(0xFF26A69A) : theme.disabledColor,
+                            color: isTajweed ? const Color(0xFFE5C158) : theme.disabledColor,
                           ),
                           title: Text(
                             TranslationService.isArabic ? 'تلوين أحكام التجويد' : 'Color Tajweed Highlights',
@@ -334,11 +328,10 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                                 : 'Highlight Ghunnah, Qalqalah, Madd…',
                             style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
                           ),
-                          value: isEnabled,
+                          value: isTajweed,
                           onChanged: (val) {
                             widget.storage.setBool('tajweed_enabled', val);
-                            setTajweedState(() {});
-                            setModalState(() {});
+                            _tajweedNotifier.value = val;
                           },
                         ),
                       );

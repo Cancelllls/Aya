@@ -40,6 +40,9 @@ class SurahReaderScreen extends StatefulWidget {
   /// External hifz notifier from the pager — when provided, the reader
   /// mirrors this notifier instead of its own internal one.
   final ValueNotifier<bool>? hifzNotifier;
+  /// External tajweed notifier from the pager — when provided, the reader
+  /// mirrors this notifier instead of its own internal one.
+  final ValueNotifier<bool>? tajweedNotifier;
 
   const SurahReaderScreen({
     super.key,
@@ -54,6 +57,7 @@ class SurahReaderScreen extends StatefulWidget {
     this.onGoToNext,
     this.onGoToPrev,
     this.hifzNotifier,
+    this.tajweedNotifier,
   });
 
   @override
@@ -83,7 +87,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   // Convenience getters so existing code compiles unchanged.
   bool get _isHifzMode => _hifzNotifier.value;
   Set<int> get _unmaskedAyahs => _unmaskedNotifier.value;
-  bool _isTajweedEnabled = true;
+  final ValueNotifier<bool> _tajweedNotifier = ValueNotifier(true);
+  bool get _isTajweedEnabled => _tajweedNotifier.value;
 
   Ticker? _ticker;
   double _scrollSpeed = 1.0;
@@ -155,10 +160,15 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     );
     _fontSizeMultiplier = widget.fontSizeMultiplier ??
         widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
-    _isTajweedEnabled = widget.storage.getBool(
-      'tajweed_enabled',
-      defaultValue: true,
-    );
+    if (widget.tajweedNotifier != null) {
+      _tajweedNotifier.value = widget.tajweedNotifier!.value;
+      widget.tajweedNotifier!.addListener(_onExternalTajweedChanged);
+    } else {
+      _tajweedNotifier.value = widget.storage.getBool(
+        'tajweed_enabled',
+        defaultValue: true,
+      );
+    }
     // Cache font once — avoids repeated SharedPrefs reads per-ayah (fix #4).
     _selectedFont = widget.storage.getString(
       'quran_font',
@@ -179,6 +189,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     );
     AudioManager.instance.playState.removeListener(_onPlayStateChanged);
     widget.hifzNotifier?.removeListener(_onExternalHifzChanged);
+    widget.tajweedNotifier?.removeListener(_onExternalTajweedChanged);
     _savePositionTimer?.cancel();
     _ticker?.dispose();
     _resumeTimer?.cancel();
@@ -191,6 +202,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _pageRecognizers.clear();
     _hifzNotifier.dispose();
     _unmaskedNotifier.dispose();
+    _tajweedNotifier.dispose();
     super.dispose();
   }
 
@@ -248,25 +260,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
   void _toggleHifzMode() {
-    // Toggle via ValueNotifier ONLY — zero setState, zero rebuilds.
+    // Toggle via ValueNotifier ONLY — zero setState, zero rebuilds, zero SnackBar toast.
     final next = !_hifzNotifier.value;
     _hifzNotifier.value = next;
     _unmaskedNotifier.value = {};
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          next
-              ? (TranslationService.isArabic
-                  ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
-                  : "Hifz Mode enabled (tap verse to reveal)")
-              : (TranslationService.isArabic
-                  ? "تم إيقاف وضع التسميع والحفظ"
-                  : "Hifz Mode disabled"),
-        ),
-        duration: const Duration(seconds: 2),
-        backgroundColor: const Color(0xFFE5C158),
-      ),
-    );
   }
 
   /// Mirrors changes from the pager's external hifzNotifier.
@@ -274,6 +271,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     if (widget.hifzNotifier == null) return;
     _hifzNotifier.value = widget.hifzNotifier!.value;
     _unmaskedNotifier.value = {}; // reset revealed set on each toggle
+  }
+
+  /// Mirrors changes from the pager's external tajweedNotifier.
+  void _onExternalTajweedChanged() {
+    if (widget.tajweedNotifier == null) return;
+    _tajweedNotifier.value = widget.tajweedNotifier!.value;
   }
 
   void _toggleAyahMasking(int ayahNum) {
@@ -289,20 +292,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
   void _toggleTajweedMode() {
-    setState(() {
-      _isTajweedEnabled = !_isTajweedEnabled;
-    });
-    widget.storage.setBool('setting_tajweed_enabled', _isTajweedEnabled);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isTajweedEnabled
-              ? (TranslationService.isArabic ? 'تم تفعيل التجويد الملون' : 'Tajweed color highlighting enabled')
-              : (TranslationService.isArabic ? 'تم إيقاف التجويد الملون' : 'Tajweed color highlighting disabled'),
-        ),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    final next = !_tajweedNotifier.value;
+    _tajweedNotifier.value = next;
+    widget.storage.setBool('tajweed_enabled', next);
   }
 
   void updateState(VoidCallback fn) {
@@ -557,53 +549,57 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // ── Tajweed toggle — most requested, at the TOP ──
-                          Container(
-                            decoration: BoxDecoration(
-                              color: _isTajweedEnabled
-                                  ? const Color(0xFF26A69A).withValues(alpha: 0.12)
-                                  : theme.dividerColor.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _isTajweedEnabled
-                                    ? const Color(0xFF26A69A).withValues(alpha: 0.4)
-                                    : theme.dividerColor,
-                                width: 1,
-                              ),
-                            ),
-                            child: SwitchListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              activeColor: const Color(0xFF26A69A),
-                              secondary: Icon(
-                                Icons.palette_outlined,
-                                color: _isTajweedEnabled
-                                    ? const Color(0xFF26A69A)
-                                    : theme.disabledColor,
-                              ),
-                              title: Text(
-                                TranslationService.isArabic
-                                    ? 'تلوين أحكام التجويد'
-                                    : 'Color Tajweed Highlights',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
+                          // ── Tajweed toggle — matches gold app theme ──
+                          ValueListenableBuilder<bool>(
+                            valueListenable: _tajweedNotifier,
+                            builder: (context, isTajweed, _) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: isTajweed
+                                      ? const Color(0xFFE5C158).withValues(alpha: 0.12)
+                                      : theme.dividerColor.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isTajweed
+                                        ? const Color(0xFFE5C158).withValues(alpha: 0.4)
+                                        : theme.dividerColor,
+                                    width: 1,
+                                  ),
                                 ),
-                              ),
-                              subtitle: Text(
-                                TranslationService.isArabic
-                                    ? 'تلوين أحرف التجويد (غنة، قلقلة، مد...)'
-                                    : 'Highlight Ghunnah, Qalqalah, Madd…',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                child: SwitchListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  activeColor: const Color(0xFFE5C158),
+                                  secondary: Icon(
+                                    Icons.palette_outlined,
+                                    color: isTajweed
+                                        ? const Color(0xFFE5C158)
+                                        : theme.disabledColor,
+                                  ),
+                                  title: Text(
+                                    TranslationService.isArabic
+                                        ? 'تلوين أحكام التجويد'
+                                        : 'Color Tajweed Highlights',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    TranslationService.isArabic
+                                        ? 'تلوين أحرف التجويد (غنة، قلقلة، مد...)'
+                                        : 'Highlight Ghunnah, Qalqalah, Madd…',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  value: isTajweed,
+                                  onChanged: (val) {
+                                    _toggleTajweedMode();
+                                  },
                                 ),
-                              ),
-                              value: _isTajweedEnabled,
-                              onChanged: (val) {
-                                setModalState(() => _isTajweedEnabled = val);
-                                _toggleTajweedMode();
-                              },
-                            ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 20),
                           const SizedBox(height: 20),
