@@ -439,32 +439,42 @@ extension SurahReaderUi on _SurahReaderScreenState {
               };
             pageRecs.add(ayahRec);
 
+            final rawSpans = TajweedService.buildSpans(
+              text: "${ayah.text} ",
+              baseStyle: verseStyle,
+              context: context,
+              isEnabled: _isTajweedEnabled && !isMaskedInHifz,
+              ayahRecognizer: ayahRec,
+            );
+
             if (isMaskedInHifz) {
-              spans.add(
-                WidgetSpan(
-                  child: GestureDetector(
-                    onTap: () {
-                      _toggleAyahMasking(ayah.numberInSurah);
-                    },
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 7.5, sigmaY: 7.5),
-                      child: Text(
-                        "${ayah.text} ",
-                        style: verseStyle,
-                        textDirection: TextDirection.rtl,
-                      ),
+              final blurColor = (theme.textTheme.bodyLarge?.color ?? Colors.white)
+                  .withValues(alpha: 0.85);
+              final maskedSpans = rawSpans.map((span) {
+                if (span is TextSpan) {
+                  return TextSpan(
+                    text: span.text,
+                    children: span.children,
+                    style: (span.style ?? verseStyle).copyWith(
+                      color: Colors.transparent,
+                      shadows: [
+                        Shadow(
+                          color: blurColor,
+                          blurRadius: 16,
+                        ),
+                        Shadow(
+                          color: blurColor,
+                          blurRadius: 8,
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              );
+                    recognizer: ayahRec,
+                  );
+                }
+                return span;
+              }).toList();
+              spans.addAll(maskedSpans);
             } else {
-              final rawSpans = TajweedService.buildSpans(
-                text: "${ayah.text} ",
-                baseStyle: verseStyle,
-                context: context,
-                isEnabled: _isTajweedEnabled,
-                ayahRecognizer: ayahRec,
-              );
               spans.addAll(rawSpans);
             }
 
