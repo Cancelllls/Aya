@@ -228,11 +228,10 @@ class ApiService {
       return _tafsirMemoryCache[cacheKey]!;
     }
 
-    final isEnglishEdition = editionId.startsWith('en.');
+    final db = await DatabaseService.getInstance();
 
-    // Fix #2: Use single-ayah SQL query (O(1)) for local Arabic Muyassar.
+    // 1. Check local bundled Tafsir for ar.muyassar
     if (editionId == 'ar.muyassar') {
-      final db = await DatabaseService.getInstance();
       final text = await db.getTafsirForAyah(surahNumber, ayahNumber);
       if (text.isNotEmpty) {
         _setTafsirCache(cacheKey, text);
@@ -240,7 +239,20 @@ class ApiService {
       }
     }
 
-    // 1. Try fawazahmed0 Quran API CDN
+    // 2. Check offline extra_tafsirs SQLite cache table
+    final offlineText = await db.getExtraTafsir(
+      editionId,
+      surahNumber,
+      ayahNumber,
+    );
+    if (offlineText != null && offlineText.isNotEmpty) {
+      _setTafsirCache(cacheKey, offlineText);
+      return offlineText;
+    }
+
+    final isEnglishEdition = editionId.startsWith('en.');
+
+    // 3. Try fawazahmed0 Quran API CDN
     try {
       final url =
           'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/$editionId/$surahNumber/$ayahNumber.json';
@@ -251,12 +263,13 @@ class ApiService {
         final text = (data['text'] as String? ?? '').trim();
         if (text.isNotEmpty) {
           _setTafsirCache(cacheKey, text);
+          await db.saveExtraTafsir(editionId, surahNumber, ayahNumber, text);
           return text;
         }
       }
     } catch (_) {}
 
-    // 2. Try Quran.com API v4
+    // 4. Try Quran.com API v4
     try {
       final tafsirMap = {
         'ar.muyassar': 16,
@@ -280,37 +293,115 @@ class ApiService {
         final cleanText = rawText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
         if (cleanText.isNotEmpty) {
           _setTafsirCache(cacheKey, cleanText);
+          await db.saveExtraTafsir(
+            editionId,
+            surahNumber,
+            ayahNumber,
+            cleanText,
+          );
           return cleanText;
         }
       }
     } catch (_) {}
 
-    // 3. Try AlQuran.cloud API (for English translations/tafsirs)
+    // 5. Try AlQuran.cloud API (for English translations/tafsirs)
     if (isEnglishEdition) {
       try {
-        final url = 'https://api.alquran.cloud/v1/ayah/$surahNumber:$ayahNumber/$editionId';
-        final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
+        final url =
+            'https://api.alquran.cloud/v1/ayah/$surahNumber:$ayahNumber/$editionId';
+        final res =
+            await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
           final text = (data['data']?['text'] as String? ?? '').trim();
           if (text.isNotEmpty) {
             _setTafsirCache(cacheKey, text);
+            await db.saveExtraTafsir(editionId, surahNumber, ayahNumber, text);
             return text;
           }
         }
       } catch (_) {}
 
-      // Fallback for English editions: return English message, never Arabic text!
-      const fallbackMsg = 'English Tafsir for this verse is unavailable offline.';
+      // Fallback for English editions: return English message
+      const fallbackMsg =
+          'English Tafsir for this verse is unavailable offline.';
       _setTafsirCache(cacheKey, fallbackMsg);
       return fallbackMsg;
     }
 
-    // Final fallback for Arabic editions: use single-ayah query from local DB.
-    final db = await DatabaseService.getInstance();
+    // Final fallback for Arabic editions: use local bundled DB
     final text = await db.getTafsirForAyah(surahNumber, ayahNumber);
     _setTafsirCache(cacheKey, text);
     return text;
+  }
+
+  /// Download an entire Tafsir edition (all 114 surahs) for 100% offline access.
+  static Future<void> downloadFullTafsirEdition(
+    String editionId, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final db = await DatabaseService.getInstance();
+    if (editionId == 'ar.muyassar') {
+      if (onProgress != null) onProgress(1.0);
+      return; // Already bundled locally!
+    }
+
+    final tafsirMap = {
+      'ar.jalalayn': 91,
+      'ar.qurtubi': 90,
+      'ar.miqbas': 93,
+      'ar.waseet': 94,
+      'ar.baghawi': 94,
+      'en.ibnkathir': 169,
+      'en.jalalayn': 171,
+      'en.maududi': 168,
+    };
+    final tId = tafsirMap[editionId] ?? 16;
+    final List<Map<String, dynamic>> batchItems = [];
+
+    for (int surah = 1; surah <= 114; surah++) {
+      try {
+        final url = Uri.parse(
+          'https://api.quran.com/api/v4/tafsirs/$tId/by_chapter/$surah',
+        );
+        final res = await http
+            .get(url)
+            .timeout(const Duration(seconds: 15));
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          final tafsirsList = data['tafsirs'] as List? ?? [];
+          for (final t in tafsirsList) {
+            final verseKey = t['verse_key'] as String? ?? '';
+            final parts = verseKey.split(':');
+            if (parts.length == 2) {
+              final sNum = int.tryParse(parts[0]) ?? surah;
+              final aNum = int.tryParse(parts[1]) ?? 1;
+              final rawText = t['text'] as String? ?? '';
+              final cleanText =
+                  rawText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+              if (cleanText.isNotEmpty) {
+                batchItems.add({
+                  'edition_id': editionId,
+                  'surah_number': sNum,
+                  'ayah_number': aNum,
+                  'text': cleanText,
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Tafsir download error surah $surah: $e');
+      }
+
+      if (onProgress != null) {
+        onProgress(surah / 114.0);
+      }
+    }
+
+    if (batchItems.isNotEmpty) {
+      await db.saveExtraTafsirsBatch(editionId, batchItems);
+    }
   }
 
   // ─── Reverse Geocoding ───────────────────────────────────────────────────

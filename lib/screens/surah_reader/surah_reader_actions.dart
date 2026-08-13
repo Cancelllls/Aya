@@ -8,6 +8,18 @@ extension SurahReaderActions on _SurahReaderScreenState {
     }
 
     String selectedLang = 'all'; // 'all', 'ar', 'en'
+    final Map<String, bool> downloadedEditions = {'ar.muyassar': true};
+    final Map<String, double> downloadingProgress = {};
+
+    DatabaseService.getInstance().then((db) {
+      for (final e in availableTafsirs) {
+        if (e.identifier != 'ar.muyassar') {
+          db.isTafsirEditionDownloaded(e.identifier).then((isDown) {
+            if (isDown) downloadedEditions[e.identifier] = true;
+          });
+        }
+      }
+    });
 
     showModalBottomSheet(
       context: context,
@@ -172,6 +184,77 @@ extension SurahReaderActions on _SurahReaderScreenState {
                                           color: theme.primaryColor,
                                         ),
                                       ),
+                                    ),
+                                    Builder(
+                                      builder: (ctx) {
+                                        final isDownloaded = edition.identifier == 'ar.muyassar' || (downloadedEditions[edition.identifier] ?? false);
+                                        final p = downloadingProgress[edition.identifier];
+
+                                        if (p != null) {
+                                          return Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 14,
+                                                height: 14,
+                                                child: CircularProgressIndicator(
+                                                  value: p,
+                                                  strokeWidth: 2,
+                                                  color: const Color(0xFFE5C158),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${(p * 100).toInt()}%',
+                                                style: const TextStyle(fontSize: 10, color: Color(0xFFE5C158), fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          );
+                                        }
+                                        if (isDownloaded) {
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.check_circle, size: 12, color: Colors.green),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  isAr ? 'دون إنترنت' : 'Offline',
+                                                  style: const TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                        return IconButton(
+                                          icon: const Icon(Icons.cloud_download_outlined, size: 20, color: Color(0xFFE5C158)),
+                                          tooltip: isAr ? 'تنزيل للتصفح بدون إنترنت' : 'Download for Offline',
+                                          onPressed: () async {
+                                            sheetSetState(() {
+                                              downloadingProgress[edition.identifier] = 0.01;
+                                            });
+                                            await ApiService.downloadFullTafsirEdition(
+                                              edition.identifier,
+                                              onProgress: (progress) {
+                                                if (context.mounted) {
+                                                  sheetSetState(() {
+                                                    downloadingProgress[edition.identifier] = progress;
+                                                  });
+                                                }
+                                              },
+                                            );
+                                            if (context.mounted) {
+                                              sheetSetState(() {
+                                                downloadingProgress.remove(edition.identifier);
+                                                downloadedEditions[edition.identifier] = true;
+                                              });
+                                            }
+                                          },
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),

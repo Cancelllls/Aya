@@ -11,7 +11,7 @@ class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
   static Future<void>? _seeding;
-  static const int _version = 9;
+  static const int _version = 10;
   // Keep in sync with android/app/build.gradle.kts applicationId
   static const String _packageName = 'com.quran.aya';
 
@@ -176,6 +176,17 @@ class DatabaseService {
         file_size INTEGER,
         downloaded_at INTEGER NOT NULL,
         UNIQUE(reciter_id, audio_type)
+      )
+    ''');
+
+    // Offline Extra Tafsirs table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS extra_tafsirs (
+        edition_id TEXT NOT NULL,
+        surah_number INTEGER NOT NULL,
+        ayah_number INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        PRIMARY KEY(edition_id, surah_number, ayah_number)
       )
     ''');
 
@@ -415,6 +426,20 @@ class DatabaseService {
         }, where: 'id = ?', whereArgs: [r['id']]);
       }
       await batch.commit(noResult: true);
+    }
+
+    if (oldVersion < 10) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS extra_tafsirs (
+            edition_id TEXT NOT NULL,
+            surah_number INTEGER NOT NULL,
+            ayah_number INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            PRIMARY KEY(edition_id, surah_number, ayah_number)
+          )
+        ''');
+      } catch (_) {}
     }
   }
 
@@ -803,4 +828,77 @@ class DatabaseService {
     );
   }
 
+  // ─── Extra Offline Tafsirs ────────────────────────────────────────────────
+  Future<void> saveExtraTafsir(
+    String editionId,
+    int surahNumber,
+    int ayahNumber,
+    String text,
+  ) async {
+    final db = _database!;
+    await db.insert(
+      'extra_tafsirs',
+      {
+        'edition_id': editionId,
+        'surah_number': surahNumber,
+        'ayah_number': ayahNumber,
+        'text': text,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> saveExtraTafsirsBatch(
+    String editionId,
+    List<Map<String, dynamic>> items,
+  ) async {
+    final db = _database!;
+    final batch = db.batch();
+    for (final item in items) {
+      batch.insert(
+        'extra_tafsirs',
+        item,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<String?> getExtraTafsir(
+    String editionId,
+    int surahNumber,
+    int ayahNumber,
+  ) async {
+    final db = _database!;
+    final rows = await db.query(
+      'extra_tafsirs',
+      columns: ['text'],
+      where: 'edition_id = ? AND surah_number = ? AND ayah_number = ?',
+      whereArgs: [editionId, surahNumber, ayahNumber],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['text'] as String?;
+  }
+
+  Future<bool> isTafsirEditionDownloaded(String editionId) async {
+    if (editionId == 'ar.muyassar') return true;
+    final db = _database!;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM extra_tafsirs WHERE edition_id = ?',
+        [editionId],
+      ),
+    );
+    return (count ?? 0) >= 5000;
+  }
+
+  Future<void> deleteTafsirEdition(String editionId) async {
+    final db = _database!;
+    await db.delete(
+      'extra_tafsirs',
+      where: 'edition_id = ?',
+      whereArgs: [editionId],
+    );
+  }
 }
