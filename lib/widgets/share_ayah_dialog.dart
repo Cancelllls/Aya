@@ -431,7 +431,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                       ),
                     ),
                   ),
-                ),
 
               const SizedBox(height: 16),
 

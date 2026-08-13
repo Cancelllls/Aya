@@ -553,7 +553,6 @@ extension SurahReaderUi on _SurahReaderScreenState {
                     ),
                   ),
                 ),
-              ),
             ],
           );
         },
