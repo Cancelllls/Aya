@@ -48,13 +48,14 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
     return [];
   }
 
-  Ayah get _firstAyah =>
-      _ayahList.isNotEmpty ? _ayahList.first : widget.ayah!;
+  Ayah? get _firstAyah =>
+      _ayahList.isNotEmpty ? _ayahList.first : widget.ayah;
 
   String get _headerRefText {
     final isAr = TranslationService.isArabic;
+    final firstNum = _firstAyah?.numberInSurah ?? 1;
     if (_ayahList.length <= 1) {
-      return '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} ${_firstAyah.numberInSurah}';
+      return '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} $firstNum';
     } else {
       return '${widget.surahName} • ${isAr ? 'الآيات' : 'Ayahs'} ${_ayahList.first.numberInSurah}-${_ayahList.last.numberInSurah}';
     }
@@ -78,17 +79,17 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   @override
   void initState() {
     super.initState();
-    _tafsirText = _firstAyah.tafseer.trim();
+    _tafsirText = _firstAyah?.tafseer.trim() ?? '';
   }
 
   void _onToggleTafsir(bool val) {
     setState(() => _includeTafsir = val);
-    if (val && _tafsirText.isEmpty) {
+    if (val && _tafsirText.isEmpty && _firstAyah != null) {
       setState(() => _isLoadingTafsir = true);
       ApiService.fetchTafsirTextForAyah(
         'ar.muyassar',
         widget.surahNumber,
-        _firstAyah.numberInSurah,
+        _firstAyah!.numberInSurah,
       ).then((text) {
         if (mounted) {
           setState(() {
@@ -453,6 +454,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                 ),
               ),
+            ),
 
               const SizedBox(height: 16),
 
