@@ -60,14 +60,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
     }
   }
 
-  String get _formattedArabicText {
-    if (_includeAyahNumbers) {
-      return _ayahList.map((a) => "${a.text} ﴿${a.numberInSurah}﴾").join(" ");
-    } else {
-      return _ayahList.map((a) => a.text).join(" ");
-    }
-  }
-
   String get _formattedTranslationText {
     return _ayahList
         .map((a) => a.translation)
@@ -439,6 +431,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                       ),
                     ),
                   ),
+                ),
 
               const SizedBox(height: 16),
 
