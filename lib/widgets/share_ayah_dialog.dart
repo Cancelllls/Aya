@@ -35,6 +35,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   String _tafsirText = '';
   bool _isLoadingTafsir = false;
 
+  double _blackFramePadding = 0.0;
   bool _includeAyahNumbers = true;
 
   List<Ayah> get _ayahList {
@@ -263,29 +264,66 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+
+              // Black Frame Padding Slider
+              Row(
+                children: [
+                  const Icon(Icons.crop_square, size: 18, color: Color(0xFFE5C158)),
+                  const SizedBox(width: 8),
+                  Text(
+                    isAr ? 'إطار أسود:' : 'Black Frame:',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      value: _blackFramePadding,
+                      min: 0.0,
+                      max: 36.0,
+                      divisions: 36,
+                      activeColor: const Color(0xFFE5C158),
+                      inactiveColor: theme.dividerColor,
+                      onChanged: (val) => setState(() => _blackFramePadding = val),
+                    ),
+                  ),
+                  Text(
+                    '${_blackFramePadding.toInt()}px',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
 
-              // Live Image Preview Card wrapped in RepaintBoundary (Horizontal layout)
-              RepaintBoundary(
-                key: _globalKey,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  decoration: BoxDecoration(
-                    color: themeConfig['bgColor'] as Color,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        spreadRadius: 2,
+              // Live Image Preview Card wrapped in RepaintBoundary (Strict Horizontal/Landscape layout)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: RepaintBoundary(
+                  key: _globalKey,
+                  child: Container(
+                    color: _blackFramePadding > 0 ? Colors.black : Colors.transparent,
+                    padding: EdgeInsets.all(_blackFramePadding),
+                    child: Container(
+                      width: 600,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                      decoration: BoxDecoration(
+                        color: themeConfig['bgColor'] as Color,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -433,6 +471,8 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                 ),
               ),
+            ),
+          ),
 
               const SizedBox(height: 16),
 
