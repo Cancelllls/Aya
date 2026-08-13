@@ -50,7 +50,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   }
 
   Future<void> _loadPrayerTimes() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     setState(() => _isLoading = true);
     try {
       final loc = widget.storage.getLocation();
@@ -75,22 +74,26 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         );
       } catch (_) {}
 
-      setState(() {
-        _prayerData = data;
-        _monthlyData = monthlyList;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _prayerData = data;
+          _monthlyData = monthlyList;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? 'خطأ في تحميل مواقيت الصلاة: $e'
-                : 'Error loading prayer times: $e',
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.isArabic
+                  ? 'خطأ في تحميل مواقيت الصلاة: $e'
+                  : 'Error loading prayer times: $e',
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
