@@ -411,18 +411,31 @@ extension SurahReaderUi on _SurahReaderScreenState {
               fontWeight: FontWeight.bold,
             );
 
-            final ayahRec = AyahGestureRecognizer()
-              ..onTap = () {
-                if (_selectedAyahs.isNotEmpty) {
+            bool longPressFired = false;
+            Timer? timer;
+            final ayahRec = TapGestureRecognizer()
+              ..onTapDown = (_) {
+                longPressFired = false;
+                timer?.cancel();
+                timer = Timer(const Duration(milliseconds: 400), () {
+                  longPressFired = true;
                   _toggleAyahSelection(ayah.numberInSurah);
-                } else if (_isHifzMode) {
-                  _toggleAyahMasking(ayah.numberInSurah);
-                } else {
-                  _showAyahActionSheet(ayah);
+                });
+              }
+              ..onTapUp = (_) {
+                timer?.cancel();
+                if (!longPressFired) {
+                  if (_selectedAyahs.isNotEmpty) {
+                    _toggleAyahSelection(ayah.numberInSurah);
+                  } else if (_isHifzMode) {
+                    _toggleAyahMasking(ayah.numberInSurah);
+                  } else {
+                    _showAyahActionSheet(ayah);
+                  }
                 }
               }
-              ..onLongPress = () {
-                _toggleAyahSelection(ayah.numberInSurah);
+              ..onTapCancel = () {
+                timer?.cancel();
               };
             pageRecs.add(ayahRec);
 
@@ -688,48 +701,4 @@ extension SurahReaderUi on _SurahReaderScreenState {
   }
 }
 
-class AyahGestureRecognizer extends PrimaryPointerGestureRecognizer {
-  VoidCallback? onTap;
-  VoidCallback? onLongPress;
-  bool _longPressFired = false;
-  Timer? _timer;
 
-  AyahGestureRecognizer({super.debugOwner});
-
-  @override
-  void addAllowedPointer(PointerDownEvent event) {
-    _longPressFired = false;
-    startTrackingPointer(event.pointer, event.transform);
-    _timer?.cancel();
-    _timer = Timer(const Duration(milliseconds: 450), () {
-      if (state == GestureRecognizerState.possible) {
-        _longPressFired = true;
-        resolve(GestureDisposition.accepted);
-        if (onLongPress != null) onLongPress!();
-      }
-    });
-  }
-
-  @override
-  void handlePrimaryPointer(PointerEvent event) {
-    if (event is PointerUpEvent) {
-      _timer?.cancel();
-      if (!_longPressFired) {
-        resolve(GestureDisposition.accepted);
-        if (onTap != null) onTap!();
-      }
-      stopTrackingPointer(event.pointer);
-    } else if (event is PointerCancelEvent) {
-      _timer?.cancel();
-      stopTrackingPointer(event.pointer);
-    }
-  }
-
-  @override
-  void didStopTrackingLastPointer(int pointer) {
-    _timer?.cancel();
-  }
-
-  @override
-  String get debugDescription => 'AyahGestureRecognizer';
-}
