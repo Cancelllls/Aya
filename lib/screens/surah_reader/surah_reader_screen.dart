@@ -236,12 +236,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
   void _toggleHifzMode() {
-    // Toggle via ValueNotifier — no setState, so ListView never remounts.
+    // Toggle via ValueNotifier ONLY — zero setState, zero rebuilds.
     final next = !_hifzNotifier.value;
     _hifzNotifier.value = next;
-    _unmaskedNotifier.value = {}; // clear revealed set
-    // Only rebuild AppBar icon color.
-    setState(() {});
+    _unmaskedNotifier.value = {};
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -357,15 +355,20 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(
-              _isHifzMode ? Icons.school : Icons.school_outlined,
-              color: _isHifzMode
-                  ? const Color(0xFFE5C158)
-                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.7),
+          // Hifz icon — uses ValueListenableBuilder so ONLY the icon
+          // repaints when toggled; the rest of the screen stays frozen.
+          ValueListenableBuilder<bool>(
+            valueListenable: _hifzNotifier,
+            builder: (context, isHifz, _) => IconButton(
+              icon: Icon(
+                isHifz ? Icons.school : Icons.school_outlined,
+                color: isHifz
+                    ? const Color(0xFFE5C158)
+                    : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.7),
+              ),
+              onPressed: _toggleHifzMode,
+              tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
             ),
-            onPressed: _toggleHifzMode,
-            tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
           ),
           IconButton(
             icon: Icon(
@@ -516,9 +519,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                 builder: (context) => StatefulBuilder(
                   builder: (context, setModalState) {
                     return DraggableScrollableSheet(
-                      initialChildSize: 0.6,
-                      minChildSize: 0.4,
-                      maxChildSize: 0.92,
+                      initialChildSize: 0.85,
+                      minChildSize: 0.5,
+                      maxChildSize: 0.95,
                       expand: false,
                       builder: (context, scrollController) => SingleChildScrollView(
                         controller: scrollController,
@@ -534,8 +537,56 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                               fontSize: 18,
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          // ── Tajweed toggle — most requested, at the TOP ──
+                          Container(
+                            decoration: BoxDecoration(
+                              color: _isTajweedEnabled
+                                  ? const Color(0xFF26A69A).withValues(alpha: 0.12)
+                                  : theme.dividerColor.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isTajweedEnabled
+                                    ? const Color(0xFF26A69A).withValues(alpha: 0.4)
+                                    : theme.dividerColor,
+                                width: 1,
+                              ),
+                            ),
+                            child: SwitchListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              activeColor: const Color(0xFF26A69A),
+                              secondary: Icon(
+                                Icons.palette_outlined,
+                                color: _isTajweedEnabled
+                                    ? const Color(0xFF26A69A)
+                                    : theme.disabledColor,
+                              ),
+                              title: Text(
+                                TranslationService.isArabic
+                                    ? 'تلوين أحكام التجويد'
+                                    : 'Color Tajweed Highlights',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                TranslationService.isArabic
+                                    ? 'تلوين أحرف التجويد (غنة، قلقلة، مد...)'
+                                    : 'Highlight Ghunnah, Qalqalah, Madd…',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                ),
+                              ),
+                              value: _isTajweedEnabled,
+                              onChanged: (val) {
+                                setModalState(() => _isTajweedEnabled = val);
+                                _toggleTajweedMode();
+                              },
+                            ),
+                          ),
                           const SizedBox(height: 20),
-                          // Reading mode selection now via TabBar.
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -941,37 +992,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 ],
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 12),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            activeColor: const Color(0xFFE5C158),
-                            title: Text(
-                              TranslationService.isArabic
-                                  ? 'التجويد الملون للأحرف'
-                                  : 'Color Tajweed Highlighting',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            subtitle: Text(
-                              TranslationService.isArabic
-                                  ? 'تفعيل أو إيقاف تلوين أحرف وقواعد التجويد'
-                                  : 'Toggle colored highlights for Tajweed rules',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: theme.textTheme.bodyMedium?.color
-                                    ?.withValues(alpha: 0.6),
-                              ),
-                            ),
-                            value: _isTajweedEnabled,
-                            onChanged: (val) {
-                              setModalState(() {
-                                _isTajweedEnabled = val;
-                              });
-                              _toggleTajweedMode();
-                            },
                           ),
                           const SizedBox(height: 16),
                         ],
