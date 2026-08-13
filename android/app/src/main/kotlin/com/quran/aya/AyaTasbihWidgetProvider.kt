@@ -50,10 +50,13 @@ class AyaTasbihWidgetProvider : AppWidgetProvider() {
                 val views = RemoteViews(context.packageName, R.layout.aya_tasbih_widget)
                 val prefs = WidgetUtils.getPrefs(context)
 
+                val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
                 val dhikrText = WidgetUtils.getSafeString(prefs, "widget_tasbih_dhikr", "سُبْحَانَ ٱللَّٰهِ")
                 val count = WidgetUtils.getSafeInt(prefs, "widget_tasbih_count", 0)
                 val target = WidgetUtils.getSafeInt(prefs, "widget_tasbih_target", 33)
 
+                views.setTextViewText(R.id.widget_title, if (isArabic) "السبحة الإلكترونية" else "Tasbih Counter")
+                views.setTextViewText(R.id.widget_subtitle, if (isArabic) "آية" else "Aya")
                 views.setTextViewText(R.id.widget_tasbih_dhikr, dhikrText)
                 views.setTextViewText(R.id.widget_tasbih_count, "$count / $target")
 

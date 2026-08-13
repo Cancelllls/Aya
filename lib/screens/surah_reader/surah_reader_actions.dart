@@ -175,23 +175,6 @@ extension SurahReaderActions on _SurahReaderScreenState {
                                         ),
                                       ),
                                     ),
-                                    Container(
-                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                       decoration: BoxDecoration(
-                                         color: Colors.green.withValues(alpha: 0.15),
-                                         borderRadius: BorderRadius.circular(8),
-                                       ),
-                                       child: Row(
-                                         children: [
-                                           const Icon(Icons.check_circle, size: 12, color: Colors.green),
-                                           const SizedBox(width: 4),
-                                           Text(
-                                             isAr ? 'دون إنترنت' : 'Offline',
-                                             style: const TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
-                                           ),
-                                         ],
-                                       ),
-                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 6),

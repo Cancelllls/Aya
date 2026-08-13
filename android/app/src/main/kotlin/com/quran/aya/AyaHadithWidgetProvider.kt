@@ -21,9 +21,12 @@ class AyaHadithWidgetProvider : AppWidgetProvider() {
                 val prefs = WidgetUtils.getPrefs(context)
 
                 val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
+                val isDark = WidgetUtils.getSafeBoolean(prefs, "widget_is_dark", true)
                 val text = WidgetUtils.getSafeString(prefs, "widget_hadith_text", "إنما الأعمال بالنيات وإنما لكل امرئ ما نوى")
                 val ref = WidgetUtils.getSafeString(prefs, "widget_hadith_ref", "رواه البخاري ومسلم")
 
+                views.setTextViewText(R.id.widget_title, if (isArabic) "حديث اليوم" else "Hadith of the Day")
+                views.setTextViewText(R.id.widget_subtitle, if (isArabic) "آية" else "Aya")
                 views.setTextViewText(R.id.widget_hadith_text, text)
                 views.setTextViewText(R.id.widget_hadith_ref, ref)
 

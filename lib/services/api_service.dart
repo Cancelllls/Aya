@@ -291,87 +291,11 @@ class ApiService {
     }
 
     final isEnglishEdition = editionId.startsWith('en.');
-
-    // 3. Try fawazahmed0 Quran API CDN
-    try {
-      final url =
-          'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/$editionId/$surahNumber/$ayahNumber.json';
-      final res =
-          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final text = (data['text'] as String? ?? '').trim();
-        if (text.isNotEmpty) {
-          _setTafsirCache(cacheKey, text);
-          await db.saveExtraTafsir(editionId, surahNumber, ayahNumber, text);
-          return text;
-        }
-      }
-    } catch (_) {}
-
-    // 4. Try Quran.com API v4
-    try {
-      final tafsirMap = {
-        'ar.muyassar': 16,
-        'ar.jalalayn': 91,
-        'ar.qurtubi': 90,
-        'ar.miqbas': 93,
-        'ar.waseet': 94,
-        'ar.baghawi': 94,
-        'en.ibnkathir': 169,
-        'en.maududi': 168,
-      };
-      final tId = tafsirMap[editionId] ?? (isEnglishEdition ? 169 : 16);
-      final url =
-          'https://api.quran.com/api/v4/tafsirs/$tId/by_ayah/$surahNumber:$ayahNumber';
-      final res =
-          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final rawText = data['tafsir']?['text'] as String? ?? '';
-        final cleanText = rawText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
-        if (cleanText.isNotEmpty) {
-          _setTafsirCache(cacheKey, cleanText);
-          await db.saveExtraTafsir(
-            editionId,
-            surahNumber,
-            ayahNumber,
-            cleanText,
-          );
-          return cleanText;
-        }
-      }
-    } catch (_) {}
-
-    // 5. Try AlQuran.cloud API (for English translations/tafsirs)
-    if (isEnglishEdition) {
-      try {
-        final url =
-            'https://api.alquran.cloud/v1/ayah/$surahNumber:$ayahNumber/$editionId';
-        final res =
-            await http.get(Uri.parse(url)).timeout(const Duration(seconds: 3));
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body);
-          final text = (data['data']?['text'] as String? ?? '').trim();
-          if (text.isNotEmpty) {
-            _setTafsirCache(cacheKey, text);
-            await db.saveExtraTafsir(editionId, surahNumber, ayahNumber, text);
-            return text;
-          }
-        }
-      } catch (_) {}
-
-      // Fallback for English editions: return English message
-      const fallbackMsg =
-          'English Tafsir for this verse is unavailable offline.';
-      _setTafsirCache(cacheKey, fallbackMsg);
-      return fallbackMsg;
-    }
-
-    // Final fallback for Arabic editions: use local bundled DB
-    final text = await db.getTafsirForAyah(surahNumber, ayahNumber);
-    _setTafsirCache(cacheKey, text);
-    return text;
+    final fallbackMsg = isEnglishEdition
+        ? 'Tafsir for this verse is unavailable offline.'
+        : 'التفسير غير متوفر لهذه الآية في الطبعة الحالية.';
+    _setTafsirCache(cacheKey, fallbackMsg);
+    return fallbackMsg;
   }
 
   /// Download an entire Tafsir edition (all 114 surahs) for 100% offline access.
