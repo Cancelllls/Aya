@@ -32,6 +32,7 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
 
                 val nextPrayerName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
                 val nextPrayerEpoch = WidgetUtils.getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
+                val isDark = WidgetUtils.getSafeBoolean(prefs, "widget_is_dark", true)
                 val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
 
                 views.setTextViewText(R.id.widget_title, appName)
@@ -43,11 +44,10 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                     val totalSeconds = (remainingMs / 1000).toInt()
                     val hours = totalSeconds / 3600
                     val minutes = (totalSeconds % 3600) / 60
-                    val seconds = totalSeconds % 60
-                    val countdown = String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                    val countdown = String.format("%02d:%02d", hours, minutes)
                     views.setTextViewText(R.id.widget_countdown_timer, countdown)
                 } else {
-                    views.setTextViewText(R.id.widget_countdown_timer, "--:--:--")
+                    views.setTextViewText(R.id.widget_countdown_timer, "--:--")
                 }
 
                 val label = if (nextPrayerName.isNotEmpty()) {
@@ -76,11 +76,13 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 val activeBg = R.drawable.active_prayer_background
                 val transBg = R.drawable.widget_transparent_bg
 
-                setPrayerStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, activePrayer == "Fajr", activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, activePrayer == "Dhuhr", activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, activePrayer == "Asr", activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, activePrayer == "Maghrib", activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, activePrayer == "Isha", activeBg, transBg)
+                val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else nextPrayerName
+
+                setPrayerStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"), isDark, activeBg, transBg)
+                setPrayerStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"), isDark, activeBg, transBg)
+                setPrayerStyle(views, R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, targetHighlight.contains("Asr", ignoreCase = true) || targetHighlight.contains("العصر"), isDark, activeBg, transBg)
+                setPrayerStyle(views, R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, targetHighlight.contains("Maghrib", ignoreCase = true) || targetHighlight.contains("المغرب"), isDark, activeBg, transBg)
+                setPrayerStyle(views, R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, targetHighlight.contains("Isha", ignoreCase = true) || targetHighlight.contains("العشاء"), isDark, activeBg, transBg)
 
                 WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
 
@@ -96,6 +98,7 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
             nameId: Int,
             timeId: Int,
             isActive: Boolean,
+            isDark: Boolean,
             activeBg: Int,
             transBg: Int
         ) {
@@ -106,8 +109,13 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                     views.setTextColor(timeId, Color.BLACK)
                 } else {
                     views.setInt(containerId, "setBackgroundResource", transBg)
-                    views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
-                    views.setTextColor(timeId, Color.WHITE)
+                    if (isDark) {
+                        views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
+                        views.setTextColor(timeId, Color.WHITE)
+                    } else {
+                        views.setTextColor(nameId, Color.parseColor("#6B7280"))
+                        views.setTextColor(timeId, Color.parseColor("#1F2937"))
+                    }
                 }
             } catch (_: Throwable) {}
         }

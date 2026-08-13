@@ -65,13 +65,6 @@ const List<TafsirEdition> availableTafsirs = [
     language: 'en',
   ),
   TafsirEdition(
-    'en.jalalayn',
-    'Tafsir al-Jalalayn (English)',
-    'Jalal ad-Din al-Mahalli & al-Suyuti',
-    'Jalal ad-Din al-Mahalli & al-Suyuti',
-    language: 'en',
-  ),
-  TafsirEdition(
     'en.maududi',
     'Tafheem-ul-Quran (English)',
     'Abul A\'la Maududi',

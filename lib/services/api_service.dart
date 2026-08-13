@@ -320,7 +320,6 @@ class ApiService {
         'ar.baghawi': 94,
         'en.ibnkathir': 169,
         'en.maududi': 168,
-        'en.jalalayn': 91,
       };
       final tId = tafsirMap[editionId] ?? (isEnglishEdition ? 169 : 16);
       final url =

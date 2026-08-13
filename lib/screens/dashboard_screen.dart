@@ -324,6 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final currentActive = _getCurrentPrayerName();
     await setStringIfChanged('widget_active_prayer', currentActive);
     await prefs.setBool("widget_is_arabic", TranslationService.isArabic);
+    await prefs.setBool("widget_is_dark", prefs.isDarkMode());
     await setStringIfChanged(
       "widget_app_name",
       TranslationService.isArabic ? "آية" : "Aya",

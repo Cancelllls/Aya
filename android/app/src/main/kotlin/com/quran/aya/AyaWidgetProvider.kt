@@ -32,6 +32,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
 
                 val nextName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
                 val nextTime = WidgetUtils.getSafeString(prefs, "widget_widget_next_display", "")
+                val isDark = WidgetUtils.getSafeBoolean(prefs, "widget_is_dark", true)
                 val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
 
                 views.setTextViewText(R.id.widget_title, appName)
@@ -56,6 +57,8 @@ class AyaWidgetProvider : AppWidgetProvider() {
                 val activeBg = R.drawable.active_prayer_background
                 val transBg = R.drawable.widget_transparent_bg
 
+                val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else nextName
+
                 fun safeSetStyle(containerId: Int, nameId: Int, timeId: Int, isActive: Boolean) {
                     try {
                         if (isActive) {
@@ -64,17 +67,22 @@ class AyaWidgetProvider : AppWidgetProvider() {
                             views.setTextColor(timeId, Color.BLACK)
                         } else {
                             views.setInt(containerId, "setBackgroundResource", transBg)
-                            views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
-                            views.setTextColor(timeId, Color.WHITE)
+                            if (isDark) {
+                                views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
+                                views.setTextColor(timeId, Color.WHITE)
+                            } else {
+                                views.setTextColor(nameId, Color.parseColor("#6B7280"))
+                                views.setTextColor(timeId, Color.parseColor("#1F2937"))
+                            }
                         }
                     } catch (_: Throwable) {}
                 }
 
-                safeSetStyle(R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, activePrayer == "Fajr")
-                safeSetStyle(R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, activePrayer == "Dhuhr")
-                safeSetStyle(R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, activePrayer == "Asr")
-                safeSetStyle(R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, activePrayer == "Maghrib")
-                safeSetStyle(R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, activePrayer == "Isha")
+                safeSetStyle(R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"))
+                safeSetStyle(R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"))
+                safeSetStyle(R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, targetHighlight.contains("Asr", ignoreCase = true) || targetHighlight.contains("العصر"))
+                safeSetStyle(R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, targetHighlight.contains("Maghrib", ignoreCase = true) || targetHighlight.contains("المغرب"))
+                safeSetStyle(R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, targetHighlight.contains("Isha", ignoreCase = true) || targetHighlight.contains("العشاء"))
 
                 WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
 
