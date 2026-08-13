@@ -38,7 +38,7 @@
     </LinearLayout>
 
     <!-- Divider -->
-    <View
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#20E5C158"
