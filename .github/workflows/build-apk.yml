@@ -18,7 +18,7 @@ jobs:
     outputs:
       version: ${{ steps.bump.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -46,14 +46,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
           fetch-depth: 0
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -101,7 +101,7 @@ jobs:
           done
 
       - name: Upload Google Play APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: google-play-apks
           path: release_apks/
@@ -113,14 +113,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
           fetch-depth: 0
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -174,7 +174,7 @@ jobs:
           done
 
       - name: Upload F-Droid APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fdroid-apks
           path: release_apks/
@@ -186,7 +186,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
@@ -200,13 +200,13 @@ jobs:
           echo "display=${VER}" >> $GITHUB_OUTPUT
 
       - name: Download Google Play APKs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: google-play-apks
           path: apks/
 
       - name: Download F-Droid APKs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: fdroid-apks
           path: apks/
