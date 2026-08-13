@@ -411,7 +411,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
               fontWeight: FontWeight.bold,
             );
 
-            final tapRec = TapGestureRecognizer()
+            final ayahRec = AyahGestureRecognizer()
               ..onTap = () {
                 if (_selectedAyahs.isNotEmpty) {
                   _toggleAyahSelection(ayah.numberInSurah);
@@ -420,8 +420,11 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 } else {
                   _showAyahActionSheet(ayah);
                 }
+              }
+              ..onLongPress = () {
+                _toggleAyahSelection(ayah.numberInSurah);
               };
-            pageRecs.add(tapRec);
+            pageRecs.add(ayahRec);
 
             if (isMaskedInHifz) {
               // Shadow-blur trick — text stays in layout but is visually blurred
@@ -438,7 +441,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       ),
                     ],
                   ),
-                  recognizer: tapRec,
+                  recognizer: ayahRec,
                 ),
               );
             } else {
@@ -447,7 +450,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 baseStyle: verseStyle,
                 context: context,
                 isEnabled: _isTajweedEnabled,
-                ayahRecognizer: tapRec,
+                ayahRecognizer: ayahRec,
               );
               spans.addAll(rawSpans);
             }
@@ -460,7 +463,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   color: const Color(0xFFE5C158),
                   fontWeight: FontWeight.bold,
                 ),
-                recognizer: tapRec,
+                recognizer: ayahRec,
               ),
             );
           }
@@ -521,16 +524,10 @@ extension SurahReaderUi on _SurahReaderScreenState {
                             ),
                           ],
                         ),
-                  child: GestureDetector(
-                    onLongPress: () {
-                      if (chunk.isNotEmpty) {
-                        _toggleAyahSelection(chunk.first.numberInSurah);
-                      }
-                    },
-                    child: Container(
-                      margin: _hideContinuousBorders
-                          ? EdgeInsets.zero
-                          : const EdgeInsets.all(4),
+                  child: Container(
+                    margin: _hideContinuousBorders
+                        ? EdgeInsets.zero
+                        : const EdgeInsets.all(4),
                       decoration: _hideContinuousBorders
                           ? null
                           : BoxDecoration(
@@ -690,4 +687,50 @@ extension SurahReaderUi on _SurahReaderScreenState {
       ),
     );
   }
+}
+
+class AyahGestureRecognizer extends PrimaryPointerGestureRecognizer {
+  VoidCallback? onTap;
+  VoidCallback? onLongPress;
+  bool _longPressFired = false;
+  Timer? _timer;
+
+  AyahGestureRecognizer({super.debugOwner});
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    _longPressFired = false;
+    startTrackingPointer(event.pointer, event.transform);
+    _timer?.cancel();
+    _timer = Timer(const Duration(milliseconds: 450), () {
+      if (state == GestureRecognizerState.possible) {
+        _longPressFired = true;
+        resolve(GestureDisposition.accepted);
+        if (onLongPress != null) onLongPress!();
+      }
+    });
+  }
+
+  @override
+  void handlePrimaryPointer(PointerEvent event) {
+    if (event is PointerUpEvent) {
+      _timer?.cancel();
+      if (!_longPressFired && state != GestureRecognizerState.rejected) {
+        resolve(GestureDisposition.accepted);
+        if (onTap != null) onTap!();
+      }
+      stopTrackingPointer(event.pointer);
+    } else if (event is PointerCancelEvent) {
+      _timer?.cancel();
+      stopTrackingPointer(event.pointer);
+    }
+  }
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {
+    _timer?.cancel();
+  }
+
+  @override
+  String get debugDescription => 'AyahGestureRecognizer';
 }

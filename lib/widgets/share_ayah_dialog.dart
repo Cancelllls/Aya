@@ -35,7 +35,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   String _tafsirText = '';
   bool _isLoadingTafsir = false;
 
-  double _blackFramePadding = 0.0;
   bool _includeAyahNumbers = true;
 
   List<Ayah> get _ayahList {
@@ -193,10 +192,12 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
     return Dialog(
       backgroundColor: theme.cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 580),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
@@ -270,108 +271,93 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              // Black Frame Padding Slider
-              Row(
-                children: [
-                  const Icon(Icons.crop_square, size: 18, color: Color(0xFFE5C158)),
-                  const SizedBox(width: 8),
-                  Text(
-                    isAr ? 'إطار أسود:' : 'Black Frame:',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      value: _blackFramePadding,
-                      min: 0.0,
-                      max: 36.0,
-                      divisions: 36,
-                      activeColor: const Color(0xFFE5C158),
-                      inactiveColor: theme.dividerColor,
-                      onChanged: (val) => setState(() => _blackFramePadding = val),
-                    ),
-                  ),
-                  Text(
-                    '${_blackFramePadding.toInt()}px',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 12),
 
-              // Live Image Preview Card wrapped in RepaintBoundary
+              // Live Image Preview Card wrapped in RepaintBoundary (Horizontal layout)
               RepaintBoundary(
                 key: _globalKey,
                 child: Container(
-                  color: _blackFramePadding > 0 ? Colors.black : Colors.transparent,
-                  padding: EdgeInsets.all(_blackFramePadding),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: themeConfig['bgColor'] as Color,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  decoration: BoxDecoration(
+                    color: themeConfig['bgColor'] as Color,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
+                      width: 2,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header Motif
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.star_outline_rounded,
-                              color: themeConfig['accentColor'] as Color,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _headerRefText,
-                              style: TextStyle(
-                                color: themeConfig['accentColor'] as Color,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.star_outline_rounded,
-                              color: themeConfig['accentColor'] as Color,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Arabic Text (If enabled)
-                        if (showArabic)
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header Motif
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.star_outline_rounded,
+                            color: themeConfig['accentColor'] as Color,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
                           Text(
-                            _formattedArabicText,
-                            textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.center,
+                            _headerRefText,
                             style: TextStyle(
-                              fontFamily: 'Amiri',
-                              fontSize: 22,
-                              height: 2.0,
+                              color: themeConfig['accentColor'] as Color,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: themeConfig['textColor'] as Color,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.star_outline_rounded,
+                            color: themeConfig['accentColor'] as Color,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Arabic Text (If enabled) with Gold Ayah Numbering
+                      if (showArabic)
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              for (int i = 0; i < _ayahList.length; i++) ...[
+                                TextSpan(
+                                  text: "${_ayahList[i].text} ",
+                                  style: TextStyle(
+                                    fontFamily: 'Amiri',
+                                    fontSize: 22,
+                                    height: 2.0,
+                                    fontWeight: FontWeight.bold,
+                                    color: themeConfig['textColor'] as Color,
+                                  ),
+                                ),
+                                if (_includeAyahNumbers)
+                                  TextSpan(
+                                    text: "﴿${_ayahList[i].numberInSurah}﴾ ",
+                                    style: const TextStyle(
+                                      fontFamily: 'Amiri',
+                                      fontSize: 20,
+                                      height: 2.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFE5C158),
+                                    ),
+                                  ),
+                              ],
+                            ],
+                          ),
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.center,
+                        ),
 
                         // Translation (If enabled & present)
                         if (showEnglish && _formattedTranslationText.isNotEmpty) ...[
@@ -451,10 +437,8 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
             ),
 
               const SizedBox(height: 16),

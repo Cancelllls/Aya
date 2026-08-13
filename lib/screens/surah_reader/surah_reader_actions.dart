@@ -441,10 +441,20 @@ extension SurahReaderActions on _SurahReaderScreenState {
           } else if (num == max) {
             _selectedAyahs.remove(max);
           } else {
-            // Tapped an internal verse: trim from num to max to ensure
-            // selection ALWAYS remains strictly continuous without gaps.
-            for (int i = num; i <= max; i++) {
-              _selectedAyahs.remove(i);
+            // Internal ayah tapped: compare left chunk [min..num-1] vs right chunk [num+1..max].
+            // Remove the smaller chunk (and num) so the larger contiguous chunk stays selected.
+            final leftLen = num - min;
+            final rightLen = max - num;
+            if (leftLen < rightLen) {
+              // Left chunk is smaller -> remove [min..num]
+              for (int i = min; i <= num; i++) {
+                _selectedAyahs.remove(i);
+              }
+            } else {
+              // Right chunk is smaller or equal -> remove [num..max]
+              for (int i = num; i <= max; i++) {
+                _selectedAyahs.remove(i);
+              }
             }
           }
         }
