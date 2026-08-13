@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show compute;
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
@@ -469,7 +470,7 @@ class DatabaseService {
         final String ayahsStr = await rootBundle.loadString(
           'assets/quran/quran_hafs.json',
         );
-        final List<dynamic> quranData = jsonDecode(ayahsStr);
+        final List<dynamic> quranData = await compute(_parseJsonList, ayahsStr);
         batch = db.batch();
         for (var editions in quranData) {
           final arabic = editions[0]['ayahs'];
@@ -901,4 +902,8 @@ class DatabaseService {
       whereArgs: [editionId],
     );
   }
+}
+
+List<dynamic> _parseJsonList(String input) {
+  return jsonDecode(input) as List<dynamic>;
 }

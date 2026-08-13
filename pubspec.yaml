@@ -92,6 +92,7 @@ flutter:
     - assets/audio/
     - assets/audio/adhan/
     - assets/quran/
+    - assets/tafsir/
     - assets/hadith/
     - assets/changelog.json
     - assets/timestamps/

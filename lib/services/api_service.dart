@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../models/quran_models.dart';
@@ -203,13 +204,41 @@ class ApiService {
   }
 
   static final Map<String, String> _tafsirMemoryCache = {};
+  static final Map<String, Map<String, dynamic>> _bundledTafsirAssetCache = {};
   static const int _maxTafsirCacheEntries = 500;
+  static const int _maxBundledTafsirAssetEntries = 3;
 
   static void _setTafsirCache(String key, String text) {
     if (_tafsirMemoryCache.length >= _maxTafsirCacheEntries) {
       _tafsirMemoryCache.remove(_tafsirMemoryCache.keys.first);
     }
     _tafsirMemoryCache[key] = text;
+  }
+
+  static Future<String> _loadFromBundledTafsirAsset(
+    String editionId,
+    int surahNumber,
+    int ayahNumber,
+  ) async {
+    try {
+      if (!_bundledTafsirAssetCache.containsKey(editionId)) {
+        if (_bundledTafsirAssetCache.length >= _maxBundledTafsirAssetEntries) {
+          _bundledTafsirAssetCache.remove(_bundledTafsirAssetCache.keys.first);
+        }
+        final jsonStr = await rootBundle.loadString(
+          'assets/tafsir/$editionId.json',
+        );
+        _bundledTafsirAssetCache[editionId] =
+            jsonDecode(jsonStr) as Map<String, dynamic>;
+      }
+      final surahData =
+          _bundledTafsirAssetCache[editionId]?[surahNumber.toString()]
+              as Map<String, dynamic>?;
+      if (surahData != null) {
+        return (surahData[ayahNumber.toString()] as String? ?? '').trim();
+      }
+    } catch (_) {}
+    return '';
   }
 
   /// Returns true if the tafsir for this ayah is already in the memory cache.
@@ -239,7 +268,18 @@ class ApiService {
       }
     }
 
-    // 2. Check offline extra_tafsirs SQLite cache table
+    // 2. Check bundled local asset JSON (assets/tafsir/$editionId.json)
+    final assetText = await _loadFromBundledTafsirAsset(
+      editionId,
+      surahNumber,
+      ayahNumber,
+    );
+    if (assetText.isNotEmpty) {
+      _setTafsirCache(cacheKey, assetText);
+      return assetText;
+    }
+
+    // 3. Check offline extra_tafsirs SQLite cache table
     final offlineText = await db.getExtraTafsir(
       editionId,
       surahNumber,
