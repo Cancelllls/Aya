@@ -462,10 +462,6 @@ extension SurahReaderUi on _SurahReaderScreenState {
                           color: blurColor,
                           blurRadius: 16,
                         ),
-                        Shadow(
-                          color: blurColor,
-                          blurRadius: 8,
-                        ),
                       ],
                     ),
                     recognizer: ayahRec,
