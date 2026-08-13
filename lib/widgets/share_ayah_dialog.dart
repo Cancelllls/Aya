@@ -512,6 +512,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
