@@ -73,8 +73,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   bool _isBookmarked = false;
   int? _bookmarkedAyahNumber;
   int? _lastScrolledAyah;
-  bool _isHifzMode = false;
-  final Set<int> _unmaskedAyahs = {};
+  // ValueNotifiers so toggling hifz/masking never remounts the ListView.
+  final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
+  final ValueNotifier<Set<int>> _unmaskedNotifier = ValueNotifier({});
+  // Convenience getters so existing code compiles unchanged.
+  bool get _isHifzMode => _hifzNotifier.value;
+  Set<int> get _unmaskedAyahs => _unmaskedNotifier.value;
   bool _isTajweedEnabled = true;
 
   Ticker? _ticker;
@@ -125,7 +129,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         widget.storage.getString('reading_mode', defaultValue: 'continuous');
     // Sync hifz mode from pager's readingMode ('hifz' = activate hifz mode)
     if (_readingMode == 'hifz') {
-      _isHifzMode = true;
+      _hifzNotifier.value = true;
       _readingMode = 'continuous'; // Display via continuous layout with hifz overlay
     }
     _quranScriptType = widget.quranScriptType ??
@@ -173,6 +177,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       }
     }
     _pageRecognizers.clear();
+    _hifzNotifier.dispose();
+    _unmaskedNotifier.dispose();
     super.dispose();
   }
 
@@ -230,14 +236,16 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   }
 
   void _toggleHifzMode() {
-    setState(() {
-      _isHifzMode = !_isHifzMode;
-      _unmaskedAyahs.clear();
-    });
+    // Toggle via ValueNotifier — no setState, so ListView never remounts.
+    final next = !_hifzNotifier.value;
+    _hifzNotifier.value = next;
+    _unmaskedNotifier.value = {}; // clear revealed set
+    // Only rebuild AppBar icon color.
+    setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _isHifzMode
+          next
               ? (TranslationService.isArabic
                   ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
                   : "Hifz Mode enabled (tap verse to reveal)")
@@ -253,13 +261,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
 
   void _toggleAyahMasking(int ayahNum) {
     if (!_isHifzMode) return;
-    setState(() {
-      if (_unmaskedAyahs.contains(ayahNum)) {
-        _unmaskedAyahs.remove(ayahNum);
-      } else {
-        _unmaskedAyahs.add(ayahNum);
-      }
-    });
+    // Mutate via ValueNotifier — no setState, preserves scroll position.
+    final current = Set<int>.from(_unmaskedNotifier.value);
+    if (current.contains(ayahNum)) {
+      current.remove(ayahNum);
+    } else {
+      current.add(ayahNum);
+    }
+    _unmaskedNotifier.value = current;
   }
 
   void _toggleTajweedMode() {
@@ -357,16 +366,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ),
             onPressed: _toggleHifzMode,
             tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.palette_outlined,
-              color: _isTajweedEnabled
-                  ? const Color(0xFF26A69A)
-                  : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white).withValues(alpha: 0.5),
-            ),
-            onPressed: _toggleTajweedMode,
-            tooltip: TranslationService.isArabic ? "التجويد الملون" : "Color Tajweed",
           ),
           IconButton(
             icon: Icon(

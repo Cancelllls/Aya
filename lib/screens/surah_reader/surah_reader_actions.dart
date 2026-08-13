@@ -445,10 +445,24 @@ extension SurahReaderActions on _SurahReaderScreenState {
 
   void _toggleAyahSelection(int num) {
     setState(() {
-      if (_selectedAyahs.contains(num)) {
+      if (_selectedAyahs.contains(num) && _selectedAyahs.length == 1) {
+        // Deselect the only selected ayah
+        _selectedAyahs.clear();
+      } else if (_selectedAyahs.contains(num)) {
+        // Deselecting — keep others, remove this one
         _selectedAyahs.remove(num);
-      } else {
+      } else if (_selectedAyahs.isEmpty) {
+        // First selection — just add it
         _selectedAyahs.add(num);
+      } else {
+        // Fill the gap: select all ayahs between current min/max and new ayah
+        final currentMin = _selectedAyahs.reduce((a, b) => a < b ? a : b);
+        final currentMax = _selectedAyahs.reduce((a, b) => a > b ? a : b);
+        final newMin = num < currentMin ? num : currentMin;
+        final newMax = num > currentMax ? num : currentMax;
+        for (int i = newMin; i <= newMax; i++) {
+          _selectedAyahs.add(i);
+        }
       }
     });
   }
