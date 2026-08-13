@@ -432,7 +432,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       Shadow(
                         color: (theme.textTheme.bodyLarge?.color ?? Colors.white)
                             .withValues(alpha: 0.55),
-                        blurRadius: 14, // +20% from 12
+                        blurRadius: 17, // +20% from 14
                       ),
                     ],
                   ),

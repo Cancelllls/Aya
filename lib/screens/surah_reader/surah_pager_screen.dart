@@ -31,6 +31,9 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   String _quranScriptType = 'hafs';
   double _fontSizeMultiplier = 1.0;
   List<dynamic> _dynamicReciters = [];
+  // Hifz is a separate notifier — never part of _readingMode, so
+  // toggling it never remounts or rebuilds the SurahReaderScreen.
+  final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -45,6 +48,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _hifzNotifier.dispose();
     super.dispose();
   }
 
@@ -129,33 +133,32 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(
-              _readingMode == 'hifz' ? Icons.school : Icons.school_outlined,
-              color: _readingMode == 'hifz'
-                  ? const Color(0xFFE5C158)
-                  : (theme.appBarTheme.iconTheme?.color ?? Colors.white).withValues(alpha: 0.8),
-            ),
-            onPressed: () {
-              final newMode = _readingMode == 'hifz' ? 'continuous' : 'hifz';
-              setState(() => _readingMode = newMode);
-              widget.storage.setString('reading_mode', newMode);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    newMode == 'hifz'
-                        ? (TranslationService.isArabic
-                              ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
-                              : "Hifz Mode Enabled (Tap verse to reveal)")
-                        : (TranslationService.isArabic
-                              ? "تم إيقاف وضع التسميع والحفظ"
-                              : "Hifz Mode Disabled"),
-                  ),
+          // Hifz icon — ValueListenableBuilder so ONLY the icon repaints,
+          // the PageView and readers are never remounted.
+          ValueListenableBuilder<bool>(
+            valueListenable: _hifzNotifier,
+            builder: (context, isHifz, _) => IconButton(
+              icon: Icon(
+                isHifz ? Icons.school : Icons.school_outlined,
+                color: isHifz
+                    ? const Color(0xFFE5C158)
+                    : (theme.appBarTheme.iconTheme?.color ?? Colors.white).withValues(alpha: 0.8),
+              ),
+              onPressed: () {
+                _hifzNotifier.value = !_hifzNotifier.value;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(_hifzNotifier.value
+                      ? (TranslationService.isArabic
+                          ? "تم تفعيل وضع التسميع والحفظ (انقر على الآية لإظهارها)"
+                          : "Hifz Mode Enabled (Tap verse to reveal)")
+                      : (TranslationService.isArabic
+                          ? "تم إيقاف وضع التسميع والحفظ"
+                          : "Hifz Mode Disabled")),
                   duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
+                ));
+              },
+              tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.bookmark_border, color: Color(0xFFE5C158)),
@@ -198,14 +201,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                   Text(TranslationService.isArabic ? "المصحف المتصل" : "Continuous", style: TextStyle(color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'continuous' ? FontWeight.bold : null)),
                 ]),
               ),
-              PopupMenuItem(
-                value: 'hifz',
-                child: Row(children: [
-                  Icon(Icons.school, color: _readingMode == 'hifz' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
-                  const SizedBox(width: 8),
-                  Text(TranslationService.isArabic ? "وضع التسميع والحفظ" : "Memorization (Hifz)", style: TextStyle(color: _readingMode == 'hifz' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'hifz' ? FontWeight.bold : null)),
-                ]),
-              ),
+
               PopupMenuItem(
                 value: 'arabic_only',
                 child: Row(children: [
@@ -264,6 +260,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
             isInsidePager: true,
             hideAppBar: true,
             readingMode: _readingMode,
+            hifzNotifier: _hifzNotifier,
             quranScriptType: _quranScriptType,
             fontSizeMultiplier: _fontSizeMultiplier,
             onGoToNext: () {
@@ -302,6 +299,51 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(TranslationService.t('reading_settings'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 16),
+                  // ── Tajweed toggle — top of sheet, always visible ──
+                  StatefulBuilder(
+                    builder: (ctx, setTajweedState) {
+                      // Read the current tajweed state from storage
+                      final isEnabled = widget.storage.getBool('tajweed_enabled', defaultValue: true);
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: isEnabled
+                              ? const Color(0xFF26A69A).withValues(alpha: 0.12)
+                              : theme.dividerColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isEnabled
+                                ? const Color(0xFF26A69A).withValues(alpha: 0.4)
+                                : theme.dividerColor,
+                          ),
+                        ),
+                        child: SwitchListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          activeColor: const Color(0xFF26A69A),
+                          secondary: Icon(
+                            Icons.palette_outlined,
+                            color: isEnabled ? const Color(0xFF26A69A) : theme.disabledColor,
+                          ),
+                          title: Text(
+                            TranslationService.isArabic ? 'تلوين أحكام التجويد' : 'Color Tajweed Highlights',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                          subtitle: Text(
+                            TranslationService.isArabic
+                                ? 'تلوين أحرف التجويد (غنة، قلقلة، مد...)'
+                                : 'Highlight Ghunnah, Qalqalah, Madd…',
+                            style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                          ),
+                          value: isEnabled,
+                          onChanged: (val) {
+                            widget.storage.setBool('tajweed_enabled', val);
+                            setTajweedState(() {});
+                            setModalState(() {});
+                          },
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 20),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     Text(TranslationService.isArabic ? 'الرواية' : "Qira'ah", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8))),

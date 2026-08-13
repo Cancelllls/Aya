@@ -37,6 +37,9 @@ class SurahReaderScreen extends StatefulWidget {
   final double? fontSizeMultiplier;
   final VoidCallback? onGoToNext;
   final VoidCallback? onGoToPrev;
+  /// External hifz notifier from the pager — when provided, the reader
+  /// mirrors this notifier instead of its own internal one.
+  final ValueNotifier<bool>? hifzNotifier;
 
   const SurahReaderScreen({
     super.key,
@@ -50,6 +53,7 @@ class SurahReaderScreen extends StatefulWidget {
     this.fontSizeMultiplier,
     this.onGoToNext,
     this.onGoToPrev,
+    this.hifzNotifier,
   });
 
   @override
@@ -127,10 +131,17 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     // Use pager-provided overrides if available, otherwise read from storage
     _readingMode = widget.readingMode ??
         widget.storage.getString('reading_mode', defaultValue: 'continuous');
-    // Sync hifz mode from pager's readingMode ('hifz' = activate hifz mode)
+    // Legacy: if readingMode was persisted as 'hifz', ignore it (hifz is now
+    // a separate notifier, not a reading mode).
     if (_readingMode == 'hifz') {
-      _hifzNotifier.value = true;
-      _readingMode = 'continuous'; // Display via continuous layout with hifz overlay
+      _readingMode = 'continuous';
+    }
+    // Wire external hifz notifier from pager (if provided).
+    if (widget.hifzNotifier != null) {
+      // Sync initial value
+      _hifzNotifier.value = widget.hifzNotifier!.value;
+      // Mirror any future changes
+      widget.hifzNotifier!.addListener(_onExternalHifzChanged);
     }
     _quranScriptType = widget.quranScriptType ??
         widget.storage.getString('quran_script_type', defaultValue: 'hafs');
@@ -145,7 +156,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _fontSizeMultiplier = widget.fontSizeMultiplier ??
         widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
     _isTajweedEnabled = widget.storage.getBool(
-      'setting_tajweed_enabled',
+      'tajweed_enabled',
       defaultValue: true,
     );
     // Cache font once — avoids repeated SharedPrefs reads per-ayah (fix #4).
@@ -167,6 +178,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       overlays: SystemUiOverlay.values,
     );
     AudioManager.instance.playState.removeListener(_onPlayStateChanged);
+    widget.hifzNotifier?.removeListener(_onExternalHifzChanged);
     _savePositionTimer?.cancel();
     _ticker?.dispose();
     _resumeTimer?.cancel();
@@ -255,6 +267,13 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
         backgroundColor: const Color(0xFFE5C158),
       ),
     );
+  }
+
+  /// Mirrors changes from the pager's external hifzNotifier.
+  void _onExternalHifzChanged() {
+    if (widget.hifzNotifier == null) return;
+    _hifzNotifier.value = widget.hifzNotifier!.value;
+    _unmaskedNotifier.value = {}; // reset revealed set on each toggle
   }
 
   void _toggleAyahMasking(int ayahNum) {
