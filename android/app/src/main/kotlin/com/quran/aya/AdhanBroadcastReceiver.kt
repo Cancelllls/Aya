@@ -24,6 +24,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.VolumeProviderCompat
+import android.util.Log
 
 /**
  * Five-Prayers-style adhan architecture:
@@ -48,7 +49,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         wakeLock.acquire(10 * 60 * 1000L)
 
         // ── Notification card (silent — no sound, no vibration, no stop button) ─
-        val channelId = "adhan_alert_v4"
+        val channelId = "adhan_alert_v5"
         val notifManager = NotificationManagerCompat.from(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -165,14 +166,27 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         mediaSession.setActive(true)
 
         // ── MediaPlayer ─────────────────────────────────────────────
-        player = MediaPlayer.create(context, resId)
-        player.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setLegacyStreamType(AudioManager.STREAM_ALARM)
-                .build()
-        )
+        try {
+            player = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setLegacyStreamType(AudioManager.STREAM_ALARM)
+                        .build()
+                )
+                val afd = context.resources.openRawResourceFd(resId)
+                if (afd != null) {
+                    setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    afd.close()
+                    prepare()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AdhanBroadcastReceiver", "Error creating MediaPlayer: ${e.message}", e)
+            if (wakeLock.isHeld) wakeLock.release()
+            return
+        }
 
         Companion.activeStop = ::stop
 

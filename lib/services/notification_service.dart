@@ -244,7 +244,7 @@ class NotificationService {
       // Pre-adhan / tracker / ramadan channels created here.
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'pre_adhan_native_v3',
+          'pre_adhan_native_v4',
           'Pre-Athan Alerts',
           description: 'Reminders before prayer time',
           importance: Importance.max,
@@ -555,7 +555,7 @@ class NotificationService {
             final preNotificationId = notificationId + 2000;
 
             final preAndroidDetails = AndroidNotificationDetails(
-              'pre_adhan_native_v3',
+              'pre_adhan_native_v4',
               'Pre-Athan Alerts',
               channelDescription: 'Reminders before prayer time',
               importance: Importance.max,
