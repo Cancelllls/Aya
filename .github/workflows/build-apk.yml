@@ -1,4 +1,4 @@
-name: Build APK
+name: Aya Release Build
 
 on:
   workflow_dispatch:
