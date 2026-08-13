@@ -9,13 +9,15 @@ import '../services/translation_service.dart';
 import '../services/api_service.dart';
 
 class ShareAyahDialog extends StatefulWidget {
-  final Ayah ayah;
+  final Ayah? ayah;
+  final List<Ayah>? ayahs;
   final String surahName;
   final int surahNumber;
 
   const ShareAyahDialog({
     super.key,
-    required this.ayah,
+    this.ayah,
+    this.ayahs,
     required this.surahName,
     required this.surahNumber,
   });
@@ -33,10 +35,50 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   String _tafsirText = '';
   bool _isLoadingTafsir = false;
 
+  double _blackFramePadding = 0.0;
+  bool _includeAyahNumbers = true;
+
+  List<Ayah> get _ayahList {
+    if (widget.ayahs != null && widget.ayahs!.isNotEmpty) {
+      return widget.ayahs!;
+    }
+    if (widget.ayah != null) {
+      return [widget.ayah!];
+    }
+    return [];
+  }
+
+  Ayah get _firstAyah =>
+      _ayahList.isNotEmpty ? _ayahList.first : widget.ayah!;
+
+  String get _headerRefText {
+    final isAr = TranslationService.isArabic;
+    if (_ayahList.length <= 1) {
+      return '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} ${_firstAyah.numberInSurah}';
+    } else {
+      return '${widget.surahName} • ${isAr ? 'الآيات' : 'Ayahs'} ${_ayahList.first.numberInSurah}-${_ayahList.last.numberInSurah}';
+    }
+  }
+
+  String get _formattedArabicText {
+    if (_includeAyahNumbers) {
+      return _ayahList.map((a) => "${a.text} ﴿${a.numberInSurah}﴾").join(" ");
+    } else {
+      return _ayahList.map((a) => a.text).join(" ");
+    }
+  }
+
+  String get _formattedTranslationText {
+    return _ayahList
+        .map((a) => a.translation)
+        .where((t) => t.isNotEmpty)
+        .join("\n\n");
+  }
+
   @override
   void initState() {
     super.initState();
-    _tafsirText = widget.ayah.tafseer.trim();
+    _tafsirText = _firstAyah.tafseer.trim();
   }
 
   void _onToggleTafsir(bool val) {
@@ -46,7 +88,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
       ApiService.fetchTafsirTextForAyah(
         'ar.muyassar',
         widget.surahNumber,
-        widget.ayah.numberInSurah,
+        _firstAyah.numberInSurah,
       ).then((text) {
         if (mounted) {
           setState(() {
@@ -112,7 +154,7 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
       await file.writeAsBytes(buffer);
 
       final isAr = TranslationService.isArabic;
-      final ref = '${widget.surahName} ${widget.surahNumber}:${widget.ayah.numberInSurah}';
+      final ref = _headerRefText;
 
       await SharePlus.instance.share(
         ShareParams(
@@ -200,6 +242,19 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                   FilterChip(
                     avatar: Icon(
+                      _includeAyahNumbers
+                          ? Icons.format_list_numbered
+                          : Icons.format_list_numbered_outlined,
+                      size: 16,
+                      color: _includeAyahNumbers ? Colors.black : Colors.grey,
+                    ),
+                    label: Text(isAr ? 'أرقام الآيات' : 'Ayah Numbers'),
+                    selected: _includeAyahNumbers,
+                    selectedColor: const Color(0xFFE5C158),
+                    onSelected: (val) => setState(() => _includeAyahNumbers = val),
+                  ),
+                  FilterChip(
+                    avatar: Icon(
                       _includeTafsir
                           ? Icons.auto_stories
                           : Icons.auto_stories_outlined,
@@ -213,87 +268,122 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+
+              // Black Frame Padding Slider
+              Row(
+                children: [
+                  const Icon(Icons.crop_square, size: 18, color: Color(0xFFE5C158)),
+                  const SizedBox(width: 8),
+                  Text(
+                    isAr ? 'إطار أسود:' : 'Black Frame:',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      value: _blackFramePadding,
+                      min: 0.0,
+                      max: 36.0,
+                      divisions: 36,
+                      activeColor: const Color(0xFFE5C158),
+                      inactiveColor: theme.dividerColor,
+                      onChanged: (val) => setState(() => _blackFramePadding = val),
+                    ),
+                  ),
+                  Text(
+                    '${_blackFramePadding.toInt()}px',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
 
               // Live Image Preview Card wrapped in RepaintBoundary
               RepaintBoundary(
                 key: _globalKey,
                 child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: themeConfig['bgColor'] as Color,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        spreadRadius: 2,
+                  color: _blackFramePadding > 0 ? Colors.black : Colors.transparent,
+                  padding: EdgeInsets.all(_blackFramePadding),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: themeConfig['bgColor'] as Color,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: (themeConfig['borderColor'] as Color).withValues(alpha: 0.8),
+                        width: 2,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Header Motif
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.star_outline_rounded,
-                            color: themeConfig['accentColor'] as Color,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${widget.surahName} • ${isAr ? 'آية' : 'Ayah'} ${widget.ayah.numberInSurah}',
-                            style: TextStyle(
-                              color: themeConfig['accentColor'] as Color,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.star_outline_rounded,
-                            color: themeConfig['accentColor'] as Color,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Arabic Text (If enabled)
-                      if (showArabic)
-                        Text(
-                          widget.ayah.text,
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Amiri',
-                            fontSize: 22,
-                            height: 2.0,
-                            fontWeight: FontWeight.bold,
-                            color: themeConfig['textColor'] as Color,
-                          ),
-                        ),
-
-                      // Translation (If enabled & present)
-                      if (showEnglish && widget.ayah.translation.isNotEmpty) ...[
-                        if (showArabic) const SizedBox(height: 12),
-                        Text(
-                          widget.ayah.translation,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 1.5,
-                            color: (themeConfig['textColor'] as Color).withValues(alpha: 0.85),
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          spreadRadius: 2,
                         ),
                       ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header Motif
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.star_outline_rounded,
+                              color: themeConfig['accentColor'] as Color,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _headerRefText,
+                              style: TextStyle(
+                                color: themeConfig['accentColor'] as Color,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.star_outline_rounded,
+                              color: themeConfig['accentColor'] as Color,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Arabic Text (If enabled)
+                        if (showArabic)
+                          Text(
+                            _formattedArabicText,
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Amiri',
+                              fontSize: 22,
+                              height: 2.0,
+                              fontWeight: FontWeight.bold,
+                              color: themeConfig['textColor'] as Color,
+                            ),
+                          ),
+
+                        // Translation (If enabled & present)
+                        if (showEnglish && _formattedTranslationText.isNotEmpty) ...[
+                          if (showArabic) const SizedBox(height: 12),
+                          Text(
+                            _formattedTranslationText,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.5,
+                              color: (themeConfig['textColor'] as Color).withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
 
                       // Tafsir (If enabled)
                       if (_includeTafsir) ...[

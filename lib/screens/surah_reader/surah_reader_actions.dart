@@ -239,30 +239,14 @@ extension SurahReaderActions on _SurahReaderScreenState {
   void _shareSelectedAyahsAsImage() {
     if (_selectedAyahs.isEmpty) return;
     final sorted = _selectedAyahs.toList()..sort();
-    final firstAyahNum = sorted.first;
-    final ayah = _ayahList.firstWhere(
-      (a) => a.numberInSurah == firstAyahNum,
-      orElse: () => _ayahList.first,
-    );
-
-    final combinedText = sorted
-        .map((num) => _ayahList.firstWhere((a) => a.numberInSurah == num, orElse: () => ayah).text)
-        .join(' ');
-
-    final combinedAyah = Ayah(
-      number: ayah.number,
-      text: combinedText,
-      numberInSurah: sorted.length == 1 ? firstAyahNum : sorted.first,
-      juz: ayah.juz,
-      hizb: ayah.hizb,
-      translation: ayah.translation,
-      tafseer: ayah.tafseer,
-    );
+    final selectedAyahsList = _ayahList
+        .where((a) => sorted.contains(a.numberInSurah))
+        .toList();
 
     showDialog(
       context: context,
       builder: (ctx) => ShareAyahDialog(
-        ayah: combinedAyah,
+        ayahs: selectedAyahsList,
         surahName: _currentSurah.name,
         surahNumber: _currentSurah.number,
       ),
@@ -445,14 +429,26 @@ extension SurahReaderActions on _SurahReaderScreenState {
 
   void _toggleAyahSelection(int num) {
     setState(() {
-      if (_selectedAyahs.contains(num) && _selectedAyahs.length == 1) {
-        // Deselect the only selected ayah
-        _selectedAyahs.clear();
-      } else if (_selectedAyahs.contains(num)) {
-        // Deselecting — keep others, remove this one
-        _selectedAyahs.remove(num);
+      if (_selectedAyahs.contains(num)) {
+        if (_selectedAyahs.length == 1) {
+          _selectedAyahs.clear();
+        } else {
+          final sorted = _selectedAyahs.toList()..sort();
+          final min = sorted.first;
+          final max = sorted.last;
+          if (num == min) {
+            _selectedAyahs.remove(min);
+          } else if (num == max) {
+            _selectedAyahs.remove(max);
+          } else {
+            // Tapped an internal verse: trim from num to max to ensure
+            // selection ALWAYS remains strictly continuous without gaps.
+            for (int i = num; i <= max; i++) {
+              _selectedAyahs.remove(i);
+            }
+          }
+        }
       } else if (_selectedAyahs.isEmpty) {
-        // First selection — just add it
         _selectedAyahs.add(num);
       } else {
         // Fill the gap: select all ayahs between current min/max and new ayah
