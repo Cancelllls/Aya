@@ -149,8 +149,9 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
 
       final buffer = byteData.buffer.asUint8List();
       final tempDir = await getTemporaryDirectory();
+      final firstAyahNum = _firstAyah?.numberInSurah ?? 1;
       final filePath =
-          '${tempDir.path}/ayah_${widget.surahNumber}_${widget.ayah.numberInSurah}_${DateTime.now().millisecondsSinceEpoch}.png';
+          '${tempDir.path}/ayah_${widget.surahNumber}_${firstAyahNum}_${DateTime.now().millisecondsSinceEpoch}.png';
       final file = File(filePath);
       await file.writeAsBytes(buffer);
 
