@@ -142,18 +142,10 @@ def main():
         print()
         for line in manual["changes"].get("en", []):
             print(f"- {line}")
-        print()
-        print("---")
-        print()
-        print(f"## {title} (v{version})")
-        print()
-        for line in manual["changes"].get("ar", []):
-            print(f"- {line}")
         return
 
     # 2. Auto-generate from git log
     en_text = gen_en(version or "")
-    ar_text = gen_ar(version or "")
 
     if not en_text:
         print(f"## Version {version or '?'}")
@@ -162,11 +154,6 @@ def main():
     print(f"## Changes (v{version})")
     print()
     print(en_text)
-    print("---")
-    print()
-    print(f"## التغييرات (v{version})")
-    print()
-    print(ar_text)
 
 
 if __name__ == "__main__":

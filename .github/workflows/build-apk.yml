@@ -57,6 +57,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -123,6 +124,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -217,7 +219,7 @@ jobs:
           echo "$CHANGELOG" > /tmp/changelog.md
 
       - name: Create Release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        uses: softprops/action-gh-release@v2.1.0
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release v${{ steps.version.outputs.display }}
