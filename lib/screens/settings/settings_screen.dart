@@ -311,6 +311,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       _use24hFormat = val;
     });
     await widget.storage.setBool('use_24h_format', val);
+    try {
+      await _platform.invokeMethod('updateWidget');
+    } catch (_) {}
   }
 
   Future<void> _toggleSwipeSurahNavigation(bool val) async {

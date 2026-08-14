@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../services/translation_service.dart';
+import '../utils/time_formatter.dart';
 
 class PrayerBarCard extends StatelessWidget {
   final ThemeData theme;
@@ -7,6 +8,7 @@ class PrayerBarCard extends StatelessWidget {
   final String time;
   final bool isCurrent;
   final IconData icon;
+  final bool is24Hour;
 
   const PrayerBarCard(
     this.theme,
@@ -15,27 +17,17 @@ class PrayerBarCard extends StatelessWidget {
     this.isCurrent,
     this.icon, {
     super.key,
+    this.is24Hour = false,
   });
-
-  String _formatTime(String time) {
-    try {
-      final parts = time.split(':');
-      final now = DateTime.now();
-      final dt = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-      );
-      return DateFormat('h:mm a').format(dt);
-    } catch (_) {
-      return time;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    final formattedTime = TimeFormatter.formatTime(
+      time,
+      is24Hour: is24Hour,
+      isArabic: TranslationService.isArabic,
+    );
+
     return Container(
       width: 100,
       margin: const EdgeInsetsDirectional.only(end: 8),
@@ -74,7 +66,7 @@ class PrayerBarCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            _formatTime(time),
+            formattedTime,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],

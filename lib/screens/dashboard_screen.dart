@@ -34,7 +34,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with WidgetsBindingObserver {
   PrayerTimeData? _prayerData;
   bool _isLoading = true;
   bool _hasError = false;
@@ -116,6 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final randIndex =
         (DateTime.now().microsecondsSinceEpoch) % QuranVersesData.verses.length;
     _randomVerse = QuranVersesData.verses[randIndex];
@@ -142,8 +144,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (_prayerData != null) {
+        _calculateNextPrayer();
+        _startCountdownTimer();
+      }
+    } else if (state == AppLifecycleState.paused) {
+      _timer?.cancel();
+    }
   }
 
   String _getCurrentPrayerName() {
@@ -205,6 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
       await NotificationService().schedulePrayerAlarms(data, widget.storage);
       _calculateNextPrayer();
+      await _updateWidgetPreferences();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -225,11 +241,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _startCountdownTimer() {
-    // Fire immediately so the countdown never shows 00:00:00
+    _timer?.cancel();
     if (_prayerData != null) _calculateNextPrayer();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_prayerData != null) {
-        _calculateNextPrayer();
+      if (_prayerData != null && mounted) {
+        final now = DateTime.now();
+        if (_nextPrayerTime != null) {
+          final diff = _nextPrayerTime!.difference(now);
+          if (diff.isNegative) {
+            _calculateNextPrayer();
+            _updateWidgetPreferences();
+          } else {
+            setState(() {
+              _nextPrayerCountdown = diff;
+            });
+            // Update widget preferences once per minute on minute boundary (second == 0)
+            if (now.second == 0) {
+              _updateWidgetPreferences();
+            }
+          }
+        } else {
+          _calculateNextPrayer();
+          _updateWidgetPreferences();
+        }
       }
     });
   }
@@ -255,16 +289,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Parse times for today
     List<MapEntry<String, DateTime>> todayPrayers = [];
     prayers.forEach((name, timeStr) {
-      // Remove any timezone tags like (EET)
       final cleanTime = timeStr.split(' ')[0];
       final parsed = DateTime.parse("${todayStr}T$cleanTime:00");
       todayPrayers.add(MapEntry(name, parsed));
     });
 
-    // Sort chronologically
     todayPrayers.sort((a, b) => a.value.compareTo(b.value));
 
-    // Find next prayer today
     for (var entry in todayPrayers) {
       if (entry.value.isAfter(now)) {
         nextPrayerTime = entry.value;
@@ -273,7 +304,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    // If all prayers today have passed, next is Fajr tomorrow
     if (nextPrayerTime == null) {
       final tomorrowStr = now
           .add(const Duration(days: 1))
@@ -289,7 +319,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _nextPrayerCountdown = nextPrayerTime!.difference(now);
       _nextPrayerTime = nextPrayerTime;
     });
-    _updateWidgetPreferences();
   }
 
   String _formatWidgetNextDisplay(Duration duration) {
@@ -315,11 +344,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    await setStringIfChanged('widget_prayer_fajr', _prayerData!.fajr);
-    await setStringIfChanged('widget_prayer_dhuhr', _prayerData!.dhuhr);
-    await setStringIfChanged('widget_prayer_asr', _prayerData!.asr);
-    await setStringIfChanged('widget_prayer_maghrib', _prayerData!.maghrib);
-    await setStringIfChanged('widget_prayer_isha', _prayerData!.isha);
+    final use24h = prefs.getBool('use_24h_format', defaultValue: false);
+    await setStringIfChanged(
+      'widget_prayer_fajr',
+      formatPrayerTime(_prayerData!.fajr, use24h: use24h),
+    );
+    await setStringIfChanged(
+      'widget_prayer_dhuhr',
+      formatPrayerTime(_prayerData!.dhuhr, use24h: use24h),
+    );
+    await setStringIfChanged(
+      'widget_prayer_asr',
+      formatPrayerTime(_prayerData!.asr, use24h: use24h),
+    );
+    await setStringIfChanged(
+      'widget_prayer_maghrib',
+      formatPrayerTime(_prayerData!.maghrib, use24h: use24h),
+    );
+    await setStringIfChanged(
+      'widget_prayer_isha',
+      formatPrayerTime(_prayerData!.isha, use24h: use24h),
+    );
 
     final currentActive = _getCurrentPrayerName();
     await setStringIfChanged('widget_active_prayer', currentActive);
