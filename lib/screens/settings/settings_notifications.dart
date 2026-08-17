@@ -76,13 +76,10 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 .withValues(alpha: 0.1),
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Column(
-              children: [
-                // Advanced Adhan & Pre-Alert Settings Tile
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            children: [
                 ListTile(
                   leading: Icon(Icons.tune_outlined, color: primary),
                   title: Text(
@@ -199,7 +196,6 @@ extension SettingsNotificationsSection on _SettingsScreenState {
             ),
           ),
         ),
-      ),
 
       // === SECTION 2: DAILY REMINDERS ===
       SettingsSectionHeader(
@@ -216,12 +212,10 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 .withValues(alpha: 0.1),
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Column(
-              children: [
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            children: [
                 SwitchListTile(
                   secondary: Icon(Icons.wb_sunny_outlined, color: primary),
                   title: Text(
@@ -303,7 +297,6 @@ extension SettingsNotificationsSection on _SettingsScreenState {
             ),
           ),
         ),
-      ),
-    ];
+      ];
   }
 }

@@ -2,16 +2,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/widget_background"
+    android:background="@drawable/widget_background_dark"
     android:padding="12dp">
 
     <!-- Header Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp"
+        android:layout_marginBottom="4dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -22,7 +22,7 @@
             android:layout_weight="1"
             android:text="آية اليوم"
             android:textColor="#E5C158"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="start" />
 
@@ -31,32 +31,33 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Aya"
-            android:textColor="#80FFFFFF"
-            android:textSize="11sp"
+            android:textColor="#94A3B8"
+            android:textSize="10sp"
             android:gravity="end" />
     </LinearLayout>
 
     <!-- Divider -->
     <FrameLayout
+        android:id="@+id/widget_divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#20E5C158"
+        android:background="#33E5C158"
         android:layout_marginBottom="6dp" />
 
     <!-- Verse Content -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center"
+        android:paddingVertical="4dp">
 
         <TextView
             android:id="@+id/widget_verse_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="شحن الآية..."
-            android:textColor="#FFFFFF"
+            android:text="أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ"
+            android:textColor="#F8FAFC"
             android:textSize="13sp"
             android:gravity="center"
             android:maxLines="4"
@@ -67,10 +68,10 @@
             android:id="@+id/widget_verse_ref"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=""
+            android:text="سورة الرعد: ٢٨"
             android:textColor="#E5C158"
             android:textSize="10sp"
             android:layout_marginTop="4dp"
-            android:layout_gravity="end" />
+            android:layout_gravity="center" />
     </LinearLayout>
 </LinearLayout>

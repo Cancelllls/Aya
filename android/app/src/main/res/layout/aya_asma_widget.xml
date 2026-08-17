@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@drawable/widget_background"
+    android:background="@drawable/widget_background_dark"
     android:padding="12dp">
 
     <TextView
@@ -14,26 +14,26 @@
         android:layout_height="wrap_content"
         android:text="الرَّحْمَنُ"
         android:textColor="#E5C158"
-        android:textSize="24sp"
+        android:textSize="22sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/asma_english"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:text="Ar-Rahman"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
+        android:textColor="#F8FAFC"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/asma_meaning"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:text="The Beneficent"
-        android:textColor="#CBD5E1"
-        android:textSize="12sp"
+        android:textColor="#94A3B8"
+        android:textSize="11sp"
         android:gravity="center" />
 </LinearLayout>

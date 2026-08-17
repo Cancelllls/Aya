@@ -4,6 +4,7 @@ import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/adhan_audio_service.dart';
 import '../../services/alarm_health_service.dart';
+import '../../core/adhan_native_controller.dart';
 
 class AdhanSettingsScreen extends StatefulWidget {
   const AdhanSettingsScreen({super.key});
@@ -120,6 +121,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 children: [
                   // Health Status Card
                   _buildHealthCard(isAr, primaryColor),
+                  const SizedBox(height: 12),
+
+                  // Live Test Card
+                  _buildTestCard(isAr, primaryColor),
                   const SizedBox(height: 16),
 
                   // Per-Prayer Settings Header
@@ -205,6 +210,107 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               onPressed: () async {
                 await _loadHealthStatus();
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTestCard(bool isAr, Color primaryColor) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isAr ? 'تجربة المنبهات والتنبيهات المباشرة' : 'Test Live Alarms & Notifications',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isAr
+                  ? 'يمكنك جدولة منبه تجريبي سيعمل بعد ٥ ثوانٍ لاختبار الصوت والخلفية'
+                  : 'Schedule a test alarm that fires in 5 seconds to test background audio.',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.notifications_active, size: 18),
+                    label: Text(
+                      isAr ? 'تجربة الأذان (٥ ث)' : 'Test Adhan (5s)',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    onPressed: () async {
+                      final testTime = DateTime.now().add(const Duration(seconds: 5));
+                      await AdhanNativeController.instance.schedulePrayerAlarm(
+                        id: 9999,
+                        time: testTime,
+                        mp3ResName: 'mishary_adhan',
+                        prayerName: 'Dhuhr',
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isAr
+                                  ? 'تمت جدولة منبه الأذان التجريبي! سيعمل خلال ٥ ثوانٍ...'
+                                  : 'Test Adhan scheduled! It will ring in 5 seconds...',
+                            ),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.alarm_on, size: 18),
+                    label: Text(
+                      isAr ? 'تنبيه مسبق (٥ ث)' : 'Test Pre-Alert (5s)',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    onPressed: () async {
+                      final testTime = DateTime.now().add(const Duration(seconds: 5));
+                      await AdhanNativeController.instance.schedulePreAdhanAlarm(
+                        id: 9998,
+                        time: testTime,
+                        prayerName: 'Dhuhr',
+                        minutesBefore: 15,
+                        alertMode: 'sound',
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isAr
+                                  ? 'تمت جدولة التنبيه المسبق التجريبي! سيعمل خلال ٥ ثوانٍ...'
+                                  : 'Test Pre-Adhan alert scheduled! It will fire in 5 seconds...',
+                            ),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -3,6 +3,7 @@ package com.quran.aya
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.os.Build
 import android.widget.RemoteViews
 import android.graphics.Color
 import android.util.Log
@@ -20,6 +21,7 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
             try {
                 val views = RemoteViews(context.packageName, R.layout.aya_combined_widget)
                 val prefs = WidgetUtils.getPrefs(context)
+                val m3Theme = WidgetUtils.getM3Theme(context, prefs)
 
                 val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
                 val appName = if (isArabic) "آية" else "Aya"
@@ -32,23 +34,29 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
 
                 val nextPrayerName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
                 val nextPrayerEpoch = WidgetUtils.getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
-                val isDark = WidgetUtils.getSafeBoolean(prefs, "widget_is_dark", true)
                 val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
 
+                // Root Theme Background
+                views.setInt(R.id.widget_root, "setBackgroundResource", m3Theme.bgDrawable)
+
+                // Header styling
                 views.setTextViewText(R.id.widget_title, appName)
+                views.setTextColor(R.id.widget_title, m3Theme.primaryColor)
+                views.setTextColor(R.id.widget_next_label, m3Theme.subtitleColor)
+                views.setTextColor(R.id.widget_next_prayer_name, m3Theme.textColor)
 
-                val nowMs = System.currentTimeMillis()
-                val remainingMs = nextPrayerEpoch - nowMs
-
-                if (remainingMs > 0 && nextPrayerEpoch > 0L) {
-                    val totalSeconds = (remainingMs / 1000).toInt()
-                    val hours = totalSeconds / 3600
-                    val minutes = (totalSeconds % 3600) / 60
-                    val countdown = String.format("%02d:%02d", hours, minutes)
-                    views.setTextViewText(R.id.widget_countdown_timer, countdown)
-                } else {
-                    views.setTextViewText(R.id.widget_countdown_timer, "--:--")
+                // Native Standalone Chronometer Setup
+                if (nextPrayerEpoch > System.currentTimeMillis()) {
+                    views.setChronometer(R.id.widget_countdown_timer, nextPrayerEpoch, null, true)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        views.setChronometerCountDown(R.id.widget_countdown_timer, true)
+                    }
                 }
+
+                // Countdown box background and text
+                views.setInt(R.id.widget_countdown_box, "setBackgroundResource", m3Theme.badgeBgDrawable)
+                views.setTextColor(R.id.widget_countdown_timer, m3Theme.badgeTextColor)
+                views.setTextColor(R.id.widget_countdown_label, m3Theme.badgeTextColor)
 
                 val label = if (nextPrayerName.isNotEmpty()) {
                     if (isArabic) "حتى $nextPrayerName" else "Until $nextPrayerName"
@@ -73,16 +81,14 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_maghrib_time, maghrib)
                 views.setTextViewText(R.id.widget_isha_time, isha)
 
-                val activeBg = R.drawable.active_prayer_background
                 val transBg = R.drawable.widget_transparent_bg
-
                 val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else nextPrayerName
 
-                setPrayerStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"), isDark, activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"), isDark, activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, targetHighlight.contains("Asr", ignoreCase = true) || targetHighlight.contains("العصر"), isDark, activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, targetHighlight.contains("Maghrib", ignoreCase = true) || targetHighlight.contains("المغرب"), isDark, activeBg, transBg)
-                setPrayerStyle(views, R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, targetHighlight.contains("Isha", ignoreCase = true) || targetHighlight.contains("العشاء"), isDark, activeBg, transBg)
+                setPrayerStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"), m3Theme, transBg)
+                setPrayerStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"), m3Theme, transBg)
+                setPrayerStyle(views, R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, targetHighlight.contains("Asr", ignoreCase = true) || targetHighlight.contains("العصر"), m3Theme, transBg)
+                setPrayerStyle(views, R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, targetHighlight.contains("Maghrib", ignoreCase = true) || targetHighlight.contains("المغرب"), m3Theme, transBg)
+                setPrayerStyle(views, R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, targetHighlight.contains("Isha", ignoreCase = true) || targetHighlight.contains("العشاء"), m3Theme, transBg)
 
                 WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
 
@@ -98,24 +104,18 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
             nameId: Int,
             timeId: Int,
             isActive: Boolean,
-            isDark: Boolean,
-            activeBg: Int,
+            theme: WidgetM3Theme,
             transBg: Int
         ) {
             try {
                 if (isActive) {
-                    views.setInt(containerId, "setBackgroundResource", activeBg)
-                    views.setTextColor(nameId, Color.BLACK)
-                    views.setTextColor(timeId, Color.BLACK)
+                    views.setInt(containerId, "setBackgroundResource", theme.badgeBgDrawable)
+                    views.setTextColor(nameId, theme.badgeTextColor)
+                    views.setTextColor(timeId, theme.badgeTextColor)
                 } else {
                     views.setInt(containerId, "setBackgroundResource", transBg)
-                    if (isDark) {
-                        views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
-                        views.setTextColor(timeId, Color.WHITE)
-                    } else {
-                        views.setTextColor(nameId, Color.parseColor("#6B7280"))
-                        views.setTextColor(timeId, Color.parseColor("#1F2937"))
-                    }
+                    views.setTextColor(nameId, theme.subtitleColor)
+                    views.setTextColor(timeId, theme.textColor)
                 }
             } catch (_: Throwable) {}
         }

@@ -20,6 +20,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
             try {
                 val views = RemoteViews(context.packageName, R.layout.aya_widget)
                 val prefs = WidgetUtils.getPrefs(context)
+                val m3Theme = WidgetUtils.getM3Theme(context, prefs)
 
                 val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
                 val appName = if (isArabic) "آية" else "Aya"
@@ -32,10 +33,14 @@ class AyaWidgetProvider : AppWidgetProvider() {
 
                 val nextName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
                 val nextTime = WidgetUtils.getSafeString(prefs, "widget_widget_next_display", "")
-                val isDark = WidgetUtils.getSafeBoolean(prefs, "widget_is_dark", true)
                 val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
 
+                views.setInt(R.id.widget_root, "setBackgroundResource", m3Theme.bgDrawable)
                 views.setTextViewText(R.id.widget_title, appName)
+                views.setTextColor(R.id.widget_title, m3Theme.primaryColor)
+                views.setTextColor(R.id.widget_next_prayer, m3Theme.textColor)
+                views.setInt(R.id.widget_divider, "setBackgroundColor", m3Theme.dividerColor)
+
                 views.setTextViewText(R.id.widget_fajr_name, if (isArabic) "الفجر" else "Fajr")
                 views.setTextViewText(R.id.widget_dhuhr_name, if (isArabic) "الظهر" else "Dhuhr")
                 views.setTextViewText(R.id.widget_asr_name, if (isArabic) "العصر" else "Asr")
@@ -54,35 +59,14 @@ class AyaWidgetProvider : AppWidgetProvider() {
                     views.setTextViewText(R.id.widget_next_prayer, appName)
                 }
 
-                val activeBg = R.drawable.active_prayer_background
                 val transBg = R.drawable.widget_transparent_bg
-
                 val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else nextName
 
-                fun safeSetStyle(containerId: Int, nameId: Int, timeId: Int, isActive: Boolean) {
-                    try {
-                        if (isActive) {
-                            views.setInt(containerId, "setBackgroundResource", activeBg)
-                            views.setTextColor(nameId, Color.BLACK)
-                            views.setTextColor(timeId, Color.BLACK)
-                        } else {
-                            views.setInt(containerId, "setBackgroundResource", transBg)
-                            if (isDark) {
-                                views.setTextColor(nameId, Color.parseColor("#80FFFFFF"))
-                                views.setTextColor(timeId, Color.WHITE)
-                            } else {
-                                views.setTextColor(nameId, Color.parseColor("#6B7280"))
-                                views.setTextColor(timeId, Color.parseColor("#1F2937"))
-                            }
-                        }
-                    } catch (_: Throwable) {}
-                }
-
-                safeSetStyle(R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"))
-                safeSetStyle(R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"))
-                safeSetStyle(R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, targetHighlight.contains("Asr", ignoreCase = true) || targetHighlight.contains("العصر"))
-                safeSetStyle(R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, targetHighlight.contains("Maghrib", ignoreCase = true) || targetHighlight.contains("المغرب"))
-                safeSetStyle(R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, targetHighlight.contains("Isha", ignoreCase = true) || targetHighlight.contains("العشاء"))
+                safeSetStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"), m3Theme, transBg)
+                safeSetStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"), m3Theme, transBg)
+                safeSetStyle(views, R.id.widget_asr_container, R.id.widget_asr_name, R.id.widget_asr_time, targetHighlight.contains("Asr", ignoreCase = true) || targetHighlight.contains("العصر"), m3Theme, transBg)
+                safeSetStyle(views, R.id.widget_maghrib_container, R.id.widget_maghrib_name, R.id.widget_maghrib_time, targetHighlight.contains("Maghrib", ignoreCase = true) || targetHighlight.contains("المغرب"), m3Theme, transBg)
+                safeSetStyle(views, R.id.widget_isha_container, R.id.widget_isha_name, R.id.widget_isha_time, targetHighlight.contains("Isha", ignoreCase = true) || targetHighlight.contains("العشاء"), m3Theme, transBg)
 
                 WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)
 
@@ -90,6 +74,20 @@ class AyaWidgetProvider : AppWidgetProvider() {
             } catch (e: Throwable) {
                 Log.e("AyaWidgetProvider", "Error updating widget: ${e.message}", e)
             }
+        }
+
+        private fun safeSetStyle(views: RemoteViews, containerId: Int, nameId: Int, timeId: Int, isActive: Boolean, theme: WidgetM3Theme, transBg: Int) {
+            try {
+                if (isActive) {
+                    views.setInt(containerId, "setBackgroundResource", theme.badgeBgDrawable)
+                    views.setTextColor(nameId, theme.badgeTextColor)
+                    views.setTextColor(timeId, theme.badgeTextColor)
+                } else {
+                    views.setInt(containerId, "setBackgroundResource", transBg)
+                    views.setTextColor(nameId, theme.subtitleColor)
+                    views.setTextColor(timeId, theme.textColor)
+                }
+            } catch (_: Throwable) {}
         }
     }
 }

@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/widget_background"
-    android:padding="10dp">
+    android:background="@drawable/widget_background_dark"
+    android:padding="12dp">
 
     <!-- Header Row -->
     <LinearLayout
@@ -31,26 +31,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Aya"
-            android:textColor="#80FFFFFF"
+            android:textColor="#94A3B8"
             android:textSize="10sp"
             android:gravity="end" />
     </LinearLayout>
 
     <!-- Divider -->
     <FrameLayout
+        android:id="@+id/widget_divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#20E5C158"
-        android:layout_marginBottom="4dp" />
+        android:background="#33E5C158"
+        android:layout_marginBottom="6dp" />
 
     <!-- Tasbih Content -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="2dp">
+        android:paddingVertical="2dp">
 
         <TextView
             android:id="@+id/widget_tasbih_dhikr"
@@ -58,19 +58,19 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="سُبْحَانَ ٱللَّٰهِ"
-            android:textColor="#FFFFFF"
+            android:textColor="#F8FAFC"
             android:textSize="14sp"
             android:gravity="center_vertical"
             android:ellipsize="end"
             android:maxLines="1"
-            android:paddingEnd="10dp" />
+            android:paddingEnd="8dp" />
 
         <LinearLayout
             android:id="@+id/widget_tasbih_count_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/active_prayer_background"
-            android:paddingHorizontal="8dp"
+            android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
             android:orientation="horizontal">
 

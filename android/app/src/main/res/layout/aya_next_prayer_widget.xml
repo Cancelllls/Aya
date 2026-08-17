@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@drawable/widget_background"
+    android:background="@drawable/widget_background_dark"
     android:padding="12dp">
 
     <TextView
@@ -13,26 +13,38 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Next Prayer"
-        android:textColor="#E2E8F0"
-        android:textSize="14sp"
+        android:textColor="#E5C158"
+        android:textSize="13sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/next_prayer_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:text="Asr"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
+        android:textColor="#F8FAFC"
+        android:textSize="20sp"
         android:textStyle="bold" />
+
+    <Chronometer
+        android:id="@+id/next_prayer_chronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="#E5C158"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:countDown="true"
+        android:format="%s" />
 
     <TextView
         android:id="@+id/next_prayer_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="in 2h 15m"
+        android:layout_marginTop="2dp"
+        android:text="--:--"
+        android:visibility="gone"
         android:textColor="#E5C158"
-        android:textSize="14sp" />
+        android:textSize="13sp" />
 </LinearLayout>
