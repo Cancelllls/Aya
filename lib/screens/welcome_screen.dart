@@ -172,7 +172,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         content: Text(
           TranslationService.isArabic
               ? "تحذير: إذا واصلت بدون تفعيل صلاحيات الموقع والتنبيهات، فقد لا يتم تشغيل الأذان في موعده بدقة في الخلفية أو عند قفل الهاتف. هل تود المتابعة على أي حال؟"
-              : "Warning: If you proceed without granting location and notifications, Athan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
+              : "Warning: If you proceed without granting location and notifications, Adhan alarms and alerts may fail to run accurately in the background or when your screen is locked. Do you want to proceed anyway?",
           style: const TextStyle(height: 1.5, fontSize: 14),
         ),
         actions: [
@@ -570,7 +570,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           Text(
             TranslationService.isArabic
                 ? "يتطلب التطبيق الصلاحيات التالية للعمل بشكل صحيح وتشغيل الأذان في وقته بالخلفية."
-                : "Aya requires the following permissions to function correctly and sound the Athan alarms on time in the background.",
+                : "Aya requires the following permissions to function correctly and sound the Adhan alarms on time in the background.",
             style: TextStyle(
               fontSize: 13,
               height: 1.4,
@@ -666,7 +666,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           : "Alarms & Reminders",
                       description: TranslationService.isArabic
                           ? "يسمح بجدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
-                          : "Allows scheduling precise Athan alarms even in Doze mode.",
+                          : "Allows scheduling precise Adhan alarms even in Doze mode.",
                       isGranted: _exactAlarmGranted,
                       onRequest: _requestExactAlarm,
                     ),

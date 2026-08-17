@@ -31,7 +31,7 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             val soundUri = Uri.parse("android.resource://${context.packageName}/raw/default_pre_adhan")
             val channel = NotificationChannel(
                 channelId,
-                "Pre-Athan Alerts",
+                "Pre-Adhan Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Reminders before prayer time"

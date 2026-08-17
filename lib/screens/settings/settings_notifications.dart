@@ -113,7 +113,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                 ListTile(
                   leading: Icon(Icons.gesture_outlined, color: primary),
                   title: Text(
-                    isAr ? "إيقاف الأذان بالإيماءات" : "Athan Stop Gesture",
+                    isAr ? "إيقاف الأذان بالإيماءات" : "Adhan Stop Gesture",
                   ),
                   subtitle: Text(
                     isAr
@@ -122,7 +122,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   ),
                   trailing: SettingsValueChip<String>(
                     value: _athanStopGesture,
-                    label: isAr ? 'طريقة إيقاف الأذان' : 'Athan Stop Gesture',
+                    label: isAr ? 'طريقة إيقاف الأذان' : 'Adhan Stop Gesture',
                     items: [
                       DropdownMenuItem(
                         value: 'both',

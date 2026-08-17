@@ -166,7 +166,7 @@ class NotificationService {
     100,
   ];
 
-  static void stopActiveAthan() {
+  static void stopActiveAdhan() {
     try {
       const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
     } catch (_) {}
@@ -245,7 +245,7 @@ class NotificationService {
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
           'pre_adhan_native_v4',
-          'Pre-Athan Alerts',
+          'Pre-Adhan Alerts',
           description: 'Reminders before prayer time',
           importance: Importance.max,
           enableVibration: true,
@@ -283,7 +283,7 @@ class NotificationService {
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         if (response.actionId == 'action_stop_adhan') {
-          stopActiveAthan();
+          stopActiveAdhan();
           return;
         }
         if (response.actionId == 'action_toggle_audio') {
@@ -593,7 +593,7 @@ class NotificationService {
                 time: preAzanTime,
                 prayerName: isAr
                     ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName'
-                    : '$preAdhanMins minutes remaining until $localizedName Athan',
+                    : '$preAdhanMins minutes remaining until $localizedName Adhan',
                 minutesBefore: preAdhanMins,
                 alertMode: preAdhanAlertMode,
               );
@@ -604,7 +604,7 @@ class NotificationService {
               final tzPreDateTime = tz.TZDateTime.from(preAzanTime, tz.local);
               final preAndroidDetails = AndroidNotificationDetails(
                 'pre_adhan_native_v4',
-                'Pre-Athan Alerts',
+                'Pre-Adhan Alerts',
                 channelDescription: 'Reminders before prayer time',
                 importance: Importance.max,
                 priority: Priority.high,
@@ -639,10 +639,10 @@ class NotificationService {
               try {
                 await _notificationsPlugin.zonedSchedule(
                   id: preNotificationId,
-                  title: isAr ? 'اقترب موعد الأذان' : 'Athan is approaching',
+                  title: isAr ? 'اقترب موعد الأذان' : 'Adhan is approaching',
                   body: isAr
                       ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
-                      : '$preAdhanMins minutes remaining until $localizedName Athan.',
+                      : '$preAdhanMins minutes remaining until $localizedName Adhan.',
                   scheduledDate: tzPreDateTime,
                   notificationDetails: preDetails,
                   androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

@@ -70,7 +70,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         // ── Notification card (silent — no sound, no vibration, no stop button) ─
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId, "Athan Alert",
+                channelId, "Adhan Alert",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Adhan playback notification"

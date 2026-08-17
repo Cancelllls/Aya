@@ -168,7 +168,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
         content: Text(
           TranslationService.isArabic
               ? "تحذير: بدون الصلاحيات المطلوبة، قد لا يعمل الأذان بدقة في الخلفية. هل تود المتابعة على أي حال؟"
-              : "Warning: Without the required permissions, Athan alarms may not work accurately in the background. Proceed anyway?",
+              : "Warning: Without the required permissions, Adhan alarms may not work accurately in the background. Proceed anyway?",
           style: const TextStyle(height: 1.5, fontSize: 14),
         ),
         actions: [
@@ -247,7 +247,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
               Text(
                 TranslationService.isArabic
                     ? "يتطلب تطبيق آية الصلاحيات التالية للعمل بشكل صحيح وتشغيل الأذان في وقته التلقائي بالخلفية."
-                    : "Aya requires the following permissions to function correctly and sound the Athan alarms on time in the background.",
+                    : "Aya requires the following permissions to function correctly and sound the Adhan alarms on time in the background.",
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.5,
@@ -310,7 +310,7 @@ class _PermissionGuardScreenState extends State<PermissionGuardScreen>
                             : "Alarms & Reminders",
                         description: TranslationService.isArabic
                             ? "يتيح جدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
-                            : "Allows scheduling precise Athan alarms even in Doze mode.",
+                            : "Allows scheduling precise Adhan alarms even in Doze mode.",
                         isGranted: _exactAlarmGranted,
                         onRequest: _requestExactAlarm,
                       ),
