@@ -260,7 +260,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Icon(Icons.bolt, color: primaryColor, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  isAr ? 'الضبط السريع لجميع الصلوات' : 'Quick Batch Presets',
+                  isAr ? 'ضبط الأذان والتنبيه المسبق' : 'Adhan & Pre-Alert Presets',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -272,18 +272,18 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             const SizedBox(height: 4),
             Text(
               isAr
-                  ? 'تعيين النمط لجميع الصلوات دفعة واحدة (صوت، اهتزاز فقط، أو تخصيص يدوي)'
-                  : 'Set alert mode for all 5 prayers at once (Sound, Vibrate only, Off, or Manual).',
+                  ? 'تعيين النمط للصلوات الخمس (صوت، اهتزاز فقط، أو تخصيص يدوي)'
+                  : 'Set alert mode for 5 prayers (Sound, Vibrate only, Off, or Manual).',
               style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 14),
 
-            // All Adhans Selector
+            // Adhan Preset Selector
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    isAr ? 'جميع الأذانات:' : 'All Adhans Preset:',
+                    isAr ? 'نمط الأذان:' : 'Adhan Preset:',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
@@ -300,20 +300,20 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       items: [
                         DropdownMenuItem(
                           value: 'real_reciter',
-                          child: Text(isAr ? '🔊 صوت المؤذن للكل' : '🔊 Sound (All)'),
+                          child: Text(isAr ? 'صوت المؤذن' : 'Full Sound'),
                         ),
                         DropdownMenuItem(
                           value: 'vibrate',
-                          child: Text(isAr ? '📳 اهتزاز فقط للكل' : '📳 Vibrate (All)'),
+                          child: Text(isAr ? 'اهتزاز فقط' : 'Vibrate Only'),
                         ),
                         DropdownMenuItem(
                           value: 'off',
-                          child: Text(isAr ? '🔇 مغلق / صامت للكل' : '🔇 Off (All)'),
+                          child: Text(isAr ? 'مغلق / صامت' : 'Off / Silent'),
                         ),
                         if (allAdhansMode == 'custom')
                           DropdownMenuItem(
                             value: 'custom',
-                            child: Text(isAr ? '⚙️ تخصيص يدوي' : '⚙️ Custom / Manual'),
+                            child: Text(isAr ? 'تخصيص يدوي' : 'Custom / Manual'),
                           ),
                       ],
                       onChanged: (val) {
@@ -329,12 +329,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
             const SizedBox(height: 10),
 
-            // All Pre-Adhans Selector
+            // Pre-Adhan Preset Selector
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    isAr ? 'جميع التنبيهات المسبقة:' : 'All Pre-Alerts Preset:',
+                    isAr ? 'التنبيه المسبق:' : 'Pre-Alert Preset:',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
@@ -351,20 +351,20 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       items: [
                         DropdownMenuItem(
                           value: 'sound',
-                          child: Text(isAr ? '🔔 نغمة تنبيه للكل' : '🔔 Sound (All)'),
+                          child: Text(isAr ? 'نغمة تنبيه' : 'Chime Sound'),
                         ),
                         DropdownMenuItem(
                           value: 'vibrate',
-                          child: Text(isAr ? '📳 اهتزاز فقط للكل' : '📳 Vibrate (All)'),
+                          child: Text(isAr ? 'اهتزاز فقط' : 'Vibrate Only'),
                         ),
                         DropdownMenuItem(
                           value: 'off',
-                          child: Text(isAr ? '🔇 مغلق للكل' : '🔇 Off (All)'),
+                          child: Text(isAr ? 'مغلق' : 'Off'),
                         ),
                         if (allPreMode == 'custom')
                           DropdownMenuItem(
                             value: 'custom',
-                            child: Text(isAr ? '⚙️ تخصيص يدوي' : '⚙️ Custom / Manual'),
+                            child: Text(isAr ? 'تخصيص يدوي' : 'Custom / Manual'),
                           ),
                       ],
                       onChanged: (val) {
