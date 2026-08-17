@@ -371,9 +371,18 @@ class MainActivity : FlutterActivity() {
 
         saveAlarmInfo(id, timestamp, mp3ResName, prayerName, enableVibration, isPreAdhan = false)
 
+        val showIntent = PendingIntent.getActivity(
+            this,
+            id + 50000,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val clockInfo = AlarmManager.AlarmClockInfo(timestamp, pendingIntent)
+                val clockInfo = AlarmManager.AlarmClockInfo(timestamp, showIntent)
                 alarmManager.setAlarmClock(clockInfo, pendingIntent)
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, timestamp, pendingIntent)
@@ -407,9 +416,18 @@ class MainActivity : FlutterActivity() {
 
         saveAlarmInfo(id, timestamp, "", prayerName, alertMode != "silent", isPreAdhan = true, minutesBefore = minutesBefore, alertMode = alertMode)
 
+        val showIntent = PendingIntent.getActivity(
+            this,
+            id + 50000,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val clockInfo = AlarmManager.AlarmClockInfo(timestamp, pendingIntent)
+                val clockInfo = AlarmManager.AlarmClockInfo(timestamp, showIntent)
                 alarmManager.setAlarmClock(clockInfo, pendingIntent)
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, timestamp, pendingIntent)

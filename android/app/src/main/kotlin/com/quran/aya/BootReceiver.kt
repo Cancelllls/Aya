@@ -65,9 +65,18 @@ class BootReceiver : BroadcastReceiver() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val showIntent = PendingIntent.getActivity(
+                context,
+                id + 50000,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    val clockInfo = AlarmManager.AlarmClockInfo(triggerAt, pendingIntent)
+                    val clockInfo = AlarmManager.AlarmClockInfo(triggerAt, showIntent)
                     alarmManager.setAlarmClock(clockInfo, pendingIntent)
                 } else {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
