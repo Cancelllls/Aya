@@ -50,10 +50,21 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
   }
 
   Future<void> _updateOffset(String prayer, int val) async {
+    final clamped = val.clamp(-30, 30);
     setState(() {
-      _offsets[prayer] = val;
+      _offsets[prayer] = clamped;
     });
-    await widget.storage.setInt('${prayer}_offset', val);
+    await widget.storage.setInt('${prayer}_offset', clamped);
+    _rescheduleAlarms();
+  }
+
+  Future<void> _resetAll() async {
+    for (final p in _prayers) {
+      setState(() {
+        _offsets[p] = 0;
+      });
+      await widget.storage.setInt('${p}_offset', 0);
+    }
     _rescheduleAlarms();
   }
 
@@ -76,31 +87,72 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
   @override
   Widget build(BuildContext context) {
     final isAr = TranslationService.isArabic;
-    final primaryColor = Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isAr ? 'تعديل مواقيت الصلاة (بالدقائق)' : 'Fine-Tune Prayer Times'),
+        title: Text(isAr ? 'تعديل مواقيت الصلاة' : 'Fine-Tune Prayer Times'),
+        actions: [
+          IconButton(
+            tooltip: isAr ? 'إعادة ضبط الكل' : 'Reset All',
+            icon: const Icon(Icons.restart_alt),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(isAr ? 'إعادة الضبط' : 'Reset Offsets'),
+                  content: Text(
+                    isAr
+                        ? 'هل تريد إعادة ضبط جميع تعديلات المواقيت إلى الصفر؟'
+                        : 'Do you want to reset all prayer time offsets back to 0?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(isAr ? 'إلغاء' : 'Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _resetAll();
+                      },
+                      child: Text(isAr ? 'تأكيد' : 'Confirm'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          // Info banner
           Card(
             elevation: 0,
-            color: primaryColor.withValues(alpha: 0.1),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            color: primaryColor.withValues(alpha: 0.08),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: primaryColor.withValues(alpha: 0.2)),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(14.0),
+              padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: primaryColor),
-                  const SizedBox(width: 12),
+                  Icon(Icons.tune, color: primaryColor, size: 28),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Text(
                       isAr
-                          ? 'يمكنك إضافة أو إنقاص دقائق على أي صلاة لضبط موعدها حسب مسجدك المحلي.'
-                          : 'Add or subtract minutes for any prayer to align with your local mosque.',
-                      style: const TextStyle(fontSize: 13),
+                          ? 'يمكنك ضبط مواقيت الصلاة بالزيادة أو النقصان حتى ٣٠ دقيقة لتتوافق تماماً مع توقيت مسجدك المحلي.'
+                          : 'Adjust prayer times by +/- 30 minutes to match your local mosque precisely.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        height: 1.4,
+                        color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.85),
+                      ),
                     ),
                   ),
                 ],
@@ -108,42 +160,91 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
             ),
           ),
           const SizedBox(height: 16),
+
           ..._prayers.map((prayer) {
             final name = isAr ? _prayerNamesAr[prayer]! : _prayerNamesEn[prayer]!;
             final currentVal = _offsets[prayer] ?? 0;
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: theme.dividerColor.withValues(alpha: 0.12),
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.access_time_filled, size: 20, color: primaryColor),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ],
                         ),
-                        Text(
-                          currentVal == 0
-                              ? (isAr ? 'بدون تعديل' : 'No offset')
-                              : '${currentVal > 0 ? "+$currentVal" : currentVal} ${isAr ? "دقيقة" : "mins"}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: currentVal == 0 ? Colors.grey : primaryColor,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: currentVal == 0
+                                ? theme.disabledColor.withValues(alpha: 0.1)
+                                : primaryColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            currentVal == 0
+                                ? (isAr ? 'بدون تعديل' : 'Exact Time')
+                                : '${currentVal > 0 ? "+$currentVal" : currentVal} ${isAr ? "دقيقة" : "mins"}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: currentVal == 0
+                                  ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5)
+                                  : primaryColor,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    Slider(
-                      min: -30,
-                      max: 30,
-                      divisions: 60,
-                      value: currentVal.toDouble(),
-                      activeColor: primaryColor,
-                      onChanged: (v) => _updateOffset(prayer, v.toInt()),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: primaryColor,
+                          onPressed: () => _updateOffset(prayer, currentVal - 1),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            min: -30,
+                            max: 30,
+                            divisions: 60,
+                            value: currentVal.toDouble(),
+                            activeColor: primaryColor,
+                            onChanged: (v) => _updateOffset(prayer, v.toInt()),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          color: primaryColor,
+                          onPressed: () => _updateOffset(prayer, currentVal + 1),
+                        ),
+                      ],
                     ),
                   ],
                 ),

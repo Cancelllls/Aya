@@ -145,53 +145,6 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                     },
                   ),
                 ),
-                Divider(
-                  height: 1,
-                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
-                ),
-
-                // Auto DND During Prayer
-                SwitchListTile(
-                  secondary: Icon(Icons.do_not_disturb_on_outlined, color: primary),
-                  title: Text(
-                    isAr ? "الصامت التلقائي أثناء الصلاة" : "Auto Silence (DND) During Prayer",
-                  ),
-                  subtitle: Text(
-                    isAr
-                        ? "تفعيل وضع عدم الإزعاج تلقائياً عند وقت الصلاة"
-                        : "Silence phone automatically during prayer time",
-                  ),
-                  activeColor: primary,
-                  value: _autoDndEnabled,
-                  onChanged: _toggleAutoDndEnabled,
-                ),
-                if (_autoDndEnabled) ...[
-                  Divider(
-                    height: 1,
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.timer_outlined, color: primary),
-                    title: Text(
-                      isAr ? "مدة الوضع الصامت" : "Auto Silence Duration",
-                    ),
-                    trailing: SettingsValueChip<int>(
-                      value: _autoDndDuration,
-                      label: isAr ? 'مدة الصامت' : 'Silence Duration',
-                      items: [15, 20, 30, 45].map((m) {
-                        return DropdownMenuItem<int>(
-                          value: m,
-                          child: Text('$m ${isAr ? "دقيقة" : "mins"}'),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          _changeAutoDndDuration(val);
-                        }
-                      },
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
