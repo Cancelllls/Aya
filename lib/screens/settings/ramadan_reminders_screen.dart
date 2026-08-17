@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/api_service.dart';
+import '../../models/prayer_models.dart';
 
 class RamadanRemindersScreen extends StatefulWidget {
   final StorageService storage;
@@ -23,6 +25,22 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
     _imsakEnabled = widget.storage.getBool('ramadan_imsak_enabled', defaultValue: true);
     _imsakOffset = widget.storage.getInt('ramadan_imsak_offset', defaultValue: 0);
     _iftarEnabled = widget.storage.getBool('ramadan_iftar_enabled', defaultValue: true);
+  }
+
+  Future<void> _rescheduleAlarms() async {
+    try {
+      final loc = widget.storage.getLocation();
+      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final school = widget.storage.getInt('asr_method', defaultValue: 0);
+
+      final PrayerTimeData data = await ApiService.fetchPrayerTimes(
+        latitude: loc['latitude'] ?? 30.0444,
+        longitude: loc['longitude'] ?? 31.2357,
+        method: method,
+        school: school,
+      );
+      await NotificationService().schedulePrayerAlarms(data, widget.storage);
+    } catch (_) {}
   }
 
   @override
@@ -50,7 +68,7 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
                       _imsakEnabled = val;
                     });
                     await widget.storage.setBool('ramadan_imsak_enabled', val);
-                    NotificationService().schedulePrayerAlarms();
+                    _rescheduleAlarms();
                   },
                 ),
                 if (_imsakEnabled) ...[
@@ -75,7 +93,7 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
                                 _imsakOffset = val;
                               });
                               await widget.storage.setInt('ramadan_imsak_offset', val);
-                              NotificationService().schedulePrayerAlarms();
+                              _rescheduleAlarms();
                             }
                           },
                         ),
@@ -93,7 +111,7 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
                       _iftarEnabled = val;
                     });
                     await widget.storage.setBool('ramadan_iftar_enabled', val);
-                    NotificationService().schedulePrayerAlarms();
+                    _rescheduleAlarms();
                   },
                 ),
               ],

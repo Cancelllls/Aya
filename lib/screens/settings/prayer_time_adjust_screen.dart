@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/api_service.dart';
+import '../../models/prayer_models.dart';
 
 class PrayerTimeAdjustScreen extends StatefulWidget {
   final StorageService storage;
@@ -52,7 +54,23 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
       _offsets[prayer] = val;
     });
     await widget.storage.setInt('${prayer}_offset', val);
-    NotificationService().schedulePrayerAlarms();
+    _rescheduleAlarms();
+  }
+
+  Future<void> _rescheduleAlarms() async {
+    try {
+      final loc = widget.storage.getLocation();
+      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final school = widget.storage.getInt('asr_method', defaultValue: 0);
+
+      final PrayerTimeData data = await ApiService.fetchPrayerTimes(
+        latitude: loc['latitude'] ?? 30.0444,
+        longitude: loc['longitude'] ?? 31.2357,
+        method: method,
+        school: school,
+      );
+      await NotificationService().schedulePrayerAlarms(data, widget.storage);
+    } catch (_) {}
   }
 
   @override
