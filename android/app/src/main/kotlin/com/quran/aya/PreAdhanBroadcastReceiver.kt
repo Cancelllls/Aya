@@ -75,6 +75,7 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setContentIntent(tapPending)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .extend(NotificationCompat.WearableExtender())
             .build()
 
         notifManager.notify(alarmId, notif)

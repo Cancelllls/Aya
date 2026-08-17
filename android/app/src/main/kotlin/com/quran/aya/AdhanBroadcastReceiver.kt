@@ -93,6 +93,15 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             "ic_notification", "drawable", context.packageName
         )
 
+        val fullScreenIntent = Intent(context, AdhanLockscreenActivity::class.java).apply {
+            putExtra("PRAYER_NAME", prayerName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        val fullScreenPending = PendingIntent.getActivity(
+            context, alarmId + 30000, fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notif = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
             .setContentTitle(prayerName)
@@ -105,13 +114,19 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(fullScreenPending, true)
             .setOngoing(true)
             .setAutoCancel(false)
             .setContentIntent(tapPending)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .extend(NotificationCompat.WearableExtender())
             .build()
 
         notifManager.notify(alarmId, notif)
+
+        try {
+            context.startActivity(fullScreenIntent)
+        } catch (_: Exception) {}
 
         // ── Vibration (Fajr-specific pattern vs standard) ─────────────────────
         if (enableVibration) {

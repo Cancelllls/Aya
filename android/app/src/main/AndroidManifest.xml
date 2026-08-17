@@ -167,7 +167,13 @@
             </intent-filter>
         </receiver>
 
-        <!-- Native Adhan Receivers (Five-Prayers model) -->
+        <!-- Native Adhan Receivers & Activity (Five-Prayers model) -->
+        <activity
+            android:name=".AdhanLockscreenActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" />
         <receiver android:name=".AdhanBroadcastReceiver" android:exported="true" />
         <receiver android:name=".PreAdhanBroadcastReceiver" android:exported="false" />
         <receiver android:name=".DndRestoreReceiver" android:exported="false" />
