@@ -4,12 +4,13 @@ extension SettingsCalculationsSection on _SettingsScreenState {
   List<Widget> _buildCalculationsSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
 
+    final primary = theme.colorScheme.primary;
+
     return [
       // Section Prayer Times
       SettingsSectionHeader(
         icon: Icons.mosque_outlined,
         title: isAr ? 'مواقيت الصلاة والحساب' : 'Prayer Times & Calculation',
-        iconColor: const Color(0xFF0F766E),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -29,7 +30,7 @@ extension SettingsCalculationsSection on _SettingsScreenState {
               children: [
                 // Calculation Method
                 ListTile(
-                  leading: const Icon(Icons.calculate_outlined, color: Color(0xFF0F766E)),
+                  leading: Icon(Icons.calculate_outlined, color: primary),
                   title: Text(TranslationService.t('calc_method')),
                   subtitle: Text(TranslationService.t('calc_settings')),
                   trailing: SettingsValueChip<int>(
@@ -95,7 +96,7 @@ extension SettingsCalculationsSection on _SettingsScreenState {
 
                 // Asr Method
                 ListTile(
-                  leading: const Icon(Icons.access_time_filled_outlined, color: Color(0xFF0F766E)),
+                  leading: Icon(Icons.access_time_filled_outlined, color: primary),
                   title: Text(TranslationService.t('asr_calc_label')),
                   subtitle: Text(TranslationService.t('asr_calc_sub')),
                   trailing: SettingsValueChip<int>(
@@ -125,7 +126,7 @@ extension SettingsCalculationsSection on _SettingsScreenState {
 
                 // Fine-Tune Navigation Tile
                 ListTile(
-                  leading: const Icon(Icons.tune_outlined, color: Color(0xFF0F766E)),
+                  leading: Icon(Icons.tune_outlined, color: primary),
                   title: Text(isAr ? 'تعديل مواقيت الصلاة (بالدقائق)' : 'Fine-Tune Prayer Times'),
                   subtitle: Text(isAr ? 'تقديم أو تأخير دقائق لضبط المواعيد حسب مسجدك المحلي' : 'Adjust minutes to match your local mosque'),
                   trailing: const Icon(Icons.chevron_right),

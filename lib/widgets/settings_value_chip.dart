@@ -18,6 +18,8 @@ class SettingsValueChip<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final primaryColor = theme.colorScheme.primary;
+
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: () {
@@ -35,7 +37,11 @@ class SettingsValueChip<T> extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
                       label,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: primaryColor,
+                      ),
                     ),
                   ),
                   const Divider(height: 1),
@@ -47,7 +53,7 @@ class SettingsValueChip<T> extends StatelessWidget {
                         return ListTile(
                           title: item.child,
                           trailing: isSelected
-                              ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                              ? Icon(Icons.check_circle, color: primaryColor)
                               : null,
                           onTap: () {
                             Navigator.pop(ctx);
@@ -63,33 +69,40 @@ class SettingsValueChip<T> extends StatelessWidget {
           },
         );
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 145),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: primaryColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: primaryColor.withValues(alpha: 0.3),
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _getItemText(),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  _getItemText(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.unfold_more,
-              size: 16,
-              color: theme.colorScheme.primary,
-            ),
-          ],
+              const SizedBox(width: 4),
+              Icon(
+                Icons.unfold_more,
+                size: 16,
+                color: primaryColor,
+              ),
+            ],
+          ),
         ),
       ),
     );

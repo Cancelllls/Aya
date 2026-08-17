@@ -58,13 +58,13 @@ extension SettingsNotificationsSection on _SettingsScreenState {
 
   List<Widget> _buildNotificationsSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
+    final primary = theme.colorScheme.primary;
 
     return [
       // === SECTION 1: ADHAN & ALERTS ===
       SettingsSectionHeader(
         icon: Icons.notifications_active_outlined,
         title: isAr ? 'الأذان والتنبيهات' : 'Adhan & Alerts',
-        iconColor: const Color(0xFF1D4ED8),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -84,7 +84,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
               children: [
                 // Advanced Adhan & Pre-Alert Settings Tile
                 ListTile(
-                  leading: const Icon(Icons.tune_outlined, color: Color(0xFF1D4ED8)),
+                  leading: Icon(Icons.tune_outlined, color: primary),
                   title: Text(
                     isAr
                         ? "إعدادات الأذان والتنبيه المسبق (لكل صلاة)"
@@ -111,7 +111,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
 
                 // Adhan Stop Gesture
                 ListTile(
-                  leading: const Icon(Icons.gesture_outlined, color: Color(0xFF1D4ED8)),
+                  leading: Icon(Icons.gesture_outlined, color: primary),
                   title: Text(
                     isAr ? "إيقاف الأذان بالإيماءات" : "Athan Stop Gesture",
                   ),
@@ -155,7 +155,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
 
                 // Auto DND During Prayer
                 SwitchListTile(
-                  secondary: const Icon(Icons.do_not_disturb_on_outlined, color: Color(0xFF1D4ED8)),
+                  secondary: Icon(Icons.do_not_disturb_on_outlined, color: primary),
                   title: Text(
                     isAr ? "الصامت التلقائي أثناء الصلاة" : "Auto Silence (DND) During Prayer",
                   ),
@@ -164,7 +164,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                         ? "تفعيل وضع عدم الإزعاج تلقائياً عند وقت الصلاة"
                         : "Silence phone automatically during prayer time",
                   ),
-                  activeThumbColor: const Color(0xFF1D4ED8),
+                  activeColor: primary,
                   value: _autoDndEnabled,
                   onChanged: _toggleAutoDndEnabled,
                 ),
@@ -174,7 +174,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                     color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.timer_outlined, color: Color(0xFF1D4ED8)),
+                    leading: Icon(Icons.timer_outlined, color: primary),
                     title: Text(
                       isAr ? "مدة الوضع الصامت" : "Auto Silence Duration",
                     ),
@@ -205,7 +205,6 @@ extension SettingsNotificationsSection on _SettingsScreenState {
       SettingsSectionHeader(
         icon: Icons.notifications_paused_outlined,
         title: isAr ? 'التذكيرات اليومية والإسلامية' : 'Daily & Islamic Reminders',
-        iconColor: const Color(0xFFB45309),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -224,11 +223,11 @@ extension SettingsNotificationsSection on _SettingsScreenState {
             child: Column(
               children: [
                 SwitchListTile(
-                  secondary: const Icon(Icons.wb_sunny_outlined, color: Color(0xFFB45309)),
+                  secondary: Icon(Icons.wb_sunny_outlined, color: primary),
                   title: Text(
                     isAr ? "تذكير أذكار الصباح" : "Morning Azkar Reminder",
                   ),
-                  activeThumbColor: const Color(0xFFB45309),
+                  activeColor: primary,
                   value: _morningAzkarReminder,
                   onChanged: _toggleMorningAzkarReminder,
                 ),
@@ -237,11 +236,11 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.nights_stay_outlined, color: Color(0xFFB45309)),
+                  secondary: Icon(Icons.nights_stay_outlined, color: primary),
                   title: Text(
                     isAr ? "تذكير أذكار المساء" : "Evening Azkar Reminder",
                   ),
-                  activeThumbColor: const Color(0xFFB45309),
+                  activeColor: primary,
                   value: _eveningAzkarReminder,
                   onChanged: _toggleEveningAzkarReminder,
                 ),
@@ -250,11 +249,11 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.menu_book_outlined, color: Color(0xFFB45309)),
+                  secondary: Icon(Icons.menu_book_outlined, color: primary),
                   title: Text(
                     isAr ? "تذكير آية اليوم" : "Today's Verse Reminder",
                   ),
-                  activeThumbColor: const Color(0xFFB45309),
+                  activeColor: primary,
                   value: _todaysVerseReminder,
                   onChanged: _toggleTodaysVerseReminder,
                 ),
@@ -263,7 +262,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.event_outlined, color: Color(0xFFB45309)),
+                  secondary: Icon(Icons.event_outlined, color: primary),
                   title: Text(
                     isAr ? "تنبيهات المناسبات الإسلامية" : "Islamic Event Reminders",
                   ),
@@ -272,7 +271,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                         ? "تنبيه يوم الجمعة والأعياد ونهار الأيام المباركة"
                         : "Alerts for Friday, Eids, and blessed days",
                   ),
-                  activeThumbColor: const Color(0xFFB45309),
+                  activeColor: primary,
                   value: _islamicEventsEnabled,
                   onChanged: _toggleIslamicEventsEnabled,
                 ),
@@ -281,7 +280,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.brightness_3_outlined, color: Color(0xFFB45309)),
+                  leading: Icon(Icons.brightness_3_outlined, color: primary),
                   title: Text(
                     isAr ? "تنبيهات شهر رمضان (الإمساك والإفطار)" : "Ramadan Reminders (Imsak & Iftar)",
                   ),

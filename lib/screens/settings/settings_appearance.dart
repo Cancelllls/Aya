@@ -23,12 +23,13 @@ extension SettingsAppearanceSection on _SettingsScreenState {
   List<Widget> _buildAppearanceSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
 
+    final primary = theme.colorScheme.primary;
+
     return [
       // Section Personalization
       SettingsSectionHeader(
         icon: Icons.palette_outlined,
         title: isAr ? 'التخصيص والمظهر' : 'Personalization',
-        iconColor: const Color(0xFF7C3AED),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -48,7 +49,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
               children: [
                 // App Language
                 ListTile(
-                  leading: const Icon(Icons.language, color: Color(0xFF7C3AED)),
+                  leading: Icon(Icons.language, color: primary),
                   title: Text(isAr ? 'لغة التطبيق' : 'App Language'),
                   trailing: SettingsValueChip<String>(
                     value: TranslationService.currentLanguage,
@@ -71,7 +72,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // Theme Preset
                 ListTile(
-                  leading: const Icon(Icons.color_lens_outlined, color: Color(0xFF7C3AED)),
+                  leading: Icon(Icons.color_lens_outlined, color: primary),
                   title: Text(TranslationService.t('theme_preset_label')),
                   subtitle: Text(TranslationService.t('theme_preset_sub')),
                   trailing: SettingsValueChip<String>(
@@ -117,7 +118,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // Bottom Navbar Style
                 ListTile(
-                  leading: const Icon(Icons.view_quilt_outlined, color: Color(0xFF7C3AED)),
+                  leading: Icon(Icons.view_quilt_outlined, color: primary),
                   title: Text(TranslationService.t('bottom_navbar_style_label')),
                   subtitle: Text(TranslationService.t('bottom_navbar_style_sub')),
                   trailing: SettingsValueChip<String>(
@@ -147,7 +148,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // Quran Font
                 ListTile(
-                  leading: const Icon(Icons.font_download_outlined, color: Color(0xFF7C3AED)),
+                  leading: Icon(Icons.font_download_outlined, color: primary),
                   title: Text(TranslationService.t('quran_font')),
                   subtitle: Text(TranslationService.t('quran_font_sub')),
                   trailing: SettingsValueChip<String>(
@@ -177,7 +178,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // First Day of Week
                 ListTile(
-                  leading: const Icon(Icons.today_outlined, color: Color(0xFF7C3AED)),
+                  leading: Icon(Icons.today_outlined, color: primary),
                   title: Text(isAr ? 'أول يوم في الأسبوع' : 'First Day of the Week'),
                   trailing: SettingsValueChip<int>(
                     value: _firstDayOfWeek,
@@ -201,7 +202,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // 24h Clock Format
                 SwitchListTile(
-                  secondary: const Icon(Icons.schedule, color: Color(0xFF7C3AED)),
+                  secondary: Icon(Icons.schedule, color: primary),
                   title: Text(
                     isAr ? "تنسيق الوقت ٢٤ ساعة" : "24-Hour Time Format",
                   ),
@@ -210,7 +211,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                         ? "عرض أوقات الصلاة بتنسيق ٢٤ ساعة بدلاً من ١٢ ساعة"
                         : "Display prayer times in 24h format instead of 12h",
                   ),
-                  activeThumbColor: const Color(0xFF7C3AED),
+                  activeColor: primary,
                   value: _use24hFormat,
                   onChanged: _toggleUse24hFormat,
                 ),
@@ -221,7 +222,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // Swipe Navigation
                 SwitchListTile(
-                  secondary: const Icon(Icons.swipe_outlined, color: Color(0xFF7C3AED)),
+                  secondary: Icon(Icons.swipe_outlined, color: primary),
                   title: Text(
                     isAr ? "سحب الشاشة للانتقال بين السور" : "Swipe to Navigate Surahs",
                   ),
@@ -230,7 +231,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                         ? "اسحب لليمين أو اليسار للانتقال إلى السورة التالية أو السابقة"
                         : "Swipe left or right to read the previous or next Surah",
                   ),
-                  activeThumbColor: const Color(0xFF7C3AED),
+                  activeColor: primary,
                   value: _swipeSurahNavigation,
                   onChanged: _toggleSwipeSurahNavigation,
                 ),
@@ -241,10 +242,10 @@ extension SettingsAppearanceSection on _SettingsScreenState {
 
                 // Keep Screen Awake
                 SwitchListTile(
-                  secondary: const Icon(Icons.screen_lock_portrait_outlined, color: Color(0xFF7C3AED)),
+                  secondary: Icon(Icons.screen_lock_portrait_outlined, color: theme.colorScheme.primary),
                   title: Text(TranslationService.t('wake_lock')),
                   subtitle: Text(TranslationService.t('wake_lock_sub')),
-                  activeThumbColor: const Color(0xFF7C3AED),
+                  activeColor: theme.colorScheme.primary,
                   value: _keepScreenAwake,
                   onChanged: _toggleKeepScreenAwake,
                 ),

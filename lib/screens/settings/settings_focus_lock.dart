@@ -3,13 +3,13 @@ part of 'settings_screen.dart';
 extension SettingsFocusLockSection on _SettingsScreenState {
   List<Widget> _buildFocusLockSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
+    final primary = theme.colorScheme.primary;
 
     return [
       // Section About & Support
       SettingsSectionHeader(
         icon: Icons.info_outline,
         title: isAr ? "عن التطبيق والدعم" : "About & Support",
-        iconColor: const Color(0xFF4338CA),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -28,7 +28,7 @@ extension SettingsFocusLockSection on _SettingsScreenState {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.info_outline, color: Color(0xFF4338CA)),
+                  leading: Icon(Icons.info_outline, color: primary),
                   title: Text(
                     isAr ? "حول تطبيق آية" : "About Aya App",
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -50,7 +50,7 @@ extension SettingsFocusLockSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.volunteer_activism_outlined, color: Color(0xFF4338CA)),
+                  leading: Icon(Icons.volunteer_activism_outlined, color: primary),
                   title: Text(
                     isAr ? "دعم تطبيق آية" : "Support Aya App",
                     style: const TextStyle(fontWeight: FontWeight.bold),

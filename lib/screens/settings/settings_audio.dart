@@ -3,13 +3,13 @@ part of 'settings_screen.dart';
 extension SettingsAudioSection on _SettingsScreenState {
   List<Widget> _buildAudioSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
+    final primary = theme.colorScheme.primary;
 
     return [
       // Section Quran & Audio
       SettingsSectionHeader(
         icon: Icons.menu_book_outlined,
         title: isAr ? 'القرآن والتلاوة والصوت' : 'Quran, Audio & Reading',
-        iconColor: const Color(0xFF15803D),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -29,7 +29,7 @@ extension SettingsAudioSection on _SettingsScreenState {
               children: [
                 // Qira'at Recitations Tile
                 ListTile(
-                  leading: const Icon(Icons.record_voice_over_outlined, color: Color(0xFF15803D)),
+                  leading: Icon(Icons.record_voice_over_outlined, color: primary),
                   title: Text(
                     isAr ? 'تلاوات القراءات' : "Qira'at Recitations",
                   ),
@@ -55,7 +55,7 @@ extension SettingsAudioSection on _SettingsScreenState {
 
                 // Quran Downloads Tile
                 ListTile(
-                  leading: const Icon(Icons.download_for_offline_outlined, color: Color(0xFF15803D)),
+                  leading: Icon(Icons.download_for_offline_outlined, color: primary),
                   title: Text(TranslationService.t('quran_downloads')),
                   subtitle: Text(TranslationService.t('quran_downloads_sub')),
                   trailing: const Icon(Icons.chevron_right),
@@ -75,10 +75,10 @@ extension SettingsAudioSection on _SettingsScreenState {
 
                 // Continuous Recitation
                 SwitchListTile(
-                  secondary: const Icon(Icons.play_circle_outline, color: Color(0xFF15803D)),
+                  secondary: Icon(Icons.play_circle_outline, color: primary),
                   title: Text(TranslationService.t('continuous_rec_label')),
                   subtitle: Text(TranslationService.t('continuous_rec_sub')),
-                  activeThumbColor: const Color(0xFF15803D),
+                  activeColor: primary,
                   value: _continuousPlay,
                   onChanged: _toggleContinuousPlay,
                 ),
@@ -88,7 +88,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                     color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                   SwitchListTile(
-                    secondary: const Icon(Icons.border_clear_outlined, color: Color(0xFF15803D)),
+                    secondary: Icon(Icons.border_clear_outlined, color: primary),
                     title: Text(
                       isAr ? "إخفاء حدود القراءة المتواصلة" : "Hide Continuous Mode Borders",
                     ),
@@ -97,7 +97,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                           ? "إزالة الحواف والظلال لتصبح الصفحات متصلة تماماً"
                           : "Remove section borders and shadows for seamless reading",
                     ),
-                    activeThumbColor: const Color(0xFF15803D),
+                    activeColor: primary,
                     value: _hideContinuousBorders,
                     onChanged: _toggleHideContinuousBorders,
                   ),
@@ -109,7 +109,7 @@ extension SettingsAudioSection on _SettingsScreenState {
 
                 // Auto-Bookmark
                 SwitchListTile(
-                  secondary: const Icon(Icons.bookmark_add_outlined, color: Color(0xFF15803D)),
+                  secondary: Icon(Icons.bookmark_add_outlined, color: primary),
                   title: Text(
                     isAr ? "حفظ المرجعية تلقائياً" : "Auto-Bookmark on Play",
                   ),
@@ -118,7 +118,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                         ? "حفظ الآية الحالية كعلامة مرجعية تلقائياً عند البدء بتشغيل التلاوة"
                         : "Automatically save current verse as bookmark when playback starts",
                   ),
-                  activeThumbColor: const Color(0xFF15803D),
+                  activeColor: primary,
                   value: _autoBookmark,
                   onChanged: _toggleAutoBookmark,
                 ),
@@ -129,7 +129,7 @@ extension SettingsAudioSection on _SettingsScreenState {
 
                 // Immersive Reader
                 SwitchListTile(
-                  secondary: const Icon(Icons.fullscreen_outlined, color: Color(0xFF15803D)),
+                  secondary: Icon(Icons.fullscreen_outlined, color: primary),
                   title: Text(
                     isAr ? "وضع القارئ الغامر" : "Immersive Reader Mode",
                   ),
@@ -138,7 +138,7 @@ extension SettingsAudioSection on _SettingsScreenState {
                         ? "إخفاء أشرطة النظام أثناء قراءة القرآن لتقليل التشتيت"
                         : "Hide status and navigation bars while reading",
                   ),
-                  activeThumbColor: const Color(0xFF15803D),
+                  activeColor: primary,
                   value: _immersiveReader,
                   onChanged: _toggleImmersiveReader,
                 ),
@@ -153,15 +153,15 @@ extension SettingsAudioSection on _SettingsScreenState {
                   builder: (context, loading, _) {
                     return ListTile(
                       leading: loading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Color(0xFF15803D),
+                                color: primary,
                               ),
                             )
-                          : const Icon(Icons.refresh, color: Color(0xFF15803D)),
+                          : Icon(Icons.refresh, color: primary),
                       title: Text(
                         isAr ? 'تحديث قائمة القراء' : 'Refresh Reciters List',
                       ),

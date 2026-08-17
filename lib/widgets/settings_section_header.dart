@@ -3,18 +3,19 @@ import 'package:flutter/material.dart';
 class SettingsSectionHeader extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Color iconColor;
+  final Color? iconColor;
 
   const SettingsSectionHeader({
     super.key,
     required this.icon,
     required this.title,
-    required this.iconColor,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = iconColor ?? theme.colorScheme.primary;
     final textColor = theme.colorScheme.onSurface;
 
     return Padding(
@@ -24,13 +25,13 @@ class SettingsSectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
+              color: primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 18,
-              color: iconColor,
+              color: primary,
             ),
           ),
           const SizedBox(width: 10),

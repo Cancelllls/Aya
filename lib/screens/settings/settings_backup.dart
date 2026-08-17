@@ -5,12 +5,12 @@ extension SettingsBackupSection on _SettingsScreenState {
 
   List<Widget> _buildBackupSection(ThemeData theme) {
     final isArabic = TranslationService.isArabic;
+    final primary = theme.colorScheme.primary;
     return [
       // Section Data & Backup
       SettingsSectionHeader(
         icon: Icons.storage_outlined,
         title: isArabic ? "إدارة البيانات والنسخ الاحتياطي" : "Data & Backup Management",
-        iconColor: const Color(0xFF475569),
       ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
@@ -29,7 +29,7 @@ extension SettingsBackupSection on _SettingsScreenState {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.upload_outlined, color: Color(0xFF475569)),
+                  leading: Icon(Icons.upload_outlined, color: primary),
                   title: Text(isArabic ? "تصدير البيانات" : "Export Data"),
                   subtitle: Text(
                     isArabic
@@ -54,7 +54,7 @@ extension SettingsBackupSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.download_outlined, color: Color(0xFF475569)),
+                  leading: Icon(Icons.download_outlined, color: primary),
                   title: Text(isArabic ? "استيراد البيانات" : "Import Data"),
                   subtitle: Text(
                     isArabic
@@ -118,7 +118,7 @@ extension SettingsBackupSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.cleaning_services_outlined, color: Color(0xFF475569)),
+                  leading: Icon(Icons.cleaning_services_outlined, color: primary),
                   title: Text(isArabic ? "إدارة التخزين والتخزين المؤقت" : "Storage & Cache Management"),
                   subtitle: Text(
                     isArabic
