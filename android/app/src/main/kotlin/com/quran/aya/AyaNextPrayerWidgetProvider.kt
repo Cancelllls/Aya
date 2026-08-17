@@ -35,8 +35,11 @@ class AyaNextPrayerWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.next_prayer_name, nextPrayerName)
                 views.setTextColor(R.id.next_prayer_name, m3Theme.textColor)
 
-                if (nextPrayerEpoch > System.currentTimeMillis()) {
-                    views.setChronometer(R.id.next_prayer_chronometer, nextPrayerEpoch, null, true)
+                val nowMs = System.currentTimeMillis()
+                if (nextPrayerEpoch > nowMs) {
+                    val durationMs = nextPrayerEpoch - nowMs
+                    val targetElapsedRealtime = android.os.SystemClock.elapsedRealtime() + durationMs
+                    views.setChronometer(R.id.next_prayer_chronometer, targetElapsedRealtime, null, true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.next_prayer_chronometer, true)
                     }

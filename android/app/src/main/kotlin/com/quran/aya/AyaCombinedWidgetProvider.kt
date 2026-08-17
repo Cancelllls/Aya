@@ -46,8 +46,11 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 views.setTextColor(R.id.widget_next_prayer_name, m3Theme.textColor)
 
                 // Native Standalone Chronometer Setup
-                if (nextPrayerEpoch > System.currentTimeMillis()) {
-                    views.setChronometer(R.id.widget_countdown_timer, nextPrayerEpoch, null, true)
+                val nowMs = System.currentTimeMillis()
+                if (nextPrayerEpoch > nowMs) {
+                    val durationMs = nextPrayerEpoch - nowMs
+                    val targetElapsedRealtime = android.os.SystemClock.elapsedRealtime() + durationMs
+                    views.setChronometer(R.id.widget_countdown_timer, targetElapsedRealtime, null, true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.widget_countdown_timer, true)
                     }
