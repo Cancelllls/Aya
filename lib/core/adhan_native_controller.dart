@@ -21,16 +21,64 @@ class AdhanNativeController {
         'prayerName': prayerName,
         'enableVibration': enableVibration,
       });
-    } on PlatformException {
-      print("Failed to schedule native alarm: '\${e.message}'.");
+    } on PlatformException catch (e) {
+      print("Failed to schedule native alarm: '${e.message}'.");
     }
+  }
+
+  Future<void> schedulePreAdhanAlarm({
+    required int id,
+    required DateTime time,
+    required String prayerName,
+    required int minutesBefore,
+    String alertMode = 'vibrate',
+  }) async {
+    try {
+      await _channel.invokeMethod('schedulePreAdhanAlarm', {
+        'id': id,
+        'timestamp': time.millisecondsSinceEpoch,
+        'prayerName': prayerName,
+        'minutesBefore': minutesBefore,
+        'alertMode': alertMode,
+      });
+    } on PlatformException catch (e) {
+      print("Failed to schedule pre-adhan native alarm: '${e.message}'.");
+    }
+  }
+
+  Future<void> cancelAlarm({required int id}) async {
+    try {
+      await _channel.invokeMethod('cancelAlarm', {'id': id});
+    } on PlatformException catch (e) {
+      print("Failed to cancel native alarm: '${e.message}'.");
+    }
+  }
+
+  Future<void> cancelAllAlarms() async {
+    try {
+      await _channel.invokeMethod('cancelAllAlarms');
+    } on PlatformException catch (e) {
+      print("Failed to cancel all native alarms: '${e.message}'.");
+    }
+  }
+
+  Future<List<Map<dynamic, dynamic>>> getScheduledAlarms() async {
+    try {
+      final List<dynamic>? res = await _channel.invokeListMethod('getScheduledAlarms');
+      if (res != null) {
+        return res.cast<Map<dynamic, dynamic>>();
+      }
+    } on PlatformException catch (e) {
+      print("Failed to get scheduled alarms: '${e.message}'.");
+    }
+    return [];
   }
 
   Future<void> requestOemAutostart() async {
     try {
       await _channel.invokeMethod('openOemAutoStartSettings');
-    } on PlatformException {
-      print("Failed to open OEM autostart settings: '\${e.message}'.");
+    } on PlatformException catch (e) {
+      print("Failed to open OEM autostart settings: '${e.message}'.");
     }
   }
 }

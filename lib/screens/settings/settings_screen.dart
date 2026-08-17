@@ -20,6 +20,7 @@ import '../../donation/google_play_donation.dart';
 import '../../version.dart';
 import '../about_screen.dart';
 import '../qiraat_screen.dart';
+import 'adhan_settings_screen.dart';
 
 part 'settings_appearance.dart';
 part 'settings_language.dart';

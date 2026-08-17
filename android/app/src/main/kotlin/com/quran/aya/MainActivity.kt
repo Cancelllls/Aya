@@ -98,6 +98,41 @@ class MainActivity : FlutterActivity() {
                         result.error("INVALID_ARGS", "Missing timestamp or id", null)
                     }
                 }
+                "schedulePreAdhanAlarm" -> {
+                    val timestamp = call.argument<Long>("timestamp")
+                    val id = call.argument<Int>("id")
+                    val prayerName = call.argument<String>("prayerName") ?: "Prayer"
+                    val minutesBefore = call.argument<Int>("minutesBefore") ?: 10
+                    val alertMode = call.argument<String>("alertMode") ?: "vibrate"
+                    if (timestamp != null && id != null) {
+                        schedulePreAdhanAlarm(
+                            timestamp = timestamp,
+                            id = id,
+                            prayerName = prayerName,
+                            minutesBefore = minutesBefore,
+                            alertMode = alertMode,
+                        )
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGS", "Missing timestamp or id", null)
+                    }
+                }
+                "cancelAlarm" -> {
+                    val id = call.argument<Int>("id")
+                    if (id != null) {
+                        cancelAlarm(id)
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGS", "Missing id", null)
+                    }
+                }
+                "cancelAllAlarms" -> {
+                    cancelAllAlarms()
+                    result.success(true)
+                }
+                "getScheduledAlarms" -> {
+                    result.success(getScheduledAlarms())
+                }
                 "openOemAutoStartSettings" -> {
                     openOemAutoStartSettings()
                     result.success(true)
@@ -327,14 +362,149 @@ class MainActivity : FlutterActivity() {
             putExtra("MP3_RES_NAME", mp3ResName)
             putExtra("PRAYER_NAME", prayerName)
             putExtra("ENABLE_VIBRATION", enableVibration)
+            putExtra("SCHEDULED_TIMESTAMP", timestamp)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP, timestamp, pendingIntent
+
+        saveAlarmInfo(id, timestamp, mp3ResName, prayerName, enableVibration, isPreAdhan = false)
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val clockInfo = AlarmManager.AlarmClockInfo(timestamp, pendingIntent)
+                alarmManager.setAlarmClock(clockInfo, pendingIntent)
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, timestamp, pendingIntent)
+            }
+        } catch (e: SecurityException) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP, timestamp, pendingIntent
+            )
+        }
+    }
+
+    private fun schedulePreAdhanAlarm(
+        timestamp: Long,
+        id: Int,
+        prayerName: String,
+        minutesBefore: Int,
+        alertMode: String,
+    ) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, PreAdhanBroadcastReceiver::class.java).apply {
+            putExtra("ALARM_ID", id)
+            putExtra("PRAYER_NAME", prayerName)
+            putExtra("MINUTES_BEFORE", minutesBefore)
+            putExtra("ALERT_MODE", alertMode)
+            putExtra("SCHEDULED_TIMESTAMP", timestamp)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, id, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        saveAlarmInfo(id, timestamp, "", prayerName, alertMode != "silent", isPreAdhan = true, minutesBefore = minutesBefore, alertMode = alertMode)
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val clockInfo = AlarmManager.AlarmClockInfo(timestamp, pendingIntent)
+                alarmManager.setAlarmClock(clockInfo, pendingIntent)
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, timestamp, pendingIntent)
+            }
+        } catch (e: SecurityException) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP, timestamp, pendingIntent
+            )
+        }
+    }
+
+    private fun cancelAlarm(id: Int) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent1 = Intent(this, AdhanBroadcastReceiver::class.java)
+        val pendingIntent1 = PendingIntent.getBroadcast(
+            this, id, intent1,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent1)
+
+        val intent2 = Intent(this, PreAdhanBroadcastReceiver::class.java)
+        val pendingIntent2 = PendingIntent.getBroadcast(
+            this, id, intent2,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent2)
+
+        removeAlarmInfo(id)
+    }
+
+    private fun cancelAllAlarms() {
+        val prefs = getSharedPreferences("adhan_alarms_native", Context.MODE_PRIVATE)
+        val allKeys = prefs.all.keys.filter { it.endsWith("_trigger") }
+        val ids = allKeys.mapNotNull { it.removePrefix("alarm_").removeSuffix("_trigger").toIntOrNull() }.distinct()
+
+        for (id in ids) {
+            cancelAlarm(id)
+        }
+    }
+
+    private fun saveAlarmInfo(
+        id: Int,
+        timestamp: Long,
+        mp3ResName: String,
+        prayerName: String,
+        vibration: Boolean,
+        isPreAdhan: Boolean,
+        minutesBefore: Int = 0,
+        alertMode: String = "vibrate"
+    ) {
+        val prefs = getSharedPreferences("adhan_alarms_native", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putLong("alarm_${id}_trigger", timestamp)
+            putString("alarm_${id}_mp3", mp3ResName)
+            putString("alarm_${id}_prayer", prayerName)
+            putBoolean("alarm_${id}_vibration", vibration)
+            putBoolean("alarm_${id}_is_pre_adhan", isPreAdhan)
+            putInt("alarm_${id}_minutes_before", minutesBefore)
+            putString("alarm_${id}_alert_mode", alertMode)
+            apply()
+        }
+    }
+
+    private fun removeAlarmInfo(id: Int) {
+        val prefs = getSharedPreferences("adhan_alarms_native", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            remove("alarm_${id}_trigger")
+            remove("alarm_${id}_mp3")
+            remove("alarm_${id}_prayer")
+            remove("alarm_${id}_vibration")
+            remove("alarm_${id}_is_pre_adhan")
+            remove("alarm_${id}_minutes_before")
+            remove("alarm_${id}_alert_mode")
+            apply()
+        }
+    }
+
+    private fun getScheduledAlarms(): List<Map<String, Any>> {
+        val prefs = getSharedPreferences("adhan_alarms_native", Context.MODE_PRIVATE)
+        val alarms = mutableListOf<Map<String, Any>>()
+        val allKeys = prefs.all.keys.filter { it.endsWith("_trigger") }
+        val now = System.currentTimeMillis()
+
+        for (key in allKeys) {
+            val id = key.removePrefix("alarm_").removeSuffix("_trigger").toIntOrNull() ?: continue
+            val triggerAt = prefs.getLong(key, 0L)
+            alarms.add(mapOf(
+                "id" to id,
+                "trigger" to triggerAt,
+                "prayer" to (prefs.getString("alarm_${id}_prayer", "") ?: ""),
+                "isPreAdhan" to prefs.getBoolean("alarm_${id}_is_pre_adhan", false),
+                "isPast" to (triggerAt <= now)
+            ))
+        }
+        return alarms
     }
 
     private fun openOemAutoStartSettings() {

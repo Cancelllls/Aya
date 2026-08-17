@@ -10,6 +10,38 @@ extension SettingsNotificationsSection on _SettingsScreenState {
             : "Notifications & Alerts",
       ),
       Card(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: ListTile(
+          leading: Icon(Icons.tune, color: theme.colorScheme.primary),
+          title: Text(
+            TranslationService.isArabic
+                ? "تخصيص الأذان والتنبيهات المتقدم (لكل صلاة)"
+                : "Advanced Adhan & Pre-Alert Settings",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            TranslationService.isArabic
+                ? "ضبط نغمات الأذان، التنبيه المسبق، التدرج بالصوت، والوضع الصامت التلقائي"
+                : "Per-prayer audio, pre-alerts, volume ramp, auto-DND & health check",
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AdhanSettingsScreen()),
+            );
+          },
+        ),
+      ),
+      Card(
         color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
         shape: RoundedRectangleBorder(

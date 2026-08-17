@@ -1,7 +1,6 @@
 package com.quran.aya
 
 import android.annotation.SuppressLint
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -40,6 +39,26 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         val mp3ResName = intent.getStringExtra("MP3_RES_NAME") ?: ""
         val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val enableVibration = intent.getBooleanExtra("ENABLE_VIBRATION", true)
+        val scheduledTimestamp = intent.getLongExtra("SCHEDULED_TIMESTAMP", 0L)
+        val maxDurationMs = intent.getIntExtra("MAX_DURATION_MS", 0)
+
+        val channelId = "adhan_alert_v5"
+        val notifManager = NotificationManagerCompat.from(context)
+
+        // ── Missed Prayer Check (If delayed by >5 minutes in deep sleep) ─────
+        val now = System.currentTimeMillis()
+        if (scheduledTimestamp > 0 && now - scheduledTimestamp > 5 * 60 * 1000) {
+            val iconRes = context.resources.getIdentifier("ic_notification", "drawable", context.packageName)
+            val missedNotif = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
+                .setContentTitle("⚠️ فاتك وقت $prayerName")
+                .setContentText("تأخر التنبيه بسبب وضع توفير الطاقة")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .build()
+            notifManager.notify(alarmId + 8000, missedNotif)
+            return
+        }
 
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(
@@ -49,8 +68,6 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         wakeLock.acquire(10 * 60 * 1000L)
 
         // ── Notification card (silent — no sound, no vibration, no stop button) ─
-        val channelId = "adhan_alert_v5"
-        val notifManager = NotificationManagerCompat.from(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId, "Athan Alert",
@@ -96,12 +113,17 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
 
         notifManager.notify(alarmId, notif)
 
-        // ── Vibration ───────────────────────────────────────────────────
+        // ── Vibration (Fajr-specific pattern vs standard) ─────────────────────
         if (enableVibration) {
             try {
                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (vibrator.hasVibrator()) {
-                    val pattern = longArrayOf(0, 1000, 500, 1000, 500, 500)
+                    val isFajr = prayerName.contains("الفجر") || prayerName.lowercase().contains("fajr")
+                    val pattern = if (isFajr)
+                        longArrayOf(0, 1000, 300, 1000, 300, 1000, 300, 500, 200, 500)
+                    else
+                        longArrayOf(0, 1000, 500, 1000, 500, 500)
+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         vibrator.vibrate(
                             VibrationEffect.createWaveform(pattern, -1),
@@ -140,12 +162,55 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         lateinit var player: MediaPlayer
         lateinit var mediaSession: MediaSessionCompat
 
+        fun triggerPostAdhanActions() {
+            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+
+            // 1. Post-Adhan Dua Notification
+            val duaEnabled = prefs.getBoolean("flutter.post_adhan_dua", true)
+            if (duaEnabled) {
+                val duaNotif = NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
+                    .setContentTitle("دعاء بعد الأذان")
+                    .setContentText("اللهم رب هذه الدعوة التامة والصلاة القائمة آت محمداً الوسيلة والفضيلة وابعثه مقاماً محموداً الذي وعدته")
+                    .setStyle(NotificationCompat.BigTextStyle().bigText("اللهم رب هذه الدعوة التامة والصلاة القائمة آت محمداً الوسيلة والفضيلة وابعثه مقاماً محموداً الذي وعدته، رضيت بالله رباً وبالإسلام ديناً وبمحمد صلى الله عليه وسلم نبياً ورسولاً."))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setTimeoutAfter(60_000)
+                    .build()
+                notifManager.notify(alarmId + 9000, duaNotif)
+            }
+
+            // 2. Auto-DND Trigger
+            val dndEnabled = prefs.getBoolean("flutter.auto_dnd_enabled", false)
+            val dndMinutes = prefs.getInt("flutter.auto_dnd_minutes", 20)
+            if (dndEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (nm.isNotificationPolicyAccessGranted) {
+                    prefs.edit().putInt("flutter.prev_interruption_filter", nm.currentInterruptionFilter).apply()
+                    nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+
+                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                    val restoreIntent = Intent(context, DndRestoreReceiver::class.java)
+                    val restorePending = PendingIntent.getBroadcast(
+                        context, 6000, restoreIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    alarmManager.setExactAndAllowWhileIdle(
+                        android.app.AlarmManager.RTC_WAKEUP,
+                        System.currentTimeMillis() + dndMinutes * 60_000L,
+                        restorePending
+                    )
+                }
+            }
+        }
+
         fun stop() {
             try { player.stop(); player.release() } catch (_: Exception) {}
-            mediaSession.release()
+            try { mediaSession.release() } catch (_: Exception) {}
             try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
             notifManager.cancel(alarmId)
             if (wakeLock.isHeld) wakeLock.release()
+            triggerPostAdhanActions()
         }
 
         // ── MediaSessionCompat for volume-key stop ──────────────────
@@ -191,20 +256,40 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         Companion.activeStop = ::stop
 
         player.setOnCompletionListener {
-            it.release()
-            mediaSession.release()
-            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
-            notifManager.cancel(alarmId)
-            if (wakeLock.isHeld) wakeLock.release()
+            stop()
         }
         player.setOnErrorListener { mp, _, _ ->
-            mp.release()
-            mediaSession.release()
-            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
-            notifManager.cancel(alarmId)
-            if (wakeLock.isHeld) wakeLock.release()
+            stop()
             true
         }
+
+        // ── Volume Ramp-Up (20% -> 100% over 5 seconds) ───────────────
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val rampUpEnabled = prefs.getBoolean("flutter.volume_ramp_up", true)
+        if (rampUpEnabled) {
+            player.setVolume(0.2f, 0.2f)
+            val handler = android.os.Handler(android.os.Looper.getMainLooper())
+            val steps = 8
+            val interval = 5000L / steps
+            for (i in 1..steps) {
+                handler.postDelayed({
+                    try {
+                        if (player.isPlaying) {
+                            val vol = 0.2f + (0.8f * i / steps)
+                            player.setVolume(vol, vol)
+                        }
+                    } catch (_: Exception) {}
+                }, interval * i)
+            }
+        }
+
+        // ── Takbeer-only max duration handling ────────────────────────
+        if (maxDurationMs > 0) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                stop()
+            }, maxDurationMs.toLong())
+        }
+
         player.start()
     }
 
