@@ -40,7 +40,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   @override
   void initState() {
-    super.initState()
+    super.initState();
     _initStorage();
   }
 
