@@ -406,6 +406,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     value: dndMins,
                     items: [15, 20, 25, 30].map((m) => DropdownMenuItem(value: m, child: Text('$m ${isAr ? 'دقيقة' : 'min'}'))).toList(),
                     onChanged: (val) async {
+                      if (val != null) {
                         await _storage?.setInt('auto_dnd_minutes', val);
                         await _storage?.setInt('auto_dnd_duration', val);
                         setState(() {});
