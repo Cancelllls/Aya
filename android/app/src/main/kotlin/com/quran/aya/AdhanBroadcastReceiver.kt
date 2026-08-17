@@ -182,7 +182,11 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
 
             // 2. Auto-DND Trigger
             val dndEnabled = prefs.getBoolean("flutter.auto_dnd_enabled", false)
-            val dndMinutes = prefs.getInt("flutter.auto_dnd_minutes", 20)
+            val dndMinutes = if (prefs.contains("flutter.auto_dnd_duration")) {
+                prefs.getInt("flutter.auto_dnd_duration", 20)
+            } else {
+                prefs.getInt("flutter.auto_dnd_minutes", 20)
+            }
             if (dndEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 if (nm.isNotificationPolicyAccessGranted) {

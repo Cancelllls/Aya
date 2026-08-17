@@ -13,6 +13,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
       _autoDndDuration = val;
     });
     await widget.storage.setInt('auto_dnd_duration', val);
+    await widget.storage.setInt('auto_dnd_minutes', val);
   }
 
   Future<void> _toggleMorningAzkarReminder(bool val) async {
