@@ -80,6 +80,20 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
 
         notifManager.notify(alarmId, notif)
 
+        if (alertMode == "sound" || alertMode == "real_reciter") {
+            try {
+                var soundResId = context.resources.getIdentifier("default_pre_adhan", "raw", context.packageName)
+                if (soundResId == 0) {
+                    soundResId = context.resources.getIdentifier("prayer_reminder_call", "raw", context.packageName)
+                }
+                if (soundResId != 0) {
+                    val player = android.media.MediaPlayer.create(context, soundResId)
+                    player?.start()
+                    player?.setOnCompletionListener { mp -> mp.release() }
+                }
+            } catch (_: Exception) {}
+        }
+
         if (alertMode != "silent") {
             try {
                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator

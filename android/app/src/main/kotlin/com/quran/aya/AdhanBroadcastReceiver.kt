@@ -164,10 +164,30 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
         } catch (_: Exception) {}
 
-        // ── MediaPlayer (skip if silent mode requested) ────────────────
-        val resId = if (mp3ResName.isNotEmpty())
-            context.resources.getIdentifier(mp3ResName, "raw", context.packageName)
-        else 0
+        // ── MediaPlayer (fallback to default_adhan if invalid resName) ────────
+        val mappedResName = when {
+            mp3ResName.contains("meshary") || mp3ResName == "mishary" -> "adhan_meshary_al_fasy_kuwait"
+            mp3ResName.contains("abdelbasset") || mp3ResName == "abdul_basit" -> "adhan_abdelbasset_abdessamad_egypte"
+            mp3ResName.contains("zahrani") || mp3ResName == "manssour" -> "adhan_manssour_el_zahrani"
+            mp3ResName.contains("quds") || mp3ResName == "maghriby" -> "adhan_nurdin_hamza_al_maghriby_quds"
+            mp3ResName.contains("kazabri") -> "adhan_omar_al_kazabri_morocco"
+            mp3ResName.contains("riad") -> "adhan_riad_al_djazairi_algeria"
+            mp3ResName.contains("nakshabandi") -> "adhan_sayed_al_nakshabandi_egypte"
+            mp3ResName.contains("fajr_meshary") -> "adhan_fajr_meshary_al_fasy_kuwait"
+            mp3ResName.contains("fajr_abdelbasset") -> "adhan_fajr_abdelbasset_abdessamad_egypte"
+            mp3ResName.contains("fajr_al_haram") || mp3ResName == "madinah" -> "adhan_fajr_al_haram_el_madani_saoudia"
+            mp3ResName.contains("haddiwi") || mp3ResName == "nurdin" -> "adhan_fajr_nurdin_al_haddiwi_fajr_morocco"
+            mp3ResName.isNotEmpty() -> mp3ResName.replace(".mp3", "")
+            else -> "default_adhan"
+        }
+
+        var resId = context.resources.getIdentifier(mappedResName, "raw", context.packageName)
+        if (resId == 0) {
+            resId = context.resources.getIdentifier("default_adhan", "raw", context.packageName)
+        }
+        if (resId == 0) {
+            resId = context.resources.getIdentifier("adhan_meshary_al_fasy_kuwait", "raw", context.packageName)
+        }
 
         if (resId == 0) {
             if (wakeLock.isHeld) wakeLock.release()

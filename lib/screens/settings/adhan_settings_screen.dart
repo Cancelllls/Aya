@@ -39,6 +39,40 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     'isha': 'Isha',
   };
 
+  final Map<String, String> _standardRecitersAr = {
+    'mishary': 'مشاري العفاسي (الكويت)',
+    'abdul_basit': 'عبد الباسط عبد الصمد (مصر)',
+    'manssour': 'منصور الزهراني (السعودية)',
+    'maghriby': 'نور الدين الهذيوي (القدس/الأقصى)',
+    'kazabri': 'عمر القزابري (المغرب)',
+    'riad': 'رياض الجزائري (الجزائر)',
+    'nakshabandi': 'سيد النقشبندي (مصر)',
+  };
+
+  final Map<String, String> _standardRecitersEn = {
+    'mishary': 'Mishary Al-Afasy (Kuwait)',
+    'abdul_basit': 'Abdul Basit (Egypt)',
+    'manssour': 'Manssour Al-Zahrani (Saudi Arabia)',
+    'maghriby': 'Nurdin Al-Maghriby (Al-Quds)',
+    'kazabri': 'Omar Al-Kazabri (Morocco)',
+    'riad': 'Riad Al-Djazairi (Algeria)',
+    'nakshabandi': 'Sayed Al-Nakshabandi (Egypt)',
+  };
+
+  final Map<String, String> _fajrRecitersAr = {
+    'mishary': 'مشاري العفاسي - الفجر (الكويت)',
+    'abdul_basit': 'عبد الباسط عبد الصمد - الفجر (مصر)',
+    'madinah': 'أذان المسجد النبوي - المدنية',
+    'nurdin': 'نور الدين الهذيوي - الفجر (المغرب)',
+  };
+
+  final Map<String, String> _fajrRecitersEn = {
+    'mishary': 'Mishary Al-Afasy - Fajr (Kuwait)',
+    'abdul_basit': 'Abdul Basit - Fajr (Egypt)',
+    'madinah': 'Madinah Haram Adhan (Saudi Arabia)',
+    'nurdin': 'Nurdin Al-Haddiwi - Fajr (Morocco)',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -88,13 +122,13 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       final map = isFajr
           ? AdhanAudioService.fajrReciterUrls
           : AdhanAudioService.standardReciterUrls;
-      final fileName = map[reciterKey];
-      if (fileName != null) {
-        final url = 'https://quran-audio-proxy.abdalraman-samir2001.workers.dev/audio/adhan/$fileName';
-        await _previewPlayer?.setUrl(url);
-        await _previewPlayer?.play();
-      }
-    } catch (_) {}
+      final fileName = map[reciterKey] ?? (isFajr ? 'adhan_fajr_meshary_al_fasy_kuwait.mp3' : 'adhan_meshary_al_fasy_kuwait.mp3');
+      await _previewPlayer?.stop();
+      await _previewPlayer?.setAsset('assets/audio/adhan/$fileName');
+      await _previewPlayer?.play();
+    } catch (e) {
+      debugPrint('Error playing preview: $e');
+    }
 
     if (mounted) {
       setState(() {
@@ -257,10 +291,13 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     ),
                     onPressed: () async {
                       final testTime = DateTime.now().add(const Duration(seconds: 5));
+                      final selectedReciter = _storage?.getString('adhan_reciter', defaultValue: 'mishary') ?? 'mishary';
+                      final rawName = AdhanAudioService.standardReciterUrls[selectedReciter]
+                          ?.replaceAll('.mp3', '') ?? 'adhan_meshary_al_fasy_kuwait';
                       await AdhanNativeController.instance.schedulePrayerAlarm(
                         id: 9999,
                         time: testTime,
-                        mp3ResName: 'mishary_adhan',
+                        mp3ResName: rawName,
                         prayerName: 'Dhuhr',
                       );
                       if (mounted) {
@@ -323,10 +360,16 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     final String modeKey = 'adhan_mode_$prayer';
     final String offsetKey = 'pre_adhan_${prayer}_minutes';
     final String preModeKey = 'pre_adhan_${prayer}_mode';
+    final String reciterKeyName = prayer == 'fajr' ? 'fajr_adhan_reciter' : 'adhan_reciter_$prayer';
 
     final currentMode = _storage?.getString(modeKey, defaultValue: 'real_reciter') ?? 'real_reciter';
     final currentOffset = _storage?.getInt(offsetKey, defaultValue: prayer == 'fajr' ? 20 : (prayer == 'maghrib' ? 10 : 15)) ?? 15;
     final currentPreMode = _storage?.getString(preModeKey, defaultValue: 'vibrate') ?? 'vibrate';
+    final currentReciter = _storage?.getString(reciterKeyName) ?? _storage?.getString('adhan_reciter', defaultValue: 'mishary') ?? 'mishary';
+
+    final reciterOptions = prayer == 'fajr'
+        ? (isAr ? _fajrRecitersAr : _fajrRecitersEn)
+        : (isAr ? _standardRecitersAr : _standardRecitersEn);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -386,20 +429,35 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       ),
                       IconButton(
                         icon: Icon(
-                          _previewingReciter == (prayer == 'fajr' ? _storage?.getString('fajr_adhan_reciter', defaultValue: 'mishary') : _storage?.getString('adhan_reciter', defaultValue: 'mishary'))
+                          _previewingReciter == currentReciter
                               ? Icons.stop_circle
                               : Icons.play_circle_fill,
                           color: primaryColor,
                         ),
                         onPressed: () {
-                          final reciterKey = prayer == 'fajr'
-                              ? _storage?.getString('fajr_adhan_reciter', defaultValue: 'mishary') ?? 'mishary'
-                              : _storage?.getString('adhan_reciter', defaultValue: 'mishary') ?? 'mishary';
-                          _togglePreview(reciterKey, prayer == 'fajr');
+                          _togglePreview(currentReciter, prayer == 'fajr');
                         },
                       ),
                     ],
                   ),
+                  DropdownButton<String>(
+                    isExpanded: true,
+                    value: reciterOptions.containsKey(currentReciter) ? currentReciter : 'mishary',
+                    items: reciterOptions.entries.map((e) {
+                      return DropdownMenuItem<String>(
+                        value: e.key,
+                        child: Text(e.value, style: const TextStyle(fontSize: 14)),
+                      );
+                    }).toList(),
+                    onChanged: (val) async {
+                      if (val != null) {
+                        await _storage?.setString(reciterKeyName, val);
+                        await _storage?.setString('adhan_reciter', val);
+                        setState(() {});
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
                 ],
 
                 const Divider(height: 24),
