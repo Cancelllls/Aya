@@ -330,5 +330,16 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
     companion object {
         var activeStop: (() -> Unit)? = null
         var lastZ: Float = 0f
+
+        fun stop(context: Context? = null) {
+            activeStop?.invoke()
+            activeStop = null
+            context?.let { ctx ->
+                try {
+                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                    nm.cancelAll()
+                } catch (_: Exception) {}
+            }
+        }
     }
 }

@@ -61,7 +61,7 @@ class AdhanLockscreenActivity : Activity() {
             setBackgroundColor(0xFFB91C1C.toInt()) // Red button
             setPadding(32, 16, 32, 16)
             setOnClickListener {
-                AdhanBroadcastReceiver.stop()
+                AdhanBroadcastReceiver.stop(this@AdhanLockscreenActivity)
                 finish()
             }
         }
