@@ -6,7 +6,12 @@ extension SettingsBackupSection on _SettingsScreenState {
   List<Widget> _buildBackupSection(ThemeData theme) {
     final isArabic = TranslationService.isArabic;
     return [
-      _buildSectionHeader(isArabic ? "النسخ الاحتياطي" : "Backup & Restore"),
+      // Section Data & Backup
+      SettingsSectionHeader(
+        icon: Icons.storage_outlined,
+        title: isArabic ? "إدارة البيانات والنسخ الاحتياطي" : "Data & Backup Management",
+        iconColor: const Color(0xFF475569),
+      ),
       Card(
         color: theme.cardColor.withValues(alpha: 0.7),
         elevation: 0,
@@ -24,7 +29,7 @@ extension SettingsBackupSection on _SettingsScreenState {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.upload, color: Color(0xFFE5C158)),
+                  leading: const Icon(Icons.upload_outlined, color: Color(0xFF475569)),
                   title: Text(isArabic ? "تصدير البيانات" : "Export Data"),
                   subtitle: Text(
                     isArabic
@@ -44,8 +49,12 @@ extension SettingsBackupSection on _SettingsScreenState {
                     }
                   },
                 ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
                 ListTile(
-                  leading: const Icon(Icons.download, color: Color(0xFFE5C158)),
+                  leading: const Icon(Icons.download_outlined, color: Color(0xFF475569)),
                   title: Text(isArabic ? "استيراد البيانات" : "Import Data"),
                   subtitle: Text(
                     isArabic
@@ -87,7 +96,7 @@ extension SettingsBackupSection on _SettingsScreenState {
                                   ? "✅ تم استيراد $count عنصر بنجاح"
                                   : "✅ $count items imported successfully",
                             ),
-                            backgroundColor: const Color(0xFFE5C158),
+                            backgroundColor: Colors.teal,
                           ),
                         );
                       }
@@ -109,7 +118,7 @@ extension SettingsBackupSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.cleaning_services, color: Color(0xFFE5C158)),
+                  leading: const Icon(Icons.cleaning_services_outlined, color: Color(0xFF475569)),
                   title: Text(isArabic ? "إدارة التخزين والتخزين المؤقت" : "Storage & Cache Management"),
                   subtitle: Text(
                     isArabic
@@ -125,7 +134,6 @@ extension SettingsBackupSection on _SettingsScreenState {
                         title: Text(
                           isArabic ? "مسح ذاكرة التخزين؟" : "Clear Cache?",
                           style: const TextStyle(
-                            color: Color(0xFFE5C158),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -140,13 +148,9 @@ extension SettingsBackupSection on _SettingsScreenState {
                             child: Text(TranslationService.t('cancel')),
                           ),
                           ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE5C158),
-                            ),
                             onPressed: () => Navigator.pop(ctx, true),
                             child: Text(
                               isArabic ? "مسح" : "Clear",
-                              style: const TextStyle(color: Colors.black),
                             ),
                           ),
                         ],
@@ -171,7 +175,7 @@ extension SettingsBackupSection on _SettingsScreenState {
                                     ? "✅ تم مسح ذاكرة التخزين المؤقت."
                                     : "✅ Temporary cache cleared.",
                               ),
-                              backgroundColor: const Color(0xFFE5C158),
+                              backgroundColor: Colors.teal,
                             ),
                           );
                         }
@@ -190,6 +194,64 @@ extension SettingsBackupSection on _SettingsScreenState {
               ],
             ),
           ),
+        ),
+      ),
+      const SizedBox(height: 12),
+
+      // Separate Danger Card for Reset Settings
+      Card(
+        color: Colors.red.shade900.withValues(alpha: 0.15),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Colors.redAccent.withValues(alpha: 0.3),
+          ),
+        ),
+        child: ListTile(
+          leading: const Icon(Icons.restart_alt, color: Colors.redAccent),
+          title: Text(
+            TranslationService.t('reset_settings'),
+            style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            isArabic ? "إعادة ضبط جميع الإعدادات إلى وضعها الافتراضي الاصلي" : "Reset all app preferences to original factory defaults",
+            style: const TextStyle(fontSize: 12),
+          ),
+          onTap: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(TranslationService.t('reset_settings')),
+                content: Text(
+                  isArabic
+                      ? "هل أنت أصلًا متأكد من إعادة ضبط كافة الإعدادات؟"
+                      : "Are you sure you want to reset all settings to defaults?",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(TranslationService.t('cancel')),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(
+                      isArabic ? "إعادة ضبط" : "Reset",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            );
+            if (confirm == true) {
+              await widget.storage.clearAll();
+              if (mounted) {
+                widget.onThemeChanged();
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+              }
+            }
+          },
         ),
       ),
     ];

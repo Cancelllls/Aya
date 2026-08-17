@@ -14,6 +14,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../services/adhan_audio_service.dart';
+import '../../core/adhan_native_controller.dart';
 import '../../services/reciters_cache_service.dart';
 import '../../donation/flavor.dart';
 import '../../donation/google_play_donation.dart';
@@ -21,6 +22,11 @@ import '../../version.dart';
 import '../about_screen.dart';
 import '../qiraat_screen.dart';
 import 'adhan_settings_screen.dart';
+import 'prayer_time_adjust_screen.dart';
+import 'ramadan_reminders_screen.dart';
+import '../../widgets/settings_section_header.dart';
+import '../../widgets/settings_value_chip.dart';
+import '../../widgets/permission_status_badge.dart';
 
 part 'settings_appearance.dart';
 part 'settings_language.dart';
@@ -856,9 +862,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         padding: const EdgeInsets.all(16.0),
         children: [
           ..._buildAppearanceSection(theme),
-          ..._buildLanguageSection(theme),
           ..._buildCalculationsSection(theme),
-          ..._buildAppPreferencesSection(theme),
           ..._buildNotificationsSection(theme),
           ..._buildAudioSection(theme),
           ..._buildPermissionsSection(theme),

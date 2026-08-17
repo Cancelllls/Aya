@@ -363,4 +363,8 @@ class StorageService {
   int? getLastAudioTimestamp() {
     return prefs.getInt('last_audio_timestamp_ms');
   }
+
+  Future<void> clearAll() async {
+    await prefs.clear();
+  }
 }

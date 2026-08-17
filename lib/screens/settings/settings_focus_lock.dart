@@ -2,85 +2,71 @@ part of 'settings_screen.dart';
 
 extension SettingsFocusLockSection on _SettingsScreenState {
   List<Widget> _buildFocusLockSection(ThemeData theme) {
-    return [
-      // Donation Support Section
-      _buildSectionHeader(
-        TranslationService.isArabic
-            ? "الدعم والمساهمة"
-            : "Support & Contribution",
-      ),
-      Card(
-        color: theme.cardColor,
-        child: ListTile(
-          leading: const Icon(
-            Icons.volunteer_activism,
-            color: Color(0xFFE5C158),
-          ),
-          title: Text(
-            TranslationService.isArabic ? "دعم تطبيق آية" : "Support Aya App",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            TranslationService.isArabic
-                ? "ساهم في دعم استضافة التطبيق وتطويره بدون إعلانات صدقة جارية"
-                : "Support server costs and development, ad-free continuous charity",
-          ),
-          trailing: Icon(
-            TranslationService.isArabic
-                ? Icons.arrow_back_ios
-                : Icons.arrow_forward_ios,
-            size: 14,
-            color: const Color(0xFFE5C158),
-          ),
-          onTap: _showDonateDialog,
-        ),
-      ),
-      Card(
-        color: theme.cardColor,
-        child: ListTile(
-          leading: const Icon(Icons.info_outline, color: Color(0xFFE5C158)),
-          title: Text(
-            TranslationService.isArabic ? "حول التطبيق" : "About Aya",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          trailing: Icon(
-            TranslationService.isArabic
-                ? Icons.arrow_back_ios
-                : Icons.arrow_forward_ios,
-            size: 14,
-            color: const Color(0xFFE5C158),
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AboutScreen()),
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: 20),
+    final isAr = TranslationService.isArabic;
 
-      // Reset Section
-      _buildSectionHeader(TranslationService.t('system_management')),
+    return [
+      // Section About & Support
+      SettingsSectionHeader(
+        icon: Icons.info_outline,
+        title: isAr ? "عن التطبيق والدعم" : "About & Support",
+        iconColor: const Color(0xFF4338CA),
+      ),
       Card(
-        color: theme.cardColor,
-        child: ListTile(
-          title: Text(
-            TranslationService.t('reset_settings'),
-            style: const TextStyle(
-              color: Colors.redAccent,
-              fontWeight: FontWeight.w600,
+        color: theme.cardColor.withValues(alpha: 0.7),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
+                .withValues(alpha: 0.1),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.info_outline, color: Color(0xFF4338CA)),
+                  title: Text(
+                    isAr ? "حول تطبيق آية" : "About Aya App",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isAr ? "معلومات الإصدار وتفاصيل الحقوق والتطوير" : "App version, licenses, and development credits",
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AboutScreen()),
+                    );
+                  },
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.volunteer_activism_outlined, color: Color(0xFF4338CA)),
+                  title: Text(
+                    isAr ? "دعم تطبيق آية" : "Support Aya App",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isAr
+                        ? "ساهم في دعم استضافة التطبيق وتطويره بدون إعلانات"
+                        : "Support server costs and development, ad-free continuous charity",
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _showDonateDialog,
+                ),
+              ],
             ),
           ),
-          subtitle: Text(TranslationService.t('reset_settings_sub')),
-          trailing: Icon(
-            TranslationService.isArabic
-                ? Icons.arrow_back_ios
-                : Icons.arrow_forward_ios,
-            size: 14,
-            color: Colors.redAccent,
-          ),
-          onTap: _resetApp,
         ),
       ),
     ];
