@@ -68,8 +68,8 @@ class BootReceiver : BroadcastReceiver() {
             val showIntent = PendingIntent.getActivity(
                 context,
                 id + 50000,
-                Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )

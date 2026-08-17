@@ -374,8 +374,8 @@ class MainActivity : FlutterActivity() {
         val showIntent = PendingIntent.getActivity(
             this,
             id + 50000,
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -419,8 +419,8 @@ class MainActivity : FlutterActivity() {
         val showIntent = PendingIntent.getActivity(
             this,
             id + 50000,
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
