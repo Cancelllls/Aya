@@ -78,6 +78,8 @@ extension SettingsNotificationsSection on _SettingsScreenState {
         ),
         child: Material(
           color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
                 ListTile(

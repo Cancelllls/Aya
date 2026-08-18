@@ -479,14 +479,6 @@ class NotificationService {
       'adhan_alert_mode',
       defaultValue: 'real_reciter',
     );
-    final adhanReciter = storage.getString(
-      'adhan_reciter',
-      defaultValue: 'mishary',
-    );
-    final fajrReciter = storage.getString(
-      'fajr_adhan_reciter',
-      defaultValue: 'mishary',
-    );
 
     String getPrayerAdhanMode(String prayerName) {
       return storage.getString(
@@ -500,10 +492,11 @@ class NotificationService {
       if (mode == 'silent' || mode == 'vibrate') return '';
       final isFajr = prayerName == 'Fajr' || prayerName == 'fajr';
       final pLower = prayerName.toLowerCase();
+      final customReciter = storage.getString('adhan_reciter_$pLower', defaultValue: '');
+      final defaultReciter = storage.getString('adhan_reciter', defaultValue: 'mishary');
       final reciterKey = isFajr
           ? storage.getString('fajr_adhan_reciter', defaultValue: 'mishary')
-          : (storage.getString('adhan_reciter_$pLower') ??
-              storage.getString('adhan_reciter', defaultValue: 'mishary'));
+          : (customReciter.isNotEmpty ? customReciter : defaultReciter);
       final filename = isFajr
           ? AdhanAudioService.fajrReciterUrls[reciterKey]
           : AdhanAudioService.standardReciterUrls[reciterKey];
@@ -690,7 +683,6 @@ class NotificationService {
         if (escalatingEnabled && dayOffset == 0) {
           try {
             final sunriseDt = _parsePrayerToday(scheduledDate, prayerData.sunrise);
-            final dhuhrDt = _parsePrayerToday(scheduledDate, prayerData.dhuhr);
             final asrDt = _parsePrayerToday(scheduledDate, prayerData.asr);
             final maghribDt = _parsePrayerToday(scheduledDate, prayerData.maghrib);
             final ishaDt = _parsePrayerToday(scheduledDate, prayerData.isha);

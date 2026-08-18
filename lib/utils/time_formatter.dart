@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-
 class TimeFormatter {
   /// Formats a raw time string (e.g. "05:15", "15:30", "15:30:00", "15:30 (EET)")
   /// into 12-hour or 24-hour time string based on user preference and language.

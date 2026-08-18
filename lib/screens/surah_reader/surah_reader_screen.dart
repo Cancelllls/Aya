@@ -562,7 +562,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                 ),
                                 child: SwitchListTile(
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                  activeColor: const Color(0xFFE5C158),
+                                  activeThumbColor: const Color(0xFFE5C158),
                                   secondary: Icon(
                                     Icons.palette_outlined,
                                     color: isTajweed
@@ -637,7 +637,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           // ── Transliteration Toggle (3.2) ──
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            activeColor: const Color(0xFFE5C158),
+                            activeThumbColor: const Color(0xFFE5C158),
                             title: Text(
                               TranslationService.isArabic ? 'النطق الصوتي (Transliteration)' : 'Phonetic Transliteration',
                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
@@ -657,7 +657,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                           // ── Asbab Al-Nuzul Toggle (1.3) ──
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            activeColor: const Color(0xFFE5C158),
+                            activeThumbColor: const Color(0xFFE5C158),
                             title: Text(
                               TranslationService.isArabic ? 'أسباب النزول' : 'Asbab Al-Nuzul (Context)',
                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),

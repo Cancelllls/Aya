@@ -313,7 +313,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildWelcomeSlide(ThemeData theme, bool isDark) {
     final primaryColor = theme.primaryColor;
-    final textColor = theme.textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black87);
     final subtextColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white60 : Colors.black54);
 
     return Padding(
@@ -652,7 +651,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ),
                 Switch.adaptive(
                   value: _wantAdhan,
-                  activeColor: primaryColor,
+                  activeThumbColor: primaryColor,
                   onChanged: (val) {
                     setState(() => _wantAdhan = val);
                   },
