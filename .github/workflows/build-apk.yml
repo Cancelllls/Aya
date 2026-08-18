@@ -10,8 +10,40 @@ on:
       - '**.md'
 
 jobs:
-  # ── Google Play Build (IAP) ──────────────────────────────────────────
+  # ── Step 1: Bump version FIRST so builds use the new number ──────────
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_version: ${{ steps.version.outputs.display }}
+      new_tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          fetch-depth: 0
+
+      - name: Bump Version
+        id: version
+        run: |
+          OLD_NEW=$(python3 tools/bump_version.py)
+          OLD=$(echo "$OLD_NEW" | awk '{print $1}')
+          NEW=$(echo "$OLD_NEW" | awk '{print $2}')
+          echo "tag=v${NEW}" >> $GITHUB_OUTPUT
+          echo "display=${NEW}" >> $GITHUB_OUTPUT
+          echo "Bumped: $OLD → $NEW"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/version.dart pubspec.yaml
+          git commit -m "chore: bump version to v${NEW} [skip ci]"
+          git push origin main
+
+  # ── Step 2: Google Play Build (IAP) ──────────────────────────────────
   google-play:
+    needs: bump
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -58,10 +90,11 @@ jobs:
 
       - name: Rename APKs for Google Play
         run: |
+          VER="${{ needs.bump.outputs.new_version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
             cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
-               release_apks/Aya-googleplay-${arch}.apk
+               release_apks/Aya-v${VER}-googleplay-${arch}.apk
           done
 
       - name: Upload Google Play APKs
@@ -70,8 +103,9 @@ jobs:
           name: google-play-apks
           path: release_apks/
 
-  # ── F-Droid / Open Source Build ──────────────────────────────────────
+  # ── Step 3: F-Droid / Open Source Build ──────────────────────────────
   fdroid:
+    needs: bump
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -123,10 +157,11 @@ jobs:
 
       - name: Rename APKs for F-Droid
         run: |
+          VER="${{ needs.bump.outputs.new_version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
             cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
-               release_apks/Aya-fdroid-${arch}.apk
+               release_apks/Aya-v${VER}-fdroid-${arch}.apk
           done
 
       - name: Upload F-Droid APKs
@@ -135,9 +170,9 @@ jobs:
           name: fdroid-apks
           path: release_apks/
 
-  # ── Bump & Release (Runs ONLY on Successful Builds) ─────────────────
+  # ── Step 4: Release (only after both builds succeed) ─────────────────
   release:
-    needs: [google-play, fdroid]
+    needs: [bump, google-play, fdroid]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -147,22 +182,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
           fetch-depth: 0
-
-      - name: Bump Version on Successful Build
-        id: version
-        run: |
-          OLD_NEW=$(python3 tools/bump_version.py)
-          OLD=$(echo "$OLD_NEW" | awk '{print $1}')
-          NEW=$(echo "$OLD_NEW" | awk '{print $2}')
-          echo "tag=v${NEW}" >> $GITHUB_OUTPUT
-          echo "display=${NEW}" >> $GITHUB_OUTPUT
-          echo "Bumped: $OLD → $NEW"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add lib/version.dart pubspec.yaml
-          git commit -m "chore: bump version to v${NEW} [skip ci]"
-          git push origin main
 
       - name: Download Google Play APKs
         uses: actions/download-artifact@v6
@@ -176,32 +195,17 @@ jobs:
           name: fdroid-apks
           path: apks/
 
-      - name: Rename release artifacts with new version tag
-        run: |
-          VER="${{ steps.version.outputs.display }}"
-          cd apks
-          for file in Aya-googleplay-*.apk; do
-            if [ -f "$file" ]; then
-              mv "$file" "${file/Aya-googleplay-/Aya-v${VER}-googleplay-}"
-            fi
-          done
-          for file in Aya-fdroid-*.apk; do
-            if [ -f "$file" ]; then
-              mv "$file" "${file/Aya-fdroid-/Aya-v${VER}-fdroid-}"
-            fi
-          done
-
       - name: Generate Changelog
         id: changelog
         run: |
-          CHANGELOG=$(python3 tools/gen_changelog.py "${{ steps.version.outputs.display }}")
+          CHANGELOG=$(python3 tools/gen_changelog.py "${{ needs.bump.outputs.new_version }}")
           echo "$CHANGELOG" > /tmp/changelog.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Release v${{ steps.version.outputs.display }}
+          tag_name: ${{ needs.bump.outputs.new_tag }}
+          name: Release v${{ needs.bump.outputs.new_version }}
           body_path: /tmp/changelog.md
           files: |
             apks/*.apk
