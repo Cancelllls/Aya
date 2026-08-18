@@ -37,6 +37,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool _bgLocationGranted = false;
   bool _exactAlarmGranted = false;
   bool _notifGranted = false;
+  bool _dndGranted = false;
   int _androidSdkVersion = 24;
 
   @override
@@ -83,7 +84,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         gpsPerm == LocationPermission.whileInUse;
     final bgLocOk = gpsPerm == LocationPermission.always;
     final notifOk = await NotificationService().checkPermissions();
-    // Never trust auto-grant — always require explicit user action.
+    final dndOk = await _platform.invokeMethod<bool>('checkNotificationPolicyAccess') ?? false;
+    // Explicit user grant check via canScheduleExactAlarms()
     final exactAlarmOk = await _platform.invokeMethod<bool>(
       'checkExactAlarmPermission',
     ) ??
@@ -93,6 +95,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         _locationGranted = locOk;
         _bgLocationGranted = bgLocOk;
         _notifGranted = notifOk;
+        _dndGranted = dndOk;
         _exactAlarmGranted = exactAlarmOk;
       });
     }
@@ -119,6 +122,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Future<void> _requestNotif() async {
     try {
       await NotificationService().requestPermissions();
+      await _checkAllPermissions();
+    } catch (_) {}
+  }
+
+  Future<void> _requestDnd() async {
+    try {
+      setState(() => _dndGranted = false);
+      await _platform.invokeMethod('requestNotificationPolicyAccess');
       await _checkAllPermissions();
     } catch (_) {}
   }
@@ -656,16 +667,31 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     isGranted: _notifGranted,
                     onRequest: _requestNotif,
                   ),
+                  // Do Not Disturb Permission — API 23+ (Android 6.0+)
+                  if (_androidSdkVersion >= 23) ...[
+                    const SizedBox(height: 10),
+                    _buildPermissionItem(
+                      icon: Icons.do_not_disturb_on,
+                      title: TranslationService.isArabic
+                          ? "إذن وضع عدم الإزعاج (الصامت التلقائي)"
+                          : "Do Not Disturb Permission",
+                      description: TranslationService.isArabic
+                          ? "لتفعيل الوضع الصامت تلقائياً أثناء أداء الصلاة واستعادته بعدها."
+                          : "Required to automatically silence your phone during prayer time.",
+                      isGranted: _dndGranted,
+                      onRequest: _requestDnd,
+                    ),
+                  ],
                   // Alarms & Reminders — only on API 31+ (Android 12+)
                   if (_androidSdkVersion >= 31) ...[
                     const SizedBox(height: 10),
                     _buildPermissionItem(
                       icon: Icons.access_alarm,
                       title: TranslationService.isArabic
-                          ? "التنبيهات والتذكيرات"
-                          : "Alarms & Reminders",
+                          ? "التنبيهات والتذكيرات (المنبهات الدقيقة)"
+                          : "Alarms & Reminders (Exact Alarms)",
                       description: TranslationService.isArabic
-                          ? "يسمح بجدولة تنبيهات الأذان الدقيقة حتى في وضع توفير الطاقة."
+                          ? "مطلوب لتشغيل الأذان في موعده بدقة حتى في وضع توفير الطاقة."
                           : "Allows scheduling precise Adhan alarms even in Doze mode.",
                       isGranted: _exactAlarmGranted,
                       onRequest: _requestExactAlarm,
