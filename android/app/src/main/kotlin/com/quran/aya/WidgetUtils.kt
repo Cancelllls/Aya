@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.os.Build
 import android.widget.RemoteViews
 
 data class WidgetM3Theme(
@@ -15,6 +16,12 @@ data class WidgetM3Theme(
     val dividerColor: Int,
     val badgeBgDrawable: Int,
     val badgeTextColor: Int
+)
+
+data class UpcomingPrayerInfo(
+    val name: String,
+    val epochMs: Long,
+    val formattedTime: String
 )
 
 object WidgetUtils {
@@ -81,9 +88,68 @@ object WidgetUtils {
         }
     }
 
+    fun getNextUpcomingPrayer(context: Context, prefs: SharedPreferences): UpcomingPrayerInfo {
+        val isArabic = getSafeBoolean(prefs, "widget_is_arabic", true)
+        val nowMs = System.currentTimeMillis()
+
+        val fajrEpoch = getSafeLong(prefs, "widget_fajr_epoch", 0L)
+        val dhuhrEpoch = getSafeLong(prefs, "widget_dhuhr_epoch", 0L)
+        val asrEpoch = getSafeLong(prefs, "widget_asr_epoch", 0L)
+        val maghribEpoch = getSafeLong(prefs, "widget_maghrib_epoch", 0L)
+        val ishaEpoch = getSafeLong(prefs, "widget_isha_epoch", 0L)
+
+        val fajrTime = getSafeString(prefs, "widget_prayer_fajr", "--:--")
+        val dhuhrTime = getSafeString(prefs, "widget_prayer_dhuhr", "--:--")
+        val asrTime = getSafeString(prefs, "widget_prayer_asr", "--:--")
+        val maghribTime = getSafeString(prefs, "widget_prayer_maghrib", "--:--")
+        val ishaTime = getSafeString(prefs, "widget_prayer_isha", "--:--")
+
+        val list = listOf(
+            UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", fajrEpoch, fajrTime),
+            UpcomingPrayerInfo(if (isArabic) "الظهر" else "Dhuhr", dhuhrEpoch, dhuhrTime),
+            UpcomingPrayerInfo(if (isArabic) "العصر" else "Asr", asrEpoch, asrTime),
+            UpcomingPrayerInfo(if (isArabic) "المغرب" else "Maghrib", maghribEpoch, maghribTime),
+            UpcomingPrayerInfo(if (isArabic) "العشاء" else "Isha", ishaEpoch, ishaTime)
+        )
+
+        // Find first prayer whose epoch is strictly in the future (> nowMs)
+        for (item in list) {
+            if (item.epochMs > nowMs) {
+                return item
+            }
+        }
+
+        // Fallback: stored next prayer or default
+        val fallbackName = getSafeString(prefs, "widget_next_prayer_name", if (isArabic) "الفجر" else "Fajr")
+        val fallbackEpoch = getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
+        val fallbackTime = getSafeString(prefs, "widget_widget_next_display", "--:--")
+
+        return UpcomingPrayerInfo(fallbackName, fallbackEpoch, fallbackTime)
+    }
+
     fun getM3Theme(context: Context, prefs: SharedPreferences): WidgetM3Theme {
-        val preset = getSafeString(prefs, "theme_preset", "dark")
+        val preset = getSafeString(prefs, "theme_preset", "adaptive")
         val isDark = getSafeBoolean(prefs, "widget_is_dark", true)
+
+        // Android 12+ (API 31+) Dynamic System Material You Colors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (preset == "adaptive" || preset == "system" || preset == "monet")) {
+            try {
+                val primary = context.getColor(android.R.color.system_accent1_500)
+                val textColor = if (isDark) context.getColor(android.R.color.system_neutral1_100) else context.getColor(android.R.color.system_neutral1_900)
+                val subtitleColor = if (isDark) context.getColor(android.R.color.system_neutral2_400) else context.getColor(android.R.color.system_neutral2_700)
+                val dividerColor = if (isDark) Color.parseColor("#33FFFFFF") else Color.parseColor("#1F000000")
+
+                return WidgetM3Theme(
+                    bgDrawable = if (isDark) R.drawable.widget_background_dark else R.drawable.widget_background_light,
+                    primaryColor = primary,
+                    textColor = textColor,
+                    subtitleColor = subtitleColor,
+                    dividerColor = dividerColor,
+                    badgeBgDrawable = if (isDark) R.drawable.active_prayer_background else R.drawable.active_prayer_background_light,
+                    badgeTextColor = if (isDark) Color.BLACK else Color.WHITE
+                )
+            } catch (_: Throwable) {}
+        }
 
         return when (preset) {
             "light", "white_monet" -> WidgetM3Theme(

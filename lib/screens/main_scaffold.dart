@@ -20,6 +20,7 @@ import 'settings/settings_screen.dart';
 import 'surah_reader/surah_pager_screen.dart';
 import 'quran_download_screen.dart';
 import 'bookmarks_screen.dart';
+import 'tajweed_guide_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   final StorageService storage;
@@ -520,6 +521,18 @@ class _MainScaffoldState extends State<MainScaffold>
                     });
                   }
                 }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.auto_stories),
+              tooltip: TranslationService.isArabic ? 'أحكام التجويد' : 'Tajweed Guide',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TajweedGuideScreen(storage: widget.storage),
+                  ),
+                );
               },
             ),
             IconButton(

@@ -1,26 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">آية</string>
+    <string name="widget_app_subtitle">آية</string>
+
     <string name="widget_prayer_times_label">آية - مواقيت الصلاة</string>
+    <string name="widget_prayer_times_title">مواقيت الصلاة</string>
     <string name="widget_prayer_times_description">يعرض مواقيت الصلاة لليوم حسب موقعك الجغرافي.</string>
     
     <string name="widget_verse_label">آية - آية اليوم</string>
+    <string name="widget_verse_title">آية اليوم</string>
     <string name="widget_verse_description">يعرض آية مختارة يومياً من القرآن الكريم.</string>
     
     <string name="widget_dhikr_label">آية - ذِكر اليوم</string>
+    <string name="widget_dhikr_title">أذكار اليوم</string>
     <string name="widget_dhikr_description">يعرض الأدعية والأذكار اليومية المأثورة.</string>
     
     <string name="widget_hadith_label">آية - حديث اليوم</string>
+    <string name="widget_hadith_title">حديث اليوم</string>
     <string name="widget_hadith_description">يعرض حديثاً شريفاً مأثوراً يومياً.</string>
     
     <string name="widget_tasbih_label">آية - مسبحة الأذكار</string>
+    <string name="widget_tasbih_title">السبحة الإلكترونية</string>
     <string name="widget_tasbih_description">عداد تسبيح سريع للأذكار اليومية باللمس.</string>
+    
     <string name="widget_hijri_label">آية - التاريخ الهجري</string>
+    <string name="widget_hijri_title">التاريخ الهجري</string>
     <string name="widget_hijri_description">يعرض التاريخ الهجري لليوم.</string>
     
     <string name="widget_next_prayer_label">آية - الصلاة القادمة</string>
+    <string name="widget_next_prayer_title">الصلاة القادمة</string>
     <string name="widget_next_prayer_description">يعرض الوقت المتبقي للصلاة القادمة.</string>
     
     <string name="widget_asma_label">آية - أسماء الله الحسنى</string>
+    <string name="widget_asma_title">أسماء الله الحسنى</string>
     <string name="widget_asma_description">يعرض اسماً من أسماء الله الحسنى يومياً.</string>
+    
+    <string name="widget_combined_label">آية - عداد ومواقيت الصلاة</string>
+    <string name="widget_combined_title">عداد ومواقيت الصلاة</string>
+    <string name="widget_combined_description">يعرض العد التنازلي المباشر للصلاة القادمة ومواقيت الصلاة.</string>
+    
     <string name="adhan_playing">الأذان يعمل — اضغط لفتح التطبيق</string>
 </resources>

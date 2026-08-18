@@ -34,8 +34,8 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   // Hifz is a separate notifier — never part of _readingMode, so
   // toggling it never remounts or rebuilds the SurahReaderScreen.
   final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
-  // Tajweed notifier so toggling colored rules in settings updates the reader live
   final ValueNotifier<bool> _tajweedNotifier = ValueNotifier(true);
+  final ValueNotifier<Set<int>> _bookmarksNotifier = ValueNotifier({});
 
   @override
   void initState() {
@@ -46,6 +46,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _quranScriptType = widget.storage.getString('quran_script_type', defaultValue: 'hafs');
     _fontSizeMultiplier = widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
     _tajweedNotifier.value = widget.storage.getBool('tajweed_enabled', defaultValue: true);
+    _loadBookmarks();
   }
 
   @override
@@ -53,7 +54,55 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _pageController.dispose();
     _hifzNotifier.dispose();
     _tajweedNotifier.dispose();
+    _bookmarksNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBookmarks() async {
+    final bookmarks = await widget.storage.getBookmarks();
+    final surahNums = bookmarks.map((b) => b['surahNumber'] as int).toSet();
+    _bookmarksNotifier.value = surahNums;
+  }
+
+  Future<void> _toggleSurahBookmark(Surah surahData) async {
+    final current = Set<int>.from(_bookmarksNotifier.value);
+    final isBookmarked = current.contains(surahData.number);
+
+    if (isBookmarked) {
+      await widget.storage.removeBookmark(surahData.number);
+      current.remove(surahData.number);
+      _bookmarksNotifier.value = current;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? 'تم إزالة العلامة من سورة ${surahData.name}'
+                : 'Removed Bookmark from Surah ${surahData.englishName}',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } else {
+      await widget.storage.addBookmark(
+        surahData.number,
+        surahData.englishName,
+        1,
+      );
+      current.add(surahData.number);
+      _bookmarksNotifier.value = current;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? 'تم حفظ علامة لسورة ${surahData.name}'
+                : 'Bookmarked Surah ${surahData.englishName}',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   int _riwayahIdFor(String script) {
@@ -154,26 +203,19 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
               tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_border, color: Color(0xFFE5C158)),
-            onPressed: () {
-              widget.storage.addBookmark(
-                surahData.number,
-                surahData.englishName,
-                1,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    TranslationService.isArabic
-                        ? 'تم حفظ علامة لسورة ${surahData.name}'
-                        : 'Bookmarked Surah ${surahData.englishName}',
-                  ),
-                  duration: const Duration(seconds: 1),
+          ValueListenableBuilder<Set<int>>(
+            valueListenable: _bookmarksNotifier,
+            builder: (context, bookmarkedSurahs, _) {
+              final isBookmarked = bookmarkedSurahs.contains(surahData.number);
+              return IconButton(
+                icon: Icon(
+                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  color: const Color(0xFFE5C158),
                 ),
+                onPressed: () => _toggleSurahBookmark(surahData),
+                tooltip: TranslationService.isArabic ? 'حفظ علامة' : 'Bookmark',
               );
             },
-            tooltip: TranslationService.isArabic ? 'حفظ علامة' : 'Bookmark',
           ),
           PopupMenuButton<String>(
             icon: Icon(

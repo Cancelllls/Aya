@@ -1,28 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Aya</string>
+    <string name="widget_app_subtitle">Aya</string>
+
     <string name="widget_prayer_times_label">Aya - Prayer Times</string>
+    <string name="widget_prayer_times_title">Prayer Times</string>
     <string name="widget_prayer_times_description">Displays today\'s prayer times at your location.</string>
     
     <string name="widget_verse_label">Aya - Daily Verse</string>
+    <string name="widget_verse_title">Verse of the Day</string>
     <string name="widget_verse_description">Displays a selected verse from the Holy Quran daily.</string>
     
     <string name="widget_dhikr_label">Aya - Daily Dhikr</string>
+    <string name="widget_dhikr_title">Daily Remembrance</string>
     <string name="widget_dhikr_description">Displays daily Islamic supplications and remembrances.</string>
     
     <string name="widget_hadith_label">Aya - Daily Hadith</string>
+    <string name="widget_hadith_title">Hadith of the Day</string>
     <string name="widget_hadith_description">Displays a daily narration from the Prophet (PBUH).</string>
     
     <string name="widget_tasbih_label">Aya - Tasbih Counter</string>
+    <string name="widget_tasbih_title">Tasbih Counter</string>
     <string name="widget_tasbih_description">A quick tap counter widget for daily remembrance.</string>
+    
     <string name="widget_hijri_label">Aya - Hijri Date</string>
+    <string name="widget_hijri_title">Hijri Calendar</string>
     <string name="widget_hijri_description">Displays the current Islamic Hijri date.</string>
     
     <string name="widget_next_prayer_label">Aya - Next Prayer</string>
+    <string name="widget_next_prayer_title">Next Prayer</string>
     <string name="widget_next_prayer_description">Countdown to the next prayer time.</string>
     
     <string name="widget_asma_label">Aya - Asma ul Husna</string>
+    <string name="widget_asma_title">Asma ul Husna</string>
     <string name="widget_asma_description">Displays one of the 99 Names of Allah.</string>
+    
     <string name="widget_combined_label">Aya - Prayer Countdown</string>
+    <string name="widget_combined_title">Prayer Countdown</string>
     <string name="widget_combined_description">Live countdown to next prayer with all prayer times.</string>
+    
     <string name="adhan_playing">Adhan is playing — tap to open the app</string>
 </resources>

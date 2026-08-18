@@ -12,6 +12,7 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../services/database_service.dart';
 import '../services/hadith_database_service.dart';
+import '../utils/text_helpers.dart';
 import 'hadith_explanation_screen.dart';
 import '../widgets/share_card_dialog.dart';
 
@@ -304,13 +305,18 @@ class _HadithScreenState extends State<HadithScreen> {
   }
 
   void _injectGrades(List<dynamic> hadiths, String bookId) {
-    // Bukhari and Muslim: entire collection is Sahih
-    if (bookId == 'bukhari' || bookId == 'muslim') {
+    final isAr = TranslationService.isArabic;
+    final isSahihCollection = bookId == 'bukhari' ||
+        bookId == 'muslim' ||
+        bookId == 'riyadussalihin' ||
+        bookId == 'malik';
+
+    if (isSahihCollection) {
       for (var h in hadiths) {
         final existing = List<dynamic>.from(h['grades'] ?? []);
         if (existing.isEmpty) {
           h['grades'] = [
-            {'grade': TranslationService.isArabic ? 'صحيح' : 'Sahih'},
+            {'grade': isAr ? 'صحيح' : 'Sahih'},
           ];
         }
       }
@@ -318,30 +324,44 @@ class _HadithScreenState extends State<HadithScreen> {
     }
 
     final bookGrades = _gradesLookup?[bookId];
-    if (bookGrades == null) return;
 
     for (var h in hadiths) {
-      final num = h['number'] as int;
-      if (num > 0 && num <= bookGrades.length) {
+      final numRaw = h['number'] ?? h['hadith_number'] ?? h['hadithnumber'];
+      final num = numRaw is int
+          ? numRaw
+          : (int.tryParse(numRaw?.toString() ?? '') ?? 0);
+      final existing = List<dynamic>.from(h['grades'] ?? []);
+
+      if (bookGrades != null && num > 0 && num <= bookGrades.length) {
         final grade = bookGrades[num - 1];
-        if (grade != null && grade.isNotEmpty) {
-          final existing = List<dynamic>.from(h['grades'] ?? []);
+        if (grade != null && grade.trim().isNotEmpty) {
           final alreadyExists = existing.any((g) {
             final gStr = g is Map ? g['grade']?.toString() : g.toString();
-            return gStr == grade;
+            return gStr == grade.trim();
           });
           if (!alreadyExists) {
-            existing.add({'grade': grade});
-            h['grades'] = existing;
+            existing.add({'grade': grade.trim()});
           }
         }
       }
+
+      // If still empty (e.g. null in grades.json or missing collection entry), inject a clean fallback badge
+      if (existing.isEmpty) {
+        existing.add({
+          'grade': isAr ? 'مقبول' : 'Acceptable',
+        });
+      }
+
+      h['grades'] = existing;
     }
   }
 
   bool _isSahihBook(dynamic h) {
     final bookId = h['_bookId'] as String? ?? _selectedBook.id;
-    return bookId == 'bukhari' || bookId == 'muslim';
+    return bookId == 'bukhari' ||
+        bookId == 'muslim' ||
+        bookId == 'riyadussalihin' ||
+        bookId == 'malik';
   }
 
   List<dynamic> _getFilteredHadiths() {
@@ -958,71 +978,82 @@ class _HadithScreenState extends State<HadithScreen> {
                                               ],
                                             ),
                                             const SizedBox(width: 8),
-                                            if ((h['grades'] != null &&
-                                                    (h['grades'] as List)
-                                                        .isNotEmpty) ||
-                                                _isSahihBook(h) ||
-                                                _selectedBook.id == 'bukhari' ||
-                                                _selectedBook.id == 'muslim')
-                                              Expanded(
-                                                child: Wrap(
-                                                  alignment: WrapAlignment.end,
-                                                  spacing: 4,
-                                                  runSpacing: 4,
-                                                  children: () {
-                                                    final grades =
-                                                        List<dynamic>.from(
-                                                          h['grades'] ?? [],
+                                            Expanded(
+                                              child: Wrap(
+                                                alignment: WrapAlignment.end,
+                                                spacing: 4,
+                                                runSpacing: 4,
+                                                children: () {
+                                                  final grades =
+                                                      List<dynamic>.from(
+                                                        h['grades'] ?? [],
+                                                      );
+                                                  final effectiveBookId =
+                                                      h['_bookId'] ??
+                                                          _selectedBook.id;
+                                                  if (grades.isEmpty) {
+                                                    final isSahihCol = effectiveBookId == 'bukhari' ||
+                                                        effectiveBookId == 'muslim' ||
+                                                        effectiveBookId == 'riyadussalihin' ||
+                                                        effectiveBookId == 'malik';
+                                                    grades.add({
+                                                      'grade': TranslationService.isArabic
+                                                          ? (isSahihCol ? 'صحيح' : 'مقبول')
+                                                          : (isSahihCol ? 'Sahih' : 'Acceptable'),
+                                                    });
+                                                  }
+                                                  return grades.map<Widget>((
+                                                    g,
+                                                  ) {
+                                                    final gradeStr =
+                                                        g['grade']
+                                                            ?.toString() ??
+                                                        '';
+                                                    final isSahih =
+                                                        gradeStr
+                                                            .toLowerCase()
+                                                            .contains(
+                                                              'sahih',
+                                                            ) ||
+                                                        gradeStr.contains(
+                                                          'صحيح',
                                                         );
-                                                    final effectiveBookId =
-                                                        h['_bookId'] ??
-                                                            _selectedBook.id;
-                                                    if (grades.isEmpty &&
-                                                        (effectiveBookId ==
-                                                                'bukhari' ||
-                                                            effectiveBookId ==
-                                                                'muslim')) {
-                                                      grades.add({
-                                                        'grade':
-                                                            TranslationService
-                                                                .isArabic
-                                                            ? 'صحيح'
-                                                            : 'Sahih',
-                                                      });
-                                                    }
-                                                    return grades.map<Widget>((
-                                                      g,
-                                                    ) {
-                                                      final gradeStr =
-                                                          g['grade']
-                                                              ?.toString() ??
-                                                          '';
-                                                      final isSahih =
-                                                          gradeStr
-                                                              .toLowerCase()
-                                                              .contains(
-                                                                'sahih',
-                                                              ) ||
-                                                          gradeStr.contains(
-                                                            'صحيح',
-                                                          );
-                                                      final isDaif =
-                                                          gradeStr
-                                                              .toLowerCase()
-                                                              .contains(
-                                                                'daif',
-                                                              ) ||
-                                                          gradeStr.contains(
-                                                            'ضعيف',
-                                                          );
-                                                      final color = isSahih
-                                                          ? Colors.green
-                                                          : (isDaif
-                                                                ? Colors
-                                                                      .redAccent
+                                                    final isHasan =
+                                                        gradeStr
+                                                            .toLowerCase()
+                                                            .contains(
+                                                              'hasan',
+                                                            ) ||
+                                                        gradeStr.contains(
+                                                          'حسن',
+                                                        ) ||
+                                                        gradeStr.contains(
+                                                          'مقبول',
+                                                        );
+                                                    final isDaif =
+                                                        gradeStr
+                                                            .toLowerCase()
+                                                            .contains(
+                                                              'daif',
+                                                            ) ||
+                                                        gradeStr.contains(
+                                                          'ضعيف',
+                                                        ) ||
+                                                        gradeStr.contains(
+                                                          'منكر',
+                                                        ) ||
+                                                        gradeStr.contains(
+                                                          'موضوع',
+                                                        );
+                                                    final color = isSahih
+                                                        ? Colors.green
+                                                        : (isHasan
+                                                            ? Colors.teal
+                                                            : (isDaif
+                                                                ? Colors.redAccent
                                                                 : const Color(
                                                                     0xFFE5C158,
-                                                                  ));
+                                                                  )));
 
                                                       return Container(
                                                         padding:
@@ -1063,22 +1094,33 @@ class _HadithScreenState extends State<HadithScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 12),
-                                        if (h['arabic'].toString().isNotEmpty &&
-                                            _displayLang == 'ara')
-                                          Text(
-                                            h['arabic'],
-                                            style: TextStyle(fontFamily: 'Amiri',
-                                              fontSize: 18,
-                                              height: 1.8,
-                                              fontWeight: FontWeight.w500,
-                                              color: theme
-                                                  .textTheme
-                                                  .bodyLarge
-                                                  ?.color,
-                                            ),
-                                            textAlign: TextAlign.start,
-                                            textDirection: TextDirection.rtl,
-                                          ),
+                                         if (h['arabic'].toString().isNotEmpty &&
+                                             _displayLang == 'ara')
+                                           _searchController.text.trim().isNotEmpty
+                                               ? _buildHighlightedText(
+                                                   text: h['arabic'].toString(),
+                                                   query: _searchController.text,
+                                                   style: TextStyle(
+                                                     fontFamily: 'Amiri',
+                                                     fontSize: 18,
+                                                     height: 1.8,
+                                                     fontWeight: FontWeight.w500,
+                                                     color: theme.textTheme.bodyLarge?.color,
+                                                   ),
+                                                   highlightColor: theme.primaryColor.withValues(alpha: 0.3),
+                                                 )
+                                               : Text(
+                                                   h['arabic'].toString(),
+                                                   style: TextStyle(
+                                                     fontFamily: 'Amiri',
+                                                     fontSize: 18,
+                                                     height: 1.8,
+                                                     fontWeight: FontWeight.w500,
+                                                     color: theme.textTheme.bodyLarge?.color,
+                                                   ),
+                                                   textAlign: TextAlign.start,
+                                                   textDirection: TextDirection.rtl,
+                                                 ),
                                         if (h['english']
                                                 .toString()
                                                 .isNotEmpty &&
@@ -1159,6 +1201,53 @@ class _HadithScreenState extends State<HadithScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHighlightedText({
+    required String text,
+    required String query,
+    required TextStyle style,
+    required Color highlightColor,
+  }) {
+    if (query.trim().isEmpty) {
+      return Text(text, style: style, textAlign: TextAlign.start, textDirection: TextDirection.rtl);
+    }
+
+    final cleanQuery = stripTashkeel(query.trim().toLowerCase());
+    final cleanText = stripTashkeel(text.toLowerCase());
+
+    if (!cleanText.contains(cleanQuery)) {
+      return Text(text, style: style, textAlign: TextAlign.start, textDirection: TextDirection.rtl);
+    }
+
+    final spans = <TextSpan>[];
+    int start = 0;
+    final matches = cleanQuery.allMatches(cleanText);
+
+    for (final match in matches) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: text.substring(start, match.start), style: style));
+      }
+      final matchEnd = match.end <= text.length ? match.end : text.length;
+      final matchStart = match.start < text.length ? match.start : 0;
+      spans.add(TextSpan(
+        text: text.substring(matchStart, matchEnd),
+        style: style.copyWith(
+          backgroundColor: highlightColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ));
+      start = matchEnd;
+    }
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: style));
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans),
+      textAlign: TextAlign.start,
+      textDirection: TextDirection.rtl,
     );
   }
 }

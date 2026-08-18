@@ -4,8 +4,8 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.os.Build
+import android.view.View
 import android.widget.RemoteViews
-import android.graphics.Color
 import android.util.Log
 
 class AyaNextPrayerWidgetProvider : AppWidgetProvider() {
@@ -24,28 +24,32 @@ class AyaNextPrayerWidgetProvider : AppWidgetProvider() {
                 val m3Theme = WidgetUtils.getM3Theme(context, prefs)
 
                 val isArabic = WidgetUtils.getSafeBoolean(prefs, "widget_is_arabic", true)
-                val nextPrayerName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "Asr")
-                val nextPrayerTime = WidgetUtils.getSafeString(prefs, "widget_widget_next_display", "")
-                val nextPrayerEpoch = WidgetUtils.getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
+                val upcoming = WidgetUtils.getNextUpcomingPrayer(context, prefs)
+                val nowMs = System.currentTimeMillis()
 
                 views.setInt(R.id.widget_root, "setBackgroundResource", m3Theme.bgDrawable)
                 views.setTextViewText(R.id.next_prayer_title, if (isArabic) "الصلاة القادمة" else "Next Prayer")
                 views.setTextColor(R.id.next_prayer_title, m3Theme.primaryColor)
 
-                views.setTextViewText(R.id.next_prayer_name, nextPrayerName)
+                views.setTextViewText(R.id.next_prayer_name, upcoming.name)
                 views.setTextColor(R.id.next_prayer_name, m3Theme.textColor)
 
-                val nowMs = System.currentTimeMillis()
-                if (nextPrayerEpoch > nowMs) {
-                    val durationMs = nextPrayerEpoch - nowMs
+                if (upcoming.epochMs > nowMs) {
+                    val durationMs = upcoming.epochMs - nowMs
                     val targetElapsedRealtime = android.os.SystemClock.elapsedRealtime() + durationMs
                     views.setChronometer(R.id.next_prayer_chronometer, targetElapsedRealtime, null, true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.next_prayer_chronometer, true)
                     }
                     views.setTextColor(R.id.next_prayer_chronometer, m3Theme.primaryColor)
+                    views.setViewVisibility(R.id.next_prayer_chronometer, View.VISIBLE)
+                    views.setViewVisibility(R.id.next_prayer_time, View.GONE)
                 } else {
-                    views.setTextViewText(R.id.next_prayer_time, nextPrayerTime.ifEmpty { "--:--" })
+                    // STOP chronometer cleanly so it NEVER displays negative numbers (-00:01)!
+                    views.setChronometer(R.id.next_prayer_chronometer, android.os.SystemClock.elapsedRealtime(), null, false)
+                    views.setViewVisibility(R.id.next_prayer_chronometer, View.GONE)
+                    views.setViewVisibility(R.id.next_prayer_time, View.VISIBLE)
+                    views.setTextViewText(R.id.next_prayer_time, upcoming.formattedTime.ifEmpty { "--:--" })
                     views.setTextColor(R.id.next_prayer_time, m3Theme.primaryColor)
                 }
 

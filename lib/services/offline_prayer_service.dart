@@ -1,6 +1,7 @@
 import 'package:adhan/adhan.dart';
 import 'package:hijri/hijri_calendar.dart';
 import '../models/prayer_models.dart';
+import 'storage_service.dart';
 
 class OfflinePrayerService {
   static String _formatTime(DateTime? dt) {
@@ -71,7 +72,11 @@ class OfflinePrayerService {
 
     final dateComps = DateComponents.from(now);
     final prayerTimes = PrayerTimes(coords, dateComps, params);
-    final hijri = HijriCalendar.fromDate(now);
+    
+    final storage = await StorageService.getInstance();
+    final hijriOffset = storage.getInt('hijri_day_offset', defaultValue: 0);
+    final adjustedDate = now.add(Duration(days: hijriOffset));
+    final hijri = HijriCalendar.fromDate(adjustedDate);
 
     return PrayerTimeData(
       fajr: _formatTime(prayerTimes.fajr),

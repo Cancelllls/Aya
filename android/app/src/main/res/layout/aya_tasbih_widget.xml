@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background_dark"
     android:padding="12dp">
@@ -20,8 +20,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="السبحة الإلكترونية"
-            android:textColor="#E5C158"
+            android:text="@string/widget_tasbih_title"
+            android:textColor="@android:color/system_accent1_500"
             android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="start" />
@@ -30,8 +30,8 @@
             android:id="@+id/widget_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Aya"
-            android:textColor="#94A3B8"
+            android:text="@string/widget_app_subtitle"
+            android:textColor="@android:color/system_neutral2_400"
             android:textSize="10sp"
             android:gravity="end" />
     </LinearLayout>
@@ -47,7 +47,8 @@
     <!-- Tasbih Content -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingVertical="2dp">
@@ -58,7 +59,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="سُبْحَانَ ٱللَّٰهِ"
-            android:textColor="#F8FAFC"
+            android:textColor="@android:color/system_neutral1_100"
             android:textSize="14sp"
             android:gravity="center_vertical"
             android:ellipsize="end"
@@ -79,7 +80,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0 / 33"
-                android:textColor="#000000"
+                android:textColor="@android:color/system_neutral1_900"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>

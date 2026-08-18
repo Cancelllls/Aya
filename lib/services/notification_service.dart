@@ -124,6 +124,14 @@ class NotificationService {
   String? _lastAudioSubtitle;
   bool? _lastAudioIsPlaying;
 
+  DateTime _parsePrayerToday(DateTime dt, String timeStr) {
+    final year = dt.year;
+    final month = dt.month.toString().padLeft(2, '0');
+    final day = dt.day.toString().padLeft(2, '0');
+    final cleanTime = timeStr.trim().split(' ')[0].padLeft(5, '0');
+    return DateTime.parse("$year-$month-${day}T$cleanTime:00");
+  }
+
   static const List<int> islamicVibrationPattern = [
     0,
     300,
@@ -491,11 +499,15 @@ class NotificationService {
       final mode = getPrayerAdhanMode(prayerName);
       if (mode == 'silent' || mode == 'vibrate') return '';
       final isFajr = prayerName == 'Fajr' || prayerName == 'fajr';
-      final reciter = isFajr ? fajrReciter : adhanReciter;
+      final pLower = prayerName.toLowerCase();
+      final reciterKey = isFajr
+          ? storage.getString('fajr_adhan_reciter', defaultValue: 'mishary')
+          : (storage.getString('adhan_reciter_$pLower') ??
+              storage.getString('adhan_reciter', defaultValue: 'mishary'));
       final filename = isFajr
-          ? AdhanAudioService.fajrReciterUrls[reciter]
-          : AdhanAudioService.standardReciterUrls[reciter];
-      if (filename == null) return 'default_adhan';
+          ? AdhanAudioService.fajrReciterUrls[reciterKey]
+          : AdhanAudioService.standardReciterUrls[reciterKey];
+      if (filename == null) return 'adhan_meshary_al_fasy_kuwait';
       return filename.replaceAll('.mp3', '');
     }
 
@@ -673,23 +685,72 @@ class NotificationService {
           }
         }
 
-        // === ESCALATING END-OF-WINDOW REMINDERS ===
+        // === ESCALATING END-OF-WINDOW REMINDERS (Strict Islamic Fiqh Calculation) ===
         final bool escalatingEnabled = storage.getBool('escalating_reminders', defaultValue: false);
         if (escalatingEnabled && dayOffset == 0) {
-          final endWindowTime = scheduledDate.subtract(const Duration(minutes: 15));
-          if (endWindowTime.isAfter(now)) {
-            try {
+          try {
+            final sunriseDt = _parsePrayerToday(scheduledDate, prayerData.sunrise);
+            final dhuhrDt = _parsePrayerToday(scheduledDate, prayerData.dhuhr);
+            final asrDt = _parsePrayerToday(scheduledDate, prayerData.asr);
+            final maghribDt = _parsePrayerToday(scheduledDate, prayerData.maghrib);
+            final ishaDt = _parsePrayerToday(scheduledDate, prayerData.isha);
+
+            final ishaFiqh = storage.getString('isha_end_window_fiqh', defaultValue: 'shafi');
+
+            // Calculate Night Duration = Next Fajr - Maghrib
+            final nextDayFajrDt = _parsePrayerToday(scheduledDate.add(const Duration(days: 1)), prayerData.fajr);
+            final nightDurationMs = nextDayFajrDt.difference(maghribDt).inMilliseconds;
+
+            // Shafi'i/Majority = Midnight (1/2 of night), Hanafi = First Third (1/3 of night)
+            final ishaEndDt = (ishaFiqh == 'hanafi')
+                ? maghribDt.add(Duration(milliseconds: nightDurationMs ~/ 3))
+                : maghribDt.add(Duration(milliseconds: nightDurationMs ~/ 2));
+
+            // Fiqh End-of-Window Alert Times (15 mins before preferred window ends):
+            // 1. Fajr: ends at Sunrise (الشروق)
+            // 2. Dhuhr: ends at Asr (العصر)
+            // 3. Asr: preferred window ends at Yellowing of Sun / اصفرار الشمس (15m before Maghrib)
+            // 4. Maghrib: ends at Isha (العشاء)
+            // 5. Isha: preferred window ends at Midnight (Shafi'i) or 1/3 Night (Hanafi)
+
+            DateTime? targetAlertTime;
+            String alertLabel = '';
+
+            switch (name.toLowerCase()) {
+              case 'fajr':
+                targetAlertTime = sunriseDt.subtract(const Duration(minutes: 15));
+                alertLabel = isAr ? '⚠️ ينتهي وقت صلاة الفجر (الشروق) قريباً' : '⚠️ Fajr time ending soon (Sunrise)';
+                break;
+              case 'dhuhr':
+                targetAlertTime = asrDt.subtract(const Duration(minutes: 15));
+                alertLabel = isAr ? '⚠️ ينتهي وقت صلاة الظهر قريباً' : '⚠️ Dhuhr time ending soon';
+                break;
+              case 'asr':
+                targetAlertTime = maghribDt.subtract(const Duration(minutes: 30));
+                alertLabel = isAr ? '⚠️ ينتهي وقت صلاة العصر المستحب (اصفرار الشمس) قريباً' : '⚠️ Asr preferred time ending soon';
+                break;
+              case 'maghrib':
+                targetAlertTime = ishaDt.subtract(const Duration(minutes: 15));
+                alertLabel = isAr ? '⚠️ ينتهي وقت صلاة المغرب قريباً' : '⚠️ Maghrib time ending soon';
+                break;
+              case 'isha':
+                targetAlertTime = ishaEndDt.subtract(const Duration(minutes: 15));
+                alertLabel = (ishaFiqh == 'hanafi')
+                    ? (isAr ? '⚠️ ينتهي وقت صلاة العشاء المستحب (ثلث الليل) قريباً' : '⚠️ Isha preferred time ending soon (1/3 Night)')
+                    : (isAr ? '⚠️ ينتهي وقت صلاة العشاء المستحب (منتصف الليل) قريباً' : '⚠️ Isha preferred time ending soon (Midnight)');
+                break;
+            }
+
+            if (targetAlertTime != null && targetAlertTime.isAfter(now) && alertLabel.isNotEmpty) {
               await AdhanNativeController.instance.schedulePreAdhanAlarm(
                 id: notificationId + 6000,
-                time: endWindowTime,
-                prayerName: isAr
-                    ? '⚠️ ينتهي وقت صلاة $localizedName قريباً'
-                    : '⚠️ $localizedName time ending soon',
+                time: targetAlertTime,
+                prayerName: alertLabel,
                 minutesBefore: 15,
                 alertMode: 'sound',
               );
-            } catch (_) {}
-          }
+            }
+          } catch (_) {}
         }
 
         // === RAMADAN: IMSAK & IFTAR ===

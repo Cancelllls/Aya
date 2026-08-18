@@ -132,7 +132,7 @@ class StorageService {
   // Dark/Light Theme
   bool isDarkMode() {
     final preset = getString('theme_preset', defaultValue: 'dark');
-    return preset != 'light' && preset != 'white_monet';
+    return preset == 'dark' || preset == 'black' || preset == 'dark_monet';
   }
 
   // Location Cache

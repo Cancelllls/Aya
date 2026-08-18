@@ -76,7 +76,8 @@ class AyaTasbihWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_tasbih_dhikr, dhikrText)
                 views.setTextColor(R.id.widget_tasbih_dhikr, textColor)
 
-                views.setTextViewText(R.id.widget_tasbih_count, "$count / $target")
+                val displayCountText = if (target > 0) "$count / $target" else "$count"
+                views.setTextViewText(R.id.widget_tasbih_count, displayCountText)
                 views.setTextColor(R.id.widget_tasbih_count, badgeTextColor)
                 views.setInt(R.id.widget_tasbih_count_container, "setBackgroundResource", badgeBg)
 

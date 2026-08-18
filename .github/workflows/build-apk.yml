@@ -2,46 +2,16 @@ name: Aya Release Build
 
 on:
   workflow_dispatch:
-  # push disabled during F-Droid submission to keep tags stable
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
     paths-ignore:
       - 'releases/**'
+      - '**.md'
 
 jobs:
-  # ── Auto-Bump Version ────────────────────────────────────────────────
-  bump:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: Bump Patch Version
-        id: bump
-        run: |
-          OLD_NEW=$(python3 tools/bump_version.py)
-          OLD=$(echo "$OLD_NEW" | awk '{print $1}')
-          NEW=$(echo "$OLD_NEW" | awk '{print $2}')
-          echo "old=$OLD" >> $GITHUB_OUTPUT
-          echo "version=$NEW" >> $GITHUB_OUTPUT
-          echo "Bumped: $OLD → $NEW"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add lib/version.dart pubspec.yaml
-          git commit -m "chore: bump version to v${NEW} [skip ci]"
-          git push origin main
-
   # ── Google Play Build (IAP) ──────────────────────────────────────────
   google-play:
-    needs: bump
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -72,7 +42,6 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          # Decode keystore and create key.properties
           echo "$KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
           cat > android/key.properties << EOF
           storePassword=${STORE_PASSWORD}
@@ -80,10 +49,6 @@ jobs:
           keyAlias=${KEY_ALIAS}
           storeFile=upload-keystore.jks
           EOF
-
-      - name: Set Version
-        run: |
-          echo "Building Google Play APK for v${{ needs.bump.outputs.version }}"
 
       - name: Install dependencies
         run: flutter pub get
@@ -93,11 +58,10 @@ jobs:
 
       - name: Rename APKs for Google Play
         run: |
-          VER="${{ needs.bump.outputs.version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
             cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
-               release_apks/Aya-v${VER}-googleplay-${arch}.apk
+               release_apks/Aya-googleplay-${arch}.apk
           done
 
       - name: Upload Google Play APKs
@@ -106,9 +70,8 @@ jobs:
           name: google-play-apks
           path: release_apks/
 
-  # ── F-Droid / Open Source Build (PayPal only, no IAP) ────────────────
+  # ── F-Droid / Open Source Build ──────────────────────────────────────
   fdroid:
-    needs: bump
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -146,12 +109,6 @@ jobs:
           keyAlias=${KEY_ALIAS}
           storeFile=upload-keystore.jks
           EOF
-
-      - name: Set Version
-        run: |
-          VER="${{ needs.bump.outputs.version }}"
-          VERSION_CODE=${{ github.run_number }}
-          sed -i "s/^version: .*/version: ${VER}+${VERSION_CODE}/" pubspec.yaml
 
       - name: Strip Google IAP for F-Droid
         run: |
@@ -166,11 +123,10 @@ jobs:
 
       - name: Rename APKs for F-Droid
         run: |
-          VER="${{ needs.bump.outputs.version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
             cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
-               release_apks/Aya-v${VER}-fdroid-${arch}.apk
+               release_apks/Aya-fdroid-${arch}.apk
           done
 
       - name: Upload F-Droid APKs
@@ -179,9 +135,9 @@ jobs:
           name: fdroid-apks
           path: release_apks/
 
-  # ── Release ───────────────────────────────────────────────────────────
+  # ── Bump & Release (Runs ONLY on Successful Builds) ─────────────────
   release:
-    needs: [bump, google-play, fdroid]
+    needs: [google-play, fdroid]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -192,12 +148,21 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Set Version
+      - name: Bump Version on Successful Build
         id: version
         run: |
-          VER="${{ needs.bump.outputs.version }}"
-          echo "tag=v${VER}" >> $GITHUB_OUTPUT
-          echo "display=${VER}" >> $GITHUB_OUTPUT
+          OLD_NEW=$(python3 tools/bump_version.py)
+          OLD=$(echo "$OLD_NEW" | awk '{print $1}')
+          NEW=$(echo "$OLD_NEW" | awk '{print $2}')
+          echo "tag=v${NEW}" >> $GITHUB_OUTPUT
+          echo "display=${NEW}" >> $GITHUB_OUTPUT
+          echo "Bumped: $OLD → $NEW"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/version.dart pubspec.yaml
+          git commit -m "chore: bump version to v${NEW} [skip ci]"
+          git push origin main
 
       - name: Download Google Play APKs
         uses: actions/download-artifact@v6
@@ -211,11 +176,25 @@ jobs:
           name: fdroid-apks
           path: apks/
 
+      - name: Rename release artifacts with new version tag
+        run: |
+          VER="${{ steps.version.outputs.display }}"
+          cd apks
+          for file in Aya-googleplay-*.apk; do
+            if [ -f "$file" ]; then
+              mv "$file" "${file/Aya-googleplay-/Aya-v${VER}-googleplay-}"
+            fi
+          done
+          for file in Aya-fdroid-*.apk; do
+            if [ -f "$file" ]; then
+              mv "$file" "${file/Aya-fdroid-/Aya-v${VER}-fdroid-}"
+            fi
+          done
+
       - name: Generate Changelog
         id: changelog
         run: |
           CHANGELOG=$(python3 tools/gen_changelog.py "${{ steps.version.outputs.display }}")
-          # Write to file to avoid GitHub output escaping issues
           echo "$CHANGELOG" > /tmp/changelog.md
 
       - name: Create Release

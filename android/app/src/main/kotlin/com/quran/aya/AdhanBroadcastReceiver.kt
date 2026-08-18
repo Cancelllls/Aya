@@ -25,22 +25,29 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.media.VolumeProviderCompat
 import android.util.Log
 
-/**
- * Five-Prayers-style adhan architecture:
- * AlarmManager → BroadcastReceiver → silent notification card +
- * native MediaPlayer + MediaSession (volume-key stop) +
- * accelerometer (flip-face-down stop).
- */
 class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
 
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context, intent: Intent) {
         val alarmId = intent.getIntExtra("ALARM_ID", 0)
         val mp3ResName = intent.getStringExtra("MP3_RES_NAME") ?: ""
-        val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
+        val rawPrayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val enableVibration = intent.getBooleanExtra("ENABLE_VIBRATION", true)
         val scheduledTimestamp = intent.getLongExtra("SCHEDULED_TIMESTAMP", 0L)
         val maxDurationMs = intent.getIntExtra("MAX_DURATION_MS", 0)
+
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
+        val isAr = langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
+
+        val prayerName = when (rawPrayerName.lowercase()) {
+            "fajr", "الفجر" -> if (isAr) "الفجر" else "Fajr"
+            "dhuhr", "الظهر" -> if (isAr) "الظهر" else "Dhuhr"
+            "asr", "العصر" -> if (isAr) "العصر" else "Asr"
+            "maghrib", "المغرب" -> if (isAr) "المغرب" else "Maghrib"
+            "isha", "العشاء" -> if (isAr) "العشاء" else "Isha"
+            else -> rawPrayerName
+        }
 
         val channelId = "adhan_alert_v5"
         val notifManager = NotificationManagerCompat.from(context)
@@ -49,10 +56,12 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         val now = System.currentTimeMillis()
         if (scheduledTimestamp > 0 && now - scheduledTimestamp > 5 * 60 * 1000) {
             val iconRes = context.resources.getIdentifier("ic_notification", "drawable", context.packageName)
+            val missedTitle = if (isAr) "⚠️ فاتك وقت $prayerName" else "⚠️ Missed $prayerName prayer time"
+            val missedText = if (isAr) "تأخر التنبيه بسبب وضع توفير الطاقة" else "Alert delayed due to battery saver"
             val missedNotif = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
-                .setContentTitle("⚠️ فاتك وقت $prayerName")
-                .setContentText("تأخر التنبيه بسبب وضع توفير الطاقة")
+                .setContentTitle(missedTitle)
+                .setContentText(missedText)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .build()
@@ -67,7 +76,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         )
         wakeLock.acquire(10 * 60 * 1000L)
 
-        // ── Notification card (silent — no sound, no vibration, no stop button) ─
+        // ── Notification card (silent — no sound, no vibration) ─
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId, "Adhan Alert",
@@ -94,7 +103,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         )
 
         val fullScreenIntent = Intent(context, AdhanLockscreenActivity::class.java).apply {
-            putExtra("PRAYER_NAME", prayerName)
+            putExtra("PRAYER_NAME", rawPrayerName)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val fullScreenPending = PendingIntent.getActivity(
@@ -102,16 +111,13 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val notifTitle = if (isAr) "حان الآن موعد أذان $prayerName" else "It is now time for $prayerName Adhan"
+        val notifText = if (isAr) "اضغط لفتح التطبيق" else "Tap to open Aya app"
+
         val notif = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
-            .setContentTitle(prayerName)
-            .setContentText(
-                context.getString(
-                    context.resources.getIdentifier(
-                        "adhan_playing", "string", context.packageName
-                    )
-                ).ifEmpty { "Adhan is playing — tap to open the app" }
-            )
+            .setContentTitle(notifTitle)
+            .setContentText(notifText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(fullScreenPending, true)
@@ -128,12 +134,12 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             context.startActivity(fullScreenIntent)
         } catch (_: Exception) {}
 
-        // ── Vibration (Fajr-specific pattern vs standard) ─────────────────────
+        // ── Vibration ─────────────────────
         if (enableVibration) {
             try {
                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (vibrator.hasVibrator()) {
-                    val isFajr = prayerName.contains("الفجر") || prayerName.lowercase().contains("fajr")
+                    val isFajr = rawPrayerName.contains("الفجر") || rawPrayerName.lowercase().contains("fajr")
                     val pattern = if (isFajr)
                         longArrayOf(0, 1000, 300, 1000, 300, 1000, 300, 500, 200, 500)
                     else
@@ -156,15 +162,13 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         }
 
         // ── Accelerometer (flip-face-down stop) ──────────────────────
-        var accelSensorManager: SensorManager? = null
         try {
             val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            accelSensorManager = sm
             val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
             sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
         } catch (_: Exception) {}
 
-        // ── MediaPlayer (fallback to default_adhan if invalid resName) ────────
+        // ── MediaPlayer Reciter Selection ─────────────────────────────
         val mappedResName = when {
             mp3ResName.contains("meshary") || mp3ResName == "mishary" -> "adhan_meshary_al_fasy_kuwait"
             mp3ResName.contains("abdelbasset") || mp3ResName == "abdul_basit" -> "adhan_abdelbasset_abdessamad_egypte"
@@ -178,13 +182,10 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             mp3ResName.contains("fajr_al_haram") || mp3ResName == "madinah" -> "adhan_fajr_al_haram_el_madani_saoudia"
             mp3ResName.contains("haddiwi") || mp3ResName == "nurdin" -> "adhan_fajr_nurdin_al_haddiwi_fajr_morocco"
             mp3ResName.isNotEmpty() -> mp3ResName.replace(".mp3", "")
-            else -> "default_adhan"
+            else -> "adhan_meshary_al_fasy_kuwait"
         }
 
         var resId = context.resources.getIdentifier(mappedResName, "raw", context.packageName)
-        if (resId == 0) {
-            resId = context.resources.getIdentifier("default_adhan", "raw", context.packageName)
-        }
         if (resId == 0) {
             resId = context.resources.getIdentifier("adhan_meshary_al_fasy_kuwait", "raw", context.packageName)
         }
@@ -194,21 +195,39 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             return
         }
 
-        lateinit var player: MediaPlayer
-        lateinit var mediaSession: MediaSessionCompat
+        var player: MediaPlayer? = null
+        var mediaSession: MediaSessionCompat? = null
 
         fun triggerPostAdhanActions() {
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-
-            // 1. Post-Adhan Dua Notification
+            // 1. Silent Post-Adhan Dua Notification (Does NOT cut off audio!)
             val duaEnabled = prefs.getBoolean("flutter.post_adhan_dua", true)
             if (duaEnabled) {
-                val duaNotif = NotificationCompat.Builder(context, channelId)
+                val duaChannelId = "dua_silent_channel"
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val duaChannel = NotificationChannel(
+                        duaChannelId, "Dua Notification",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    ).apply {
+                        setSound(null, null)
+                        enableVibration(false)
+                    }
+                    notifManager.createNotificationChannel(duaChannel)
+                }
+
+                val duaTitle = if (isAr) "دعاء بعد الأذان" else "Dua After Adhan"
+                val duaText = if (isAr)
+                    "اللهم رب هذه الدعوة التامة والصلاة القائمة آت محمداً الوسيلة والفضيلة وابعثه مقاماً محموداً الذي وعدته، رضيت بالله رباً وبالإسلام ديناً وبمحمد صلى الله عليه وسلم نبياً ورسولاً."
+                else
+                    "O Allah, Lord of this perfect call and established prayer, grant Muhammad the intercession and favor, and raise him to the praised station You promised him."
+
+                val duaNotif = NotificationCompat.Builder(context, duaChannelId)
                     .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
-                    .setContentTitle("دعاء بعد الأذان")
-                    .setContentText("اللهم رب هذه الدعوة التامة والصلاة القائمة آت محمداً الوسيلة والفضيلة وابعثه مقاماً محموداً الذي وعدته")
-                    .setStyle(NotificationCompat.BigTextStyle().bigText("اللهم رب هذه الدعوة التامة والصلاة القائمة آت محمداً الوسيلة والفضيلة وابعثه مقاماً محموداً الذي وعدته، رضيت بالله رباً وبالإسلام ديناً وبمحمد صلى الله عليه وسلم نبياً ورسولاً."))
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setContentTitle(duaTitle)
+                    .setContentText(duaText)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(duaText))
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setSound(null)
+                    .setVibrate(null)
                     .setAutoCancel(true)
                     .setTimeoutAfter(60_000)
                     .build()
@@ -244,9 +263,20 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         }
 
         fun stop() {
-            try { player.stop(); player.release() } catch (_: Exception) {}
-            try { mediaSession.release() } catch (_: Exception) {}
-            try { accelSensorManager?.unregisterListener(this@AdhanBroadcastReceiver) } catch (_: Exception) {}
+            try {
+                if (player != null && player!!.isPlaying) {
+                    player!!.stop()
+                }
+                player?.release()
+                player = null
+            } catch (_: Exception) {}
+
+            try {
+                mediaSession?.isActive = false
+                mediaSession?.release()
+                mediaSession = null
+            } catch (_: Exception) {}
+
             notifManager.cancel(alarmId)
             if (wakeLock.isHeld) wakeLock.release()
             triggerPostAdhanActions()
@@ -254,7 +284,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
 
         // ── MediaSessionCompat for volume-key stop ──────────────────
         mediaSession = MediaSessionCompat(context, "AyaAdhan")
-        mediaSession.setPlaybackState(
+        mediaSession?.setPlaybackState(
             PlaybackStateCompat.Builder()
                 .setState(PlaybackStateCompat.STATE_PLAYING, 0, 0f)
                 .build()
@@ -266,12 +296,12 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
                 stop()
             }
         }
-        mediaSession.setPlaybackToRemote(volumeProvider)
-        mediaSession.setActive(true)
+        mediaSession?.setPlaybackToRemote(volumeProvider)
+        mediaSession?.isActive = true
 
         // ── MediaPlayer ─────────────────────────────────────────────
         try {
-            player = MediaPlayer().apply {
+            val mp = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
@@ -286,6 +316,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
                     prepare()
                 }
             }
+            player = mp
         } catch (e: Exception) {
             Log.e("AdhanBroadcastReceiver", "Error creating MediaPlayer: ${e.message}", e)
             if (wakeLock.isHeld) wakeLock.release()
@@ -294,28 +325,28 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
 
         Companion.activeStop = ::stop
 
-        player.setOnCompletionListener {
+        player?.setOnCompletionListener {
             stop()
         }
-        player.setOnErrorListener { mp, _, _ ->
+        player?.setOnErrorListener { mp, _, _ ->
             stop()
             true
         }
 
         // ── Volume Ramp-Up (20% -> 100% over 5 seconds) ───────────────
-        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val rampUpEnabled = prefs.getBoolean("flutter.volume_ramp_up", true)
         if (rampUpEnabled) {
-            player.setVolume(0.2f, 0.2f)
+            player?.setVolume(0.2f, 0.2f)
             val handler = android.os.Handler(android.os.Looper.getMainLooper())
             val steps = 8
             val interval = 5000L / steps
             for (i in 1..steps) {
                 handler.postDelayed({
                     try {
-                        if (player.isPlaying) {
+                        val p = player
+                        if (p != null && p.isPlaying) {
                             val vol = 0.2f + (0.8f * i / steps)
-                            player.setVolume(vol, vol)
+                            p.setVolume(vol, vol)
                         }
                     } catch (_: Exception) {}
                 }, interval * i)
@@ -329,10 +360,8 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             }, maxDurationMs.toLong())
         }
 
-        player.start()
+        player?.start()
     }
-
-    // ── SensorEventListener (flip-face-down) ────────────────────────
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
@@ -356,7 +385,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             activeStop = null
             context?.let { ctx ->
                 try {
-                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     nm.cancelAll()
                 } catch (_: Exception) {}
             }

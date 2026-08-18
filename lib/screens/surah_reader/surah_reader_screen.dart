@@ -213,19 +213,13 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     FontWeight? fontWeight,
     Color? backgroundColor,
   }) {
-    // Use cached font — never read SharedPrefs per-ayah (fix #4).
-    if (_selectedFont == 'font-scheherazade') {
-      return TextStyle(
-        fontFamily: 'Scheherazade New',
-        fontSize: fontSize,
-        height: height,
-        color: color,
-        fontWeight: fontWeight,
-        backgroundColor: backgroundColor,
-      );
-    }
+    final customFont = widget.storage.getString('quran_arabic_font', defaultValue: '');
+    final fontFamily = customFont.isNotEmpty
+        ? customFont
+        : (_selectedFont == 'font-scheherazade' ? 'Scheherazade New' : 'Amiri');
+
     return TextStyle(
-      fontFamily: 'Amiri',
+      fontFamily: fontFamily,
       fontSize: fontSize,
       height: height,
       color: color,
@@ -602,7 +596,84 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                             },
                           ),
                           const SizedBox(height: 20),
-                          const SizedBox(height: 20),
+                          // ── Font Switcher (3.1) ──
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                TranslationService.isArabic ? 'خط المصحف' : 'Arabic Font',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 170,
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: widget.storage.getString('quran_arabic_font', defaultValue: 'Amiri'),
+                                  dropdownColor: theme.cardColor,
+                                  underline: const SizedBox(),
+                                  icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                                  items: const [
+                                    DropdownMenuItem(value: 'Amiri', child: Text('Amiri (أميري)')),
+                                    DropdownMenuItem(value: 'Scheherazade New', child: Text('Scheherazade (شهرزاد)')),
+                                    DropdownMenuItem(value: 'Warsh', child: Text('Warsh (ورش)')),
+                                    DropdownMenuItem(value: 'Qalun', child: Text('Qalun (قالون)')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      widget.storage.setString('quran_arabic_font', val);
+                                      setModalState(() {});
+                                      setState(() {});
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // ── Transliteration Toggle (3.2) ──
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            activeColor: const Color(0xFFE5C158),
+                            title: Text(
+                              TranslationService.isArabic ? 'النطق الصوتي (Transliteration)' : 'Phonetic Transliteration',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                            subtitle: Text(
+                              TranslationService.isArabic ? 'عرض كيفية نطق الآيات بالحروف اللاتينية' : 'Show Romanized pronunciation guide under ayahs',
+                              style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                            ),
+                            value: widget.storage.getBool('show_transliteration', defaultValue: false),
+                            onChanged: (val) {
+                              widget.storage.setBool('show_transliteration', val);
+                              setModalState(() {});
+                              setState(() {});
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // ── Asbab Al-Nuzul Toggle (1.3) ──
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            activeColor: const Color(0xFFE5C158),
+                            title: Text(
+                              TranslationService.isArabic ? 'أسباب النزول' : 'Asbab Al-Nuzul (Context)',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                            subtitle: Text(
+                              TranslationService.isArabic ? 'عرض سياق وأسباب نزول الآيات عند فتح التفسير' : 'Show historical revelation context in Tafsir modal',
+                              style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                            ),
+                            value: widget.storage.getBool('show_asbab_nuzul', defaultValue: true),
+                            onChanged: (val) {
+                              widget.storage.setBool('show_asbab_nuzul', val);
+                              setModalState(() {});
+                              setState(() {});
+                            },
+                          ),
+                          const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [

@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.os.Build
 import android.widget.RemoteViews
-import android.graphics.Color
 import android.util.Log
 
 class AyaCombinedWidgetProvider : AppWidgetProvider() {
@@ -32,9 +31,9 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 val maghrib = WidgetUtils.getSafeString(prefs, "widget_prayer_maghrib", "--:--")
                 val isha = WidgetUtils.getSafeString(prefs, "widget_prayer_isha", "--:--")
 
-                val nextPrayerName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
-                val nextPrayerEpoch = WidgetUtils.getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
+                val upcoming = WidgetUtils.getNextUpcomingPrayer(context, prefs)
                 val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
+                val nowMs = System.currentTimeMillis()
 
                 // Root Theme Background
                 views.setInt(R.id.widget_root, "setBackgroundResource", m3Theme.bgDrawable)
@@ -45,15 +44,17 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 views.setTextColor(R.id.widget_next_label, m3Theme.subtitleColor)
                 views.setTextColor(R.id.widget_next_prayer_name, m3Theme.textColor)
 
-                // Native Standalone Chronometer Setup
-                val nowMs = System.currentTimeMillis()
-                if (nextPrayerEpoch > nowMs) {
-                    val durationMs = nextPrayerEpoch - nowMs
+                // Native Standalone Chronometer Setup with Negative Count Prevention
+                if (upcoming.epochMs > nowMs) {
+                    val durationMs = upcoming.epochMs - nowMs
                     val targetElapsedRealtime = android.os.SystemClock.elapsedRealtime() + durationMs
                     views.setChronometer(R.id.widget_countdown_timer, targetElapsedRealtime, null, true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.widget_countdown_timer, true)
                     }
+                } else {
+                    // STOP chronometer cleanly so it NEVER displays negative numbers (-00:01)!
+                    views.setChronometer(R.id.widget_countdown_timer, android.os.SystemClock.elapsedRealtime(), null, false)
                 }
 
                 // Countdown box background and text
@@ -61,14 +62,14 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 views.setTextColor(R.id.widget_countdown_timer, m3Theme.badgeTextColor)
                 views.setTextColor(R.id.widget_countdown_label, m3Theme.badgeTextColor)
 
-                val label = if (nextPrayerName.isNotEmpty()) {
-                    if (isArabic) "حتى $nextPrayerName" else "Until $nextPrayerName"
+                val label = if (upcoming.name.isNotEmpty()) {
+                    if (isArabic) "حتى ${upcoming.name}" else "Until ${upcoming.name}"
                 } else {
                     if (isArabic) "حتى الصلاة" else "Until Prayer"
                 }
                 views.setTextViewText(R.id.widget_countdown_label, label)
                 views.setTextViewText(R.id.widget_next_label, if (isArabic) "التالي: " else "Next: ")
-                views.setTextViewText(R.id.widget_next_prayer_name, nextPrayerName.ifEmpty {
+                views.setTextViewText(R.id.widget_next_prayer_name, upcoming.name.ifEmpty {
                     if (isArabic) "الصلاة" else "Prayer"
                 })
 
@@ -85,7 +86,7 @@ class AyaCombinedWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_isha_time, isha)
 
                 val transBg = R.drawable.widget_transparent_bg
-                val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else nextPrayerName
+                val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else upcoming.name
 
                 setPrayerStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"), m3Theme, transBg)
                 setPrayerStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"), m3Theme, transBg)

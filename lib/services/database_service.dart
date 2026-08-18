@@ -78,8 +78,16 @@ class DatabaseService {
       );
     }
 
-    // Quran data is lazy-seeded on first read to avoid ~130 MB
-    // cold-start overhead. See _ensureQuranSeeded().
+    // Enable SQLite Write-Ahead Logging (WAL) and High-Performance PRAGMAs
+    try {
+      await db.execute('PRAGMA journal_mode=WAL;');
+      await db.execute('PRAGMA synchronous=NORMAL;');
+      await db.execute('PRAGMA cache_size=-64000;');
+      await db.execute('PRAGMA temp_store=MEMORY;');
+      await db.execute('PRAGMA mmap_size=268435456;');
+      await db.execute('PRAGMA threads=4;');
+    } catch (_) {}
+
     return db;
   }
 

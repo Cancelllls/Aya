@@ -503,7 +503,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     ),
                     onPressed: () async {
                       final testTime = DateTime.now().add(const Duration(seconds: 5));
-                      final selectedReciter = _storage?.getString('adhan_reciter', defaultValue: 'mishary') ?? 'mishary';
+                      final selectedReciter = _storage?.getString('adhan_reciter_dhuhr') ??
+                          _storage?.getString('adhan_reciter', defaultValue: 'mishary') ??
+                          'mishary';
                       final rawName = AdhanAudioService.standardReciterUrls[selectedReciter]
                           ?.replaceAll('.mp3', '') ?? 'adhan_meshary_al_fasy_kuwait';
                       await AdhanNativeController.instance.schedulePrayerAlarm(
@@ -564,6 +566,43 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.warning_amber_rounded, size: 18, color: Colors.orangeAccent),
+                label: Text(
+                  isAr ? 'تجربة تنبيه قرب انتهاء الوقت (٥ث)' : 'Test End-of-Window Alert (5s)',
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  final testTime = DateTime.now().add(const Duration(seconds: 5));
+                  await AdhanNativeController.instance.schedulePreAdhanAlarm(
+                    id: 9997,
+                    time: testTime,
+                    prayerName: isAr ? '⚠️ ينتهي وقت صلاة الظهر قريباً' : '⚠️ Dhuhr time ending soon',
+                    minutesBefore: 15,
+                    alertMode: 'sound',
+                  );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isAr
+                              ? 'تمت جدولة تنبيه قرب انتهاء الوقت التجريبي! سيعمل خلال ٥ ثوانٍ...'
+                              : 'Test Escalating alert scheduled! It will fire in 5 seconds...',
+                        ),
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -876,13 +915,62 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           SwitchListTile(
             activeColor: primaryColor,
             title: Text(isAr ? 'تنبيهات قرب انتهاء وقت الصلاة' : 'Escalating End-of-Window Alerts'),
-            subtitle: Text(isAr ? 'تنبيه عاجل قبل ١٥ دقيقة من دخول الصلاة التالية' : 'Urgent notification 15 mins before prayer window closes'),
+            subtitle: Text(isAr ? 'تنبيه عاجل قبل ١٥ دقيقة من انتهاء النافذة الشرعية للصلاة' : 'Urgent notification 15 mins before prayer window closes'),
             value: escalating,
             onChanged: (val) async {
               await _storage?.setBool('escalating_reminders', val);
               setState(() {});
             },
           ),
+          if (escalating)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      isAr ? 'نهاية وقت العشاء المستحب:' : 'Isha Preferred Window End:',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _storage?.getString('isha_end_window_fiqh', defaultValue: 'shafi') ?? 'shafi',
+                        items: [
+                          DropdownMenuItem(
+                            value: 'shafi',
+                            child: Text(
+                              isAr ? 'منتصف الليل (الشافعية والجمهور)' : 'Midnight (Shafi\'i/Majority)',
+                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12.5),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'hanafi',
+                            child: Text(
+                              isAr ? 'ثلث الليل (الحنفية)' : '1/3 of Night (Hanafi)',
+                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12.5),
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) async {
+                          if (val != null) {
+                            await _storage?.setString('isha_end_window_fiqh', val);
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const Divider(height: 1),
           SwitchListTile(
             activeColor: primaryColor,
@@ -926,6 +1014,76 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 ],
               ),
             ),
+          const Divider(height: 1),
+          // Hijri Date Offset (+/- 2 Days)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr ? 'تعديل التاريخ الهجري:' : 'Hijri Date Offset:',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isAr ? 'تعديل اليوم ليتوافق مع رؤية الهلال المحلية' : 'Adjust day offset to match local moon sighting',
+                        style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _storage?.getInt('hijri_day_offset', defaultValue: 0) ?? 0,
+                      items: [-2, -1, 0, 1, 2].map((off) {
+                        final label = off == 0
+                            ? (isAr ? 'تلقائي (0)' : 'Exact (0)')
+                            : (off > 0 ? '+$off ${isAr ? 'يوم' : 'day'}' : '$off ${isAr ? 'يوم' : 'day'}');
+                        return DropdownMenuItem(
+                          value: off,
+                          child: Text(label, style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                        );
+                      }).toList(),
+                      onChanged: (val) async {
+                        if (val != null) {
+                          await _storage?.setInt('hijri_day_offset', val);
+                          setState(() {});
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // OEM AutoStart Helper Button
+          ListTile(
+            leading: Icon(Icons.battery_saver_rounded, color: primaryColor),
+            title: Text(
+              isAr ? 'إعدادات التشغيل التلقائي (حماية من الإغلاق)' : 'Device Auto-Start Settings',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+            ),
+            subtitle: Text(
+              isAr ? 'تسهيل عمل الأذان في الخلفية على أجهزة شاومي وسامسونج وغيرها' : 'Ensure background adhan reliability on Xiaomi, Samsung, etc.',
+              style: const TextStyle(fontSize: 11.5),
+            ),
+            trailing: Icon(Icons.chevron_right, color: primaryColor),
+            onTap: () async {
+              await AdhanNativeController.instance.requestOemAutostart();
+            },
+          ),
         ],
       ),
     );

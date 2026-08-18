@@ -334,6 +334,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  DateTime _parsePrayerToday(DateTime now, String timeStr) {
+    final year = now.year;
+    final month = _pad(now.month);
+    final day = _pad(now.day);
+    final cleanTime = timeStr.trim().padLeft(5, '0');
+    return DateTime.parse("$year-$month-${day}T$cleanTime:00");
+  }
+
   Future<void> _updateWidgetPreferences() async {
     if (_prayerData == null) return;
     final prefs = widget.storage;
@@ -528,7 +536,24 @@ class _DashboardScreenState extends State<DashboardScreen>
     final nextDisplay = _formatWidgetNextDisplay(_nextPrayerCountdown);
     final lastDisplay = prefs.getString('widget_widget_next_display');
 
-    // Save next prayer epoch for combined countdown widget
+    // Save prayer epochs for native widget auto-advance
+    if (_prayerData != null) {
+      final now = DateTime.now();
+      try {
+        final f = _parsePrayerToday(now, _prayerData!.fajr);
+        final d = _parsePrayerToday(now, _prayerData!.dhuhr);
+        final a = _parsePrayerToday(now, _prayerData!.asr);
+        final m = _parsePrayerToday(now, _prayerData!.maghrib);
+        final i = _parsePrayerToday(now, _prayerData!.isha);
+
+        await prefs.setInt('widget_fajr_epoch', f.millisecondsSinceEpoch);
+        await prefs.setInt('widget_dhuhr_epoch', d.millisecondsSinceEpoch);
+        await prefs.setInt('widget_asr_epoch', a.millisecondsSinceEpoch);
+        await prefs.setInt('widget_maghrib_epoch', m.millisecondsSinceEpoch);
+        await prefs.setInt('widget_isha_epoch', i.millisecondsSinceEpoch);
+      } catch (_) {}
+    }
+
     if (_nextPrayerTime != null) {
       await prefs.setInt(
         'widget_next_prayer_epoch',

@@ -4,7 +4,6 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
-import android.graphics.Color
 import android.util.Log
 
 class AyaWidgetProvider : AppWidgetProvider() {
@@ -31,8 +30,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
                 val maghrib = WidgetUtils.getSafeString(prefs, "widget_prayer_maghrib", "--:--")
                 val isha = WidgetUtils.getSafeString(prefs, "widget_prayer_isha", "--:--")
 
-                val nextName = WidgetUtils.getSafeString(prefs, "widget_next_prayer_name", "")
-                val nextTime = WidgetUtils.getSafeString(prefs, "widget_widget_next_display", "")
+                val upcoming = WidgetUtils.getNextUpcomingPrayer(context, prefs)
                 val activePrayer = WidgetUtils.getSafeString(prefs, "widget_active_prayer", "")
 
                 views.setInt(R.id.widget_root, "setBackgroundResource", m3Theme.bgDrawable)
@@ -53,14 +51,14 @@ class AyaWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_maghrib_time, maghrib)
                 views.setTextViewText(R.id.widget_isha_time, isha)
 
-                if (nextName.isNotEmpty() && nextTime.isNotEmpty()) {
-                    views.setTextViewText(R.id.widget_next_prayer, "$nextName: $nextTime")
+                if (upcoming.name.isNotEmpty() && upcoming.formattedTime.isNotEmpty()) {
+                    views.setTextViewText(R.id.widget_next_prayer, "${upcoming.name}: ${upcoming.formattedTime}")
                 } else {
                     views.setTextViewText(R.id.widget_next_prayer, appName)
                 }
 
                 val transBg = R.drawable.widget_transparent_bg
-                val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else nextName
+                val targetHighlight = if (activePrayer.isNotEmpty()) activePrayer else upcoming.name
 
                 safeSetStyle(views, R.id.widget_fajr_container, R.id.widget_fajr_name, R.id.widget_fajr_time, targetHighlight.contains("Fajr", ignoreCase = true) || targetHighlight.contains("الفجر"), m3Theme, transBg)
                 safeSetStyle(views, R.id.widget_dhuhr_container, R.id.widget_dhuhr_name, R.id.widget_dhuhr_time, targetHighlight.contains("Dhuhr", ignoreCase = true) || targetHighlight.contains("الظهر"), m3Theme, transBg)

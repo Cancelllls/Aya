@@ -18,11 +18,24 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val alarmId = intent.getIntExtra("ALARM_ID", 0)
-        val prayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
+        val rawPrayerName = intent.getStringExtra("PRAYER_NAME") ?: "Prayer"
         val minutesBefore = intent.getIntExtra("MINUTES_BEFORE", 10)
         val alertMode = intent.getStringExtra("ALERT_MODE") ?: "vibrate"
 
         if (alertMode == "off") return
+
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
+        val isAr = langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
+
+        val prayerName = when (rawPrayerName.lowercase()) {
+            "fajr", "الفجر" -> if (isAr) "الفجر" else "Fajr"
+            "dhuhr", "الظهر" -> if (isAr) "الظهر" else "Dhuhr"
+            "asr", "العصر" -> if (isAr) "العصر" else "Asr"
+            "maghrib", "المغرب" -> if (isAr) "المغرب" else "Maghrib"
+            "isha", "العشاء" -> if (isAr) "العشاء" else "Isha"
+            else -> rawPrayerName
+        }
 
         val channelId = "pre_adhan_native_v4"
         val notifManager = NotificationManagerCompat.from(context)
@@ -63,8 +76,16 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             "ic_notification", "drawable", context.packageName
         )
 
-        val title = if (prayerName.contains("بقي") || prayerName.contains("minutes")) prayerName else "اقترب موعد الأذان"
-        val body = if (prayerName.contains("بقي") || prayerName.contains("minutes")) "تذكير بالصلاة القادمة" else "بقي $minutesBefore دقائق على أذان $prayerName"
+        val title = if (rawPrayerName.startsWith("⚠️")) {
+            rawPrayerName
+        } else {
+            if (isAr) "اقترب موعد الأذان" else "Adhan is approaching"
+        }
+        val body = if (rawPrayerName.startsWith("⚠️")) {
+            if (isAr) "تنبيه عاجل قبل انتهاء وقت الصلاة ⚠️" else "Urgent alert before prayer window closes ⚠️"
+        } else {
+            if (isAr) "بقي $minutesBefore دقائق على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
+        }
 
         val notif = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
