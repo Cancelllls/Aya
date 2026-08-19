@@ -17,6 +17,7 @@ import '../../services/translation_service.dart';
 import '../../services/audio_manager.dart';
 import '../../services/tajweed_service.dart';
 import '../../widgets/share_ayah_dialog.dart';
+import '../tajweed_guide_screen.dart';
 
 part 'surah_reader_audio.dart';
 part 'surah_reader_bookmarks.dart';
@@ -376,12 +377,19 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             ),
           ),
           IconButton(
-            icon: Icon(
-              _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: const Color(0xFFE5C158),
+            icon: const Icon(
+              Icons.auto_stories,
+              color: Color(0xFFE5C158),
             ),
-            onPressed: _toggleBookmark,
-            tooltip: 'Bookmark Surah',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TajweedGuideScreen(storage: widget.storage),
+                ),
+              );
+            },
+            tooltip: TranslationService.isArabic ? 'دليل أحكام التجويد والتشكيل' : 'Tajweed & Tashkeel Guide',
           ),
           PopupMenuButton<String>(
             icon: Icon(

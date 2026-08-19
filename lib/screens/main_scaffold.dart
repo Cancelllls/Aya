@@ -524,18 +524,6 @@ class _MainScaffoldState extends State<MainScaffold>
               },
             ),
             IconButton(
-              icon: const Icon(Icons.auto_stories),
-              tooltip: TranslationService.isArabic ? 'أحكام التجويد' : 'Tajweed Guide',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TajweedGuideScreen(storage: widget.storage),
-                  ),
-                );
-              },
-            ),
-            IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
                 Navigator.push(

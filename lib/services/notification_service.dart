@@ -447,6 +447,9 @@ class NotificationService {
       cancelFutures.add(_notificationsPlugin.cancel(id: i + 5000));
     }
     await Future.wait(cancelFutures);
+    try {
+      await AdhanNativeController.instance.cancelAllAlarms();
+    } catch (_) {}
 
     final alertFajr = storage.getBool('alert_fajr', defaultValue: true);
     final alertDhuhr = storage.getBool('alert_dhuhr', defaultValue: true);
@@ -671,7 +674,7 @@ class NotificationService {
                   time: jumuahTime,
                   prayerName: isAr ? '🕌 اقتربت صلاة الجمعة' : '🕌 Jumu\'ah prayer is approaching',
                   minutesBefore: jumuahMins,
-                  alertMode: 'sound',
+                  alertMode: preAdhanAlertMode,
                 );
               } catch (_) {}
             }
@@ -739,7 +742,7 @@ class NotificationService {
                 time: targetAlertTime,
                 prayerName: alertLabel,
                 minutesBefore: 15,
-                alertMode: 'sound',
+                alertMode: preAdhanAlertMode,
               );
             }
           } catch (_) {}

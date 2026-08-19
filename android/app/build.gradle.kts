@@ -39,6 +39,18 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("fdroid") {
+            dimension = "distribution"
+            applicationId = "com.quran.aya"
+        }
+        create("play") {
+            dimension = "distribution"
+            applicationId = "com.quran.aya"
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {

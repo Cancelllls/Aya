@@ -86,14 +86,14 @@ jobs:
         run: flutter pub get
 
       - name: Build Google Play APKs
-        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/debug-info --dart-define=GOOGLE_PLAY=true
+        run: flutter build apk --flavor play --release --split-per-abi --obfuscate --split-debug-info=build/debug-info --dart-define=GOOGLE_PLAY=true
 
       - name: Rename APKs for Google Play
         run: |
           VER="${{ needs.bump.outputs.new_version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
-            cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
+            cp build/app/outputs/flutter-apk/app-play-${arch}-release.apk \
                release_apks/Aya-v${VER}-googleplay-${arch}.apk
           done
 
@@ -153,14 +153,14 @@ jobs:
         run: flutter pub get
 
       - name: Build F-Droid APKs
-        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/debug-info
+        run: flutter build apk --flavor fdroid --release --split-per-abi --obfuscate --split-debug-info=build/debug-info
 
       - name: Rename APKs for F-Droid
         run: |
           VER="${{ needs.bump.outputs.new_version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
-            cp build/app/outputs/flutter-apk/app-${arch}-release.apk \
+            cp build/app/outputs/flutter-apk/app-fdroid-${arch}-release.apk \
                release_apks/Aya-v${VER}-fdroid-${arch}.apk
           done
 

@@ -12,10 +12,15 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
 import 'database_service.dart';
+import 'translation_service.dart';
 
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
 class ApiService {
+  /// Flavor detection: 'fdroid' or 'play'.
+  /// Defaults to 'fdroid' for 100% open-source privacy compliance.
+  static const String appFlavor =
+      String.fromEnvironment('FLAVOR', defaultValue: 'fdroid');
   // ─── Prayer Times ────────────────────────────────────────────────────────
   static Future<void> cachePrayerTimes(String key, PrayerTimeData data) async {
     try {
@@ -372,6 +377,13 @@ class ApiService {
     double latitude,
     double longitude,
   ) async {
+    // If building for F-Droid flavor (or default), use Photon directly for 100% open-source geocoding
+    if (appFlavor == 'fdroid') {
+      final photonResult = await _reverseGeocodePhoton(latitude, longitude);
+      if (photonResult != null) return photonResult;
+    }
+
+    // Otherwise (or if Play flavor), try Google Geocoding first with Photon fallback
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
         latitude,
@@ -431,8 +443,76 @@ class ApiService {
         final country = place.country ?? 'Unknown Country';
         return {'city': exactLocation, 'country': country};
       }
-    } catch (_) {}
+    } catch (_) {
+      // Fallback to Photon if Google geocoding fails (e.g. de-googled ROMs / missing backend)
+      final fallback = await _reverseGeocodePhoton(latitude, longitude);
+      if (fallback != null) return fallback;
+    }
     return {'city': 'My Location', 'country': 'GPS'};
+  }
+
+  /// Open-source reverse geocoding via Photon (Komoot / OpenStreetMap).
+  /// Fast, keyless, and 100% Google Play Services free for F-Droid.
+  static Future<Map<String, String>?> _reverseGeocodePhoton(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final langParam = TranslationService.isArabic ? 'default' : 'en';
+      final uri = Uri.parse(
+        'https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude&lang=$langParam',
+      );
+      final response = await http.get(uri, headers: {
+        'User-Agent': 'AyaIslamicApp/1.0 (https://github.com/Cancellls/Aya)',
+      }).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final features = data['features'] as List?;
+        if (features != null && features.isNotEmpty) {
+            final props = features.first['properties'] as Map<String, dynamic>?;
+          if (props != null) {
+            final street = (props['street'] as String?)?.trim();
+            final name = (props['name'] as String?)?.trim();
+            final district = (props['district'] as String?)?.trim() ??
+                (props['locality'] as String?)?.trim();
+            final city = (props['city'] as String?)?.trim() ??
+                (props['town'] as String?)?.trim() ??
+                (props['village'] as String?)?.trim() ??
+                (props['state'] as String?)?.trim();
+            final country = (props['country'] as String?)?.trim() ?? '';
+
+            List<String> parts = [];
+            if (street != null && street.isNotEmpty) {
+              parts.add(street);
+            } else if (name != null && name.isNotEmpty && name != city) {
+              parts.add(name);
+            }
+
+            if (district != null && district.isNotEmpty && district != city) {
+              parts.add(district);
+            }
+
+            if (city != null && city.isNotEmpty) {
+              parts.add(city);
+            }
+
+            String displayLocation = parts.take(2).join(', ');
+            if (displayLocation.isEmpty) {
+              displayLocation = name ?? city ?? 'Unknown Location';
+            }
+
+            return {
+              'city': displayLocation,
+              'country': country.isNotEmpty ? country : 'GPS',
+            };
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Photon reverse geocoding error: $e');
+    }
+    return null;
   }
 
   static Future<Position?> getBestLocation() async {

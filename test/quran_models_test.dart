@@ -81,8 +81,8 @@ void main() {
   });
 
   group('TafsirEdition', () {
-    test('availableTafsirs has 6 editions', () {
-      expect(availableTafsirs, hasLength(6));
+    test('availableTafsirs has 8 editions', () {
+      expect(availableTafsirs, hasLength(8));
     });
 
     test('first is Al-Muyassar', () {

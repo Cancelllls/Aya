@@ -28,11 +28,21 @@ class AyaNextPrayerWidgetProvider : AppWidgetProvider() {
                 val nowMs = System.currentTimeMillis()
 
                 views.setInt(R.id.widget_root, "setBackgroundResource", m3Theme.bgDrawable)
+                views.setInt(R.id.next_prayer_box, "setBackgroundResource", m3Theme.badgeBgDrawable)
+
                 views.setTextViewText(R.id.next_prayer_title, if (isArabic) "الصلاة القادمة" else "Next Prayer")
                 views.setTextColor(R.id.next_prayer_title, m3Theme.primaryColor)
 
-                views.setTextViewText(R.id.next_prayer_name, upcoming.name)
+                val prayerDisplayName = if (upcoming.formattedTime.isNotEmpty() && upcoming.formattedTime != "--:--") {
+                    "${upcoming.name} (${upcoming.formattedTime})"
+                } else {
+                    upcoming.name
+                }
+                views.setTextViewText(R.id.next_prayer_name, prayerDisplayName)
                 views.setTextColor(R.id.next_prayer_name, m3Theme.textColor)
+
+                views.setTextViewText(R.id.next_prayer_subtitle, if (isArabic) "الوقت المتبقي" else "Time Remaining")
+                views.setTextColor(R.id.next_prayer_subtitle, m3Theme.badgeTextColor)
 
                 if (upcoming.epochMs > nowMs) {
                     val durationMs = upcoming.epochMs - nowMs
@@ -41,7 +51,7 @@ class AyaNextPrayerWidgetProvider : AppWidgetProvider() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         views.setChronometerCountDown(R.id.next_prayer_chronometer, true)
                     }
-                    views.setTextColor(R.id.next_prayer_chronometer, m3Theme.primaryColor)
+                    views.setTextColor(R.id.next_prayer_chronometer, m3Theme.badgeTextColor)
                     views.setViewVisibility(R.id.next_prayer_chronometer, View.VISIBLE)
                     views.setViewVisibility(R.id.next_prayer_time, View.GONE)
                 } else {
@@ -50,7 +60,7 @@ class AyaNextPrayerWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(R.id.next_prayer_chronometer, View.GONE)
                     views.setViewVisibility(R.id.next_prayer_time, View.VISIBLE)
                     views.setTextViewText(R.id.next_prayer_time, upcoming.formattedTime.ifEmpty { "--:--" })
-                    views.setTextColor(R.id.next_prayer_time, m3Theme.primaryColor)
+                    views.setTextColor(R.id.next_prayer_time, m3Theme.badgeTextColor)
                 }
 
                 WidgetUtils.attachLaunchAppPendingIntent(context, views, R.id.widget_root)

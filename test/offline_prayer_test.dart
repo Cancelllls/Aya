@@ -80,8 +80,8 @@ void main() {
       expect(month.length, greaterThanOrEqualTo(28));
       expect(month.length, lessThanOrEqualTo(31));
       for (final day in month) {
-        expect(day['Fajr'], isNotEmpty);
-        expect(day['Isha'], isNotEmpty);
+        expect(day['timings']['Fajr'], isNotEmpty);
+        expect(day['timings']['Isha'], isNotEmpty);
       }
     });
   });

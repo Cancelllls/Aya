@@ -22,8 +22,6 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
         val minutesBefore = intent.getIntExtra("MINUTES_BEFORE", 10)
         val alertMode = intent.getStringExtra("ALERT_MODE") ?: "vibrate"
 
-        if (alertMode == "off") return
-
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
         val isAr = langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
@@ -37,18 +35,34 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             else -> rawPrayerName
         }
 
-        val channelId = "pre_adhan_native_v4"
+        val pKey = when {
+            rawPrayerName.contains("fajr", ignoreCase = true) || rawPrayerName.contains("الفجر") -> "fajr"
+            rawPrayerName.contains("dhuhr", ignoreCase = true) || rawPrayerName.contains("الظهر") -> "dhuhr"
+            rawPrayerName.contains("asr", ignoreCase = true) || rawPrayerName.contains("العصر") -> "asr"
+            rawPrayerName.contains("maghrib", ignoreCase = true) || rawPrayerName.contains("المغرب") -> "maghrib"
+            rawPrayerName.contains("isha", ignoreCase = true) || rawPrayerName.contains("العشاء") -> "isha"
+            else -> rawPrayerName.lowercase().trim()
+        }
+
+        val storedPreMode = prefs.getString("flutter.pre_adhan_${pKey}_mode", null)
+            ?: prefs.getString("flutter.pre_adhan_alert_mode", alertMode)
+        val effectiveAlertMode = storedPreMode ?: alertMode
+
+        if (effectiveAlertMode == "off") return
+
+        val isSound = effectiveAlertMode == "sound" || effectiveAlertMode == "real_reciter"
+        val channelId = if (isSound) "pre_adhan_sound_channel_v2" else "pre_adhan_silent_channel_v2"
         val notifManager = NotificationManagerCompat.from(context)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val soundUri = Uri.parse("android.resource://${context.packageName}/raw/default_pre_adhan")
             val channel = NotificationChannel(
                 channelId,
-                "Pre-Adhan Alerts",
+                if (isSound) "Pre-Adhan Sound Alerts" else "Pre-Adhan Silent Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Reminders before prayer time"
-                if (alertMode == "sound" || alertMode == "real_reciter") {
+                if (isSound) {
                     setSound(
                         soundUri,
                         AudioAttributes.Builder()
@@ -87,7 +101,7 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             if (isAr) "بقي $minutesBefore دقائق على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
         }
 
-        val notif = NotificationCompat.Builder(context, channelId)
+        val notifBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
             .setContentTitle(title)
             .setContentText(body)
@@ -97,9 +111,12 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             .setContentIntent(tapPending)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .extend(NotificationCompat.WearableExtender())
-            .build()
 
-        notifManager.notify(alarmId, notif)
+        if (!isSound) {
+            notifBuilder.setSound(null)
+        }
+
+        notifManager.notify(alarmId, notifBuilder.build())
 
         if (alertMode == "sound" || alertMode == "real_reciter") {
             try {

@@ -6,7 +6,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/quran_models.dart';
 import '../services/translation_service.dart';
-import '../services/api_service.dart';
 
 class ShareAyahDialog extends StatefulWidget {
   final Ayah? ayah;
@@ -31,9 +30,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
   bool _isGenerating = false;
   int _selectedThemeIndex = 0;
   String _langMode = 'both'; // 'both', 'ar_only', 'en_only'
-  bool _includeTafsir = false;
-  String _tafsirText = '';
-  bool _isLoadingTafsir = false;
 
   double _blackFramePadding = 0.0;
   bool _includeAyahNumbers = true;
@@ -66,31 +62,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
         .map((a) => a.translation)
         .where((t) => t.isNotEmpty)
         .join("\n\n");
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _tafsirText = _firstAyah?.tafseer.trim() ?? '';
-  }
-
-  void _onToggleTafsir(bool val) {
-    setState(() => _includeTafsir = val);
-    if (val && _tafsirText.isEmpty && _firstAyah != null) {
-      setState(() => _isLoadingTafsir = true);
-      ApiService.fetchTafsirTextForAyah(
-        'ar.muyassar',
-        widget.surahNumber,
-        _firstAyah!.numberInSurah,
-      ).then((text) {
-        if (mounted) {
-          setState(() {
-            _tafsirText = text;
-            _isLoadingTafsir = false;
-          });
-        }
-      });
-    }
   }
 
   final List<Map<String, dynamic>> _themes = [
@@ -249,19 +220,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                     selectedColor: const Color(0xFFE5C158),
                     onSelected: (val) => setState(() => _includeAyahNumbers = val),
                   ),
-                  FilterChip(
-                    avatar: Icon(
-                      _includeTafsir
-                          ? Icons.auto_stories
-                          : Icons.auto_stories_outlined,
-                      size: 16,
-                      color: _includeTafsir ? Colors.black : Colors.grey,
-                    ),
-                    label: Text(isAr ? 'تضمين التفسير' : 'Include Tafsir'),
-                    selected: _includeTafsir,
-                    selectedColor: const Color(0xFFE5C158),
-                    onSelected: _onToggleTafsir,
-                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -402,42 +360,6 @@ class _ShareAyahDialogState extends State<ShareAyahDialog> {
                             ),
                           ),
                         ],
-
-                      // Tafsir (If enabled)
-                      if (_includeTafsir) ...[
-                        const SizedBox(height: 14),
-                        Divider(
-                          color: (themeConfig['accentColor'] as Color).withValues(alpha: 0.4),
-                          thickness: 1,
-                        ),
-                        const SizedBox(height: 8),
-                        if (_isLoadingTafsir)
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFFE5C158),
-                              ),
-                            ),
-                          )
-                        else
-                          Text(
-                            _tafsirText.isNotEmpty
-                                ? _tafsirText
-                                : (isAr ? 'التفسير الميسر غير متوفر' : 'Tafsir not available'),
-                            textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Amiri',
-                              fontSize: 13,
-                              height: 1.7,
-                              color: (themeConfig['textColor'] as Color).withValues(alpha: 0.9),
-                            ),
-                          ),
-                      ],
 
                       const SizedBox(height: 16),
 

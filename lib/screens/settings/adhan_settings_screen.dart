@@ -4,6 +4,10 @@ import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/adhan_audio_service.dart';
 import '../../services/alarm_health_service.dart';
+import '../../services/notification_service.dart';
+import '../../services/offline_prayer_service.dart';
+import '../../services/api_service.dart';
+import '../../models/prayer_models.dart';
 import '../../core/adhan_native_controller.dart';
 
 class AdhanSettingsScreen extends StatefulWidget {
@@ -137,18 +141,50 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     }
   }
 
+  Future<void> _rescheduleAlarms() async {
+    if (_storage == null) return;
+    try {
+      final loc = _storage!.getLocation();
+      final method = _storage!.getInt('calc_method', defaultValue: 2);
+      final school = _storage!.getInt('asr_method', defaultValue: 0);
+
+      PrayerTimeData data;
+      try {
+        data = await ApiService.fetchPrayerTimes(
+          latitude: loc['latitude'] ?? 30.0444,
+          longitude: loc['longitude'] ?? 31.2357,
+          method: method,
+          school: school,
+        );
+      } catch (_) {
+        data = await OfflinePrayerService.getPrayerTimes(
+          latitude: loc['latitude'] ?? 30.0444,
+          longitude: loc['longitude'] ?? 31.2357,
+          method: method,
+          school: school,
+        );
+      }
+      await NotificationService().schedulePrayerAlarms(data, _storage!);
+      await _loadHealthStatus();
+    } catch (_) {}
+  }
+
   Future<void> _setAllAdhansMode(String mode) async {
+    await _storage?.setString('adhan_alert_mode', mode);
     for (final p in _prayers) {
       await _storage?.setString('adhan_mode_$p', mode);
     }
     setState(() {});
+    _rescheduleAlarms();
   }
 
   Future<void> _setAllPreAdhansMode(String mode) async {
+    await _storage?.setString('pre_adhan_alert_mode', mode);
     for (final p in _prayers) {
       await _storage?.setString('pre_adhan_${p}_mode', mode);
     }
     setState(() {});
+    _rescheduleAlarms();
   }
 
   String _getAllAdhansCurrentMode() {
@@ -687,6 +723,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         if (val != null) {
                           await _storage?.setString(modeKey, val);
                           setState(() {});
+                          _rescheduleAlarms();
                         }
                       },
                     ),
@@ -745,6 +782,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                             await _storage?.setString(reciterKeyName, val);
                             await _storage?.setString('adhan_reciter', val);
                             setState(() {});
+                            _rescheduleAlarms();
                           }
                         },
                       ),
@@ -786,6 +824,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   onChanged: (val) async {
                     await _storage?.setInt(offsetKey, val.toInt());
                     setState(() {});
+                    _rescheduleAlarms();
                   },
                 ),
 
@@ -816,6 +855,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         if (val != null) {
                           await _storage?.setString(preModeKey, val);
                           setState(() {});
+                          _rescheduleAlarms();
                         }
                       },
                     ),
@@ -920,6 +960,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             onChanged: (val) async {
               await _storage?.setBool('escalating_reminders', val);
               setState(() {});
+              _rescheduleAlarms();
             },
           ),
           if (escalating)
@@ -963,6 +1004,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           if (val != null) {
                             await _storage?.setString('isha_end_window_fiqh', val);
                             setState(() {});
+                            _rescheduleAlarms();
                           }
                         },
                       ),
@@ -980,6 +1022,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             onChanged: (val) async {
               await _storage?.setBool('jumuah_reminder', val);
               setState(() {});
+              _rescheduleAlarms();
             },
           ),
           if (jumuah)

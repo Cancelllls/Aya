@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.os.Build
 import android.widget.RemoteViews
 
@@ -25,6 +27,35 @@ data class UpcomingPrayerInfo(
 )
 
 object WidgetUtils {
+
+    fun updateAllWidgets(context: Context) {
+        try {
+            val widgetProviders = arrayOf(
+                AyaWidgetProvider::class.java,
+                AyaVerseWidgetProvider::class.java,
+                AyaDhikrWidgetProvider::class.java,
+                AyaHadithWidgetProvider::class.java,
+                AyaTasbihWidgetProvider::class.java,
+                AyaHijriWidgetProvider::class.java,
+                AyaNextPrayerWidgetProvider::class.java,
+                AyaAsmaulHusnaWidgetProvider::class.java,
+                AyaCombinedWidgetProvider::class.java,
+            )
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            for (provider in widgetProviders) {
+                val intent = Intent(context, provider).apply {
+                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                }
+                val ids = appWidgetManager.getAppWidgetIds(
+                    ComponentName(context, provider)
+                )
+                if (ids != null && ids.isNotEmpty()) {
+                    intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                    context.sendBroadcast(intent)
+                }
+            }
+        } catch (_: Throwable) {}
+    }
 
     fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
@@ -115,7 +146,17 @@ object WidgetUtils {
         // Find first prayer whose epoch is strictly in the future (> nowMs)
         for (item in list) {
             if (item.epochMs > nowMs) {
+                scheduleNextPrayerWidgetAlarm(context, item.epochMs)
                 return item
+            }
+        }
+
+        // If all 5 prayers of today have passed, calculate tomorrow's Fajr
+        if (fajrEpoch > 0L) {
+            val tomorrowFajrEpoch = fajrEpoch + 24 * 60 * 60 * 1000L
+            if (tomorrowFajrEpoch > nowMs) {
+                scheduleNextPrayerWidgetAlarm(context, tomorrowFajrEpoch)
+                return UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", tomorrowFajrEpoch, fajrTime)
             }
         }
 
@@ -123,8 +164,34 @@ object WidgetUtils {
         val fallbackName = getSafeString(prefs, "widget_next_prayer_name", if (isArabic) "الفجر" else "Fajr")
         val fallbackEpoch = getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
         val fallbackTime = getSafeString(prefs, "widget_widget_next_display", "--:--")
+        val effectiveFallbackEpoch = if (fallbackEpoch > nowMs) fallbackEpoch else 0L
 
-        return UpcomingPrayerInfo(fallbackName, fallbackEpoch, fallbackTime)
+        if (effectiveFallbackEpoch > nowMs) {
+            scheduleNextPrayerWidgetAlarm(context, effectiveFallbackEpoch)
+        }
+
+        return UpcomingPrayerInfo(fallbackName, effectiveFallbackEpoch, fallbackTime)
+    }
+
+    fun scheduleNextPrayerWidgetAlarm(context: Context, nextEpochMs: Long) {
+        if (nextEpochMs <= System.currentTimeMillis()) return
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager ?: return
+            val intent = Intent(context, AyaNextPrayerWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                991122,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, nextEpochMs + 500L, pendingIntent)
+            } else {
+                alarmManager.setExact(android.app.AlarmManager.RTC_WAKEUP, nextEpochMs + 500L, pendingIntent)
+            }
+        } catch (_: Throwable) {}
     }
 
     fun getM3Theme(context: Context, prefs: SharedPreferences): WidgetM3Theme {

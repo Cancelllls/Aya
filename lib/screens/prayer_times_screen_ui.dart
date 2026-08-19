@@ -2,112 +2,134 @@ part of 'prayer_times_screen.dart';
 
 extension PrayerTimesScreenUi on _PrayerTimesScreenState {
   Widget _buildPrayerScreenBody(BuildContext context, ThemeData theme, Map<String, dynamic> loc) {
-    return RefreshIndicator(
-      onRefresh: _loadPrayerTimes,
-      color: const Color(0xFFE5C158),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildLocationHeaderCard(theme, loc),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               _buildSubTabSelector(theme),
-              const SizedBox(height: 20),
-              if (_selectedSubTab == 0) ...[
-                Text(
-                  TranslationService.t('daily_schedule'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFFE5C158),
-                        ),
-                      )
-                    : _prayerData == null
-                    ? Center(
-                        child: Text(
-                          TranslationService.isArabic
-                              ? "لم يتم تحميل مواقيت الصلاة بعد."
-                              : "No schedule details loaded.",
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          _buildScheduleRow(
-                            theme,
-                            "Fajr",
-                            _prayerData!.fajr,
-                            Icons.cloud_queue,
-                          ),
-                          _buildScheduleRow(
-                            theme,
-                            "Sunrise",
-                            _prayerData!.sunrise,
-                            Icons.wb_sunny_outlined,
-                          ),
-                          _buildScheduleRow(
-                            theme,
-                            "Dhuhr",
-                            _prayerData!.dhuhr,
-                            Icons.wb_sunny,
-                          ),
-                          _buildScheduleRow(
-                            theme,
-                            "Asr",
-                            _prayerData!.asr,
-                            Icons.wb_twilight,
-                          ),
-                          _buildScheduleRow(
-                            theme,
-                            "Sunset",
-                            _prayerData!.sunset,
-                            Icons.wb_twilight,
-                          ),
-                          _buildScheduleRow(
-                            theme,
-                            "Maghrib",
-                            _prayerData!.maghrib,
-                            Icons.wb_cloudy_outlined,
-                          ),
-                          _buildScheduleRow(
-                            theme,
-                            "Isha",
-                            _prayerData!.isha,
-                            Icons.nights_stay,
-                          ),
-                        ],
-                      ),
-              ] else if (_selectedSubTab == 1) ...[
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFFE5C158),
-                        ),
-                      )
-                    : _buildPrayerCalendar(theme),
-              ] else ...[
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFFE5C158),
-                        ),
-                      )
-                    : _buildHijriCalendar(theme),
-              ],
+              const SizedBox(height: 16),
             ],
           ),
         ),
-      ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadPrayerTimes,
+            color: const Color(0xFFE5C158),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 100.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_selectedSubTab == 0) ...[
+                    Text(
+                      TranslationService.t('daily_schedule'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _isLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFE5C158),
+                              ),
+                            ),
+                          )
+                        : _prayerData == null
+                        ? Center(
+                            child: Text(
+                              TranslationService.isArabic
+                                  ? "لم يتم تحميل مواقيت الصلاة بعد."
+                                  : "No schedule details loaded.",
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _buildScheduleRow(
+                                theme,
+                                "Fajr",
+                                _prayerData!.fajr,
+                                Icons.cloud_queue,
+                              ),
+                              _buildScheduleRow(
+                                theme,
+                                "Sunrise",
+                                _prayerData!.sunrise,
+                                Icons.wb_sunny_outlined,
+                              ),
+                              _buildScheduleRow(
+                                theme,
+                                "Dhuhr",
+                                _prayerData!.dhuhr,
+                                Icons.wb_sunny,
+                              ),
+                              _buildScheduleRow(
+                                theme,
+                                "Asr",
+                                _prayerData!.asr,
+                                Icons.wb_twilight,
+                              ),
+                              _buildScheduleRow(
+                                theme,
+                                "Sunset",
+                                _prayerData!.sunset,
+                                Icons.wb_twilight,
+                              ),
+                              _buildScheduleRow(
+                                theme,
+                                "Maghrib",
+                                _prayerData!.maghrib,
+                                Icons.wb_cloudy_outlined,
+                              ),
+                              _buildScheduleRow(
+                                theme,
+                                "Isha",
+                                _prayerData!.isha,
+                                Icons.nights_stay,
+                              ),
+                            ],
+                          ),
+                  ] else if (_selectedSubTab == 1) ...[
+                    _isLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFE5C158),
+                              ),
+                            ),
+                          )
+                        : _buildPrayerCalendar(theme),
+                  ] else ...[
+                    _isLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFE5C158),
+                              ),
+                            ),
+                          )
+                        : _buildHijriCalendar(theme),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

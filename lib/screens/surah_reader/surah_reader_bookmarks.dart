@@ -65,39 +65,4 @@ extension SurahReaderBookmarks on _SurahReaderScreenState {
       widget.storage.saveLastReadPosition(surahNum, ayahNum);
     });
   }
-
-  void _toggleBookmark() async {
-    if (_isBookmarked) {
-      await widget.storage.removeBookmark(_currentSurah.number);
-      if (!mounted) return;
-      setState(() {
-        _isBookmarked = false;
-        _bookmarkedAyahNumber = null;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(TranslationService.t('bookmark_removed')),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    } else {
-      final targetAyah = _bookmarkedAyahNumber ?? 1;
-      await widget.storage.addBookmark(
-        _currentSurah.number,
-        _currentSurah.englishName,
-        targetAyah,
-      );
-      if (!mounted) return;
-      setState(() {
-        _isBookmarked = true;
-        _bookmarkedAyahNumber = targetAyah;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(TranslationService.t('bookmark_saved')),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
-  }
 }

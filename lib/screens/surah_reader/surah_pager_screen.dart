@@ -5,6 +5,7 @@ import '../../services/reciters_cache_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/audio_manager.dart';
 import '../../models/offline_surahs.dart';
+import '../tajweed_guide_screen.dart';
 import 'surah_reader_screen.dart';
 
 class SurahPagerScreen extends StatefulWidget {
@@ -203,19 +204,20 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
               tooltip: TranslationService.isArabic ? "وضع التسميع والحفظ" : "Hifz / Memorization Mode",
             ),
           ),
-          ValueListenableBuilder<Set<int>>(
-            valueListenable: _bookmarksNotifier,
-            builder: (context, bookmarkedSurahs, _) {
-              final isBookmarked = bookmarkedSurahs.contains(surahData.number);
-              return IconButton(
-                icon: Icon(
-                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  color: const Color(0xFFE5C158),
+          IconButton(
+            icon: const Icon(
+              Icons.auto_stories,
+              color: Color(0xFFE5C158),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TajweedGuideScreen(storage: widget.storage),
                 ),
-                onPressed: () => _toggleSurahBookmark(surahData),
-                tooltip: TranslationService.isArabic ? 'حفظ علامة' : 'Bookmark',
               );
             },
+            tooltip: TranslationService.isArabic ? 'دليل أحكام التجويد والتشكيل' : 'Tajweed & Tashkeel Guide',
           ),
           PopupMenuButton<String>(
             icon: Icon(

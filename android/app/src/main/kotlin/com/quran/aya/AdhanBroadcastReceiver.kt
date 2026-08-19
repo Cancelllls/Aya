@@ -49,6 +49,33 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             else -> rawPrayerName
         }
 
+        val pKey = when {
+            rawPrayerName.contains("fajr", ignoreCase = true) || rawPrayerName.contains("الفجر") -> "fajr"
+            rawPrayerName.contains("dhuhr", ignoreCase = true) || rawPrayerName.contains("الظهر") -> "dhuhr"
+            rawPrayerName.contains("asr", ignoreCase = true) || rawPrayerName.contains("العصر") -> "asr"
+            rawPrayerName.contains("maghrib", ignoreCase = true) || rawPrayerName.contains("المغرب") -> "maghrib"
+            rawPrayerName.contains("isha", ignoreCase = true) || rawPrayerName.contains("العشاء") -> "isha"
+            else -> rawPrayerName.lowercase().trim()
+        }
+
+        // ── Check live user preferences (strictly respect vibration/silent mode) ──
+        val storedPrayerMode = prefs.getString("flutter.adhan_mode_$pKey", null)
+            ?: prefs.getString("flutter.adhan_alert_mode", null)
+
+        val isSoundWanted = when (storedPrayerMode) {
+            "vibrate", "silent", "off" -> false
+            else -> mp3ResName.isNotEmpty() &&
+                mp3ResName != "none" &&
+                mp3ResName != "silent" &&
+                mp3ResName != "vibrate" &&
+                mp3ResName != "off"
+        }
+
+        val isVibrationWanted = when (storedPrayerMode) {
+            "silent", "off" -> false
+            else -> enableVibration
+        }
+
         val channelId = "adhan_alert_v5"
         val notifManager = NotificationManagerCompat.from(context)
 
@@ -135,11 +162,11 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         } catch (_: Exception) {}
 
         // ── Vibration ─────────────────────
-        if (enableVibration) {
+        if (isVibrationWanted) {
             try {
                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 if (vibrator.hasVibrator()) {
-                    val isFajr = rawPrayerName.contains("الفجر") || rawPrayerName.lowercase().contains("fajr")
+                    val isFajr = pKey == "fajr"
                     val pattern = if (isFajr)
                         longArrayOf(0, 1000, 300, 1000, 300, 1000, 300, 500, 200, 500)
                     else
@@ -161,55 +188,24 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             } catch (_: Exception) {}
         }
 
-        // ── Accelerometer (flip-face-down stop) ──────────────────────
-        try {
-            val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-            sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-        } catch (_: Exception) {}
+        // ── Update Widgets immediately so countdown switches to next prayer ─────
+        WidgetUtils.updateAllWidgets(context)
 
-        // ── MediaPlayer Reciter Selection ─────────────────────────────
-        val mappedResName = when {
-            mp3ResName.contains("meshary") || mp3ResName == "mishary" -> "adhan_meshary_al_fasy_kuwait"
-            mp3ResName.contains("abdelbasset") || mp3ResName == "abdul_basit" -> "adhan_abdelbasset_abdessamad_egypte"
-            mp3ResName.contains("zahrani") || mp3ResName == "manssour" -> "adhan_manssour_el_zahrani"
-            mp3ResName.contains("quds") || mp3ResName == "maghriby" -> "adhan_nurdin_hamza_al_maghriby_quds"
-            mp3ResName.contains("kazabri") -> "adhan_omar_al_kazabri_morocco"
-            mp3ResName.contains("riad") -> "adhan_riad_al_djazairi_algeria"
-            mp3ResName.contains("nakshabandi") -> "adhan_sayed_al_nakshabandi_egypte"
-            mp3ResName.contains("fajr_meshary") -> "adhan_fajr_meshary_al_fasy_kuwait"
-            mp3ResName.contains("fajr_abdelbasset") -> "adhan_fajr_abdelbasset_abdessamad_egypte"
-            mp3ResName.contains("fajr_al_haram") || mp3ResName == "madinah" -> "adhan_fajr_al_haram_el_madani_saoudia"
-            mp3ResName.contains("haddiwi") || mp3ResName == "nurdin" -> "adhan_fajr_nurdin_al_haddiwi_fajr_morocco"
-            mp3ResName.isNotEmpty() -> mp3ResName.replace(".mp3", "")
-            else -> "adhan_meshary_al_fasy_kuwait"
-        }
-
-        var resId = context.resources.getIdentifier(mappedResName, "raw", context.packageName)
-        if (resId == 0) {
-            resId = context.resources.getIdentifier("adhan_meshary_al_fasy_kuwait", "raw", context.packageName)
-        }
-
-        if (resId == 0) {
-            if (wakeLock.isHeld) wakeLock.release()
-            return
-        }
-
-        var player: MediaPlayer? = null
-        var mediaSession: MediaSessionCompat? = null
+        var sensorManager: SensorManager? = null
 
         fun triggerPostAdhanActions() {
-            // 1. Silent Post-Adhan Dua Notification (Does NOT cut off audio!)
+            // 1. Silent Post-Adhan Dua Notification (Purely silent, LOW importance, does NOT grab audio focus)
             val duaEnabled = prefs.getBoolean("flutter.post_adhan_dua", true)
             if (duaEnabled) {
-                val duaChannelId = "dua_silent_channel"
+                val duaChannelId = "dua_silent_channel_v2"
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val duaChannel = NotificationChannel(
                         duaChannelId, "Dua Notification",
-                        NotificationManager.IMPORTANCE_DEFAULT
+                        NotificationManager.IMPORTANCE_LOW
                     ).apply {
                         setSound(null, null)
                         enableVibration(false)
+                        setShowBadge(false)
                     }
                     notifManager.createNotificationChannel(duaChannel)
                 }
@@ -225,11 +221,11 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
                     .setContentTitle(duaTitle)
                     .setContentText(duaText)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(duaText))
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .setSound(null)
                     .setVibrate(null)
                     .setAutoCancel(true)
-                    .setTimeoutAfter(60_000)
+                    .setTimeoutAfter(120_000)
                     .build()
                 notifManager.notify(alarmId + 9000, duaNotif)
             }
@@ -260,9 +256,65 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
                     )
                 }
             }
+
+            // Update Widgets after prayer trigger
+            WidgetUtils.updateAllWidgets(context)
         }
 
+        // If vibration only / silent / no sound requested, skip MediaPlayer completely!
+        if (!isSoundWanted) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (wakeLock.isHeld) wakeLock.release()
+                triggerPostAdhanActions()
+            }, 5000L)
+            return
+        }
+
+        // ── Accelerometer (flip-face-down stop) ──────────────────────
+        Companion.alarmStartTime = System.currentTimeMillis()
+        Companion.lastZ = 0f
+        try {
+            val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            sensorManager = sm
+            val accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+            sm.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+        } catch (_: Exception) {}
+
+        // ── MediaPlayer Reciter Selection ─────────────────────────────
+        val mappedResName = when {
+            mp3ResName.contains("meshary") || mp3ResName == "mishary" -> "adhan_meshary_al_fasy_kuwait"
+            mp3ResName.contains("abdelbasset") || mp3ResName == "abdul_basit" -> "adhan_abdelbasset_abdessamad_egypte"
+            mp3ResName.contains("zahrani") || mp3ResName == "manssour" -> "adhan_manssour_el_zahrani"
+            mp3ResName.contains("quds") || mp3ResName == "maghriby" -> "adhan_nurdin_hamza_al_maghriby_quds"
+            mp3ResName.contains("kazabri") -> "adhan_omar_al_kazabri_morocco"
+            mp3ResName.contains("riad") -> "adhan_riad_al_djazairi_algeria"
+            mp3ResName.contains("nakshabandi") -> "adhan_sayed_al_nakshabandi_egypte"
+            mp3ResName.contains("fajr_meshary") -> "adhan_fajr_meshary_al_fasy_kuwait"
+            mp3ResName.contains("fajr_abdelbasset") -> "adhan_fajr_abdelbasset_abdessamad_egypte"
+            mp3ResName.contains("fajr_al_haram") || mp3ResName == "madinah" -> "adhan_fajr_al_haram_el_madani_saoudia"
+            mp3ResName.contains("haddiwi") || mp3ResName == "nurdin" -> "adhan_fajr_nurdin_al_haddiwi_fajr_morocco"
+            else -> mp3ResName.replace(".mp3", "")
+        }
+
+        var resId = context.resources.getIdentifier(mappedResName, "raw", context.packageName)
+        if (resId == 0) {
+            resId = context.resources.getIdentifier("adhan_meshary_al_fasy_kuwait", "raw", context.packageName)
+        }
+
+        if (resId == 0) {
+            if (wakeLock.isHeld) wakeLock.release()
+            triggerPostAdhanActions()
+            return
+        }
+
+        var player: MediaPlayer? = null
+        var mediaSession: MediaSessionCompat? = null
+
         fun stop() {
+            try {
+                sensorManager?.unregisterListener(this)
+            } catch (_: Exception) {}
+
             try {
                 if (player != null && player!!.isPlaying) {
                     player!!.stop()
@@ -365,9 +417,15 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
+        // Ignore events in the first 2.5 seconds to prevent accidental stop from resting position
+        if (System.currentTimeMillis() - Companion.alarmStartTime < 2500L) {
+            Companion.lastZ = event.values[2]
+            return
+        }
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             val z = event.values[2]
-            if (z < -8.5f && Companion.lastZ >= -8.5f) {
+            // Require transition from upright/face-up (lastZ >= 0) to face-down (z < -8.5f)
+            if (z < -8.5f && Companion.lastZ >= 0f) {
                 Companion.activeStop?.invoke()
             }
             Companion.lastZ = z
@@ -379,6 +437,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
     companion object {
         var activeStop: (() -> Unit)? = null
         var lastZ: Float = 0f
+        var alarmStartTime: Long = 0L
 
         fun stop(context: Context? = null) {
             activeStop?.invoke()

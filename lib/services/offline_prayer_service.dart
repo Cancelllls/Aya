@@ -68,13 +68,18 @@ class OfflinePrayerService {
     }
 
     params.madhab = school == 1 ? Madhab.hanafi : Madhab.shafi;
-    params.highLatitudeRule = HighLatitudeRule.twilight_angle;
+    if (params.method != CalculationMethod.umm_al_qura && params.method != CalculationMethod.qatar) {
+      params.highLatitudeRule = HighLatitudeRule.twilight_angle;
+    }
 
     final dateComps = DateComponents.from(now);
     final prayerTimes = PrayerTimes(coords, dateComps, params);
     
-    final storage = await StorageService.getInstance();
-    final hijriOffset = storage.getInt('hijri_day_offset', defaultValue: 0);
+    int hijriOffset = 0;
+    try {
+      final storage = await StorageService.getInstance();
+      hijriOffset = storage.getInt('hijri_day_offset', defaultValue: 0);
+    } catch (_) {}
     final adjustedDate = now.add(Duration(days: hijriOffset));
     final hijri = HijriCalendar.fromDate(adjustedDate);
 
