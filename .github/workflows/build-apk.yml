@@ -93,8 +93,13 @@ jobs:
           VER="${{ needs.bump.outputs.new_version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
-            cp build/app/outputs/flutter-apk/app-play-${arch}-release.apk \
-               release_apks/Aya-v${VER}-googleplay-${arch}.apk
+            if [ -f build/app/outputs/flutter-apk/app-${arch}-play-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-${arch}-play-release.apk \
+                 release_apks/Aya-v${VER}-googleplay-${arch}.apk
+            elif [ -f build/app/outputs/flutter-apk/app-play-${arch}-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-play-${arch}-release.apk \
+                 release_apks/Aya-v${VER}-googleplay-${arch}.apk
+            fi
           done
 
       - name: Upload Google Play APKs
@@ -160,8 +165,13 @@ jobs:
           VER="${{ needs.bump.outputs.new_version }}"
           mkdir -p release_apks
           for arch in arm64-v8a x86_64; do
-            cp build/app/outputs/flutter-apk/app-fdroid-${arch}-release.apk \
-               release_apks/Aya-v${VER}-fdroid-${arch}.apk
+            if [ -f build/app/outputs/flutter-apk/app-${arch}-fdroid-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-${arch}-fdroid-release.apk \
+                 release_apks/Aya-v${VER}-fdroid-${arch}.apk
+            elif [ -f build/app/outputs/flutter-apk/app-fdroid-${arch}-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-fdroid-${arch}-release.apk \
+                 release_apks/Aya-v${VER}-fdroid-${arch}.apk
+            fi
           done
 
       - name: Upload F-Droid APKs
