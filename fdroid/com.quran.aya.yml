@@ -9,7 +9,7 @@ IssueTracker: https://github.com/Cancelllls/Aya/issues
 Translation: https://github.com/Cancelllls/Aya
 Changelog: https://github.com/Cancelllls/Aya/releases
 
-Summary: Quran, Hadith, Prayer Times, Adhan, Azkar — offline-first Islamic companion
+AutoName: Aya
 Description: |
   Aya is a comprehensive, offline-first Islamic companion app built with
   Flutter.
@@ -38,9 +38,9 @@ RepoType: git
 Repo: https://github.com/Cancelllls/Aya.git
 
 Builds:
-  - versionName: 1.1.2
-    versionCode: 10102
-    commit: v1.1.2
+  - versionName: 1.1.4
+    versionCode: 10104
+    commit: v1.1.4
     output: build/app/outputs/flutter-apk/app-fdroid-release.apk
     srclibs:
       - flutter@3.44.4
@@ -50,6 +50,7 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get
+      - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec sed -i "s/implementation 'com.google.android.gms:play-services-location/compileOnly 'com.google.android.gms:play-services-location/g" {} +
     scanignore:
       - .pub-cache
     build:
@@ -59,5 +60,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.1.2
-CurrentVersionCode: 10102
+CurrentVersion: 1.1.4
+CurrentVersionCode: 10104

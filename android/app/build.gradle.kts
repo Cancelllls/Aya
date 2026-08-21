@@ -70,6 +70,17 @@ android {
                 signingConfigs.getByName("debug")
         }
     }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    configurations.configureEach {
+        if (name.contains("fdroid", ignoreCase = true)) {
+            exclude(group = "com.google.android.gms")
+        }
+    }
 }
 
 flutter {
