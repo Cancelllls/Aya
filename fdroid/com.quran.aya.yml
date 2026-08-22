@@ -73,7 +73,8 @@ Builds:
         {} +
       - sed -i '/defaultConfig {/i dependenciesInfo { includeInApk = false; includeInBundle
         = false }' android/app/build.gradle.kts
-      - printf '%s\n' "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
+      - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
+        "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
         >> android/app/proguard-rules.pro
       - sed -i 's/signingConfig =/proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro")\n            signingConfig =/' android/app/build.gradle.kts
