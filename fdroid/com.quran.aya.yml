@@ -17,7 +17,7 @@ Repo: https://github.com/Cancelllls/Aya.git
 Builds:
   - versionName: 1.2.9
     versionCode: 12209
-    commit: c46b8061dd58d6aa8461932253c30acac84e8d0d
+    commit: 2bb9faa91e66f2ff536d44098b01f2faae561293
     output: build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk
     srclibs:
       - flutter@3.44.4
@@ -30,12 +30,6 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get
-      - find $$flutter$$ -name "*embedding*.jar" -exec zip -d {} "io/flutter/embedding/android/FlutterPlayStoreSplitApplication*.class"
-        "io/flutter/embedding/engine/deferredcomponents/PlayStoreDeferredComponentManager*.class"
-        \; 2>/dev/null || true
-      - sed -i '/exclude(group = "com.google.android.gms")/a \            exclude(group
-        = "com.google.android.play")\n            exclude(group = "com.google.android.play.core")'
-        android/app/build.gradle.kts
       - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec
         sed -i "/play-services-location/d" {} +
       - printf '%s\n' 'package com.baseflow.geolocator.location;' 'import android.app.Activity;'
@@ -57,14 +51,9 @@ Builds:
       - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/isGooglePlayServicesAvailable(Context/,/^[[:space:]]\{2\}\}/c\  private
         boolean isGooglePlayServicesAvailable(Context context) {\n    return false;\n  }"
         {} +
-      - sed -i '/defaultConfig {/i dependenciesInfo { includeInApk = false; includeInBundle
-        = false }' android/app/build.gradle.kts
       - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
         "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
         "-dontwarn com.google.android.play.**" >> android/app/proguard-rules.pro
-      - sed -i 's/signingConfig =/isMinifyEnabled = true\n            isShrinkResources
-        = true\n            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),
-        "proguard-rules.pro")\n            signingConfig =/' android/app/build.gradle.kts
     scanignore:
       - .pub-cache
     build:
