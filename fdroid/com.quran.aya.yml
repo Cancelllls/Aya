@@ -15,9 +15,9 @@ RepoType: git
 Repo: https://github.com/Cancelllls/Aya.git
 
 Builds:
-  - versionName: 1.2.3
-    versionCode: 12203
-    commit: e4b73e9d54f03bc2f045ec9ec859ed2aa4ad047a
+  - versionName: 1.2.5
+    versionCode: 12205
+    commit: 5ee1a27e004895bc013ab6e5f7a66fb5891ef3f5
     output: build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk
     srclibs:
       - flutter@3.44.4
@@ -73,5 +73,5 @@ UpdateCheckMode: Tags
 VercodeOperation:
   - '%c + 2000'
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.2.3
-CurrentVersionCode: 12203
+CurrentVersion: 1.2.5
+CurrentVersionCode: 12205
