@@ -1,4 +1,9 @@
 import java.util.Properties
+import java.net.URI
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.FileSystem
+import java.nio.file.Path
 
 plugins {
     id("com.android.application")
@@ -87,6 +92,35 @@ android {
             exclude(group = "com.google.android.gms")
             exclude(group = "com.google.android.play")
             exclude(group = "com.google.android.play.core")
+        }
+    }
+}
+
+tasks.matching { it.name.contains("dex", ignoreCase = true) || it.name.contains("assemble", ignoreCase = true) || it.name.contains("minify", ignoreCase = true) || it.name.contains("compile", ignoreCase = true) }.configureEach {
+    doFirst {
+        fileTree(File(System.getProperty("user.home"), ".gradle/caches")) {
+            include("**/*flutter_embedding*.jar")
+        }.forEach { jarFile: File ->
+            try {
+                val uri = URI.create("jar:" + jarFile.toURI().toString())
+                val env = mutableMapOf<String, String>()
+                val zipFs = FileSystems.newFileSystem(uri, env)
+                try {
+                    listOf(
+                        "/io/flutter/embedding/android/FlutterPlayStoreSplitApplication.class",
+                        "/io/flutter/embedding/engine/deferredcomponents/PlayStoreDeferredComponentManager.class",
+                        "/io/flutter/embedding/engine/deferredcomponents/PlayStoreDeferredComponentManager\$FeatureInstallStateUpdatedListener.class",
+                        "/io/flutter/embedding/engine/deferredcomponents/PlayStoreDeferredComponentManager\$1.class"
+                    ).forEach { pathStr ->
+                        val p = zipFs.getPath(pathStr)
+                        if (Files.exists(p)) {
+                            Files.delete(p)
+                        }
+                    }
+                } finally {
+                    zipFs.close()
+                }
+            } catch (e: Exception) {}
         }
     }
 }
