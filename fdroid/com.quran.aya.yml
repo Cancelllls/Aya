@@ -18,7 +18,7 @@ Binaries:
 
 Builds:
   - versionName: 1.2.3
-    versionCode: 10203
+    versionCode: 12203
     commit: e4b73e9d54f03bc2f045ec9ec859ed2aa4ad047a
     output: build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk
     srclibs:
@@ -70,6 +70,8 @@ AllowedAPKSigningKeys: ae3789c35df3bd411bee028a9b064638ed41ada6634b2dcf6abd72f74
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
+VercodeOperation:
+  - '%c + 2000'
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
 CurrentVersion: 1.2.3
-CurrentVersionCode: 10203
+CurrentVersionCode: 12203
