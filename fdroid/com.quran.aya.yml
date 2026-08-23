@@ -58,7 +58,8 @@ Builds:
       - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
         "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
         "-dontwarn com.google.android.play.**" >> android/app/proguard-rules.pro
-      - sed -i 's/signingConfig =/proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),
+      - sed -i 's/signingConfig =/isMinifyEnabled = true\n            isShrinkResources
+        = true\n            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro")\n            signingConfig =/' android/app/build.gradle.kts
     scanignore:
       - .pub-cache
