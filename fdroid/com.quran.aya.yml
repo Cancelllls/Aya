@@ -13,7 +13,8 @@ AutoName: Aya
 
 RepoType: git
 Repo: https://github.com/Cancelllls/Aya.git
-Binaries: https://github.com/Cancelllls/Aya/releases/download/v%v/Aya-v%v-fdroid-arm64-v8a.apk
+Binaries: 
+  https://github.com/Cancelllls/Aya/releases/download/v%v/Aya-v%v-fdroid-arm64-v8a.apk
 
 Builds:
   - versionName: 1.2.2
