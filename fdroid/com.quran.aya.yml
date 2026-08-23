@@ -16,18 +16,14 @@ Repo: https://github.com/Cancelllls/Aya.git
 Binaries: https://github.com/Cancelllls/Aya/releases/download/v%v/Aya-v%v-fdroid-arm64-v8a.apk
 
 Builds:
-  - versionName: 1.1.4
-    versionCode: 10104
-    commit: 8824ccc7a4a5fb6ca503fd4abc8ebd737fdf32c1
+  - versionName: 1.1.8
+    versionCode: 10108
+    commit: b958b9e92757b47b06b8c1a6a2629ba51bfd1599
     output: build/app/outputs/flutter-apk/app-fdroid-release.apk
     srclibs:
       - flutter@3.44.4
     rm:
       - ios
-      - linux
-      - macos
-      - web
-      - windows
     prebuild:
       - sed -i '/in_app_purchase/d' pubspec.yaml
       - cp lib/donation/google_play_donation_stub.dart lib/donation/google_play_donation.dart
@@ -75,5 +71,5 @@ AllowedAPKSigningKeys: ae3789c35df3bd411bee028a9b064638ed41ada6634b2dcf6abd72f74
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.1.4
-CurrentVersionCode: 10104
+CurrentVersion: 1.1.8
+CurrentVersionCode: 10108
