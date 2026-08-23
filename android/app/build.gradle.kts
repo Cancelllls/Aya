@@ -83,6 +83,8 @@ android {
     configurations.configureEach {
         if (name.contains("fdroid", ignoreCase = true)) {
             exclude(group = "com.google.android.gms")
+            exclude(group = "com.google.android.play")
+            exclude(group = "com.google.android.play.core")
         }
     }
 }
