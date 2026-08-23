@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - 'releases/**'
       - '**.md'
+      - 'fdroid/**'
 
 jobs:
   # ── Step 1: Bump version FIRST so builds use the new number ──────────
