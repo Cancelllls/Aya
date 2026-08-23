@@ -61,8 +61,6 @@ Builds:
         "proguard-rules.pro")\n            signingConfig =/' android/app/build.gradle.kts
     scanignore:
       - .pub-cache
-    scandelete:
-      - .pub-cache
     build:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter build apk --flavor fdroid --release
