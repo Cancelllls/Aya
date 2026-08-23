@@ -13,13 +13,12 @@ AutoName: Aya
 
 RepoType: git
 Repo: https://github.com/Cancelllls/Aya.git
-Binaries: 
-  https://github.com/Cancelllls/Aya/releases/download/v%v/Aya-v%v-fdroid-arm64-v8a.apk
+Binaries: https://github.com/Cancelllls/Aya/releases/download/v%v/Aya-v%v-fdroid-arm64-v8a.apk
 
 Builds:
-  - versionName: 1.2.2
-    versionCode: 10202
-    commit: 6bea38a1b19ad4ec7133b155f72312a1c59b53af
+  - versionName: 1.2.3
+    versionCode: 10203
+    commit: e4b73e9d54f03bc2f045ec9ec859ed2aa4ad047a
     output: build/app/outputs/flutter-apk/app-fdroid-release.apk
     srclibs:
       - flutter@3.44.4
@@ -72,5 +71,5 @@ AllowedAPKSigningKeys: ae3789c35df3bd411bee028a9b064638ed41ada6634b2dcf6abd72f74
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.2.2
-CurrentVersionCode: 10202
+CurrentVersion: 1.2.3
+CurrentVersionCode: 10203
