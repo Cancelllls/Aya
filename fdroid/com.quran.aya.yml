@@ -29,7 +29,9 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get
-      - sed -i '/exclude(group = "com.google.android.gms")/a \            exclude(group = "com.google.android.play")\n            exclude(group = "com.google.android.play.core")' android/app/build.gradle.kts
+      - sed -i '/exclude(group = "com.google.android.gms")/a \            exclude(group
+        = "com.google.android.play")\n            exclude(group = "com.google.android.play.core")'
+        android/app/build.gradle.kts
       - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec
         sed -i "/play-services-location/d" {} +
       - printf '%s\n' 'package com.baseflow.geolocator.location;' 'import android.app.Activity;'
@@ -55,8 +57,7 @@ Builds:
         = false }' android/app/build.gradle.kts
       - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
         "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
-        "-dontwarn com.google.android.play.**"
-        >> android/app/proguard-rules.pro
+        "-dontwarn com.google.android.play.**" >> android/app/proguard-rules.pro
       - sed -i 's/signingConfig =/proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro")\n            signingConfig =/' android/app/build.gradle.kts
     scanignore:
