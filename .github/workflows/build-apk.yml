@@ -9,6 +9,9 @@ on:
       - 'releases/**'
       - '**.md'
       - 'fdroid/**'
+      - 'fastlane/**'
+      - 'assets/**'
+      - '.github/**'
 
 jobs:
   # ── Step 1: Bump version FIRST so builds use the new number ──────────
