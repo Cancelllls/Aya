@@ -10,40 +10,24 @@ Translation: https://github.com/Cancelllls/Aya
 Changelog: https://github.com/Cancelllls/Aya/releases
 
 AutoName: Aya
-Description: |
-  Aya is a comprehensive, offline-first Islamic companion app built with
-  Flutter.
-
-  * Quran — 10 Qira'at (Hafs, Warsh, Qalun, etc.) with per-ayah audio sync
-    for 12 reciters. 6 tafsir editions. Continuous mushaf or ayah-by-ayah
-    reading. Arabic search with full diacritic normalization.
-
-  * Hadith — 13 collections (Bukhari, Muslim, Abu Dawud, Tirmidhi, Nasai,
-    Ibn Majah, Malik, Riyad as-Salihin, and more). FTS5 full-text search.
-    Grading and explanation from Dorar.net.
-
-  * Prayer Times — 14 calculation methods, fully offline via adhan library.
-    Native AlarmManager scheduling with Five Prayers-style MediaPlayer +
-    MediaSession for reliable adhan playback.
-
-  * Azkar — 11 categories (morning, evening, post-prayer, sleep, protection,
-    forgiveness, 99 Names of Allah, custom). Counter tracking with haptics.
-
-  * Qibla compass, prayer tracker with statistics, 8 home screen widgets,
-    Ramadan alerts, digital tasbih, full backup/restore.
-
-  Completely free and ad-free. No account required. Everything works offline.
 
 RepoType: git
 Repo: https://github.com/Cancelllls/Aya.git
+Binaries: https://github.com/Cancelllls/Aya/releases/download/v%v/Aya-v%v-fdroid-arm64-v8a.apk
 
 Builds:
   - versionName: 1.1.4
     versionCode: 10104
-    commit: v1.1.4
+    commit: 8824ccc7a4a5fb6ca503fd4abc8ebd737fdf32c1
     output: build/app/outputs/flutter-apk/app-fdroid-release.apk
     srclibs:
       - flutter@3.44.4
+    rm:
+      - ios
+      - linux
+      - macos
+      - web
+      - windows
     prebuild:
       - sed -i '/in_app_purchase/d' pubspec.yaml
       - cp lib/donation/google_play_donation_stub.dart lib/donation/google_play_donation.dart
@@ -80,9 +64,13 @@ Builds:
         "proguard-rules.pro")\n            signingConfig =/' android/app/build.gradle.kts
     scanignore:
       - .pub-cache
+    scandelete:
+      - .pub-cache
     build:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter build apk --flavor fdroid --release
+
+AllowedAPKSigningKeys: ae3789c35df3bd411bee028a9b064638ed41ada6634b2dcf6abd72f7420e528a
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
