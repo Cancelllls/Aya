@@ -3,7 +3,6 @@ Categories:
 License: MIT
 AuthorName: Abdalrahman Samir
 AuthorEmail: abdalraman.samir2001@gmail.com
-WebSite: https://github.com/Cancelllls/Aya
 SourceCode: https://github.com/Cancelllls/Aya
 IssueTracker: https://github.com/Cancelllls/Aya/issues
 Translation: https://github.com/Cancelllls/Aya
@@ -17,19 +16,22 @@ Repo: https://github.com/Cancelllls/Aya.git
 Builds:
   - versionName: 1.2.9
     versionCode: 12209
-    commit: 2bb9faa91e66f2ff536d44098b01f2faae561293
+    commit: 9d1a2ab4a378cf81777915db363040b303af8a18
     output: build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk
     srclibs:
-      - flutter@3.44.4
+      - flutter@stable
     rm:
       - ios
     prebuild:
+      - flutterVersion=$(sed -n -E "s/.*flutter-version:\ '(.*)'/\1/p" .github/workflows/build-apk.yml | head -n 1)
+      - '[[ $flutterVersion ]]'
+      - git -C $$flutter$$ checkout -f $flutterVersion
       - sed -i '/in_app_purchase/d' pubspec.yaml
-      - rm -f pubspec.lock
+      - cp pubspec.lock.fdroid pubspec.lock
       - cp lib/donation/google_play_donation_stub.dart lib/donation/google_play_donation.dart
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
-      - $$flutter$$/bin/flutter pub get
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
       - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec
         sed -i "/play-services-location/d" {} +
       - printf '%s\n' 'package com.baseflow.geolocator.location;' 'import android.app.Activity;'

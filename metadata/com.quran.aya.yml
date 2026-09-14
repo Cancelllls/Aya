@@ -3,54 +3,70 @@ Categories:
 License: MIT
 AuthorName: Abdalrahman Samir
 AuthorEmail: abdalraman.samir2001@gmail.com
-WebSite: https://github.com/Cancelllls/Aya
 SourceCode: https://github.com/Cancelllls/Aya
 IssueTracker: https://github.com/Cancelllls/Aya/issues
+Translation: https://github.com/Cancelllls/Aya
 Changelog: https://github.com/Cancelllls/Aya/releases
 
 AutoName: Aya
-Summary: Quran, Hadith, Prayer Times, Adhan, Azkar — offline-first Islamic companion
-Description: |
-  Aya is a comprehensive, offline-first Islamic companion app built with Flutter.
-
-  • Quran — 10 Qira'at (Hafs, Warsh, Qalun, etc.) with per-ayah audio sync
-    for 12 reciters. 6 tafsir editions. Continuous mushaf or ayah-by-ayah
-    reading. Arabic search with full diacritic normalization.
-
-  • Hadith — 13 collections (Bukhari, Muslim, Abu Dawud, Tirmidhi, Nasai,
-    Ibn Majah, Malik, Riyad as-Salihin, and more). FTS5 full-text search.
-    Grading and explanation from Dorar.net.
-
-  • Prayer Times — 14 calculation methods, fully offline via adhan library.
-    Native AlarmManager scheduling with Five Prayers-style MediaPlayer +
-    MediaSession for reliable adhan playback.
-
-  • Azkar — 11 categories (morning, evening, post-prayer, sleep, protection,
-    forgiveness, 99 Names of Allah, custom). Counter tracking with haptics.
-
-  • Qibla compass, prayer tracker with statistics, 8 home screen widgets,
-    Ramadan alerts, digital tasbih, full backup/restore.
-
-  Completely free and ad-free. No account required. Everything works offline.
 
 RepoType: git
 Repo: https://github.com/Cancelllls/Aya.git
 
 Builds:
-  - versionName: '1.1.0'
-    versionCode: 1
-    commit: v1.1.0
-    subdir: .
-    sudo: apt-get update && apt-get install -y git unzip
-    gradle:
-      - yes
+  - versionName: 1.2.9
+    versionCode: 12209
+    commit: 9d1a2ab4a378cf81777915db363040b303af8a18
+    output: build/app/outputs/flutter-apk/app-arm64-v8a-fdroid-release.apk
     srclibs:
       - flutter@stable
+    rm:
+      - ios
     prebuild:
-      - echo "flutter.sdk=$$flutter$$" > local.properties
-    build: $$flutter$$/bin/flutter build apk --release
+      - flutterVersion=$(sed -n -E "s/.*flutter-version:\ '(.*)'/\1/p" .github/workflows/build-apk.yml | head -n 1)
+      - '[[ $flutterVersion ]]'
+      - git -C $$flutter$$ checkout -f $flutterVersion
+      - sed -i '/in_app_purchase/d' pubspec.yaml
+      - cp pubspec.lock.fdroid pubspec.lock
+      - cp lib/donation/google_play_donation_stub.dart lib/donation/google_play_donation.dart
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get --enforce-lockfile
+      - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec
+        sed -i "/play-services-location/d" {} +
+      - printf '%s\n' 'package com.baseflow.geolocator.location;' 'import android.app.Activity;'
+        'import android.content.Context;' 'import com.baseflow.geolocator.errors.ErrorCallback;'
+        'public class FusedLocationClient implements LocationClient {' '  public FusedLocationClient(Context
+        c, LocationOptions o) {}' '  public void isLocationServiceEnabled(LocationServiceListener
+        l) {}' '  public void getLastKnownPosition(PositionChangedCallback p, ErrorCallback
+        e) {}' '  public boolean onActivityResult(int r, int c) { return false; }'
+        '  public void startPositionUpdates(Activity a, PositionChangedCallback p,
+        ErrorCallback e) {}' '  public void stopPositionUpdates() {}' '}' > $(find
+        .pub-cache -name "FusedLocationClient.java")
+      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/com.google.android.gms/d"
+        {} +
+      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/LocationClient
+        createLocationClient/,/^[[:space:]]\{2\}\}/c\  public LocationClient createLocationClient(Context
+        context, boolean forceAndroidLocationManager, LocationOptions locationOptions)
+        {\n    return new LocationManagerClient(context, locationOptions);\n  }" {}
+        +
+      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/isGooglePlayServicesAvailable(Context/,/^[[:space:]]\{2\}\}/c\  private
+        boolean isGooglePlayServicesAvailable(Context context) {\n    return false;\n  }"
+        {} +
+      - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
+        "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
+        "-dontwarn com.google.android.play.**" >> android/app/proguard-rules.pro
+    scanignore:
+      - .pub-cache
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --flavor fdroid --release --split-per-abi
+        --target-platform="android-arm64" --obfuscate --split-debug-info=build/debug-info
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: '1.1.0'
-CurrentVersionCode: 1
+VercodeOperation:
+  - '%c + 2000'
+UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+CurrentVersion: 1.2.9
+CurrentVersionCode: 12209
