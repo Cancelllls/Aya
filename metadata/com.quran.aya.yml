@@ -33,30 +33,13 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get --enforce-lockfile
-      - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec
-        sed -i "/play-services-location/d" {} +
-      - printf '%s\n' 'package com.baseflow.geolocator.location;' 'import android.app.Activity;'
-        'import android.content.Context;' 'import com.baseflow.geolocator.errors.ErrorCallback;'
-        'public class FusedLocationClient implements LocationClient {' '  public FusedLocationClient(Context
-        c, LocationOptions o) {}' '  public void isLocationServiceEnabled(LocationServiceListener
-        l) {}' '  public void getLastKnownPosition(PositionChangedCallback p, ErrorCallback
-        e) {}' '  public boolean onActivityResult(int r, int c) { return false; }'
-        '  public void startPositionUpdates(Activity a, PositionChangedCallback p,
-        ErrorCallback e) {}' '  public void stopPositionUpdates() {}' '}' > $(find
-        .pub-cache -name "FusedLocationClient.java")
-      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/com.google.android.gms/d"
-        {} +
-      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/LocationClient
-        createLocationClient/,/^[[:space:]]\{2\}\}/c\  public LocationClient createLocationClient(Context
-        context, boolean forceAndroidLocationManager, LocationOptions locationOptions)
-        {\n    return new LocationManagerClient(context, locationOptions);\n  }" {}
-        +
-      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/isGooglePlayServicesAvailable(Context/,/^[[:space:]]\{2\}\}/c\  private
-        boolean isGooglePlayServicesAvailable(Context context) {\n    return false;\n  }"
-        {} +
-      - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
-        "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
-        "-dontwarn com.google.android.play.**" >> android/app/proguard-rules.pro
+      - cd $PUB_CACHE/hosted/pub.dev/geolocator_android-*/android
+      - sed -i -e '/gms/d' build.gradle
+      - cd src/main/java/com/baseflow/geolocator/location
+      - rm FusedLocationClient.java
+      - sed -i -e '/if (forceAndroidLocationManager) {/,/^  }/c return new LocationManagerClient(context,
+        locationOptions);}' -e '/isGooglePlayServicesAvailable/,/^  }/d' -e '/gms/d'
+        GeolocationManager.java
     scanignore:
       - .pub-cache
     build:
@@ -83,30 +66,13 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter config --no-analytics
       - $$flutter$$/bin/flutter pub get --enforce-lockfile
-      - find .pub-cache -name "build.gradle" -path "*/geolocator_android*/*" -exec
-        sed -i "/play-services-location/d" {} +
-      - printf '%s\n' 'package com.baseflow.geolocator.location;' 'import android.app.Activity;'
-        'import android.content.Context;' 'import com.baseflow.geolocator.errors.ErrorCallback;'
-        'public class FusedLocationClient implements LocationClient {' '  public FusedLocationClient(Context
-        c, LocationOptions o) {}' '  public void isLocationServiceEnabled(LocationServiceListener
-        l) {}' '  public void getLastKnownPosition(PositionChangedCallback p, ErrorCallback
-        e) {}' '  public boolean onActivityResult(int r, int c) { return false; }'
-        '  public void startPositionUpdates(Activity a, PositionChangedCallback p,
-        ErrorCallback e) {}' '  public void stopPositionUpdates() {}' '}' > $(find
-        .pub-cache -name "FusedLocationClient.java")
-      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/com.google.android.gms/d"
-        {} +
-      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/LocationClient
-        createLocationClient/,/^[[:space:]]\{2\}\}/c\  public LocationClient createLocationClient(Context
-        context, boolean forceAndroidLocationManager, LocationOptions locationOptions)
-        {\n    return new LocationManagerClient(context, locationOptions);\n  }" {}
-        +
-      - find .pub-cache -name "GeolocationManager.java" -exec sed -i "/isGooglePlayServicesAvailable(Context/,/^[[:space:]]\{2\}\}/c\  private
-        boolean isGooglePlayServicesAvailable(Context context) {\n    return false;\n  }"
-        {} +
-      - printf '%s\n' "-dontwarn com.google.android.play.core.**" "-dontwarn io.flutter.embedding.**"
-        "-dontwarn com.google.android.gms.**" "-dontwarn com.baseflow.geolocator.**"
-        "-dontwarn com.google.android.play.**" >> android/app/proguard-rules.pro
+      - cd $PUB_CACHE/hosted/pub.dev/geolocator_android-*/android
+      - sed -i -e '/gms/d' build.gradle
+      - cd src/main/java/com/baseflow/geolocator/location
+      - rm FusedLocationClient.java
+      - sed -i -e '/if (forceAndroidLocationManager) {/,/^  }/c return new LocationManagerClient(context,
+        locationOptions);}' -e '/isGooglePlayServicesAvailable/,/^  }/d' -e '/gms/d'
+        GeolocationManager.java
     scanignore:
       - .pub-cache
     build:
