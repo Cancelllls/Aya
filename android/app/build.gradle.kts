@@ -96,11 +96,13 @@ android {
     }
 }
 
-tasks.matching { it.name.contains("dex", ignoreCase = true) || it.name.contains("assemble", ignoreCase = true) || it.name.contains("minify", ignoreCase = true) || it.name.contains("compile", ignoreCase = true) }.configureEach {
+tasks.matching { it.name.contains("compile", ignoreCase = true) }.configureEach {
     doFirst {
-        fileTree(File(System.getProperty("user.home"), ".gradle/caches")) {
-            include("**/*flutter_embedding*.jar")
-        }.forEach { jarFile: File ->
+        val flutterCaches = File(System.getProperty("user.home"), ".gradle/caches/modules-2/files-2.1/io.flutter")
+        if (flutterCaches.exists()) {
+            fileTree(flutterCaches) {
+                include("**/*flutter_embedding*.jar")
+            }.forEach { jarFile: File ->
             try {
                 val uri = URI.create("jar:" + jarFile.toURI().toString())
                 val env = mutableMapOf<String, String>()
