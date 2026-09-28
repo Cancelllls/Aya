@@ -220,6 +220,11 @@ class TranslationService {
       'names_of_allah': 'Names of Allah',
       'hijri_calendar': 'Hijri Calendar',
       'prayer_calendar': 'Prayer Calendar',
+      'upcoming_holy_days': 'UPCOMING HOLY DAYS',
+      'holy_days': 'Islamic Events',
+      'daily_prayers_for': 'Prayer Times for',
+      'view_table': 'Full Month Table',
+      'view_calendar': 'Calendar Grid',
     },
     'ar': {
       'app_title': 'آية',
@@ -426,6 +431,11 @@ class TranslationService {
       'names_of_allah': 'أسماء الله',
       'hijri_calendar': 'التقويم الهجري',
       'prayer_calendar': 'جدول الصلوات',
+      'upcoming_holy_days': 'المناسبات الإسلامية القادمة',
+      'holy_days': 'المناسبات الإسلامية',
+      'daily_prayers_for': 'مواقيت الصلاة ليوم',
+      'view_table': 'جدول الشهر بالكامل',
+      'view_calendar': 'تقويم الأيام',
     },
   };
 

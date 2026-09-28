@@ -9,6 +9,7 @@ import '../services/offline_prayer_service.dart';
 import '../services/translation_service.dart';
 import '../services/notification_service.dart';
 import '../utils/text_helpers.dart';
+import 'package:hijri/hijri_calendar.dart';
 
 part 'prayer_times_screen_ui.dart';
 
@@ -37,6 +38,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   int _calendarMonth = DateTime.now().month;
   int _calendarYear = DateTime.now().year;
   bool _isCalendarLoading = false;
+  DateTime _selectedCalendarDay = DateTime.now();
+  bool _showRawPrayerTable = false;
 
   @override
   void initState() {
@@ -126,6 +129,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       } else {
         _calendarMonth--;
       }
+      final now = DateTime.now();
+      if (_calendarYear == now.year && _calendarMonth == now.month) {
+        _selectedCalendarDay = now;
+      } else {
+        _selectedCalendarDay = DateTime(_calendarYear, _calendarMonth, 1);
+      }
     });
     _loadCalendarData();
   }
@@ -137,6 +146,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         _calendarYear++;
       } else {
         _calendarMonth++;
+      }
+      final now = DateTime.now();
+      if (_calendarYear == now.year && _calendarMonth == now.month) {
+        _selectedCalendarDay = now;
+      } else {
+        _selectedCalendarDay = DateTime(_calendarYear, _calendarMonth, 1);
       }
     });
     _loadCalendarData();
@@ -675,7 +690,855 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     );
   }
 
-  Widget _buildPrayerCalendar(ThemeData theme) {
+  String _getGregMonthName(int month, bool isArabic) {
+    const en = [
+      '', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const ar = [
+      '', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    if (month >= 1 && month <= 12) {
+      return isArabic ? ar[month] : en[month];
+    }
+    return '';
+  }
+
+  String _getHijriMonthName(int month, bool isArabic) {
+    const en = [
+      '', 'Muharram', 'Safar', "Rabi' I", "Rabi' II", "Jumada I", "Jumada II",
+      'Rajab', "Sha'ban", 'Ramadan', 'Shawwal', "Dhu al-Qi'dah", "Dhu al-Hijjah"
+    ];
+    const ar = [
+      '', 'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+      'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+    ];
+    if (month >= 1 && month <= 12) {
+      return isArabic ? ar[month] : en[month];
+    }
+    return '';
+  }
+
+  String _getHijriMonthShort(int month, bool isArabic) {
+    const en = [
+      '', 'Muh.', 'Saf.', 'Rab. I', 'Rab. II', 'Jum. I', 'Jum. II',
+      'Raj.', 'Sha.', 'Ram.', 'Shaw.', 'Dhu Q.', 'Dhu H.'
+    ];
+    const ar = [
+      '', 'محرم', 'صفر', 'ربيع ١', 'ربيع ٢', 'جمادى ١', 'جمادى ٢',
+      'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+    ];
+    if (month >= 1 && month <= 12) {
+      return isArabic ? ar[month] : en[month];
+    }
+    return '';
+  }
+
+  String _getSpanningHijriTitle(int year, int month) {
+    final hStart = HijriCalendar.fromDate(DateTime(year, month, 1));
+    final hEnd = HijriCalendar.fromDate(DateTime(year, month + 1, 0));
+    final isArabic = TranslationService.isArabic;
+    final startName = _getHijriMonthName(hStart.hMonth, isArabic);
+    final endName = _getHijriMonthName(hEnd.hMonth, isArabic);
+
+    if (hStart.hMonth == hEnd.hMonth) {
+      return isArabic ? "$startName ${hStart.hYear} هـ" : "$startName ${hStart.hYear}";
+    }
+    if (hStart.hYear == hEnd.hYear) {
+      return isArabic
+          ? "$startName – $endName ${hEnd.hYear} هـ"
+          : "$startName – $endName ${hEnd.hYear}";
+    }
+    return isArabic
+        ? "$startName ${hStart.hYear} هـ – $endName ${hEnd.hYear} هـ"
+        : "$startName ${hStart.hYear} – $endName ${hEnd.hYear}";
+  }
+
+  String _formatCountdownPill(int days, bool isArabic) {
+    if (days == 0) return isArabic ? 'اليوم' : 'Today';
+    if (days == 1) return isArabic ? 'غداً' : 'Tomorrow';
+    if (days == 2) return isArabic ? 'بعد يومين' : 'in 2 days';
+    if (days > 2 && days <= 10) return isArabic ? 'بعد $days أيام' : 'in $days days';
+    if (days > 10) return isArabic ? 'بعد $days يوم' : 'in $days days';
+    return isArabic ? 'انتهت' : 'Passed';
+  }
+
+  List<Map<String, dynamic>> _getUpcomingHolyDays() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final hNow = HijriCalendar.fromDate(today);
+
+    final holyEvents = [
+      {'m': 1, 'd': 1, 'ar': 'رأس السنة الهجرية', 'en': 'Islamic New Year', 'icon': '🌙'},
+      {'m': 1, 'd': 9, 'ar': 'تاسوعاء', 'en': "Tasu'a", 'icon': '🕌'},
+      {'m': 1, 'd': 10, 'ar': 'يوم عاشوراء', 'en': 'Day of Ashura', 'icon': '🕌'},
+      {'m': 3, 'd': 12, 'ar': 'المولد النبوي الشريف', 'en': 'Mawlid al-Nabi', 'icon': '🕌'},
+      {'m': 7, 'd': 1, 'ar': 'أول شهر رجب', 'en': 'First Day of Rajab', 'icon': '🌙'},
+      {'m': 7, 'd': 2, 'ar': 'ليلة الرغائب', 'en': 'Laylat al-Raghaib', 'icon': '🤲'},
+      {'m': 7, 'd': 27, 'ar': 'ليلة الإسراء والمعراج', 'en': "Isra' and Mi'raj", 'icon': '🕌'},
+      {'m': 8, 'd': 1, 'ar': 'أول شهر شعبان', 'en': "First Day of Sha'ban", 'icon': '🌙'},
+      {'m': 8, 'd': 15, 'ar': 'ليلة النصف من شعبان', 'en': "Mid-Sha'ban", 'icon': '🌕'},
+      {'m': 9, 'd': 1, 'ar': 'بداية شهر رمضان المبارك', 'en': 'Start of Ramadan', 'icon': '🌙'},
+      {'m': 9, 'd': 27, 'ar': 'ليلة القدر (المتحراة)', 'en': 'Laylat al-Qadr', 'icon': '🤲'},
+      {'m': 10, 'd': 1, 'ar': 'عيد الفطر المبارك', 'en': 'Eid al-Fitr', 'icon': '✨'},
+      {'m': 12, 'd': 1, 'ar': 'أول ذي الحجة (العشر الأوائل)', 'en': 'First Day of Dhu al-Hijjah', 'icon': '🌙'},
+      {'m': 12, 'd': 9, 'ar': 'يوم عرفة', 'en': 'Day of Arafah', 'icon': '🤲'},
+      {'m': 12, 'd': 10, 'ar': 'عيد الأضحى المبارك', 'en': 'Eid al-Adha', 'icon': '🕌'},
+    ];
+
+    final upcoming = <Map<String, dynamic>>[];
+    final isArabic = TranslationService.isArabic;
+
+    for (final ev in holyEvents) {
+      final m = ev['m'] as int;
+      final d = ev['d'] as int;
+
+      DateTime? gregDate;
+      int targetHYear = hNow.hYear;
+
+      for (int yearOffset = 0; yearOffset <= 1; yearOffset++) {
+        final candidateHYear = hNow.hYear + yearOffset;
+        final hCal = HijriCalendar();
+        final candidateDate = hCal.hijriToGregorian(candidateHYear, m, d);
+        if (!candidateDate.isBefore(today)) {
+          gregDate = candidateDate;
+          targetHYear = candidateHYear;
+          break;
+        }
+      }
+
+      if (gregDate != null) {
+        final daysDiff = gregDate.difference(today).inDays;
+        final hMonthName = _getHijriMonthName(m, isArabic);
+        final gMonthName = _getGregMonthName(gregDate.month, isArabic);
+
+        final String dateSubtitle = isArabic
+            ? "${gregDate.day} $gMonthName ${gregDate.year} · $d $hMonthName $targetHYear هـ"
+            : "${_getGregMonthName(gregDate.month, false)} ${gregDate.day}, ${gregDate.year} · $hMonthName $d, $targetHYear AH";
+
+        final gregDateStr =
+            "${gregDate.day.toString().padLeft(2, '0')}-${gregDate.month.toString().padLeft(2, '0')}-${gregDate.year}";
+
+        upcoming.add({
+          'title': isArabic ? ev['ar'] : ev['en'],
+          'titleAr': ev['ar'],
+          'titleEn': ev['en'],
+          'icon': ev['icon'],
+          'gregDateTime': gregDate,
+          'gregDate': gregDateStr,
+          'hijriDate': "$d $hMonthName $targetHYear",
+          'subtitle': dateSubtitle,
+          'key': "${m}_$d",
+          'daysRemaining': daysDiff,
+        });
+      }
+    }
+
+    upcoming.sort((a, b) => (a['daysRemaining'] as int).compareTo(b['daysRemaining'] as int));
+    return upcoming;
+  }
+
+  Widget _buildModernCalendarGrid(ThemeData theme, {required bool forPrayer}) {
+    if (_monthlyData == null || _monthlyData!.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Text(
+            TranslationService.isArabic
+                ? 'جاري تحميل التقويم...'
+                : 'Loading calendar...',
+          ),
+        ),
+      );
+    }
+
+    final isArabic = TranslationService.isArabic;
+    final gregMonthName = _getGregMonthName(_calendarMonth, isArabic);
+    final spanningHijri = _getSpanningHijriTitle(_calendarYear, _calendarMonth);
+
+    final firstDayOfMonth = DateTime(_calendarYear, _calendarMonth, 1);
+    final daysInCurrentMonth = DateTime(_calendarYear, _calendarMonth + 1, 0).day;
+    final leadingPadding = firstDayOfMonth.weekday % 7; // Sunday = 0
+    final prevMonthLastDay = DateTime(_calendarYear, _calendarMonth, 0);
+    final daysInPrevMonth = prevMonthLastDay.day;
+
+    final List<Map<String, dynamic>> gridCells = [];
+
+    // 1. Leading days (adjacent previous month)
+    for (int i = leadingPadding - 1; i >= 0; i--) {
+      final dayNum = daysInPrevMonth - i;
+      final date = DateTime(prevMonthLastDay.year, prevMonthLastDay.month, dayNum);
+      final hijri = HijriCalendar.fromDate(date);
+      gridCells.add({
+        'date': date,
+        'hijri': hijri,
+        'gregDay': dayNum.toString(),
+        'hijriDay': hijri.hDay.toString(),
+        'isCurrentMonth': false,
+        'isFirstOfHijriMonth': hijri.hDay == 1,
+      });
+    }
+
+    // 2. Current month days
+    for (int d = 1; d <= daysInCurrentMonth; d++) {
+      final date = DateTime(_calendarYear, _calendarMonth, d);
+      final hijri = HijriCalendar.fromDate(date);
+      gridCells.add({
+        'date': date,
+        'hijri': hijri,
+        'gregDay': d.toString(),
+        'hijriDay': hijri.hDay.toString(),
+        'isCurrentMonth': true,
+        'isFirstOfHijriMonth': hijri.hDay == 1,
+      });
+    }
+
+    // 3. Trailing days (adjacent next month)
+    final remainder = gridCells.length % 7;
+    final trailingCount = remainder == 0 ? 0 : 7 - remainder;
+    final nextMonth = DateTime(_calendarYear, _calendarMonth + 1, 1);
+    for (int d = 1; d <= trailingCount; d++) {
+      final date = DateTime(nextMonth.year, nextMonth.month, d);
+      final hijri = HijriCalendar.fromDate(date);
+      gridCells.add({
+        'date': date,
+        'hijri': hijri,
+        'gregDay': d.toString(),
+        'hijriDay': hijri.hDay.toString(),
+        'isCurrentMonth': false,
+        'isFirstOfHijriMonth': hijri.hDay == 1,
+      });
+    }
+
+    final weekdayHeadersEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    final weekdayHeadersAr = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+    final weekdayHeaders = isArabic ? weekdayHeadersAr : weekdayHeadersEn;
+
+    final now = DateTime.now();
+    final events = _getHijriEventsForMonth();
+
+    return Card(
+      color: theme.cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 16.0),
+        child: Column(
+          children: [
+            // Month Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.chevron_left,
+                    color: Color(0xFFE5C158),
+                    size: 26,
+                  ),
+                  onPressed: _isCalendarLoading ? null : _prevCalendarMonth,
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        "$gregMonthName $_calendarYear",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        spanningHijri,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.5,
+                          color: Color(0xFFE5C158),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFFE5C158),
+                    size: 26,
+                  ),
+                  onPressed: _isCalendarLoading ? null : _nextCalendarMonth,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            if (_isCalendarLoading)
+              const SizedBox(
+                height: 260,
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFE5C158)),
+                ),
+              )
+            else ...[
+              // Weekday Headers
+              Row(
+                children: List.generate(7, (idx) {
+                  return Expanded(
+                    child: Center(
+                      child: Text(
+                        weekdayHeaders[idx],
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                          letterSpacing: 0.3,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.55,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 6),
+              Divider(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.10),
+                height: 12,
+              ),
+              const SizedBox(height: 4),
+
+              // Calendar 7-column Grid
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  childAspectRatio: 0.84,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 5,
+                ),
+                itemCount: gridCells.length,
+                itemBuilder: (context, idx) {
+                  final cell = gridCells[idx];
+                  final DateTime date = cell['date'];
+                  final HijriCalendar hijri = cell['hijri'];
+                  final bool isCurrentMonth = cell['isCurrentMonth'];
+                  final bool isFirstOfHijri = cell['isFirstOfHijriMonth'];
+
+                  final bool isToday = isCurrentMonth &&
+                      date.year == now.year &&
+                      date.month == now.month &&
+                      date.day == now.day;
+
+                  final bool isSelected = isCurrentMonth &&
+                      date.year == _selectedCalendarDay.year &&
+                      date.month == _selectedCalendarDay.month &&
+                      date.day == _selectedCalendarDay.day;
+
+                  final dayStr = date.day.toString().padLeft(2, '0');
+                  final monthStr = date.month.toString().padLeft(2, '0');
+                  final fullDateFormatted = "$dayStr-$monthStr-${date.year}";
+                  final hasEvent = events.any((e) => e['gregDate'] == fullDateFormatted);
+
+                  final hijriShortName = _getHijriMonthShort(hijri.hMonth, isArabic);
+
+                  if (!isCurrentMonth) {
+                    return Opacity(
+                      opacity: 0.28,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              cell['gregDay'],
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              cell['hijriDay'],
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      setState(() {
+                        _selectedCalendarDay = date;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.22)
+                            : isToday
+                                ? const Color(0xFFE5C158).withValues(alpha: 0.10)
+                                : (hasEvent
+                                    ? const Color(0xFFE5C158).withValues(alpha: 0.04)
+                                    : theme.cardColor.withValues(alpha: 0.5)),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFFE5C158)
+                              : isToday
+                                  ? const Color(0xFFE5C158).withValues(alpha: 0.7)
+                                  : Theme.of(context)
+                                      .dividerColor
+                                      .withValues(alpha: 0.10),
+                          width: isSelected ? 2.0 : (isToday ? 1.5 : 1.0),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            cell['gregDay'],
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: isSelected || isToday
+                                  ? FontWeight.w900
+                                  : FontWeight.w700,
+                              color: isSelected || isToday
+                                  ? const Color(0xFFE5C158)
+                                  : theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          if (isFirstOfHijri)
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                hijriShortName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 9.0,
+                                  color: Color(0xFFE5C158),
+                                ),
+                              ),
+                            )
+                          else
+                            Text(
+                              cell['hijriDay'],
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
+                                color: isSelected || isToday
+                                    ? const Color(0xFFE5C158)
+                                    : theme.textTheme.bodyMedium?.color?.withValues(
+                                        alpha: 0.55,
+                                      ),
+                              ),
+                            ),
+                          if (hasEvent)
+                            Container(
+                              margin: const EdgeInsets.only(top: 2),
+                              width: 4,
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE5C158),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedDayPrayerTimes(ThemeData theme) {
+    final isArabic = TranslationService.isArabic;
+    final selectedDayStr = _selectedCalendarDay.day.toString().padLeft(2, '0');
+    final selectedMonthStr = _selectedCalendarDay.month.toString().padLeft(2, '0');
+    final selectedFullDate = "$selectedDayStr-$selectedMonthStr-${_selectedCalendarDay.year}";
+
+    Map<String, dynamic>? selectedDayData;
+    if (_monthlyData != null) {
+      for (final item in _monthlyData!) {
+        final g = item['date']?['gregorian'];
+        if (g != null && g['day'] == selectedDayStr) {
+          selectedDayData = item;
+          break;
+        }
+      }
+    }
+
+    final now = DateTime.now();
+    final isToday = _selectedCalendarDay.year == now.year &&
+        _selectedCalendarDay.month == now.month &&
+        _selectedCalendarDay.day == now.day;
+
+    final hijri = HijriCalendar.fromDate(_selectedCalendarDay);
+    final hijriMonthName = _getHijriMonthName(hijri.hMonth, isArabic);
+    final gregMonthName = _getGregMonthName(_selectedCalendarDay.month, isArabic);
+
+    final String dateTitle = isArabic
+        ? "${_selectedCalendarDay.day} $gregMonthName ${_selectedCalendarDay.year} · ${hijri.hDay} $hijriMonthName ${hijri.hYear} هـ"
+        : "${_getGregMonthName(_selectedCalendarDay.month, false)} ${_selectedCalendarDay.day}, ${_selectedCalendarDay.year} · $hijriMonthName ${hijri.hDay}, ${hijri.hYear} AH";
+
+    final events = _getHijriEventsForMonth();
+    final dayEvents = events.where((e) => e['gregDate'] == selectedFullDate).toList();
+    final hasEvent = dayEvents.isNotEmpty;
+    final eventTitle = hasEvent ? dayEvents.first['title'] as String : '';
+
+    final timings = selectedDayData?['timings'];
+
+    return Card(
+      color: theme.cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date Header
+            Row(
+              children: [
+                const Icon(Icons.event, color: Color(0xFFE5C158), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    dateTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                if (isToday)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFE5C158).withValues(alpha: 0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      isArabic ? "اليوم" : "Today",
+                      style: const TextStyle(
+                        color: Color(0xFFE5C158),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            if (hasEvent) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Text('🕌', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        eventTitle,
+                        style: const TextStyle(
+                          color: Color(0xFFE5C158),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_active_outlined,
+                        color: Color(0xFFE5C158),
+                        size: 20,
+                      ),
+                      onPressed: () => _showReminderDialog(dayEvents.first),
+                      tooltip: isArabic ? "ضبط تذكير" : "Set Reminder",
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 14),
+
+            if (timings == null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Text(
+                    isArabic
+                        ? "أوقات الصلاة غير متوفرة لهذا اليوم"
+                        : "Prayer timings not loaded for this date",
+                    style: TextStyle(color: theme.disabledColor),
+                  ),
+                ),
+              )
+            else
+              // 6 Prayer Times Strip
+              Row(
+                children: [
+                  _buildMiniPrayerPill(theme, TranslationService.t('fajr'), _fmt(timings['Fajr']), Icons.cloud_queue),
+                  _buildMiniPrayerPill(theme, TranslationService.t('sunrise'), _fmt(timings['Sunrise']), Icons.wb_sunny_outlined),
+                  _buildMiniPrayerPill(theme, TranslationService.t('dhuhr'), _fmt(timings['Dhuhr']), Icons.wb_sunny),
+                  _buildMiniPrayerPill(theme, TranslationService.t('asr'), _fmt(timings['Asr']), Icons.wb_twilight),
+                  _buildMiniPrayerPill(theme, TranslationService.t('maghrib'), _fmt(timings['Maghrib']), Icons.wb_cloudy_outlined),
+                  _buildMiniPrayerPill(theme, TranslationService.t('isha'), _fmt(timings['Isha']), Icons.nights_stay),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniPrayerPill(
+    ThemeData theme,
+    String name,
+    String time,
+    IconData icon,
+  ) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2.0),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 2.0),
+        decoration: BoxDecoration(
+          color: (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white)
+              .withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: const Color(0xFFE5C158), size: 16),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                name,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                time,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUpcomingHolyDays(ThemeData theme) {
+    final upcoming = _getUpcomingHolyDays();
+    final isArabic = TranslationService.isArabic;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Text('🌙', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              TranslationService.t('upcoming_holy_days'),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13.5,
+                letterSpacing: 0.8,
+                color: Color(0xFFE5C158),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (upcoming.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                isArabic
+                    ? "لا توجد مناسبات قادمة مسجلة"
+                    : "No upcoming holy days found",
+                style: TextStyle(color: theme.disabledColor),
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: upcoming.length > 8 ? 8 : upcoming.length,
+            itemBuilder: (context, idx) {
+              final ev = upcoming[idx];
+              final int days = ev['daysRemaining'];
+              final String pillText = _formatCountdownPill(days, isArabic);
+
+              return Card(
+                color: theme.cardColor,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.10),
+                  ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => _showReminderDialog(ev),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14.0,
+                      vertical: 12.0,
+                    ),
+                    child: Row(
+                      children: [
+                        // Event Emoji Icon Container
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5C158).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              ev['icon'] as String,
+                              style: const TextStyle(fontSize: 22),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        // Title & Subtitle
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ev['title'] as String,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                ev['subtitle'] as String,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: theme.textTheme.bodyMedium?.color
+                                      ?.withValues(alpha: 0.60),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+
+                        // Countdown Pill Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5C158).withValues(
+                              alpha: days == 0 ? 0.9 : 0.18,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFE5C158),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Text(
+                            pillText,
+                            style: TextStyle(
+                              color: days == 0
+                                  ? Colors.black
+                                  : const Color(0xFFE5C158),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+
+                        // Reminder button
+                        IconButton(
+                          icon: const Icon(
+                            Icons.notifications_active_outlined,
+                            color: Color(0xFFE5C158),
+                            size: 20,
+                          ),
+                          onPressed: () => _showReminderDialog(ev),
+                          tooltip: isArabic ? "ضبط تذكير" : "Set Reminder",
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRawDataTable(ThemeData theme) {
     if (_monthlyData == null || _monthlyData!.isEmpty) {
       return Center(
         child: Padding(
@@ -782,319 +1645,58 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     );
   }
 
-  Widget _buildHijriCalendar(ThemeData theme) {
-    if (_monthlyData == null || _monthlyData!.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Text(
-            TranslationService.isArabic
-                ? 'جاري تحميل التقويم الهجري...'
-                : 'Loading Hijri calendar...',
-          ),
-        ),
-      );
-    }
-
-    final firstDay = _monthlyData!.first;
-
-    final gregMonthName = firstDay['date']['gregorian']['month']['en'] ?? '';
-    final gregYear = firstDay['date']['gregorian']['year'] ?? '';
-
-    final hijriMonthName = TranslationService.isArabic
-        ? (firstDay['date']['hijri']['month']['ar'] ?? '')
-        : (firstDay['date']['hijri']['month']['en'] ?? '');
-    final hijriYear = firstDay['date']['hijri']['year'] ?? '';
-
-    final firstDayDateStr = firstDay['date']['gregorian']['date'] as String;
-    final parts = firstDayDateStr.split('-');
-    final fYear = int.parse(parts[2]);
-    final fMonth = int.parse(parts[1]);
-    final fDay = int.parse(parts[0]);
-    final firstDayDateTime = DateTime(fYear, fMonth, fDay);
-    final startWeekday = firstDayDateTime.weekday; // 1 = Mon, 7 = Sun
-
-    final daysOfWeekAr = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
-    final daysOfWeekEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final weekdayHeaders = TranslationService.isArabic
-        ? daysOfWeekAr
-        : daysOfWeekEn;
-
-    final List<Widget> gridItems = [];
-
-    final paddingCellsCount = startWeekday - 1;
-    for (int i = 0; i < paddingCellsCount; i++) {
-      gridItems.add(const SizedBox.shrink());
-    }
-
-    final now = DateTime.now();
-    final todayDayStr = now.day.toString().padLeft(2, '0');
-    final todayMonthStr = now.month.toString().padLeft(2, '0');
-    final todayYearStr = now.year.toString();
-    final todayFormatted = "$todayDayStr-$todayMonthStr-$todayYearStr";
-
-    final events = _getHijriEventsForMonth();
-
-    for (final day in _monthlyData!) {
-      final gregDay = day['date']['gregorian']['day'] ?? '';
-      final hijriDay = day['date']['hijri']['day'] ?? '';
-      final fullDate = day['date']['gregorian']['date'] as String;
-      final isToday = fullDate == todayFormatted;
-
-      final dayEvents = events.where((e) => e['gregDate'] == fullDate).toList();
-      final hasEvent = dayEvents.isNotEmpty;
-      final eventTitle = hasEvent ? dayEvents.first['title'] as String : '';
-
-      gridItems.add(
-        InkWell(
-          onTap: hasEvent
-              ? () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: theme.cardColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: Color(0xFFE5C158)),
-                      ),
-                      title: Text(
-                        TranslationService.isArabic
-                            ? 'حدث إسلامي'
-                            : 'Islamic Event',
-                        style: const TextStyle(color: Color(0xFFE5C158)),
-                      ),
-                      content: Text(
-                        eventTitle,
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: Text(
-                            TranslationService.isArabic ? 'حسناً' : 'OK',
-                            style: const TextStyle(color: Color(0xFFE5C158)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              : null,
-          child: Container(
-            margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: isToday
-                  ? const Color(0xFFE5C158).withValues(alpha: 0.15)
-                  : (hasEvent
-                        ? const Color(0xFFE5C158).withValues(alpha: 0.05)
-                        : theme.cardColor.withValues(alpha: 0.6)),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isToday
-                    ? const Color(0xFFE5C158)
-                    : (hasEvent
-                          ? const Color(0xFFE5C158).withValues(alpha: 0.5)
-                          : Theme.of(context).dividerColor.withValues(alpha: 0.1)),
-                width: isToday || hasEvent ? 1.5 : 1.0,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 4,
-                  left: 4,
-                  child: Text(
-                    gregDay,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
-                        0.5,
-                      ),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        hijriDay,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isToday
-                              ? const Color(0xFFE5C158)
-                              : theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      if (hasEvent)
-                        Container(
-                          margin: const EdgeInsets.only(top: 2),
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE5C158),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      color: theme.cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+  Widget _buildPrayerCalendar(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.chevron_left,
-                    color: Color(0xFFE5C158),
-                  ),
-                  onPressed: _isCalendarLoading ? null : _prevCalendarMonth,
+            TextButton.icon(
+              icon: Icon(
+                _showRawPrayerTable ? Icons.calendar_month : Icons.table_chart_outlined,
+                size: 18,
+                color: const Color(0xFFE5C158),
+              ),
+              label: Text(
+                _showRawPrayerTable
+                    ? TranslationService.t('view_calendar')
+                    : TranslationService.t('view_table'),
+                style: const TextStyle(
+                  color: Color(0xFFE5C158),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
                 ),
-                Expanded(
-                  child: Text(
-                    "$gregMonthName $gregYear  /  $hijriMonthName $hijriYear",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFFE5C158),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFFE5C158),
-                  ),
-                  onPressed: _isCalendarLoading ? null : _nextCalendarMonth,
-                ),
-              ],
+              ),
+              onPressed: () {
+                setState(() {
+                  _showRawPrayerTable = !_showRawPrayerTable;
+                });
+              },
             ),
-            const SizedBox(height: 16),
-            if (_isCalendarLoading)
-              const SizedBox(
-                height: 150,
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFFE5C158)),
-                ),
-              )
-            else ...[
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 1.5,
-                ),
-                itemCount: 7,
-                itemBuilder: (context, idx) {
-                  return Center(
-                    child: Text(
-                      weekdayHeaders[idx],
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
-                          0.6,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              Divider(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
-                height: 12,
-              ),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 1.0,
-                ),
-                itemCount: gridItems.length,
-                itemBuilder: (context, idx) {
-                  return gridItems[idx];
-                },
-              ),
-              if (events.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Divider(
-                  color: Theme.of(context).dividerColor.withValues(alpha: 0.12),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    TranslationService.isArabic
-                        ? "المناسبات الهجرية"
-                        : "Islamic Events",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFE5C158),
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Column(
-                  children: events.map((event) {
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        event['title'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      subtitle: Text(
-                        "${event['hijriDate']} (${event['gregDate']})",
-                        style: TextStyle(
-                          fontSize: 11,
-                          color:
-                              (Theme.of(context).textTheme.bodyMedium?.color ??
-                                      Colors.white)
-                                  .withValues(alpha: 0.38),
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(
-                          Icons.notifications_active_outlined,
-                          color: Color(0xFFE5C158),
-                          size: 20,
-                        ),
-                        onPressed: () => _showReminderDialog(event),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ],
           ],
         ),
-      ),
+        if (_showRawPrayerTable)
+          _buildRawDataTable(theme)
+        else ...[
+          _buildModernCalendarGrid(theme, forPrayer: true),
+          const SizedBox(height: 14),
+          _buildSelectedDayPrayerTimes(theme),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildHijriCalendar(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildModernCalendarGrid(theme, forPrayer: false),
+        const SizedBox(height: 14),
+        _buildSelectedDayPrayerTimes(theme),
+        const SizedBox(height: 16),
+        _buildUpcomingHolyDays(theme),
+      ],
     );
   }
 
