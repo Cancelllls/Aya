@@ -122,7 +122,8 @@ tasks.matching { it.name.contains("compile", ignoreCase = true) }.configureEach 
                 } finally {
                     zipFs.close()
                 }
-            } catch (e: Exception) {}
+                } catch (e: Exception) {}
+            }
         }
     }
 }
