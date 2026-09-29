@@ -5,12 +5,13 @@ import '../services/storage_service.dart';
 import '../services/offline_prayer_service.dart';
 import '../models/prayer_models.dart';
 import '../services/translation_service.dart';
+import '../services/prayer_tracker_stats_service.dart';
 
 class PrayerTrackerScreen extends StatefulWidget {
   const PrayerTrackerScreen({super.key});
 
   @override
-  _PrayerTrackerScreenState createState() => _PrayerTrackerScreenState();
+  State<PrayerTrackerScreen> createState() => _PrayerTrackerScreenState();
 }
 
 class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
@@ -30,6 +31,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   bool _isLoading = true;
   int _selectedYear = DateTime.now().year;
   PrayerTimeData? _selectedDatePrayerTimes;
+  PrayerTimeData? _todayPrayerTimes;
   int _firstDayOfWeek = 1;
 
   final List<String> _prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -69,6 +71,129 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTodayPrayerTimes() async {
+    try {
+      final storage = await StorageService.getInstance();
+      final location = storage.getLocation();
+      final lat = location['lat'] as double? ?? 0.0;
+      final lng = location['lng'] as double? ?? 0.0;
+      final method = storage.getInt('prayer_method', defaultValue: 3);
+      final school = storage.getInt('prayer_school', defaultValue: 0);
+
+      if (lat != 0.0 && lng != 0.0) {
+        final times = await OfflinePrayerService.getPrayerTimes(
+          latitude: lat,
+          longitude: lng,
+          method: method,
+          school: school,
+          date: DateTime.now(),
+        );
+        _todayPrayerTimes = times;
+      }
+    } catch (_) {}
+  }
+
+  bool _isPrayerPassedToday(String prayerKey) {
+    final now = DateTime.now();
+    if (_todayPrayerTimes != null) {
+      String timeStr = '';
+      switch (prayerKey) {
+        case 'fajr':
+          timeStr = _todayPrayerTimes!.fajr;
+          break;
+        case 'dhuhr':
+          timeStr = _todayPrayerTimes!.dhuhr;
+          break;
+        case 'asr':
+          timeStr = _todayPrayerTimes!.asr;
+          break;
+        case 'maghrib':
+          timeStr = _todayPrayerTimes!.maghrib;
+          break;
+        case 'isha':
+          timeStr = _todayPrayerTimes!.isha;
+          break;
+      }
+      if (timeStr.isNotEmpty) {
+        try {
+          final parts = timeStr.split(':');
+          final hour = int.parse(parts[0].trim());
+          final minute = int.parse(parts[1].trim());
+          final pTime = DateTime(now.year, now.month, now.day, hour, minute);
+          return now.isAfter(pTime);
+        } catch (_) {}
+      }
+    }
+    // Fallback if prayer times unavailable: standard rough hours
+    switch (prayerKey) {
+      case 'fajr':
+        return now.hour >= 6;
+      case 'dhuhr':
+        return now.hour >= 13;
+      case 'asr':
+        return now.hour >= 16;
+      case 'maghrib':
+        return now.hour >= 19;
+      case 'isha':
+        return now.hour >= 21;
+    }
+    return false;
+  }
+
+  Map<String, DateTime> _getPeriodBounds(String period) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    if (period == 'weekly') {
+      int daysToSubtract = (today.weekday - _firstDayOfWeek) % 7;
+      if (daysToSubtract < 0) daysToSubtract += 7;
+      final weekStart = today.subtract(Duration(days: daysToSubtract));
+      final weekEnd = weekStart.add(const Duration(days: 6));
+      return {'start': weekStart, 'end': weekEnd};
+    } else if (period == 'monthly') {
+      final monthStart = DateTime(today.year, today.month, 1);
+      final monthEnd = DateTime(today.year, today.month + 1, 0);
+      return {'start': monthStart, 'end': monthEnd};
+    } else {
+      final yearStart = DateTime(_selectedYear, 1, 1);
+      final yearEnd = DateTime(_selectedYear, 12, 31);
+      return {'start': yearStart, 'end': yearEnd};
+    }
+  }
+
+  void _recomputeAllStats() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final weeklyBounds = _getPeriodBounds('weekly');
+    final monthlyBounds = _getPeriodBounds('monthly');
+    final yearlyBounds = _getPeriodBounds('yearly');
+
+    _stats['weekly'] = PrayerTrackerStatsCalculator.calculateStats(
+      start: weeklyBounds['start']!,
+      end: weeklyBounds['end']!,
+      today: today,
+      trackerData: _trackerData,
+      isPrayerPassedToday: _isPrayerPassedToday,
+    );
+
+    _stats['monthly'] = PrayerTrackerStatsCalculator.calculateStats(
+      start: monthlyBounds['start']!,
+      end: monthlyBounds['end']!,
+      today: today,
+      trackerData: _trackerData,
+      isPrayerPassedToday: _isPrayerPassedToday,
+    );
+
+    _stats['yearly'] = PrayerTrackerStatsCalculator.calculateStats(
+      start: yearlyBounds['start']!,
+      end: yearlyBounds['end']!,
+      today: today,
+      trackerData: _trackerData,
+      isPrayerPassedToday: _isPrayerPassedToday,
+    );
   }
 
   Future<void> _loadPrayerTimesForSelectedDate() async {
@@ -117,24 +242,19 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
 
   Future<void> _loadData({bool showLoading = true}) async {
     if (showLoading) setState(() => _isLoading = true);
+    await _loadTodayPrayerTimes();
     final db = await DatabaseService.getInstance();
 
     final now = DateTime.now();
-    final yearStart = DateTime(_selectedYear, 1, 1);
-    final yearEnd = DateTime(_selectedYear, 12, 31);
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthEnd = DateTime(now.year, now.month + 1, 0);
+    final minYear = _selectedYear < now.year ? _selectedYear : now.year;
+    final maxYear = _selectedYear > now.year ? _selectedYear : now.year;
 
     final storage = await StorageService.getInstance();
     _firstDayOfWeek = storage.getInt('first_day_of_week', defaultValue: 1);
-    int daysToSubtract = (now.weekday - _firstDayOfWeek) % 7;
-    if (daysToSubtract < 0) daysToSubtract += 7;
-    final currentWeekStart = now.subtract(Duration(days: daysToSubtract));
-    final currentWeekEnd = currentWeekStart.add(const Duration(days: 6));
 
     final yearlyList = await db.getPrayerTrackerRange(
-      _formatDate(yearStart),
-      _formatDate(yearEnd),
+      '$minYear-01-01',
+      '$maxYear-12-31',
     );
 
     // Build map for quick lookup
@@ -143,27 +263,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
       _trackerData[item['date'] as String] = Map<String, dynamic>.from(item);
     }
 
-    _calculateStats('yearly', yearStart, yearEnd, yearlyList);
-    _calculateStats(
-      'monthly',
-      monthStart,
-      monthEnd,
-      yearlyList.where((e) {
-        final d = DateTime.parse(e['date'] as String);
-        return d.isAfter(monthStart.subtract(const Duration(days: 1))) &&
-            d.isBefore(monthEnd.add(const Duration(days: 1)));
-      }),
-    );
-    _calculateStats(
-      'weekly',
-      currentWeekStart,
-      currentWeekEnd,
-      yearlyList.where((e) {
-        final d = DateTime.parse(e['date'] as String);
-        return d.isAfter(currentWeekStart.subtract(const Duration(days: 1))) &&
-            d.isBefore(currentWeekEnd.add(const Duration(days: 1)));
-      }),
-    );
+    _recomputeAllStats();
 
     if (mounted) {
       if (showLoading) {
@@ -172,32 +272,6 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         setState(() {}); // Just rebuild
       }
     }
-  }
-
-  void _calculateStats(
-    String period,
-    DateTime start,
-    DateTime end,
-    Iterable<Map<String, dynamic>> list,
-  ) {
-    int prayed = 0, missed = 0;
-
-    for (var item in list) {
-      for (var p in _prayers) {
-        final val = item[p] as int? ?? 0;
-        if (val == 1) {
-          prayed++;
-        } else {
-          missed++;
-        }
-      }
-    }
-
-    // Only count actual tracked data, not theoretical calendar days.
-    // "missed" means prayers the user explicitly toggled to 0 (unmarked).
-    final int total = prayed + missed;
-
-    _stats[period] = {'prayed': prayed, 'missed': missed, 'total': total};
   }
 
   Future<void> _togglePrayerForDate(
@@ -221,47 +295,10 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
         };
       }
       _trackerData[dateStr]![prayer] = nextStatus;
-      _updateStatsLocally();
+      _recomputeAllStats();
     });
 
     await db.updatePrayerTracker(dateStr, prayer, nextStatus);
-  }
-
-  void _updateStatsLocally() {
-    final now = DateTime.now();
-    final yearStart = DateTime(_selectedYear, 1, 1);
-    final yearEnd = DateTime(_selectedYear, 12, 31);
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthEnd = DateTime(now.year, now.month + 1, 0);
-    int daysToSubtract = (now.weekday - _firstDayOfWeek) % 7;
-    if (daysToSubtract < 0) daysToSubtract += 7;
-    final currentWeekStart = now.subtract(Duration(days: daysToSubtract));
-    final currentWeekEnd = currentWeekStart.add(const Duration(days: 6));
-
-    final list = _trackerData.values.toList();
-    _calculateStats('yearly', yearStart, yearEnd, list);
-    _calculateStats(
-      'monthly',
-      monthStart,
-      monthEnd,
-      list.where((e) {
-        if (e['date'] == null) return false;
-        final d = DateTime.parse(e['date'] as String);
-        return d.isAfter(monthStart.subtract(const Duration(days: 1))) &&
-            d.isBefore(monthEnd.add(const Duration(days: 1)));
-      }),
-    );
-    _calculateStats(
-      'weekly',
-      currentWeekStart,
-      currentWeekEnd,
-      list.where((e) {
-        if (e['date'] == null) return false;
-        final d = DateTime.parse(e['date'] as String);
-        return d.isAfter(currentWeekStart.subtract(const Duration(days: 1))) &&
-            d.isBefore(currentWeekEnd.add(const Duration(days: 1)));
-      }),
-    );
   }
 
   @override
@@ -838,9 +875,48 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
   }
 
   Widget _buildStatsView(bool isAr, ThemeData theme) {
+    final allTotal = (_stats['weekly']?['total'] ?? 0) +
+        (_stats['monthly']?['total'] ?? 0) +
+        (_stats['yearly']?['total'] ?? 0);
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
+        if (allTotal == 0) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.primaryColor.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: theme.primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isAr
+                        ? 'سجّل صلواتك في تبويب اليوم لبدء تتبّع إحصاءاتك وتقدمك.'
+                        : 'Track your daily prayers in the Today tab to see your progress and statistics here.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         _buildMinimalistStatCard(
           'weekly',
           isAr ? 'هذا الأسبوع' : 'This Week',
@@ -871,13 +947,15 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     bool isAr,
     ThemeData theme,
   ) {
-    final data = _stats[period]!;
-    final total = data['total']!;
-    if (total == 0) return const SizedBox.shrink();
+    final data = _stats[period] ?? {'prayed': 0, 'missed': 0, 'total': 0};
+    final total = data['total'] ?? 0;
+    final prayed = data['prayed'] ?? 0;
+    final missed = data['missed'] ?? 0;
+    final prayedPct = total > 0 ? (prayed / total).clamp(0.0, 1.0) : 0.0;
 
-    final prayed = data['prayed']!;
-    final missed = data['missed']!;
-    final prayedPct = total > 0 ? (prayed / total) : 0.0;
+    final isDark = theme.brightness == Brightness.dark;
+    final successColor = isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
+    final errorColor = isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -896,7 +974,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               ),
             ),
             Text(
-              "${(prayedPct * 100).toInt()}%",
+              total > 0 ? "${(prayedPct * 100).toInt()}%" : "—",
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w300,
@@ -910,11 +988,9 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: prayedPct,
-            backgroundColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
-              0.1,
-            ),
+            backgroundColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(
-              theme.textTheme.bodyLarge?.color ?? Colors.black,
+              theme.primaryColor,
             ),
             minHeight: 4,
           ),
@@ -927,10 +1003,17 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
               isAr ? 'صلوات صُليت' : 'Prayers Done',
               prayed,
               theme,
+              color: prayed > 0 ? successColor : null,
             ),
             _buildMinimalStatItem(
               isAr ? 'صلوات فائتة' : 'Prayers Missed',
               missed,
+              theme,
+              color: missed > 0 ? errorColor : null,
+            ),
+            _buildMinimalStatItem(
+              isAr ? 'إجمالي المطلوب' : 'Total Due',
+              total,
               theme,
             ),
           ],
@@ -939,7 +1022,12 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
     );
   }
 
-  Widget _buildMinimalStatItem(String label, int value, ThemeData theme) {
+  Widget _buildMinimalStatItem(
+    String label,
+    int value,
+    ThemeData theme, {
+    Color? color,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -948,7 +1036,7 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: theme.textTheme.bodyLarge?.color,
+            color: color ?? theme.textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 4),
