@@ -1,0 +1,200 @@
+name: Aya Beta Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - Beta
+    paths-ignore:
+      - 'releases/**'
+      - '**.md'
+      - 'fdroid/**'
+      - 'metadata/**'
+      - 'fastlane/**'
+
+jobs:
+  # ── Step 1: Google Play Build (IAP) ──────────────────────────────────
+  google-play:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: Beta
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: 'stable'
+          cache: true
+
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=${STORE_PASSWORD}
+          keyPassword=${KEY_PASSWORD}
+          keyAlias=${KEY_ALIAS}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Google Play APKs
+        run: flutter build apk --flavor play --release --split-per-abi --obfuscate --split-debug-info=build/debug-info --dart-define=GOOGLE_PLAY=true
+
+      - name: Rename APKs for Google Play
+        run: |
+          mkdir -p release_apks
+          for arch in arm64-v8a armeabi-v7a x86_64; do
+            if [ -f build/app/outputs/flutter-apk/app-${arch}-play-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-${arch}-play-release.apk \
+                 release_apks/Aya-beta-googleplay-${arch}.apk
+            elif [ -f build/app/outputs/flutter-apk/app-play-${arch}-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-play-${arch}-release.apk \
+                 release_apks/Aya-beta-googleplay-${arch}.apk
+            fi
+          done
+
+      - name: Upload Google Play APKs
+        uses: actions/upload-artifact@v6
+        with:
+          name: google-play-apks
+          path: release_apks/
+
+  # ── Step 2: F-Droid / Open Source Build ──────────────────────────────
+  fdroid:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: Beta
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: 'stable'
+          cache: true
+
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=${STORE_PASSWORD}
+          keyPassword=${KEY_PASSWORD}
+          keyAlias=${KEY_ALIAS}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Strip Google IAP for F-Droid
+        run: |
+          sed -i '/in_app_purchase/d' pubspec.yaml
+          cp lib/donation/google_play_donation_stub.dart lib/donation/google_play_donation.dart
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build F-Droid APKs
+        run: flutter build apk --flavor fdroid --release --split-per-abi --obfuscate --split-debug-info=build/debug-info
+
+      - name: Rename APKs for F-Droid
+        run: |
+          mkdir -p release_apks
+          for arch in arm64-v8a armeabi-v7a x86_64; do
+            if [ -f build/app/outputs/flutter-apk/app-${arch}-fdroid-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-${arch}-fdroid-release.apk \
+                 release_apks/Aya-beta-fdroid-${arch}.apk
+            elif [ -f build/app/outputs/flutter-apk/app-fdroid-${arch}-release.apk ]; then
+              cp build/app/outputs/flutter-apk/app-fdroid-${arch}-release.apk \
+                 release_apks/Aya-beta-fdroid-${arch}.apk
+            fi
+          done
+
+      - name: Upload F-Droid APKs
+        uses: actions/upload-artifact@v6
+        with:
+          name: fdroid-apks
+          path: release_apks/
+
+  # ── Step 3: Beta Pre-Release ─────────────────────────────────────────
+  release:
+    needs: [google-play, fdroid]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: Beta
+          fetch-depth: 0
+
+      - name: Download Google Play APKs
+        uses: actions/download-artifact@v6
+        with:
+          name: google-play-apks
+          path: apks/
+
+      - name: Download F-Droid APKs
+        uses: actions/download-artifact@v6
+        with:
+          name: fdroid-apks
+          path: apks/
+
+      - name: Create or Update Beta Pre-Release
+        uses: softprops/action-gh-release@v2.1.0
+        with:
+          tag_name: beta
+          target_commitish: Beta
+          name: "Aya Beta Preview — Prayer & Hijri Calendar"
+          prerelease: true
+          make_latest: false
+          body: |
+            ### Aya Beta Preview (Issue #1)
+
+            Automated Beta release for testing the prayer and Hijri calendar redesign on the `Beta` branch.
+
+            #### What's Included:
+            - **Dual Gregorian & Hijri Calendar View:** Month header shows spanning Hijri month range (e.g. *Rabi' I – Rabi' II 1448*).
+            - **7x6 Month Grid:** Primary bold Gregorian day numbers, secondary Hijri day numbers directly below, 1st-of-month indicators (*Rab. II*), and current-day highlights.
+            - **Selected Day Schedule:** Quick card showing all prayer times for any selected date directly below the calendar.
+            - **Upcoming Holy Days:** Dedicated card list with countdown pill badges (e.g., *in 73 days*, *Tomorrow*) and Islamic event reminders.
+            - **Table View Toggle:** Easily toggle between modern calendar grid and full-month table.
+          files: |
+            apks/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
