@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3] - 2026-09-29
+
+### Changed
+- **Hijri Calendar Streamlining**: Removed the redundant selected day prayer time strip from the Hijri Calendar view to give full focus to lunar days and Islamic holy events.
+- **Redesigned Hijri Calendar**: Modern 7x6 month grid displaying dual Gregorian and Hijri dates with spanning Hijri month header titles.
+- **Upcoming Holy Days**: Chronological listing of upcoming Islamic occasions with countdown pill badges and bilingual event titles.
+- **Prayer Tracker Statistics Overhaul**: Time-aware prayer checks preventing premature false missed prayers for today's upcoming times and removing unfair pre-install penalties.
+
 ## [1.0.3] - 2026-07-13
 
 ### Added

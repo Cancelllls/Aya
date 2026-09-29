@@ -1,6 +1,25 @@
 {
   "versions": [
     {
+      "version": "1.3.3",
+      "date": "2026-09-29",
+      "title": "Redesigned Hijri Calendar & Prayer Statistics Overhaul",
+      "changes": {
+        "en": [
+          "Redesigned Hijri Calendar — Modern 7x6 day grid showing dual Gregorian and Hijri dates with spanning Hijri month titles",
+          "Dedicated Hijri Focus — Streamlined Hijri Calendar view focusing on lunar dates and upcoming holy days without redundant prayer timing strips",
+          "Upcoming Holy Days — Chronological listing of upcoming Islamic events with countdown pill badges and bilingual titles",
+          "Prayer Tracker Statistics Overhaul — Time-aware prayer checks resolving false missed prayer counts and pre-install penalties"
+        ],
+        "ar": [
+          "تقويم هجري معاد تصميمه — شبكة ٧×٦ عصرية تعرض التاريخين الميلادي والهجري مع عناوين الأشهر الهجرية الممتدة",
+          "تركيز مخصص للتقويم الهجري — واجهة مبسطة تركز على الأيام القمرية والمناسبات الإسلامية دون شريط أوقات الصلاة المكرر",
+          "المناسبات الإسلامية القادمة — قائمة زمنية بالمناسبات الدينية القادمة مع شارات العد التنازلي وعناوين ثنائية اللغة",
+          "تحسين إحصائيات متتبع الصلاة — حسابات دقيقة تراعي توقيت الصلاة تمنع الاحتساب الخاطئ للصلوات القادمة"
+        ]
+      }
+    },
+    {
       "version": "1.1.0",
       "date": "2026-08-04",
       "title": "Major Refactor — Five Prayers Adhan, Full Arabic Search, Per-Qira'ah Reciters",

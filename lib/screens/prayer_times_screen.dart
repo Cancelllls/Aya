@@ -1692,8 +1692,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildModernCalendarGrid(theme, forPrayer: false),
-        const SizedBox(height: 14),
-        _buildSelectedDayPrayerTimes(theme),
         const SizedBox(height: 16),
         _buildUpcomingHolyDays(theme),
       ],
