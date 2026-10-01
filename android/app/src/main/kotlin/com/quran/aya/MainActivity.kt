@@ -270,28 +270,7 @@ class MainActivity : FlutterActivity() {
                 }
                 "updateWidget" -> {
                     try {
-                        val widgetProviders = arrayOf(
-                            AyaWidgetProvider::class.java,
-                            AyaVerseWidgetProvider::class.java,
-                            AyaDhikrWidgetProvider::class.java,
-                            AyaHadithWidgetProvider::class.java,
-                            AyaTasbihWidgetProvider::class.java,
-                            AyaHijriWidgetProvider::class.java,
-                            AyaNextPrayerWidgetProvider::class.java,
-                            AyaAsmaulHusnaWidgetProvider::class.java,
-                            AyaCombinedWidgetProvider::class.java,
-                        )
-                        val appWidgetManager = AppWidgetManager.getInstance(context)
-                        for (provider in widgetProviders) {
-                            val intent = Intent(context, provider).apply {
-                                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                            }
-                            val ids = appWidgetManager.getAppWidgetIds(
-                                ComponentName(context, provider)
-                            )
-                            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                            context.sendBroadcast(intent)
-                        }
+                        WidgetUtils.updateAllWidgets(context)
                         result.success(true)
                     } catch (e: Exception) {
                         result.error("ERROR", e.message, null)

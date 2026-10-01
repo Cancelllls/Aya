@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:adhan/adhan.dart';
 import 'package:hijri/hijri_calendar.dart';
 import '../models/prayer_models.dart';
@@ -99,6 +100,105 @@ class OfflinePrayerService {
       hijriMonth: hijri.getLongMonthName(),
       hijriYear: hijri.hYear.toString(),
     );
+  }
+
+  static Future<String> get30DaysScheduleJson({
+    required double latitude,
+    required double longitude,
+    required int method,
+    required int school,
+    bool use24h = false,
+    bool isArabic = true,
+  }) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final coords = Coordinates(latitude, longitude);
+
+    CalculationParameters params;
+    switch (method) {
+      case 0:
+        params = CalculationMethod.other.getParameters();
+        break;
+      case 1:
+        params = CalculationMethod.karachi.getParameters();
+        break;
+      case 2:
+        params = CalculationMethod.north_america.getParameters();
+        break;
+      case 3:
+        params = CalculationMethod.muslim_world_league.getParameters();
+        break;
+      case 4:
+        params = CalculationMethod.umm_al_qura.getParameters();
+        break;
+      case 5:
+        params = CalculationMethod.egyptian.getParameters();
+        break;
+      case 7:
+        params = CalculationMethod.tehran.getParameters();
+        break;
+      case 8:
+        params = CalculationMethod.dubai.getParameters();
+        break;
+      case 9:
+        params = CalculationMethod.kuwait.getParameters();
+        break;
+      case 10:
+        params = CalculationMethod.qatar.getParameters();
+        break;
+      case 11:
+        params = CalculationMethod.singapore.getParameters();
+        break;
+      case 12:
+        params = CalculationMethod.turkey.getParameters();
+        break;
+      default:
+        params = CalculationMethod.other.getParameters();
+        break;
+    }
+
+    params.madhab = school == 1 ? Madhab.hanafi : Madhab.shafi;
+    if (params.method != CalculationMethod.umm_al_qura &&
+        params.method != CalculationMethod.qatar) {
+      params.highLatitudeRule = HighLatitudeRule.twilight_angle;
+    }
+
+    final List<Map<String, dynamic>> schedule = [];
+    for (int i = 0; i < 30; i++) {
+      final date = today.add(Duration(days: i));
+      final dateComps = DateComponents.from(date);
+      final pt = PrayerTimes(coords, dateComps, params);
+
+      schedule.add({
+        'd':
+            "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
+        'f_ms': pt.fajr.millisecondsSinceEpoch,
+        'f_str': _formatTimeWithFormat(pt.fajr, use24h, isArabic),
+        'd_ms': pt.dhuhr.millisecondsSinceEpoch,
+        'd_str': _formatTimeWithFormat(pt.dhuhr, use24h, isArabic),
+        'a_ms': pt.asr.millisecondsSinceEpoch,
+        'a_str': _formatTimeWithFormat(pt.asr, use24h, isArabic),
+        'm_ms': pt.maghrib.millisecondsSinceEpoch,
+        'm_str': _formatTimeWithFormat(pt.maghrib, use24h, isArabic),
+        'i_ms': pt.isha.millisecondsSinceEpoch,
+        'i_str': _formatTimeWithFormat(pt.isha, use24h, isArabic),
+      });
+    }
+
+    return jsonEncode(schedule);
+  }
+
+  static String _formatTimeWithFormat(DateTime dt, bool use24h, bool isArabic) {
+    final rounded = dt.add(const Duration(seconds: 30));
+    final hour = rounded.hour;
+    final minute = rounded.minute.toString().padLeft(2, '0');
+    if (use24h) {
+      return "${hour.toString().padLeft(2, '0')}:$minute";
+    }
+    final isPm = hour >= 12;
+    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
+    final suffix = isPm ? (isArabic ? 'م' : 'PM') : (isArabic ? 'ص' : 'AM');
+    return "$displayHour:$minute $suffix";
   }
 
   static Future<List<Map<String, dynamic>>> getMonthlyCalendar({

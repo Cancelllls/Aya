@@ -14,6 +14,7 @@ import '../services/notification_service.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
 import '../services/quran_verses.dart';
+import '../services/offline_prayer_service.dart';
 import 'prayer_tracker_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -155,6 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (_prayerData != null) {
         _calculateNextPrayer();
         _startCountdownTimer();
+        _updateWidgetPreferences();
       }
     } else if (state == AppLifecycleState.paused) {
       _timer?.cancel();
@@ -551,6 +553,28 @@ class _DashboardScreenState extends State<DashboardScreen>
         await prefs.setInt('widget_asr_epoch', a.millisecondsSinceEpoch);
         await prefs.setInt('widget_maghrib_epoch', m.millisecondsSinceEpoch);
         await prefs.setInt('widget_isha_epoch', i.millisecondsSinceEpoch);
+
+        // Precompute 30-day rolling schedule for perpetual offline widget updates
+        final loc = widget.storage.getLocation();
+        final lat = (loc['latitude'] as num?)?.toDouble() ?? 30.0444;
+        final lng = (loc['longitude'] as num?)?.toDouble() ?? 31.2357;
+        final method = widget.storage.getInt('calc_method', defaultValue: 5);
+        final school = widget.storage.getInt('asr_method', defaultValue: 0);
+
+        final scheduleJson = await OfflinePrayerService.get30DaysScheduleJson(
+          latitude: lat,
+          longitude: lng,
+          method: method,
+          school: school,
+          use24h: use24h,
+          isArabic: TranslationService.isArabic,
+        );
+        await prefs.setString('widget_prayer_schedule_30d', scheduleJson);
+        await prefs.setDouble('widget_user_latitude', lat);
+        await prefs.setDouble('widget_user_longitude', lng);
+        await prefs.setInt('widget_calc_method', method);
+        await prefs.setInt('widget_asr_method', school);
+        await prefs.setBool('widget_time_format_24h', use24h);
       } catch (_) {}
     }
 

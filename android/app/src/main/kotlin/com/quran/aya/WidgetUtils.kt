@@ -1,14 +1,19 @@
 package com.quran.aya
 
 import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.os.Build
 import android.widget.RemoteViews
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.Calendar
+import java.util.TimeZone
+import kotlin.math.*
 
 data class WidgetM3Theme(
     val bgDrawable: Int,
@@ -17,16 +22,25 @@ data class WidgetM3Theme(
     val subtitleColor: Int,
     val dividerColor: Int,
     val badgeBgDrawable: Int,
-    val badgeTextColor: Int
+    val badgeTextColor: Int,
+    val heroCardDrawable: Int,
+    val heroCardTextColor: Int,
+    val activePillDrawable: Int,
+    val activePillTextColor: Int
 )
 
 data class UpcomingPrayerInfo(
     val name: String,
     val epochMs: Long,
-    val formattedTime: String
+    val formattedTime: String,
+    val prayerKey: String = "",
+    val allPrayersToday: Map<String, String> = emptyMap(),
+    val isTomorrow: Boolean = false
 )
 
 object WidgetUtils {
+
+    const val ACTION_PRAYER_AUTO_ADVANCE = "com.quran.aya.ACTION_PRAYER_AUTO_ADVANCE"
 
     fun updateAllWidgets(context: Context) {
         try {
@@ -119,10 +133,69 @@ object WidgetUtils {
         }
     }
 
+    fun getSafeDouble(prefs: SharedPreferences, key: String, defaultVal: Double): Double {
+        val keyWithPrefix = if (key.startsWith("flutter.")) key else "flutter.$key"
+        val targetKey = if (prefs.contains(keyWithPrefix)) keyWithPrefix else key
+        return try {
+            val rawLong = prefs.getLong(targetKey, -1L)
+            if (rawLong != -1L) {
+                java.lang.Double.longBitsToDouble(rawLong)
+            } else {
+                prefs.getFloat(targetKey, defaultVal.toFloat()).toDouble()
+            }
+        } catch (_: Throwable) {
+            try {
+                prefs.getString(targetKey, null)?.toDoubleOrNull() ?: defaultVal
+            } catch (_: Throwable) {
+                defaultVal
+            }
+        }
+    }
+
     fun getNextUpcomingPrayer(context: Context, prefs: SharedPreferences): UpcomingPrayerInfo {
         val isArabic = getSafeBoolean(prefs, "widget_is_arabic", true)
         val nowMs = System.currentTimeMillis()
 
+        // ── Tier 1: Multi-Day Precomputed 30-Day Schedule (Zero Drifting, Perfect Parity) ──
+        val scheduleJson = getSafeString(prefs, "widget_prayer_schedule_30d", "")
+        if (scheduleJson.isNotEmpty()) {
+            try {
+                val array = JSONArray(scheduleJson)
+                for (i in 0 until array.length()) {
+                    val dayObj = array.getJSONObject(i)
+                    val f_ms = dayObj.optLong("f_ms", 0L)
+                    val d_ms = dayObj.optLong("d_ms", 0L)
+                    val a_ms = dayObj.optLong("a_ms", 0L)
+                    val m_ms = dayObj.optLong("m_ms", 0L)
+                    val i_ms = dayObj.optLong("i_ms", 0L)
+
+                    val dayPrayers = listOf(
+                        UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", f_ms, dayObj.optString("f_str", "--:--"), "fajr"),
+                        UpcomingPrayerInfo(if (isArabic) "الظهر" else "Dhuhr", d_ms, dayObj.optString("d_str", "--:--"), "dhuhr"),
+                        UpcomingPrayerInfo(if (isArabic) "العصر" else "Asr", a_ms, dayObj.optString("a_str", "--:--"), "asr"),
+                        UpcomingPrayerInfo(if (isArabic) "المغرب" else "Maghrib", m_ms, dayObj.optString("m_str", "--:--"), "maghrib"),
+                        UpcomingPrayerInfo(if (isArabic) "العشاء" else "Isha", i_ms, dayObj.optString("i_str", "--:--"), "isha")
+                    )
+
+                    // If any prayer today is in future:
+                    for (item in dayPrayers) {
+                        if (item.epochMs > nowMs) {
+                            scheduleNextPrayerWidgetAlarm(context, item.epochMs)
+                            val allTimes = mapOf(
+                                "fajr" to dayObj.optString("f_str", "--:--"),
+                                "dhuhr" to dayObj.optString("d_str", "--:--"),
+                                "asr" to dayObj.optString("a_str", "--:--"),
+                                "maghrib" to dayObj.optString("m_str", "--:--"),
+                                "isha" to dayObj.optString("i_str", "--:--")
+                            )
+                            return item.copy(allPrayersToday = allTimes, isTomorrow = (i > 0))
+                        }
+                    }
+                }
+            } catch (_: Throwable) {}
+        }
+
+        // ── Tier 2: Stored Single-Day Epochs Fallback ──
         val fajrEpoch = getSafeLong(prefs, "widget_fajr_epoch", 0L)
         val dhuhrEpoch = getSafeLong(prefs, "widget_dhuhr_epoch", 0L)
         val asrEpoch = getSafeLong(prefs, "widget_asr_epoch", 0L)
@@ -136,31 +209,32 @@ object WidgetUtils {
         val ishaTime = getSafeString(prefs, "widget_prayer_isha", "--:--")
 
         val list = listOf(
-            UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", fajrEpoch, fajrTime),
-            UpcomingPrayerInfo(if (isArabic) "الظهر" else "Dhuhr", dhuhrEpoch, dhuhrTime),
-            UpcomingPrayerInfo(if (isArabic) "العصر" else "Asr", asrEpoch, asrTime),
-            UpcomingPrayerInfo(if (isArabic) "المغرب" else "Maghrib", maghribEpoch, maghribTime),
-            UpcomingPrayerInfo(if (isArabic) "العشاء" else "Isha", ishaEpoch, ishaTime)
+            UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", fajrEpoch, fajrTime, "fajr"),
+            UpcomingPrayerInfo(if (isArabic) "الظهر" else "Dhuhr", dhuhrEpoch, dhuhrTime, "dhuhr"),
+            UpcomingPrayerInfo(if (isArabic) "العصر" else "Asr", asrEpoch, asrTime, "asr"),
+            UpcomingPrayerInfo(if (isArabic) "المغرب" else "Maghrib", maghribEpoch, maghribTime, "maghrib"),
+            UpcomingPrayerInfo(if (isArabic) "العشاء" else "Isha", ishaEpoch, ishaTime, "isha")
         )
 
-        // Find first prayer whose epoch is strictly in the future (> nowMs)
         for (item in list) {
             if (item.epochMs > nowMs) {
                 scheduleNextPrayerWidgetAlarm(context, item.epochMs)
-                return item
+                return item.copy(allPrayersToday = mapOf(
+                    "fajr" to fajrTime, "dhuhr" to dhuhrTime, "asr" to asrTime, "maghrib" to maghribTime, "isha" to ishaTime
+                ))
             }
         }
 
-        // If all 5 prayers of today have passed, calculate tomorrow's Fajr
-        if (fajrEpoch > 0L) {
-            val tomorrowFajrEpoch = fajrEpoch + 24 * 60 * 60 * 1000L
-            if (tomorrowFajrEpoch > nowMs) {
-                scheduleNextPrayerWidgetAlarm(context, tomorrowFajrEpoch)
-                return UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", tomorrowFajrEpoch, fajrTime)
+        // ── Tier 3: Native Offline Solar Astronomical Engine (Runs Forever Without App Open) ──
+        try {
+            val astroResult = calculateAstronomicalUpcomingPrayer(context, prefs, isArabic, nowMs)
+            if (astroResult != null && astroResult.epochMs > nowMs) {
+                scheduleNextPrayerWidgetAlarm(context, astroResult.epochMs)
+                return astroResult
             }
-        }
+        } catch (_: Throwable) {}
 
-        // Fallback: stored next prayer or default
+        // ── Tier 4: Graceful Absolute Fallback ──
         val fallbackName = getSafeString(prefs, "widget_next_prayer_name", if (isArabic) "الفجر" else "Fajr")
         val fallbackEpoch = getSafeLong(prefs, "widget_next_prayer_epoch", 0L)
         val fallbackTime = getSafeString(prefs, "widget_widget_next_display", "--:--")
@@ -170,26 +244,40 @@ object WidgetUtils {
             scheduleNextPrayerWidgetAlarm(context, effectiveFallbackEpoch)
         }
 
-        return UpcomingPrayerInfo(fallbackName, effectiveFallbackEpoch, fallbackTime)
+        return UpcomingPrayerInfo(fallbackName, effectiveFallbackEpoch, fallbackTime, "fajr")
     }
 
     fun scheduleNextPrayerWidgetAlarm(context: Context, nextEpochMs: Long) {
         if (nextEpochMs <= System.currentTimeMillis()) return
         try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager ?: return
-            val intent = Intent(context, AyaNextPrayerWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                991122,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+
+            val providers = arrayOf(
+                AyaNextPrayerWidgetProvider::class.java,
+                AyaCombinedWidgetProvider::class.java,
+                AyaWidgetProvider::class.java
             )
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, nextEpochMs + 500L, pendingIntent)
-            } else {
-                alarmManager.setExact(android.app.AlarmManager.RTC_WAKEUP, nextEpochMs + 500L, pendingIntent)
+
+            for (provider in providers) {
+                val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, provider))
+                if (ids == null || ids.isEmpty()) continue
+
+                val intent = Intent(context, provider).apply {
+                    action = ACTION_PRAYER_AUTO_ADVANCE
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                }
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    provider.name.hashCode(),
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, nextEpochMs + 200L, pendingIntent)
+                } else {
+                    alarmManager.setExact(android.app.AlarmManager.RTC_WAKEUP, nextEpochMs + 200L, pendingIntent)
+                }
             }
         } catch (_: Throwable) {}
     }
@@ -198,8 +286,8 @@ object WidgetUtils {
         val preset = getSafeString(prefs, "theme_preset", "adaptive")
         val isDark = getSafeBoolean(prefs, "widget_is_dark", true)
 
-        // Android 12+ (API 31+) Dynamic System Material You Colors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (preset == "adaptive" || preset == "system" || preset == "monet")) {
+        // Android 12+ Dynamic System Material You Colors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (preset == "adaptive" || preset == "system" || preset == "monet" || preset.contains("monet"))) {
             try {
                 val primary = context.getColor(android.R.color.system_accent1_500)
                 val textColor = if (isDark) context.getColor(android.R.color.system_neutral1_100) else context.getColor(android.R.color.system_neutral1_900)
@@ -213,7 +301,11 @@ object WidgetUtils {
                     subtitleColor = subtitleColor,
                     dividerColor = dividerColor,
                     badgeBgDrawable = if (isDark) R.drawable.active_prayer_background else R.drawable.active_prayer_background_light,
-                    badgeTextColor = if (isDark) Color.BLACK else Color.WHITE
+                    badgeTextColor = if (isDark) Color.BLACK else Color.WHITE,
+                    heroCardDrawable = if (isDark) R.drawable.widget_hero_card_dark else R.drawable.widget_hero_card_light,
+                    heroCardTextColor = primary,
+                    activePillDrawable = if (isDark) R.drawable.widget_active_pill_dark else R.drawable.widget_active_pill_light,
+                    activePillTextColor = primary
                 )
             } catch (_: Throwable) {}
         }
@@ -226,7 +318,11 @@ object WidgetUtils {
                 subtitleColor = Color.parseColor("#64748B"),
                 dividerColor = Color.parseColor("#E2E8F0"),
                 badgeBgDrawable = R.drawable.active_prayer_background_light,
-                badgeTextColor = Color.WHITE
+                badgeTextColor = Color.WHITE,
+                heroCardDrawable = R.drawable.widget_hero_card_light,
+                heroCardTextColor = Color.parseColor("#0D9488"),
+                activePillDrawable = R.drawable.widget_active_pill_light,
+                activePillTextColor = Color.parseColor("#0D9488")
             )
             "sepia" -> WidgetM3Theme(
                 bgDrawable = R.drawable.widget_background_sepia,
@@ -235,7 +331,11 @@ object WidgetUtils {
                 subtitleColor = Color.parseColor("#7A6451"),
                 dividerColor = Color.parseColor("#E5DABF"),
                 badgeBgDrawable = R.drawable.active_prayer_background_sepia,
-                badgeTextColor = Color.WHITE
+                badgeTextColor = Color.WHITE,
+                heroCardDrawable = R.drawable.widget_hero_card_sepia,
+                heroCardTextColor = Color.parseColor("#8C5A2B"),
+                activePillDrawable = R.drawable.widget_active_pill_sepia,
+                activePillTextColor = Color.parseColor("#8C5A2B")
             )
             "black" -> WidgetM3Theme(
                 bgDrawable = R.drawable.widget_background_black,
@@ -244,26 +344,38 @@ object WidgetUtils {
                 subtitleColor = Color.parseColor("#A3A3A3"),
                 dividerColor = Color.parseColor("#262626"),
                 badgeBgDrawable = R.drawable.active_prayer_background,
-                badgeTextColor = Color.BLACK
+                badgeTextColor = Color.BLACK,
+                heroCardDrawable = R.drawable.widget_hero_card_dark,
+                heroCardTextColor = Color.parseColor("#E5C158"),
+                activePillDrawable = R.drawable.widget_active_pill_dark,
+                activePillTextColor = Color.parseColor("#E5C158")
             )
             "dark", "dark_monet" -> WidgetM3Theme(
                 bgDrawable = R.drawable.widget_background_dark,
                 primaryColor = Color.parseColor("#E5C158"),
                 textColor = Color.parseColor("#F8FAFC"),
-                subtitleColor = Color.parseColor("#94A3B8"),
-                dividerColor = Color.parseColor("#33E5C158"),
+                subtitleColor = Color.parseColor("#8E9E96"),
+                dividerColor = Color.parseColor("#26E5C158"),
                 badgeBgDrawable = R.drawable.active_prayer_background,
-                badgeTextColor = Color.BLACK
+                badgeTextColor = Color.BLACK,
+                heroCardDrawable = R.drawable.widget_hero_card_dark,
+                heroCardTextColor = Color.parseColor("#E5C158"),
+                activePillDrawable = R.drawable.widget_active_pill_dark,
+                activePillTextColor = Color.parseColor("#E5C158")
             )
             else -> if (isDark) {
                 WidgetM3Theme(
                     bgDrawable = R.drawable.widget_background_dark,
                     primaryColor = Color.parseColor("#E5C158"),
                     textColor = Color.parseColor("#F8FAFC"),
-                    subtitleColor = Color.parseColor("#94A3B8"),
-                    dividerColor = Color.parseColor("#33E5C158"),
+                    subtitleColor = Color.parseColor("#8E9E96"),
+                    dividerColor = Color.parseColor("#26E5C158"),
                     badgeBgDrawable = R.drawable.active_prayer_background,
-                    badgeTextColor = Color.BLACK
+                    badgeTextColor = Color.BLACK,
+                    heroCardDrawable = R.drawable.widget_hero_card_dark,
+                    heroCardTextColor = Color.parseColor("#E5C158"),
+                    activePillDrawable = R.drawable.widget_active_pill_dark,
+                    activePillTextColor = Color.parseColor("#E5C158")
                 )
             } else {
                 WidgetM3Theme(
@@ -273,7 +385,11 @@ object WidgetUtils {
                     subtitleColor = Color.parseColor("#64748B"),
                     dividerColor = Color.parseColor("#E2E8F0"),
                     badgeBgDrawable = R.drawable.active_prayer_background_light,
-                    badgeTextColor = Color.WHITE
+                    badgeTextColor = Color.WHITE,
+                    heroCardDrawable = R.drawable.widget_hero_card_light,
+                    heroCardTextColor = Color.parseColor("#0D9488"),
+                    activePillDrawable = R.drawable.widget_active_pill_light,
+                    activePillTextColor = Color.parseColor("#0D9488")
                 )
             }
         }
@@ -292,5 +408,184 @@ object WidgetUtils {
             )
             views.setOnClickPendingIntent(viewId, pendingIntent)
         } catch (_: Throwable) {}
+    }
+
+    // ── Native Astronomical Prayer Calculation Engine ───────────────────────
+
+    private fun calculateAstronomicalUpcomingPrayer(
+        context: Context,
+        prefs: SharedPreferences,
+        isArabic: Boolean,
+        nowMs: Long
+    ): UpcomingPrayerInfo? {
+        var lat = getSafeDouble(prefs, "widget_user_latitude", 0.0)
+        var lng = getSafeDouble(prefs, "widget_user_longitude", 0.0)
+        if (lat == 0.0 && lng == 0.0) {
+            val rawLoc = getSafeString(prefs, "user_location", "")
+            if (rawLoc.isNotEmpty()) {
+                try {
+                    val obj = JSONObject(rawLoc)
+                    lat = obj.optDouble("latitude", 30.0444)
+                    lng = obj.optDouble("longitude", 31.2357)
+                } catch (_: Throwable) {
+                    lat = 30.0444
+                    lng = 31.2357
+                }
+            } else {
+                lat = 30.0444
+                lng = 31.2357
+            }
+        }
+
+        val method = getSafeInt(prefs, "widget_calc_method", 5)
+        val madhab = getSafeInt(prefs, "widget_asr_method", 0)
+        val use24h = getSafeBoolean(prefs, "widget_time_format_24h", false)
+
+        val cal = Calendar.getInstance()
+        val todayPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic)
+
+        // Check if any prayer today is upcoming
+        for (item in todayPrayers.values) {
+            if (item.epochMs > nowMs) {
+                val allTimes = todayPrayers.mapValues { it.value.formattedTime }
+                return item.copy(allPrayersToday = allTimes, isTomorrow = false)
+            }
+        }
+
+        // All today passed, compute tomorrow
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        val tomorrowPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic)
+        val tomorrowFajr = tomorrowPrayers["fajr"]
+        if (tomorrowFajr != null) {
+            val allTimes = tomorrowPrayers.mapValues { it.value.formattedTime }
+            return tomorrowFajr.copy(allPrayersToday = allTimes, isTomorrow = true)
+        }
+
+        return null
+    }
+
+    private fun computeSolarPrayersForDay(
+        cal: Calendar,
+        lat: Double,
+        lng: Double,
+        method: Int,
+        madhab: Int,
+        use24h: Boolean,
+        isArabic: Boolean
+    ): Map<String, UpcomingPrayerInfo> {
+        val y = cal.get(Calendar.YEAR)
+        val m = cal.get(Calendar.MONTH) + 1
+        val d = cal.get(Calendar.DAY_OF_MONTH)
+
+        val tzOffsetHours = cal.timeZone.getOffset(cal.timeInMillis) / 3600000.0
+
+        // Julian Day
+        var jy = y
+        var jm = m
+        if (jm <= 2) {
+            jy -= 1
+            jm += 12
+        }
+        val ja = floor(jy / 100.0)
+        val jb = 2 - ja + floor(ja / 4.0)
+        val jd = floor(365.25 * (jy + 4716)) + floor(30.6001 * (jm + 1)) + d + jb - 1524.5
+
+        val dJ2000 = jd - 2451545.0
+        val M = Math.toRadians((357.529 + 0.98560028 * dJ2000) % 360)
+        val L0 = (280.459 + 0.98564736 * dJ2000) % 360
+        val lambda = Math.toRadians((L0 + 1.915 * sin(M) + 0.020 * sin(2 * M)) % 360)
+        val eps = Math.toRadians(23.439 - 0.00000036 * dJ2000)
+
+        val alpha = Math.toDegrees(atan2(cos(eps) * sin(lambda), cos(lambda))) % 360
+        val delta = asin(sin(eps) * sin(lambda))
+
+        var eot = (L0 - alpha) / 15.0
+        while (eot > 12) eot -= 24
+        while (eot < -12) eot += 24
+
+        val dhuhrHours = 12.0 + tzOffsetHours - (lng / 15.0) - eot
+
+        val latRad = Math.toRadians(lat)
+
+        fun hourAngle(angle: Double): Double {
+            val cosH = (sin(Math.toRadians(-angle)) - sin(latRad) * sin(delta)) / (cos(latRad) * cos(delta))
+            if (cosH > 1.0 || cosH < -1.0) return 0.0
+            return Math.toDegrees(acos(cosH)) / 15.0
+        }
+
+        // Method angles
+        val (fajrAngle, ishaAngle, ishaFixedMinutes) = when (method) {
+            1 -> Triple(18.0, 18.0, 0) // Karachi
+            2 -> Triple(15.0, 15.0, 0) // North America (ISNA)
+            3 -> Triple(18.0, 17.0, 0) // MWL
+            4 -> Triple(18.5, 0.0, 90) // Umm Al-Qura (90 min)
+            5 -> Triple(19.5, 17.5, 0) // Egyptian
+            7 -> Triple(17.7, 14.0, 0) // Tehran
+            8 -> Triple(18.2, 18.2, 0) // Gulf / Dubai
+            9 -> Triple(18.0, 17.5, 0) // Kuwait
+            10 -> Triple(18.0, 0.0, 90) // Qatar
+            else -> Triple(18.0, 17.0, 0)
+        }
+
+        val fajrHours = dhuhrHours - hourAngle(fajrAngle)
+        val sunsetHours = dhuhrHours + hourAngle(0.833)
+        val maghribHours = sunsetHours
+
+        val ishaHours = if (ishaFixedMinutes > 0) {
+            maghribHours + (ishaFixedMinutes / 60.0)
+        } else {
+            dhuhrHours + hourAngle(ishaAngle)
+        }
+
+        // Asr (Shafi n=1, Hanafi n=2)
+        val n = if (madhab == 1) 2.0 else 1.0
+        val asrAlt = atan(1.0 / (n + tan(abs(latRad - delta))))
+        val cosAsr = (sin(asrAlt) - sin(latRad) * sin(delta)) / (cos(latRad) * cos(delta))
+        val asrHA = if (cosAsr in -1.0..1.0) Math.toDegrees(acos(cosAsr)) / 15.0 else 0.0
+        val asrHours = dhuhrHours + asrHA
+
+        fun toEpoch(hoursFraction: Double): Long {
+            var h = hoursFraction
+            while (h < 0) h += 24
+            while (h >= 24) h -= 24
+            val ih = h.toInt()
+            val remMin = (h - ih) * 60
+            val im = round(remMin).toInt()
+            val c = Calendar.getInstance(cal.timeZone).apply {
+                timeInMillis = cal.timeInMillis
+                set(Calendar.HOUR_OF_DAY, ih)
+                set(Calendar.MINUTE, im)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            return c.timeInMillis
+        }
+
+        fun formatTime(epoch: Long): String {
+            val c = Calendar.getInstance(cal.timeZone).apply { timeInMillis = epoch }
+            val hour = c.get(Calendar.HOUR_OF_DAY)
+            val minute = c.get(Calendar.MINUTE).toString().padStart(2, '0')
+            if (use24h) {
+                return "${hour.toString().padStart(2, '0')}:$minute"
+            }
+            val isPm = hour >= 12
+            val displayHour = if (hour % 12 == 0) 12 else hour % 12
+            val suffix = if (isPm) (if (isArabic) "م" else "PM") else (if (isArabic) "ص" else "AM")
+            return "$displayHour:$minute $suffix"
+        }
+
+        val fEpoch = toEpoch(fajrHours)
+        val dEpoch = toEpoch(dhuhrHours)
+        val aEpoch = toEpoch(asrHours)
+        val mEpoch = toEpoch(maghribHours)
+        val iEpoch = toEpoch(ishaHours)
+
+        return mapOf(
+            "fajr" to UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", fEpoch, formatTime(fEpoch), "fajr"),
+            "dhuhr" to UpcomingPrayerInfo(if (isArabic) "الظهر" else "Dhuhr", dEpoch, formatTime(dEpoch), "dhuhr"),
+            "asr" to UpcomingPrayerInfo(if (isArabic) "العصر" else "Asr", aEpoch, formatTime(aEpoch), "asr"),
+            "maghrib" to UpcomingPrayerInfo(if (isArabic) "المغرب" else "Maghrib", mEpoch, formatTime(mEpoch), "maghrib"),
+            "isha" to UpcomingPrayerInfo(if (isArabic) "العشاء" else "Isha", iEpoch, formatTime(iEpoch), "isha")
+        )
     }
 }

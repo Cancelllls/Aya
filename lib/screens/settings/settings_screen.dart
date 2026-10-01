@@ -608,7 +608,11 @@ class _SettingsScreenState extends State<SettingsScreen>
         _themePreset = val;
       });
       await widget.storage.setString('theme_preset', val);
+      await widget.storage.setBool('widget_is_dark', widget.storage.isDarkMode());
       widget.onThemeChanged();
+      try {
+        await _platform.invokeMethod('updateWidget');
+      } catch (_) {}
     }
   }
 
@@ -755,6 +759,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 final navigator = Navigator.of(dialogContext);
 
                 await widget.storage.setString('theme_preset', 'dark');
+                await widget.storage.setBool('widget_is_dark', true);
                 await widget.storage.setString(
                   'quran_font',
                   'font-scheherazade',
@@ -825,6 +830,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                 });
                 navigator.pop();
                 widget.onThemeChanged();
+                try {
+                  await _platform.invokeMethod('updateWidget');
+                } catch (_) {}
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text(

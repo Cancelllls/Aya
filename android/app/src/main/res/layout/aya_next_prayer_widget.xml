@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:background="@drawable/widget_background_dark"
-    android:padding="8dp">
+    android:padding="10dp">
 
     <!-- Header: Title & Next Prayer Name -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="6dp"
         android:paddingHorizontal="4dp">
 
         <TextView
@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="الصلاة القادمة"
-            android:textColor="@android:color/system_accent1_500"
+            android:textColor="#E5C158"
             android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="start" />
@@ -33,27 +33,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="العصر"
-            android:textColor="@android:color/system_neutral1_100"
+            android:textColor="@android:color/white"
             android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="end" />
     </LinearLayout>
 
-    <!-- Center Countdown / Time Box -->
+    <!-- Center Hero Card: Countdown / Time Box -->
     <LinearLayout
         android:id="@+id/next_prayer_box"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@drawable/active_prayer_background"
+        android:background="@drawable/widget_hero_card_dark"
         android:padding="8dp">
 
         <Chronometer
             android:id="@+id/next_prayer_chronometer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/system_neutral1_900"
+            android:textColor="#E5C158"
             android:textSize="28sp"
             android:textStyle="bold"
             android:countDown="true"
@@ -66,7 +66,7 @@
             android:layout_height="wrap_content"
             android:text="--:--"
             android:visibility="gone"
-            android:textColor="@android:color/system_neutral1_900"
+            android:textColor="#E5C158"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="الوقت المتبقي"
-            android:textColor="@android:color/system_neutral1_900"
+            android:textColor="#8E9E96"
             android:textSize="11sp" />
     </LinearLayout>
 </LinearLayout>
