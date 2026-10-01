@@ -287,7 +287,7 @@ object WidgetUtils {
         val isDark = getSafeBoolean(prefs, "widget_is_dark", true)
 
         // Android 12+ Dynamic System Material You Colors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (preset == "adaptive" || preset == "system" || preset == "monet")) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (preset == "adaptive" || preset == "system" || preset == "monet" || preset.contains("monet"))) {
             try {
                 val primary = context.getColor(android.R.color.system_accent1_500)
                 val textColor = if (isDark) context.getColor(android.R.color.system_neutral1_100) else context.getColor(android.R.color.system_neutral1_900)

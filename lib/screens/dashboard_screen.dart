@@ -156,6 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (_prayerData != null) {
         _calculateNextPrayer();
         _startCountdownTimer();
+        _updateWidgetPreferences();
       }
     } else if (state == AppLifecycleState.paused) {
       _timer?.cancel();
