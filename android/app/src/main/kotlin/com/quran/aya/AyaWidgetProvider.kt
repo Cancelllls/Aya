@@ -16,7 +16,7 @@ class AyaWidgetProvider : AppWidgetProvider() {
         if (action == WidgetUtils.ACTION_PRAYER_AUTO_ADVANCE ||
             action == AppWidgetManager.ACTION_APPWIDGET_UPDATE ||
             action == Intent.ACTION_BOOT_COMPLETED ||
-            action == Intent.ACTION_TIME_SET ||
+            action == Intent.ACTION_TIME_CHANGED ||
             action == Intent.ACTION_TIMEZONE_CHANGED) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, AyaWidgetProvider::class.java))
