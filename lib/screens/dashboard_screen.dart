@@ -14,6 +14,7 @@ import '../services/notification_service.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
 import '../services/quran_verses.dart';
+import '../services/offline_prayer_service.dart';
 import 'prayer_tracker_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
