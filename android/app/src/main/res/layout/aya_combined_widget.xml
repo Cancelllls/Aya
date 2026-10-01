@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background_dark"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <!-- Header Row -->
     <LinearLayout
@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Aya"
-            android:textColor="@android:color/system_accent1_500"
+            android:textColor="#E5C158"
             android:textSize="14sp"
             android:textStyle="bold"
             android:gravity="start" />
@@ -37,7 +37,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Next: "
-                android:textColor="@android:color/system_neutral2_400"
+                android:textColor="#8E9E96"
                 android:textSize="11sp"
                 android:gravity="end" />
 
@@ -46,30 +46,31 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Asr"
-                android:textColor="@android:color/system_neutral1_100"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:gravity="end" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Countdown Box -->
+    <!-- Center Hero Card: Countdown Box -->
     <LinearLayout
         android:id="@+id/widget_countdown_box"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@drawable/active_prayer_background"
-        android:padding="8dp"
-        android:layout_marginBottom="6dp">
+        android:background="@drawable/widget_hero_card_dark"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="10dp"
+        android:layout_marginBottom="8dp">
 
         <Chronometer
             android:id="@+id/widget_countdown_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/system_neutral1_900"
-            android:textSize="28sp"
+            android:textColor="#E5C158"
+            android:textSize="26sp"
             android:textStyle="bold"
             android:countDown="true"
             android:format="%s"
@@ -81,7 +82,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Until Asr"
-            android:textColor="@android:color/system_neutral1_900"
+            android:textColor="#8E9E96"
             android:textSize="11sp" />
     </LinearLayout>
 
@@ -101,20 +102,21 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="2dp">
             <TextView
                 android:id="@+id/widget_fajr_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Fajr"
-                android:textColor="@android:color/system_neutral2_400"
+                android:textColor="#8E9E96"
                 android:textSize="10sp" />
             <TextView
                 android:id="@+id/widget_fajr_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--:--"
-                android:textColor="@android:color/system_neutral1_100"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -127,20 +129,21 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="2dp">
             <TextView
                 android:id="@+id/widget_dhuhr_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Dhuhr"
-                android:textColor="@android:color/system_neutral2_400"
+                android:textColor="#8E9E96"
                 android:textSize="10sp" />
             <TextView
                 android:id="@+id/widget_dhuhr_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--:--"
-                android:textColor="@android:color/system_neutral1_100"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -153,20 +156,21 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="2dp">
             <TextView
                 android:id="@+id/widget_asr_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Asr"
-                android:textColor="@android:color/system_neutral2_400"
+                android:textColor="#8E9E96"
                 android:textSize="10sp" />
             <TextView
                 android:id="@+id/widget_asr_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--:--"
-                android:textColor="@android:color/system_neutral1_100"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -179,20 +183,21 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="2dp">
             <TextView
                 android:id="@+id/widget_maghrib_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Maghrib"
-                android:textColor="@android:color/system_neutral2_400"
+                android:textColor="#8E9E96"
                 android:textSize="10sp" />
             <TextView
                 android:id="@+id/widget_maghrib_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--:--"
-                android:textColor="@android:color/system_neutral1_100"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -205,20 +210,21 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="2dp">
             <TextView
                 android:id="@+id/widget_isha_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Isha"
-                android:textColor="@android:color/system_neutral2_400"
+                android:textColor="#8E9E96"
                 android:textSize="10sp" />
             <TextView
                 android:id="@+id/widget_isha_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--:--"
-                android:textColor="@android:color/system_neutral1_100"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
