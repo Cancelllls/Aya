@@ -12,7 +12,7 @@ class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
   static Future<void>? _seeding;
-  static const int _version = 10;
+  static const int _version = 11;
   // Keep in sync with android/app/build.gradle.kts applicationId
   static const String _packageName = 'com.quran.aya';
 
@@ -57,6 +57,23 @@ class DatabaseService {
     if (!Platform.isIOS && !Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
+    }
+
+    // Fast-boot pre-seeded DB: If DB does not exist on disk, check if a pre-compiled
+    // seed DB is bundled in assets. If present, copy directly for instant 0ms first launch.
+    if (!await File(path).exists()) {
+      try {
+        final byteData = await rootBundle.load('assets/db/aya_seed.db');
+        final bytes = byteData.buffer.asUint8List(
+          byteData.offsetInBytes,
+          byteData.lengthInBytes,
+        );
+        final file = File(path);
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(bytes, flush: true);
+      } catch (_) {
+        // Fallback to normal creation if seed DB asset is not bundled
+      }
     }
 
     Database? db;
@@ -117,10 +134,12 @@ class DatabaseService {
         tafsir TEXT,
         juz INTEGER,
         hizb INTEGER,
+        page INTEGER DEFAULT 1,
         FOREIGN KEY (surah_number) REFERENCES surahs (number)
       )
     ''');
     await db.execute('CREATE INDEX idx_ayahs_surah ON ayahs(surah_number)');
+    await db.execute('CREATE INDEX idx_ayahs_page ON ayahs(page)');
 
     // Prayer times cache table
     await db.execute('''
@@ -239,6 +258,12 @@ class DatabaseService {
     await db.execute('''
       CREATE VIRTUAL TABLE hadiths_fts USING fts5(
         search_arabic, search_english,
+        tokenize='unicode61 remove_diacritics 2'
+      )
+    ''');
+    await db.execute('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS ayahs_fts USING fts5(
+        text_arabic_clean, text_english,
         tokenize='unicode61 remove_diacritics 2'
       )
     ''');
@@ -450,6 +475,27 @@ class DatabaseService {
         ''');
       } catch (_) {}
     }
+
+    if (oldVersion < 11) {
+      try {
+        await db.execute('ALTER TABLE ayahs ADD COLUMN page INTEGER DEFAULT 1');
+      } catch (_) {}
+      try {
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_ayahs_page ON ayahs(page)');
+      } catch (_) {}
+      try {
+        await db.execute('''
+          CREATE VIRTUAL TABLE IF NOT EXISTS ayahs_fts USING fts5(
+            text_arabic_clean, text_english,
+            tokenize='unicode61 remove_diacritics 2'
+          )
+        ''');
+        await db.execute(
+          'INSERT INTO ayahs_fts(rowid, text_arabic_clean, text_english) '
+          'SELECT id, text_arabic_clean, text_english FROM ayahs',
+        );
+      } catch (_) {}
+    }
   }
 
   static Future<void> _seedQuranData(Database db) async {
@@ -488,6 +534,7 @@ class DatabaseService {
           for (int i = 0; i < arabic.length; i++) {
             final hizbQuarter = arabic[i]['hizbQuarter'] as int? ?? 1;
             final calculatedHizb = ((hizbQuarter - 1) ~/ 4) + 1;
+            final page = arabic[i]['page'] as int? ?? 1;
             batch.insert('ayahs', {
               'surah_number': editions[0]['number'],
               'ayah_number': arabic[i]['numberInSurah'],
@@ -500,10 +547,25 @@ class DatabaseService {
               'tafsir': tafsir != null ? tafsir[i]['text'] : null,
               'juz': arabic[i]['juz'],
               'hizb': calculatedHizb,
+              'page': page,
             });
           }
         }
         await batch.commit(noResult: true);
+
+        // Populate ayahs_fts for instant full-text search
+        try {
+          await db.execute('''
+            CREATE VIRTUAL TABLE IF NOT EXISTS ayahs_fts USING fts5(
+              text_arabic_clean, text_english,
+              tokenize='unicode61 remove_diacritics 2'
+            )
+          ''');
+          await db.execute(
+            'INSERT INTO ayahs_fts(rowid, text_arabic_clean, text_english) '
+            'SELECT id, text_arabic_clean, text_english FROM ayahs',
+          );
+        } catch (_) {}
       }
     } catch (e) {
       // Quran seed failed — will retry on next cold start
@@ -537,7 +599,7 @@ class DatabaseService {
         : <String>[
             'id', 'surah_number', 'ayah_number', 'global_number',
             'text_arabic', 'text_arabic_clean', 'text_english',
-            'juz', 'hizb',
+            'juz', 'hizb', 'page',
           ];
     return await db.query(
       'ayahs',
@@ -546,6 +608,40 @@ class DatabaseService {
       whereArgs: [surahNumber],
       orderBy: 'ayah_number ASC',
     );
+  }
+
+  /// Fetch all ayahs for a standard 604-page Madinah Mushaf page.
+  Future<List<Map<String, dynamic>>> getAyahsForPage(int pageNumber) async {
+    final db = _database!;
+    await _ensureQuranSeeded();
+    return await db.rawQuery(
+      '''
+      SELECT ayahs.id, ayahs.surah_number, ayahs.ayah_number, ayahs.global_number,
+             ayahs.text_arabic, ayahs.text_arabic_clean, ayahs.text_english,
+             ayahs.juz, ayahs.hizb, ayahs.page,
+             surahs.name as surah_name, surahs.englishName as surah_englishName 
+      FROM ayahs 
+      JOIN surahs ON ayahs.surah_number = surahs.number 
+      WHERE ayahs.page = ?
+      ORDER BY ayahs.surah_number ASC, ayahs.ayah_number ASC
+      ''',
+      [pageNumber],
+    );
+  }
+
+  /// Fetch standard Madinah Mushaf page number for a given ayah.
+  Future<int> getPageForAyah(int surahNumber, int ayahNumber) async {
+    final db = _database!;
+    await _ensureQuranSeeded();
+    final rows = await db.query(
+      'ayahs',
+      columns: ['page'],
+      where: 'surah_number = ? AND ayah_number = ?',
+      whereArgs: [surahNumber, ayahNumber],
+      limit: 1,
+    );
+    if (rows.isEmpty) return 1;
+    return (rows.first['page'] as int?) ?? 1;
   }
 
   /// Fetch only tafsir text for a surah — used for lazy loading.
@@ -581,15 +677,38 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
     final db = _database!;
     await _ensureQuranSeeded();
-    final queryClean = stripTashkeel(query).toLowerCase();
-    final searchPattern = '%$queryClean%';
+    final queryClean = stripTashkeel(query).toLowerCase().trim();
+    if (queryClean.isEmpty) return [];
 
-    // Fix #9: Select explicit columns excluding heavy 'tafsir' text column
+    // 1. High-speed FTS5 MATCH with snippet highlights (<mark> tags)
+    try {
+      final ftsResults = await db.rawQuery(
+        '''
+        SELECT ayahs.id, ayahs.surah_number, ayahs.ayah_number, ayahs.global_number,
+               ayahs.text_arabic, ayahs.text_arabic_clean, ayahs.text_english,
+               ayahs.juz, ayahs.hizb, ayahs.page,
+               surahs.name as surah_name, surahs.englishName as surah_englishName,
+               snippet(ayahs_fts, 0, '<mark>', '</mark>', '...', 15) as snippet_arabic,
+               snippet(ayahs_fts, 1, '<mark>', '</mark>', '...', 15) as snippet_english
+        FROM ayahs 
+        JOIN surahs ON ayahs.surah_number = surahs.number 
+        INNER JOIN ayahs_fts ON ayahs.id = ayahs_fts.rowid
+        WHERE ayahs_fts MATCH ?
+        ORDER BY rank
+        ''',
+        ['"$queryClean"'],
+      );
+      if (ftsResults.isNotEmpty) return ftsResults;
+    } catch (_) {}
+
+    // 2. Fallback: LIKE scan
+    final searchPattern = '%$queryClean%';
     final results = await db.rawQuery(
       '''
       SELECT ayahs.id, ayahs.surah_number, ayahs.ayah_number, ayahs.global_number,
              ayahs.text_arabic, ayahs.text_arabic_clean, ayahs.text_english,
-             ayahs.juz, ayahs.hizb, surahs.name as surah_name, surahs.englishName as surah_englishName 
+             ayahs.juz, ayahs.hizb, ayahs.page,
+             surahs.name as surah_name, surahs.englishName as surah_englishName 
       FROM ayahs 
       JOIN surahs ON ayahs.surah_number = surahs.number 
       WHERE ayahs.text_arabic_clean LIKE ? OR LOWER(ayahs.text_english) LIKE ?

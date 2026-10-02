@@ -136,7 +136,10 @@ class HadithDatabaseService {
     try {
       if (intQuery != null) {
         return await _db.rawQuery(
-          'SELECT h.* FROM hadiths h '
+          'SELECT h.*, '
+          'snippet(hadiths_fts, 0, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_arabic, '
+          'snippet(hadiths_fts, 1, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_english '
+          'FROM hadiths h '
           'LEFT JOIN hadiths_fts f ON h.id = f.rowid '
           'WHERE h.book_id = ? AND (h.hadith_number = ? OR hadiths_fts MATCH ?) '
           'ORDER BY hadiths_fts MATCH ? IS NULL, h.hadith_number ASC '
@@ -145,7 +148,10 @@ class HadithDatabaseService {
         );
       }
       return await _db.rawQuery(
-        'SELECT h.* FROM hadiths h '
+        'SELECT h.*, '
+        'snippet(hadiths_fts, 0, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_arabic, '
+        'snippet(hadiths_fts, 1, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_english '
+        'FROM hadiths h '
         'INNER JOIN hadiths_fts f ON h.id = f.rowid '
         'WHERE h.book_id = ? AND hadiths_fts MATCH ? '
         'ORDER BY rank LIMIT ? OFFSET ?',
@@ -178,7 +184,10 @@ class HadithDatabaseService {
     try {
       if (intQuery != null) {
         return await _db.rawQuery(
-          'SELECT h.* FROM hadiths h '
+          'SELECT h.*, '
+          'snippet(hadiths_fts, 0, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_arabic, '
+          'snippet(hadiths_fts, 1, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_english '
+          'FROM hadiths h '
           'LEFT JOIN hadiths_fts f ON h.id = f.rowid '
           'WHERE h.book_id LIKE ? AND (h.hadith_number = ? OR hadiths_fts MATCH ?) '
           'LIMIT ?',
@@ -186,7 +195,10 @@ class HadithDatabaseService {
         );
       }
       return await _db.rawQuery(
-        'SELECT h.* FROM hadiths h '
+        'SELECT h.*, '
+        'snippet(hadiths_fts, 0, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_arabic, '
+        'snippet(hadiths_fts, 1, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_english '
+        'FROM hadiths h '
         'INNER JOIN hadiths_fts f ON h.id = f.rowid '
         'WHERE h.book_id LIKE ? AND hadiths_fts MATCH ? '
         'ORDER BY rank LIMIT ?',

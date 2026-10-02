@@ -411,6 +411,8 @@ class _HadithScreenState extends State<HadithScreen> {
         'english': r['english'],
         'searchArText': r['search_arabic'],
         'searchEnText': r['search_english'],
+        'snippetArabic': r['snippet_arabic'],
+        'snippetEnglish': r['snippet_english'],
         'grades': jsonDecode((r['grades'] as String?) ?? '[]'),
         '_bookId': bookId,
         '_bookName': langPrefix == 'ara' ? book.nameAr : book.nameEn,
@@ -1094,50 +1096,70 @@ class _HadithScreenState extends State<HadithScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 12),
-                                         if (h['arabic'].toString().isNotEmpty &&
-                                             _displayLang == 'ara')
-                                           _searchController.text.trim().isNotEmpty
-                                               ? _buildHighlightedText(
-                                                   text: h['arabic'].toString(),
-                                                   query: _searchController.text,
-                                                   style: TextStyle(
-                                                     fontFamily: 'Amiri',
-                                                     fontSize: 18,
-                                                     height: 1.8,
-                                                     fontWeight: FontWeight.w500,
-                                                     color: theme.textTheme.bodyLarge?.color,
-                                                   ),
-                                                   highlightColor: theme.primaryColor.withValues(alpha: 0.3),
-                                                 )
-                                               : Text(
-                                                   h['arabic'].toString(),
-                                                   style: TextStyle(
-                                                     fontFamily: 'Amiri',
-                                                     fontSize: 18,
-                                                     height: 1.8,
-                                                     fontWeight: FontWeight.w500,
-                                                     color: theme.textTheme.bodyLarge?.color,
-                                                   ),
-                                                   textAlign: TextAlign.start,
-                                                   textDirection: TextDirection.rtl,
-                                                 ),
+                                        if (h['arabic'].toString().isNotEmpty &&
+                                            _displayLang == 'ara')
+                                          _searchController.text.trim().isNotEmpty
+                                              ? _buildHighlightedText(
+                                                  text: (h['snippetArabic'] != null && h['snippetArabic'].toString().contains('<mark>'))
+                                                      ? h['snippetArabic'].toString()
+                                                      : h['arabic'].toString(),
+                                                  query: _searchController.text,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Amiri',
+                                                    fontSize: 18,
+                                                    height: 1.8,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: theme.textTheme.bodyLarge?.color,
+                                                  ),
+                                                  highlightColor: const Color(0xFFE5C158),
+                                                  textDirection: TextDirection.rtl,
+                                                )
+                                              : Text(
+                                                  h['arabic'].toString(),
+                                                  style: TextStyle(
+                                                    fontFamily: 'Amiri',
+                                                    fontSize: 18,
+                                                    height: 1.8,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: theme.textTheme.bodyLarge?.color,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                  textDirection: TextDirection.rtl,
+                                                ),
                                         if (h['english']
                                                 .toString()
                                                 .isNotEmpty &&
                                             _displayLang == 'eng')
-                                          Text(
-                                            _cleanEnglish(h['english'].toString()),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              height: 1.5,
-                                              color: theme
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color,
-                                            ),
-                                            textAlign: TextAlign.start,
-                                            textDirection: TextDirection.ltr,
-                                          ),
+                                          _searchController.text.trim().isNotEmpty
+                                              ? _buildHighlightedText(
+                                                  text: (h['snippetEnglish'] != null && h['snippetEnglish'].toString().contains('<mark>'))
+                                                      ? h['snippetEnglish'].toString()
+                                                      : _cleanEnglish(h['english'].toString()),
+                                                  query: _searchController.text,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    height: 1.5,
+                                                    color: theme
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
+                                                  ),
+                                                  highlightColor: const Color(0xFFE5C158),
+                                                  textDirection: TextDirection.ltr,
+                                                )
+                                              : Text(
+                                                  _cleanEnglish(h['english'].toString()),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    height: 1.5,
+                                                    color: theme
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                  textDirection: TextDirection.ltr,
+                                                ),
                                       ],
                                     ),
                                   ),
@@ -1209,45 +1231,63 @@ class _HadithScreenState extends State<HadithScreen> {
     required String query,
     required TextStyle style,
     required Color highlightColor,
+    TextDirection textDirection = TextDirection.rtl,
   }) {
+    if (text.contains('<mark>')) {
+      final spans = parseMarkedSpans(
+        text,
+        baseStyle: style,
+        highlightColor: highlightColor,
+      );
+      return SelectableText.rich(
+        TextSpan(children: spans),
+        textAlign: TextAlign.start,
+        textDirection: textDirection,
+      );
+    }
+
     if (query.trim().isEmpty) {
-      return Text(text, style: style, textAlign: TextAlign.start, textDirection: TextDirection.rtl);
+      return SelectableText(
+        text,
+        style: style,
+        textAlign: TextAlign.start,
+        textDirection: textDirection,
+      );
     }
 
     final cleanQuery = stripTashkeel(query.trim().toLowerCase());
     final cleanText = stripTashkeel(text.toLowerCase());
 
     if (!cleanText.contains(cleanQuery)) {
-      return Text(text, style: style, textAlign: TextAlign.start, textDirection: TextDirection.rtl);
+      return SelectableText(
+        text,
+        style: style,
+        textAlign: TextAlign.start,
+        textDirection: textDirection,
+      );
     }
 
-    final spans = <TextSpan>[];
-    int start = 0;
-    final matches = cleanQuery.allMatches(cleanText);
-
-    for (final match in matches) {
-      if (match.start > start) {
-        spans.add(TextSpan(text: text.substring(start, match.start), style: style));
-      }
-      final matchEnd = match.end <= text.length ? match.end : text.length;
-      final matchStart = match.start < text.length ? match.start : 0;
+    final words = text.split(' ');
+    final spans = <InlineSpan>[];
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      final cleanWord = stripTashkeel(word.toLowerCase());
+      final isMatch = cleanWord.contains(cleanQuery);
       spans.add(TextSpan(
-        text: text.substring(matchStart, matchEnd),
-        style: style.copyWith(
-          backgroundColor: highlightColor,
-          fontWeight: FontWeight.bold,
-        ),
+        text: i < words.length - 1 ? '$word ' : word,
+        style: isMatch
+            ? style.copyWith(
+                color: highlightColor,
+                fontWeight: FontWeight.bold,
+              )
+            : style,
       ));
-      start = matchEnd;
-    }
-    if (start < text.length) {
-      spans.add(TextSpan(text: text.substring(start), style: style));
     }
 
     return SelectableText.rich(
       TextSpan(children: spans),
       textAlign: TextAlign.start,
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
     );
   }
 }

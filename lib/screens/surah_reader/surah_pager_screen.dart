@@ -7,6 +7,8 @@ import '../../services/audio_manager.dart';
 import '../../models/offline_surahs.dart';
 import '../tajweed_guide_screen.dart';
 import 'surah_reader_screen.dart';
+import '../../services/database_service.dart';
+import 'madinah_mushaf_view.dart';
 
 class SurahPagerScreen extends StatefulWidget {
   final Surah initialSurah;
@@ -239,6 +241,14 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                   Text(TranslationService.isArabic ? "المصحف المتصل" : "Continuous", style: TextStyle(color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'continuous' ? FontWeight.bold : null)),
                 ]),
               ),
+              PopupMenuItem(
+                value: 'madinah_page',
+                child: Row(children: [
+                  Icon(Icons.auto_stories, color: _readingMode == 'madinah_page' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
+                  const SizedBox(width: 8),
+                  Text(TranslationService.isArabic ? "صفحات المدينة (١٥ سطر)" : "15-Line Madinah Mushaf", style: TextStyle(color: _readingMode == 'madinah_page' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'madinah_page' ? FontWeight.bold : null)),
+                ]),
+              ),
 
               PopupMenuItem(
                 value: 'arabic_only',
@@ -272,7 +282,25 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
           ),
         ],
       ),
-      body: PageView.builder(
+      body: _readingMode == 'madinah_page'
+          ? FutureBuilder<int>(
+              future: DatabaseService.getInstance().then(
+                (db) => db.getPageForAyah(
+                  widget.initialSurah.number,
+                  widget.initialAyahNumber ?? 1,
+                ),
+              ),
+              builder: (context, snapshot) {
+                final initialPage = snapshot.data ?? 1;
+                return MadinahMushafView(
+                  key: ValueKey('mushaf_view_${_reloadKey}_${initialPage}_$_fontSizeMultiplier'),
+                  initialPage: initialPage,
+                  storage: widget.storage,
+                  fontSizeMultiplier: _fontSizeMultiplier,
+                );
+              },
+            )
+          : PageView.builder(
         controller: _pageController,
         itemCount: 114,
         onPageChanged: (page) => setState(() => _currentPage = page),

@@ -97,6 +97,7 @@ flutter:
     - assets/changelog.json
     - assets/timestamps/
     - assets/fonts/
+    - assets/db/
 
   fonts:
     - family: Amiri

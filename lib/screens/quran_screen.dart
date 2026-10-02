@@ -503,9 +503,16 @@ class _QuranScreenState extends State<QuranScreen> {
         final String surahName = match['surah_name'] ?? '';
         final String englishName = match['surah_englishName'] ?? '';
         final int numberInSurah = match['ayah_number'] ?? 0;
-        final String text = _isArabic(_searchController.text)
+        final bool isArabicSearch = _isArabic(_searchController.text);
+        final String rawText = isArabicSearch
             ? (match['text_arabic'] ?? '')
             : (match['text_english'] ?? '');
+        final String? snippet = isArabicSearch
+            ? (match['snippet_arabic'] as String?)
+            : (match['snippet_english'] as String?) ;
+        final String displayText = (snippet != null && snippet.contains('<mark>'))
+            ? snippet
+            : rawText;
         final int surahNumber = match['surah_number'] ?? 1;
 
         return Card(
@@ -524,10 +531,20 @@ class _QuranScreenState extends State<QuranScreen> {
               horizontal: 16,
               vertical: 12,
             ),
-            title: Text(
-              text,
-              style: const TextStyle(fontSize: 16, height: 1.5),
-              textDirection: _isArabic(text)
+            title: Text.rich(
+              TextSpan(
+                children: parseMarkedSpans(
+                  displayText,
+                  baseStyle: TextStyle(
+                    fontFamily: isArabicSearch ? 'Amiri' : null,
+                    fontSize: isArabicSearch ? 18 : 15,
+                    height: 1.6,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                  highlightColor: const Color(0xFFE5C158),
+                ),
+              ),
+              textDirection: _isArabic(rawText)
                   ? TextDirection.rtl
                   : TextDirection.ltr,
             ),

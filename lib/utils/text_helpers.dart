@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../services/translation_service.dart';
 
 /// Remove Arabic diacritics and normalize for search.
@@ -44,4 +45,53 @@ String formatPrayerTime(String rawTime, {bool use24h = false}) {
       ? (TranslationService.isArabic ? 'م' : 'PM')
       : (TranslationService.isArabic ? 'ص' : 'AM');
   return '$displayHour:$displayMinute $suffix';
+}
+
+/// Converts Western numeric characters ('0'-'9') to Eastern Arabic digits ('٠'-'٩').
+String toArabicDigits(dynamic input) {
+  const western = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const eastern = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  String str = input.toString();
+  for (int i = 0; i < western.length; i++) {
+    str = str.replaceAll(western[i], eastern[i]);
+  }
+  return str;
+}
+
+/// Parses text containing `<mark>keyword</mark>` tags into a list of [TextSpan]s.
+/// Marked tokens receive [highlightStyle] or bold gold color [highlightColor] (#E5C158).
+List<InlineSpan> parseMarkedSpans(
+  String text, {
+  required TextStyle baseStyle,
+  TextStyle? highlightStyle,
+  Color highlightColor = const Color(0xFFE5C158),
+}) {
+  if (!text.contains('<mark>')) {
+    return [TextSpan(text: text, style: baseStyle)];
+  }
+
+  final spans = <InlineSpan>[];
+  final effectiveHighlightStyle = highlightStyle ??
+      baseStyle.copyWith(
+        color: highlightColor,
+        fontWeight: FontWeight.bold,
+      );
+
+  final parts = text.split('<mark>');
+  for (int i = 0; i < parts.length; i++) {
+    if (i == 0) {
+      if (parts[i].isNotEmpty) {
+        spans.add(TextSpan(text: parts[i], style: baseStyle));
+      }
+    } else {
+      final subparts = parts[i].split('</mark>');
+      if (subparts[0].isNotEmpty) {
+        spans.add(TextSpan(text: subparts[0], style: effectiveHighlightStyle));
+      }
+      if (subparts.length > 1 && subparts[1].isNotEmpty) {
+        spans.add(TextSpan(text: subparts[1], style: baseStyle));
+      }
+    }
+  }
+  return spans;
 }

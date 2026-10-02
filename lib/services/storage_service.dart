@@ -3,11 +3,16 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
+import 'storage/prayer_preferences.dart';
+import 'storage/reading_tracker_store.dart';
 
 class StorageService {
   static StorageService? _instance;
   static SharedPreferences? _prefs;
   static DatabaseService? _db;
+
+  late final PrayerPreferences prayer;
+  late final ReadingTrackerStore readingTracker;
 
   StorageService._();
 
@@ -25,6 +30,8 @@ class StorageService {
       _instance = StorageService._();
       _prefs = await SharedPreferences.getInstance();
       _db = await DatabaseService.getInstance();
+      _instance!.prayer = PrayerPreferences(_prefs!);
+      _instance!.readingTracker = ReadingTrackerStore(_prefs!, _db!);
       await _migrateIfNeeded();
     }
     return _instance!;
@@ -135,87 +142,11 @@ class StorageService {
     return preset == 'dark' || preset == 'black' || preset == 'dark_monet';
   }
 
-  // Location Cache
-  Map<String, dynamic> getLocation() {
-    final raw = getString('user_location');
-    if (raw.isEmpty) {
-      return {
-        'city': 'Cairo',
-        'country': 'Egypt',
-        'latitude': 30.0444,
-        'longitude': 31.2357,
-        'source': 'default',
-      };
-    }
-    return jsonDecode(raw) as Map<String, dynamic>;
-  }
+  // Location Cache (Delegated to PrayerPreferences)
+  Map<String, dynamic> getLocation() => prayer.getLocation();
 
-  int determineSmartCalculationMethod(String city, String country) {
-    final loc = '$city $country'.toLowerCase();
-    if (loc.contains('egypt') ||
-        loc.contains('مصر') ||
-        loc.contains('alexandria') ||
-        loc.contains('الإسكندرية') ||
-        loc.contains('cairo') ||
-        loc.contains('القاهرة')) {
-      return 5; // Egypt (Egyptian General Authority of Survey)
-    } else if (loc.contains('saudi') ||
-        loc.contains('سعودية') ||
-        loc.contains('makkah') ||
-        loc.contains('mecca') ||
-        loc.contains('مكة') ||
-        loc.contains('riyadh') ||
-        loc.contains('الرياض') ||
-        loc.contains('madinah') ||
-        loc.contains('المدينة')) {
-      return 4; // Umm Al-Qura
-    } else if (loc.contains('turkey') ||
-        loc.contains('türkiye') ||
-        loc.contains('turk') ||
-        loc.contains('تركيا') ||
-        loc.contains('istanbul') ||
-        loc.contains('إسطنبول') ||
-        loc.contains('ankara') ||
-        loc.contains('أنقرة')) {
-      return 13; // Turkey (Diyanet)
-    } else if (loc.contains('united states') ||
-        loc.contains('usa') ||
-        loc.contains('canada') ||
-        loc.contains('america') ||
-        loc.contains('أمريكا') ||
-        loc.contains('كندا')) {
-      return 2; // ISNA
-    } else if (loc.contains('singapore') || loc.contains('سنغافورة')) {
-      return 11; // Singapore
-    } else if (loc.contains('russia') || loc.contains('روسيا')) {
-      return 14; // Russia
-    } else if (loc.contains('uae') ||
-        loc.contains('emirates') ||
-        loc.contains('إمارات') ||
-        loc.contains('dubai') ||
-        loc.contains('دبي') ||
-        loc.contains('abu dhabi') ||
-        loc.contains('أبوظبي')) {
-      return 16; // UAE
-    } else if (loc.contains('qatar') || loc.contains('قطر')) {
-      return 10; // Qatar
-    } else if (loc.contains('france') ||
-        loc.contains('فرنسا') ||
-        loc.contains('paris') ||
-        loc.contains('باريس')) {
-      return 12; // France
-    } else if (loc.contains('pakistan') ||
-        loc.contains('باكستان') ||
-        loc.contains('india') ||
-        loc.contains('الهند') ||
-        loc.contains('bangladesh') ||
-        loc.contains('بنجلاديش') ||
-        loc.contains('karachi') ||
-        loc.contains('كاراتشي')) {
-      return 1; // Karachi
-    }
-    return 3; // Muslim World League (MWL) as general fallback
-  }
+  int determineSmartCalculationMethod(String city, String country) =>
+      prayer.determineSmartCalculationMethod(city, country);
 
   Future<bool> setLocation(
     String city,
@@ -223,47 +154,22 @@ class StorageService {
     double lat,
     double lng,
     String source,
-  ) async {
-    final data = {
-      'city': city,
-      'country': country,
-      'latitude': lat,
-      'longitude': lng,
-      'source': source,
-    };
+  ) =>
+      prayer.setLocation(city, country, lat, lng, source);
 
-    // Automatically determine calculation method based on location
-    final smartMethod = determineSmartCalculationMethod(city, country);
-    await setInt('calc_method', smartMethod);
-
-    return await setString('user_location', jsonEncode(data));
-  }
-
-  // Bookmarks
-  Future<List<Map<String, dynamic>>> getBookmarks() async {
-    final list = await _db!.getBookmarks();
-    return list
-        .map(
-          (b) => {
-            'surahNumber': b['surah_number'],
-            'surahName': b['surah_name'],
-            'ayahNumber': b['ayah_number'],
-          },
-        )
-        .toList();
-  }
+  // Bookmarks (Delegated to ReadingTrackerStore)
+  Future<List<Map<String, dynamic>>> getBookmarks() =>
+      readingTracker.getBookmarks();
 
   Future<void> addBookmark(
     int surahNumber,
     String surahName,
     int ayahNumber,
-  ) async {
-    await _db!.addBookmark(surahNumber, surahName, ayahNumber);
-  }
+  ) =>
+      readingTracker.addBookmark(surahNumber, surahName, ayahNumber);
 
-  Future<void> removeBookmark(int surahNumber, {int? ayahNumber}) async {
-    await _db!.removeBookmark(surahNumber, ayah: ayahNumber);
-  }
+  Future<void> removeBookmark(int surahNumber, {int? ayahNumber}) =>
+      readingTracker.removeBookmark(surahNumber, ayahNumber: ayahNumber);
 
   // Custom Dhikr list
   Future<List<Map<String, dynamic>>> getCustomDhikrs() async {
@@ -306,63 +212,37 @@ class StorageService {
     return await prefs.remove(key);
   }
 
-  // --- Last Read Position ---
-  Future<void> saveLastReadPosition(int surahNum, int ayahNum) async {
-    await setInt('last_read_surah', surahNum);
-    await setInt('last_read_ayah', ayahNum);
-    await setInt('last_read_ayah_surah_$surahNum', ayahNum);
-  }
+  // --- Last Read Position (Delegated to ReadingTrackerStore) ---
+  Future<void> saveLastReadPosition(int surahNum, int ayahNum) =>
+      readingTracker.saveLastReadPosition(surahNum, ayahNum);
 
-  Map<String, int>? getLastReadPosition() {
-    final surahNum = prefs.getInt('last_read_surah');
-    final ayahNum = prefs.getInt('last_read_ayah');
-    if (surahNum != null && ayahNum != null) {
-      return {'surah': surahNum, 'ayah': ayahNum};
-    }
-    return null;
-  }
+  Map<String, int>? getLastReadPosition() =>
+      readingTracker.getLastReadPosition();
 
-  int? getLastReadAyahForSurah(int surahNum) {
-    return prefs.getInt('last_read_ayah_surah_$surahNum');
-  }
+  int? getLastReadAyahForSurah(int surahNum) =>
+      readingTracker.getLastReadAyahForSurah(surahNum);
 
-  // --- Last Audio Position ---
+  // --- Last Audio Position (Delegated to ReadingTrackerStore) ---
   Future<void> saveLastAudioPosition(
     int surahNum,
     int ayahNum,
     String reciter,
     String surahName,
-  ) async {
-    await setInt('last_audio_surah', surahNum);
-    await setInt('last_audio_ayah', ayahNum);
-    await setString('last_audio_reciter', reciter);
-    await setString('last_audio_surah_name', surahName);
-  }
+  ) =>
+      readingTracker.saveLastAudioPosition(
+        surahNum,
+        ayahNum,
+        reciter,
+        surahName,
+      );
 
-  Future<void> saveLastAudioTimestamp(int positionMs) async {
-    await setInt('last_audio_timestamp_ms', positionMs);
-  }
+  Future<void> saveLastAudioTimestamp(int positionMs) =>
+      readingTracker.saveLastAudioTimestamp(positionMs);
 
-  Map<String, dynamic>? getLastAudioPosition() {
-    final surahNum = prefs.getInt('last_audio_surah');
-    final ayahNum = prefs.getInt('last_audio_ayah');
-    final reciter = prefs.getString('last_audio_reciter');
-    final surahName =
-        prefs.getString('last_audio_surah_name') ?? "Surah $surahNum";
-    if (surahNum != null && ayahNum != null && reciter != null) {
-      return {
-        'surah': surahNum,
-        'ayah': ayahNum,
-        'reciter': reciter,
-        'surahName': surahName,
-      };
-    }
-    return null;
-  }
+  Map<String, dynamic>? getLastAudioPosition() =>
+      readingTracker.getLastAudioPosition();
 
-  int? getLastAudioTimestamp() {
-    return prefs.getInt('last_audio_timestamp_ms');
-  }
+  int? getLastAudioTimestamp() => readingTracker.getLastAudioTimestamp();
 
   Future<void> clearAll() async {
     await prefs.clear();

@@ -10,6 +10,7 @@ import 'translation_service.dart';
 import '../models/offline_surahs.dart';
 import 'qdc_audio_service.dart';
 import 'notification_service.dart';
+import 'audio_cache_service.dart';
 
 class AudioPlayState {
   final int surahNum;
@@ -224,10 +225,18 @@ class AudioManager {
       isLoading: false,
     );
 
+    final ayahCacheKey = 'ayah_${_surahNum}_${ayah.numberInSurah}_${reciter}_$quranScriptType.mp3';
+    final cachedAyahFile = await AudioCacheService.instance.getCachedAudio(ayahCacheKey);
+
     try {
       await _player.stop();
       await _player.setVolume(1.0);
-      await _player.play(UrlSource(url));
+      if (cachedAyahFile != null) {
+        await _player.play(DeviceFileSource(cachedAyahFile.path));
+      } else {
+        await _player.play(UrlSource(url));
+        unawaited(AudioCacheService.instance.cacheStreamUrl(url, ayahCacheKey));
+      }
     } catch (_) {
       _isPerAyahSequenceMode = false;
       stop();
@@ -323,6 +332,9 @@ class AudioManager {
     final localPath = '${dir.path}/quran_audio/$reciter/$fileName';
     final isOffline = await File(localPath).exists();
 
+    final streamCacheKey = 'surah_${surahNum}_${reciter}_${isTimestampSyncMode ? "qdc" : "std"}.mp3';
+    final cachedStreamFile = await AudioCacheService.instance.getCachedAudio(streamCacheKey);
+
     playState.value = AudioPlayState(
       surahNum: surahNum,
       ayahNum: isTimestampSyncMode ? initialAyahNum : 0,
@@ -339,8 +351,11 @@ class AudioManager {
       await _player.setVolume(1.0);
       if (isOffline) {
         await _player.play(DeviceFileSource(localPath));
+      } else if (cachedStreamFile != null) {
+        await _player.play(DeviceFileSource(cachedStreamFile.path));
       } else {
         await _player.play(UrlSource(url));
+        unawaited(AudioCacheService.instance.cacheStreamUrl(url, streamCacheKey));
       }
 
       if (isTimestampSyncMode &&
@@ -420,10 +435,16 @@ class AudioManager {
         final dir = await getApplicationDocumentsDirectory();
         final localPath =
             '${dir.path}/quran_audio/$reciter/surah_$_surahNum.mp3';
+        final streamCacheKey = 'surah_${_surahNum}_${reciter}_std.mp3';
+        final cachedStreamFile = await AudioCacheService.instance.getCachedAudio(streamCacheKey);
+
         if (await File(localPath).exists()) {
           await _player.play(DeviceFileSource(localPath));
+        } else if (cachedStreamFile != null) {
+          await _player.play(DeviceFileSource(cachedStreamFile.path));
         } else {
           await _player.play(UrlSource(url));
+          unawaited(AudioCacheService.instance.cacheStreamUrl(url, streamCacheKey));
         }
       }
     }
