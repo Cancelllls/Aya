@@ -6,6 +6,7 @@ import 'api_service.dart';
 import 'database_service.dart';
 import 'storage_service.dart';
 import 'qdc_audio_service.dart';
+import 'translation_cache_service.dart';
 
 enum DownloadStatus { notDownloaded, downloading, downloaded, error }
 
@@ -480,6 +481,82 @@ class QuranDownloadService extends ChangeNotifier {
     }
     _isDownloadingTafsir = false;
     _tafsirDownloadProgress = 0.0;
+    notifyListeners();
+  }
+
+  // --- Translation Download Logic ---
+  bool _isDownloadingTranslation = false;
+  double _translationDownloadProgress = 0.0;
+  String? _downloadingTranslationEdition;
+  bool get isDownloadingTranslation => _isDownloadingTranslation;
+  double get translationDownloadProgress => _translationDownloadProgress;
+  String? get downloadingTranslationEdition => _downloadingTranslationEdition;
+
+  Future<void> downloadAllTranslation(
+    StorageService storage,
+    String translationEdition,
+  ) async {
+    if (translationEdition == 'en.sahih') {
+      _isDownloadingTranslation = false;
+      _translationDownloadProgress = 1.0;
+      notifyListeners();
+      return;
+    }
+    _isDownloadingTranslation = true;
+    _downloadingTranslationEdition = translationEdition;
+    _translationDownloadProgress = 0.0;
+    notifyListeners();
+
+    try {
+      await TranslationCacheService.instance.downloadFromCdn(
+        translationEdition,
+        onProgress: (p) {
+          if (!_isDownloadingTranslation) return;
+          _translationDownloadProgress = p;
+          notifyListeners();
+        },
+      );
+    } catch (_) {}
+
+    _isDownloadingTranslation = false;
+    _downloadingTranslationEdition = null;
+    _translationDownloadProgress = 1.0;
+    notifyListeners();
+  }
+
+  void cancelTranslationDownload() {
+    _isDownloadingTranslation = false;
+    _downloadingTranslationEdition = null;
+    notifyListeners();
+  }
+
+  Future<int> getTranslationCountForEdition(String translationEdition) async {
+    if (translationEdition == 'en.sahih') {
+      return 6236;
+    }
+    try {
+      final db = await DatabaseService.getInstance();
+      final downloaded =
+          await db.isTranslationEditionDownloaded(translationEdition);
+      return downloaded ? 6236 : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<void> deleteTranslation(
+    StorageService storage,
+    String translationEdition,
+  ) async {
+    if (translationEdition != 'en.sahih') {
+      try {
+        final db = await DatabaseService.getInstance();
+        await db.deleteTranslationEdition(translationEdition);
+      } catch (_) {}
+    }
+    _isDownloadingTranslation = false;
+    _translationDownloadProgress = 0.0;
+    _downloadingTranslationEdition = null;
     notifyListeners();
   }
 }

@@ -11,6 +11,7 @@ import '../../services/audio_manager.dart';
 import '../../services/database_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
+import '../../services/translation_cache_service.dart';
 import '../../utils/text_helpers.dart';
 import '../../widgets/share_ayah_dialog.dart';
 
@@ -705,6 +706,17 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
     final textArabic = (ayah['text_arabic'] as String? ?? '').trim();
     final textEnglish = (ayah['text_english'] as String? ?? '').trim();
     final isBookmarked = _bookmarkedAyahs.contains('$surahNum:$ayahNum');
+    final selectedTrans = widget.storage.getString(
+      'default_translation',
+      defaultValue: 'en.sahih',
+    );
+    String activeTranslation =
+        TranslationCacheService.instance.getFromMemory(
+          selectedTrans,
+          surahNum,
+          ayahNum,
+        ) ??
+        textEnglish;
 
     showModalBottomSheet(
       context: context,
@@ -714,12 +726,30 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            if (selectedTrans != 'en.sahih' &&
+                activeTranslation == textEnglish) {
+              TranslationCacheService.instance
+                  .getAyahTranslation(
+                    surahNum,
+                    ayahNum,
+                    editionId: selectedTrans,
+                  )
+                  .then((val) {
+                    if (val != null && val.isNotEmpty && context.mounted) {
+                      setModalState(() {
+                        activeTranslation = val;
+                      });
+                    }
+                  });
+            }
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                 // Drag handle
                 Container(
                   width: 40,
@@ -767,10 +797,10 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                         textAlign: TextAlign.center,
                         textDirection: TextDirection.rtl,
                       ),
-                      if (textEnglish.isNotEmpty) ...[
+                      if (activeTranslation.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
-                          textEnglish,
+                          activeTranslation,
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.4,
@@ -837,7 +867,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                     final ref = '$surahName $surahNum:$ayahNum';
                     SharePlus.instance.share(
                       ShareParams(
-                        text: '$textArabic\n\n$textEnglish\n\n— $ref • Aya App',
+                        text: '$textArabic\n\n$activeTranslation\n\n— $ref • Aya App',
                       ),
                     );
                   },
@@ -851,7 +881,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                       number: ayah['global_number'] as int? ?? 1,
                       numberInSurah: ayahNum,
                       text: textArabic,
-                      translation: textEnglish,
+                      translation: activeTranslation,
                       juz: ayah['juz'] as int? ?? 1,
                       hizb: ayah['hizb'] as int? ?? 1,
                       tafseer: (ayah['tafsir'] as String?) ?? '',
@@ -872,6 +902,8 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
         );
       },
     );
+  },
+);
   }
 
   void _showTafseerDialog(Map<String, dynamic> ayah, String surahName) {

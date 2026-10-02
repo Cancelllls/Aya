@@ -127,12 +127,17 @@ extension SurahReaderData on _SurahReaderScreenState {
         'default_tafsir',
         defaultValue: 'ar.muyassar',
       );
+      final translationEdition = widget.storage.getString(
+        'default_translation',
+        defaultValue: 'en.sahih',
+      );
 
       List<Ayah> list;
       if (_quranScriptType == 'hafs') {
         list = await ApiService.fetchSurahDetails(
           _currentSurah.number,
           tafsirEdition: tafsirEdition,
+          translationEdition: translationEdition,
         );
       } else {
         list = await LocalQuranService.getSurahAyahs(
@@ -142,6 +147,7 @@ extension SurahReaderData on _SurahReaderScreenState {
         final dbList = await ApiService.fetchSurahDetails(
           _currentSurah.number,
           tafsirEdition: tafsirEdition,
+          translationEdition: translationEdition,
         );
         for (int i = 0; i < list.length; i++) {
           if (i < dbList.length) {

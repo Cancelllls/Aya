@@ -165,23 +165,38 @@ class ApiService {
   static Future<List<Ayah>> fetchSurahDetails(
     int surahNumber, {
     String tafsirEdition = 'ar.muyassar',
+    String? translationEdition,
   }) async {
     final db = await DatabaseService.getInstance();
     // Exclude tafsir from initial load — it's the single largest column.
     // Tafsir is lazy-loaded when the user switches to tafsir mode.
     final ayahsRaw = await db.getAyahsForSurah(surahNumber);
 
+    Map<int, String>? extraTranslations;
+    if (translationEdition != null && translationEdition != 'en.sahih') {
+      extraTranslations = await db.getExtraTranslationsForSurah(
+        surahNumber,
+        translationEdition,
+      );
+    }
+
     final list = <Ayah>[];
     for (var row in ayahsRaw) {
+      final ayahNum = row['ayah_number'] as int? ?? 0;
+      final transText = (extraTranslations != null &&
+              extraTranslations.containsKey(ayahNum) &&
+              extraTranslations[ayahNum]!.isNotEmpty)
+          ? extraTranslations[ayahNum]!
+          : (row['text_english'] as String? ?? '');
       final ayah = Ayah(
         number: row['global_number'] as int? ?? 0,
-        numberInSurah: row['ayah_number'] as int? ?? 0,
+        numberInSurah: ayahNum,
         text: Ayah.cleanBasmalah(
           row['text_arabic'] as String? ?? '',
-          row['ayah_number'] as int? ?? 0,
+          ayahNum,
           row['global_number'] as int? ?? 0,
         ),
-        translation: row['text_english'] as String? ?? '',
+        translation: transText,
         juz: row['juz'] as int? ?? 0,
         hizb: row['hizb'] as int? ?? 0,
         tafseer: '',
@@ -190,6 +205,41 @@ class ApiService {
     }
 
     return list;
+  }
+
+  /// Fetch translation text for a surah and update [ayahs] list in-place.
+  static Future<void> fetchTranslationForSurah(
+    int surahNumber,
+    List<Ayah> ayahs, {
+    required String translationEdition,
+  }) async {
+    final db = await DatabaseService.getInstance();
+    if (translationEdition == 'en.sahih') {
+      final rows = await db.getAyahsForSurah(surahNumber);
+      final lookup = <int, String>{};
+      for (final r in rows) {
+        lookup[r['ayah_number'] as int] = (r['text_english'] as String?) ?? '';
+      }
+      for (final a in ayahs) {
+        if (lookup.containsKey(a.numberInSurah)) {
+          a.translation = lookup[a.numberInSurah]!;
+        }
+      }
+      return;
+    }
+
+    final map = await db.getExtraTranslationsForSurah(
+      surahNumber,
+      translationEdition,
+    );
+    if (map.isNotEmpty) {
+      for (final a in ayahs) {
+        if (map.containsKey(a.numberInSurah) &&
+            map[a.numberInSurah]!.isNotEmpty) {
+          a.translation = map[a.numberInSurah]!;
+        }
+      }
+    }
   }
 
   /// Clean HTML tags and common entities from Tafsir text.

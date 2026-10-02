@@ -73,6 +73,106 @@ const List<TafsirEdition> availableTafsirs = [
   ),
 ];
 
+class TranslationEdition {
+  final String identifier;
+  final String name;
+  final String nameAr;
+  final String translator;
+  final String translatorAr;
+  final String language;
+  final bool isBundled;
+  final String cdnFile;
+
+  const TranslationEdition(
+    this.identifier,
+    this.name,
+    this.nameAr,
+    this.translator,
+    this.translatorAr, {
+    required this.language,
+    this.isBundled = false,
+    required this.cdnFile,
+  });
+
+  bool get isRtl => language == 'ur' || language == 'ar';
+}
+
+const List<TranslationEdition> availableTranslations = [
+  TranslationEdition(
+    'en.sahih',
+    'Saheeh International (English)',
+    'صحيح انترناشونال (إنجليزي)',
+    'Saheeh International',
+    'صحيح انترناشونال',
+    language: 'en',
+    isBundled: true,
+    cdnFile: 'en.sahih.json.gz',
+  ),
+  TranslationEdition(
+    'en.khattab',
+    'The Clear Quran (Dr. Mustafa Khattab)',
+    'القرآن الواضح (د. مصطفى خطاب)',
+    'Dr. Mustafa Khattab',
+    'د. مصطفى خطاب',
+    language: 'en',
+    cdnFile: 'en.khattab.json.gz',
+  ),
+  TranslationEdition(
+    'id.kemenag',
+    'Kemenag (Indonesian)',
+    'المصحف الإندونيسي (وزارة الشؤون الدينية)',
+    'Indonesian Ministry of Religious Affairs',
+    'وزارة الشؤون الدينية الإندونيسية',
+    language: 'id',
+    cdnFile: 'id.kemenag.json.gz',
+  ),
+  TranslationEdition(
+    'ur.jalandhry',
+    'Fateh Muhammad Jalandhry (Urdu)',
+    'فاتح محمد جالندھری (أردو)',
+    'Fateh Muhammad Jalandhry',
+    'فاتح محمد جالندھری',
+    language: 'ur',
+    cdnFile: 'ur.jalandhry.json.gz',
+  ),
+  TranslationEdition(
+    'fr.hamidullah',
+    'Muhammad Hamidullah (French)',
+    'محمد حميد الله (فرنسي)',
+    'Muhammad Hamidullah',
+    'محمد حميد الله',
+    language: 'fr',
+    cdnFile: 'fr.hamidullah.json.gz',
+  ),
+  TranslationEdition(
+    'tr.diyanet',
+    'Diyanet İşleri (Turkish)',
+    'رئاسة الشؤون الدينية (تركي)',
+    'Diyanet İşleri Başkanlığı',
+    'رئاسة الشؤون الدينية التركية',
+    language: 'tr',
+    cdnFile: 'tr.diyanet.json.gz',
+  ),
+  TranslationEdition(
+    'ru.kuliev',
+    'Elmir Kuliev (Russian)',
+    'إلمير كولييف (روسي)',
+    'Elmir Kuliev',
+    'إلمير كولييف',
+    language: 'ru',
+    cdnFile: 'ru.kuliev.json.gz',
+  ),
+  TranslationEdition(
+    'es.cortes',
+    'Julio Cortes (Spanish)',
+    'خوليو كورتيس (إسباني)',
+    'Julio Cortes',
+    'خوليو كورتيس',
+    language: 'es',
+    cdnFile: 'es.cortes.json.gz',
+  ),
+];
+
 class ReciterInfo {
   final String id;
   final String nameAr;

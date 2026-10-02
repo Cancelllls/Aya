@@ -12,7 +12,7 @@ class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
   static Future<void>? _seeding;
-  static const int _version = 11;
+  static const int _version = 12;
   // Keep in sync with android/app/build.gradle.kts applicationId
   static const String _packageName = 'com.quran.aya';
 
@@ -217,6 +217,20 @@ class DatabaseService {
         PRIMARY KEY(edition_id, surah_number, ayah_number)
       )
     ''');
+
+    // Offline Extra Translations table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS extra_translations (
+        edition_id TEXT NOT NULL,
+        surah_number INTEGER NOT NULL,
+        ayah_number INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        PRIMARY KEY(edition_id, surah_number, ayah_number)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_extra_trans_lookup ON extra_translations(edition_id, surah_number)',
+    );
 
     // Create indexes for fast lookups
     await db.execute(
@@ -493,6 +507,23 @@ class DatabaseService {
         await db.execute(
           'INSERT INTO ayahs_fts(rowid, text_arabic_clean, text_english) '
           'SELECT id, text_arabic_clean, text_english FROM ayahs',
+        );
+      } catch (_) {}
+    }
+
+    if (oldVersion < 12) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS extra_translations (
+            edition_id TEXT NOT NULL,
+            surah_number INTEGER NOT NULL,
+            ayah_number INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            PRIMARY KEY(edition_id, surah_number, ayah_number)
+          )
+        ''');
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_extra_trans_lookup ON extra_translations(edition_id, surah_number)',
         );
       } catch (_) {}
     }
@@ -1025,6 +1056,112 @@ class DatabaseService {
     final db = _database!;
     await db.delete(
       'extra_tafsirs',
+      where: 'edition_id = ?',
+      whereArgs: [editionId],
+    );
+  }
+
+  // ─── Extra Translations Methods ───
+
+  Future<void> saveExtraTranslationsBatch(
+    String editionId,
+    List<Map<String, dynamic>> items,
+  ) async {
+    final db = _database!;
+    final batch = db.batch();
+    for (final item in items) {
+      batch.insert(
+        'extra_translations',
+        item,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<Map<int, String>> getExtraTranslationsForSurah(
+    int surahNumber,
+    String editionId,
+  ) async {
+    if (editionId == 'en.sahih') {
+      final rows = await getAyahsForSurah(surahNumber);
+      return {
+        for (var r in rows)
+          r['ayah_number'] as int: (r['text_english'] as String?) ?? '',
+      };
+    }
+    final db = _database!;
+    final rows = await db.query(
+      'extra_translations',
+      columns: ['ayah_number', 'text'],
+      where: 'edition_id = ? AND surah_number = ?',
+      whereArgs: [editionId, surahNumber],
+    );
+    final map = <int, String>{};
+    for (final r in rows) {
+      map[r['ayah_number'] as int] = (r['text'] as String?) ?? '';
+    }
+    return map;
+  }
+
+  Future<String?> getExtraTranslation(
+    String editionId,
+    int surahNumber,
+    int ayahNumber,
+  ) async {
+    if (editionId == 'en.sahih') {
+      final db = _database!;
+      final rows = await db.query(
+        'ayahs',
+        columns: ['text_english'],
+        where: 'surah_number = ? AND ayah_number = ?',
+        whereArgs: [surahNumber, ayahNumber],
+        limit: 1,
+      );
+      if (rows.isEmpty) return null;
+      return rows.first['text_english'] as String?;
+    }
+    final db = _database!;
+    final rows = await db.query(
+      'extra_translations',
+      columns: ['text'],
+      where: 'edition_id = ? AND surah_number = ? AND ayah_number = ?',
+      whereArgs: [editionId, surahNumber, ayahNumber],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['text'] as String?;
+  }
+
+  Future<bool> isTranslationEditionDownloaded(String editionId) async {
+    if (editionId == 'en.sahih') return true;
+    final db = _database!;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM extra_translations WHERE edition_id = ?',
+        [editionId],
+      ),
+    );
+    return (count ?? 0) >= 5000;
+  }
+
+  Future<int> getTranslationCountForEdition(String editionId) async {
+    if (editionId == 'en.sahih') return 6236;
+    final db = _database!;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM extra_translations WHERE edition_id = ?',
+        [editionId],
+      ),
+    );
+    return count ?? 0;
+  }
+
+  Future<void> deleteTranslationEdition(String editionId) async {
+    if (editionId == 'en.sahih') return;
+    final db = _database!;
+    await db.delete(
+      'extra_translations',
       where: 'edition_id = ?',
       whereArgs: [editionId],
     );

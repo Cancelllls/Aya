@@ -449,6 +449,10 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   void _showReadingSettings(BuildContext context, ThemeData theme) {
     // Read fresh from storage every time the popup opens
     String storedReciter = _getReciterFor(_quranScriptType);
+    String storedTranslation = widget.storage.getString(
+      'default_translation',
+      defaultValue: 'en.sahih',
+    );
     bool loadingReciters = false;
     List<dynamic> dynamicReciters = List.from(_dynamicReciters);
 
@@ -571,6 +575,45 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                               .map((r) => DropdownMenuItem<String>(value: (r['moshaf'][0]['server'] as String), child: Text(r['name'] as String, overflow: TextOverflow.ellipsis))).toList(),
                             onChanged: (v) { if (v != null) { storedReciter = 'mp3quran_server_$v'; _saveReciter('mp3quran_server_$v'); setModalState(() {}); } },
                           )),
+                  ]),
+                  const SizedBox(height: 16),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text(
+                      TranslationService.isArabic ? 'ترجمة القرآن' : 'Translation',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 170,
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: availableTranslations.any((t) => t.identifier == storedTranslation)
+                            ? storedTranslation
+                            : 'en.sahih',
+                        dropdownColor: theme.cardColor,
+                        underline: const SizedBox(),
+                        icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFE5C158)),
+                        items: availableTranslations.map((t) {
+                          return DropdownMenuItem(
+                            value: t.identifier,
+                            child: Text(
+                              TranslationService.isArabic ? t.nameAr : t.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (v) async {
+                          if (v != null) {
+                            storedTranslation = v;
+                            await widget.storage.setString('default_translation', v);
+                            setModalState(() {});
+                            if (mounted) setState(() {});
+                          }
+                        },
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 20),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

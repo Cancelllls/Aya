@@ -176,6 +176,35 @@ extension SettingsAppearanceSection on _SettingsScreenState {
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
 
+                // Quran Translation
+                ListTile(
+                  leading: Icon(Icons.translate_outlined, color: primary),
+                  title: Text(isAr ? 'ترجمة معاني القرآن' : 'Quran Translation'),
+                  subtitle: Text(isAr ? 'اختر الترجمة المعروضة مع الآيات' : 'Select active translation edition'),
+                  trailing: SettingsValueChip<String>(
+                    value: _translationEdition,
+                    label: isAr ? 'ترجمة القرآن' : 'Quran Translation',
+                    items: availableTranslations.map((t) {
+                      return DropdownMenuItem(
+                        value: t.identifier,
+                        child: Text(
+                          isAr ? t.nameAr : t.name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        _changeTranslationEdition(val);
+                      }
+                    },
+                  ),
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+
                 // First Day of Week
                 ListTile(
                   leading: Icon(Icons.today_outlined, color: primary),
