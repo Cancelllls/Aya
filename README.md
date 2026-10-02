@@ -14,29 +14,15 @@
   <a href="https://f-droid.org/en/packages/com.quran.aya/">
     <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="60">
   </a>
-</p>
-
-<p align="center">
-  <a href="https://apps.obtainium.imranr.dev/?r=https://github.com/Cancelllls/Aya">
-    <img src="https://img.shields.io/badge/Obtainium-Add_to_App-2478CC?style=for-the-badge&logo=android&logoColor=white" height="34" alt="Add to Obtainium">
+  &nbsp;&nbsp;
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.quran.aya%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FCancelllls%2FAya%22%2C%22author%22%3A%22Cancelllls%22%2C%22name%22%3A%22Aya%22%7D">
+    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/Cancelllls/Aya/releases/latest">
-    <img src="https://img.shields.io/badge/GitHub-Direct_APK-2ea44f?style=for-the-badge&logo=github&logoColor=white" height="34" alt="Download APK">
+    <img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">
   </a>
 </p>
-
----
-
-## 📥 Download & Installation
-
-| Source | Type | Updates | Description |
-| :--- | :--- | :--- | :--- |
-| **[F-Droid](https://f-droid.org/en/packages/com.quran.aya/)** | Official FOSS Store | Scheduled (~1–3 days) | Official F-Droid repository build, signed with F-Droid's key. Verified 100% open-source with zero tracking. |
-| **[Obtainium](https://apps.obtainium.imranr.dev/?r=https://github.com/Cancelllls/Aya)** | Direct / In-App | **Instant** | Tracks GitHub Releases directly and delivers automatic updates in the background the moment a tag is published. |
-| **[GitHub Releases](https://github.com/Cancelllls/Aya/releases/latest)** | Manual APK | Direct Download | Standalone signed APKs (`arm64-v8a` for modern devices, `x86_64` for emulators). |
-
-> **Tip for Instant Updates:** If you prefer automatic updates without waiting for F-Droid's scheduled build queue, install **[Obtainium](https://github.com/ImranR98/Obtainium)** on your device and tap **[Add to Obtainium](https://apps.obtainium.imranr.dev/?r=https://github.com/Cancelllls/Aya)**.
 
 ---
 
