@@ -1,6 +1,25 @@
 {
   "versions": [
     {
+      "version": "1.3.4",
+      "date": "2026-10-02",
+      "title": "Madinah Mushaf, Dynamic Scaling & Navigation Improvements",
+      "changes": {
+        "en": [
+          "15-Line Madinah Mushaf — Authentic 15-line Madinah Mushaf layout mode with dynamic Quran text scaling, pinch-to-zoom gestures, and quick Tafsir action sheets",
+          "Compact Hadith Navigation — Floating pagination pill with direct jump-to-page dialog replacing oversized bottom bar",
+          "Offline English Tafsir — Resolved offline English Tafsir caching and offline storage initialization",
+          "Hadith Reader View — Fixed cutoff text, added navbar clearance, and improved autoscroll pause/resume machine"
+        ],
+        "ar": [
+          "مصحف المدينة ١٥ سطراً — نمط عرض أصيل لمصحف المدينة النبوية مع تحجيم ديناميكي وتكبير بإصبعين وقائمة تفسير سريعة",
+          "شريط تنقل مدمج للأحاديث — كبسولة عائمة للتنقل بين الصفحات مع نافذة الانتقال المباشر",
+          "تخزين محلي للتفسير الإنجليزي — إصلاح التخزين المحلي والوصول الفوري للتفاسير الإنجليزية بدون إنترنت",
+          "تحسين قارئ الحديث — إصلاح النصوص المقطوعة، إضافة مسافة أمان للشريط السفلي، وتحسين إيقاف واستئناف التمرير التلقائي"
+        ]
+      }
+    },
+    {
       "version": "1.3.3",
       "date": "2026-09-29",
       "title": "Redesigned Hijri Calendar & Prayer Statistics Overhaul",

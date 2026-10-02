@@ -1,0 +1,8 @@
+• 10 offline Tafsir books with instant reader and offline search
+• Interactive Tajweed rules engine with colored Arabic ligatures
+• Material 3 and dynamic color palette support
+• Share ayah, hadith, and azkar as beautifully styled images
+• Hifz memorization mode with frosted glass ayah blur
+• 8 customizable home screen widgets with Samsung adaptivity
+• Continuous Quran reading mode with smooth verse peeking
+• 100% offline-first architecture with zero tracking

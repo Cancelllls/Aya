@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.4] - 2026-10-02
+
+### Added
+- **15-Line Madinah Mushaf**: Added authentic 15-line Madinah Mushaf layout mode with dynamic Quran text scaling, pinch-to-zoom gestures, and quick Tafsir action sheets.
+- **FTS5 Verse Search**: High-performance SQLite FTS5 Quranic verse search with query term highlighting.
+- **Compact Hadith Navigation**: Floating pagination pill with direct jump-to-page dialog replacing oversized bottom bar.
+
+### Fixed
+- **Offline English Tafsir**: Resolved offline English Tafsir caching and offline storage initialization.
+- **Hadith Reader View**: Fixed cutoff text and autoscroll pause/resume state machine.
+- **Full-Text Visibility**: Added floating navigation bar bottom inset padding across all Hadith collections.
+
 ## [1.3.3] - 2026-09-29
 
 ### Changed

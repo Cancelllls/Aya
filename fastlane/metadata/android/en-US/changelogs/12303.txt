@@ -1,0 +1,5 @@
+• Redesigned Hijri Calendar: modern 7x6 grid showing dual Gregorian and Hijri dates
+• Spanning lunar month titles and streamlined Islamic calendar view
+• Upcoming Holy Days timeline with countdown pill badges and bilingual event titles
+• Prayer Tracker statistics overhaul: time-aware checks eliminating false missed prayers
+• Removed unfair pre-installation penalties from prayer tracking stats
