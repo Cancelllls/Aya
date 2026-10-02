@@ -1,6 +1,25 @@
 {
   "versions": [
     {
+      "version": "1.3.5",
+      "date": "2026-10-02",
+      "title": "Multi-Edition Quran Translations & Performance Enhancements",
+      "changes": {
+        "en": [
+          "Multi-Edition Translations — CDN-backed Quran translations for 8 global editions with instant offline caching",
+          "Cleaned Translation Rendering — Removed raw HTML tags and entities across reader and share dialogs",
+          "Bundled Offline Tafsir — 8 full offline Tafsir collections with fast Arabic/English language toggle",
+          "Hadith Keyboard Avoidance — Floating pagination capsule automatically hides when search keyboard opens"
+        ],
+        "ar": [
+          "ترجمات متعددة — دعم ٨ ترجمات عالمية لمعاني القرآن مع تخزين محلي تلقائي",
+          "تنقية نصوص الترجمة — إزالة وسوم HTML والرموز البرمجية من شاشات القراءة والمشاركة",
+          "تفاسير كاملة بدون إنترنت — ٨ تفاسير مدمجة محلياً مع تبديل سريع بين العربية والإنجليزية",
+          "تحسين قارئ الحديث — إخفاء كبسولة التنقل العائمة تلقائياً عند فتح لوحة المفاتيح أثناء البحث"
+        ]
+      }
+    },
+    {
       "version": "1.3.4",
       "date": "2026-10-02",
       "title": "Madinah Mushaf, Dynamic Scaling & Navigation Improvements",

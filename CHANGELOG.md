@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.5] - 2026-10-02
+
+### Added
+- **Multi-Edition Translations**: CDN-backed Quran translations for 8 global editions with instant offline caching and memory persistence.
+- **Bundled Offline Tafsirs**: 8 complete Tafsir editions bundled offline with binary language filtering (Arabic / English) and quick preview sheets.
+
+### Fixed
+- **Clean Translation Text**: Stripped raw HTML tags (`<i>`, `<b>`, `<footnote>`, `<sup>`) and unescaped HTML entities across reader displays and ayah share dialogs.
+- **Hadith Keyboard Avoidance**: Floating pagination capsule automatically hides when virtual keyboard opens to avoid obscuring search results.
+- **Reader Performance**: Optimized reading mode selectors, database lookups, and memory footprint.
+
 ## [1.3.4] - 2026-10-02
 
 ### Added
