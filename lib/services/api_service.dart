@@ -14,6 +14,7 @@ import '../models/prayer_models.dart';
 import 'database_service.dart';
 import 'translation_service.dart';
 import 'translation_cache_service.dart';
+import '../utils/text_helpers.dart';
 
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
@@ -207,7 +208,7 @@ class ApiService {
           ayahNum,
           row['global_number'] as int? ?? 0,
         ),
-        translation: transText,
+        translation: cleanTranslationText(transText),
         juz: row['juz'] as int? ?? 0,
         hizb: row['hizb'] as int? ?? 0,
         tafseer: '',
@@ -229,7 +230,7 @@ class ApiService {
       final rows = await db.getAyahsForSurah(surahNumber);
       final lookup = <int, String>{};
       for (final r in rows) {
-        lookup[r['ayah_number'] as int] = (r['text_english'] as String?) ?? '';
+        lookup[r['ayah_number'] as int] = cleanTranslationText((r['text_english'] as String?) ?? '');
       }
       for (final a in ayahs) {
         if (lookup.containsKey(a.numberInSurah)) {
@@ -247,7 +248,7 @@ class ApiService {
       for (final a in ayahs) {
         if (map.containsKey(a.numberInSurah) &&
             map[a.numberInSurah]!.isNotEmpty) {
-          a.translation = map[a.numberInSurah]!;
+          a.translation = cleanTranslationText(map[a.numberInSurah]!);
         }
       }
     }

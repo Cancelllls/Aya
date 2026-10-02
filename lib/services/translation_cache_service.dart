@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../models/quran_models.dart';
+import '../utils/text_helpers.dart';
 import 'database_service.dart';
 
 class TranslationCacheService {
@@ -98,7 +99,7 @@ class TranslationCacheService {
         final s = int.tryParse(parts[0]);
         final a = int.tryParse(parts[1]);
         if (s != null && a != null) {
-          final text = (entry.value as String?) ?? '';
+          final text = cleanTranslationText((entry.value as String?) ?? '');
           items.add({
             'edition_id': editionId,
             'surah_number': s,
@@ -128,13 +129,14 @@ class TranslationCacheService {
   }) async {
     final edition = editionId ?? 'en.sahih';
     final cached = getFromMemory(edition, surahNumber, ayahNumber);
-    if (cached != null) return cached;
+    if (cached != null) return cleanTranslationText(cached);
 
     final db = await DatabaseService.getInstance();
     final text = await db.getExtraTranslation(edition, surahNumber, ayahNumber);
     if (text != null) {
-      cacheAyah(edition, surahNumber, ayahNumber, text);
-      return text;
+      final clean = cleanTranslationText(text);
+      cacheAyah(edition, surahNumber, ayahNumber, clean);
+      return clean;
     }
     if (edition != 'en.sahih') {
       try {
@@ -142,8 +144,9 @@ class TranslationCacheService {
         final fresh =
             await db.getExtraTranslation(edition, surahNumber, ayahNumber);
         if (fresh != null) {
-          cacheAyah(edition, surahNumber, ayahNumber, fresh);
-          return fresh;
+          final clean = cleanTranslationText(fresh);
+          cacheAyah(edition, surahNumber, ayahNumber, clean);
+          return clean;
         }
       } catch (_) {}
     }

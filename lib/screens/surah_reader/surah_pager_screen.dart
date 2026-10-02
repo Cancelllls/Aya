@@ -9,7 +9,6 @@ import '../../models/offline_surahs.dart';
 import '../tajweed_guide_screen.dart';
 import 'surah_reader_screen.dart';
 import '../../services/database_service.dart';
-import 'madinah_mushaf_view.dart';
 
 class SurahPagerScreen extends StatefulWidget {
   final Surah initialSurah;
@@ -45,9 +44,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _tajweedNotifier = ValueNotifier(true);
   final ValueNotifier<Set<int>> _bookmarksNotifier = ValueNotifier({});
-  int? _madinahSurahNumber;
-  String? _madinahSurahName;
-  String? _madinahEnglishName;
 
   @override
   void initState() {
@@ -55,6 +51,10 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _currentPage = widget.initialSurah.number - 1;
     _pageController = PageController(initialPage: _currentPage);
     _readingMode = widget.storage.getString('reading_mode', defaultValue: 'continuous');
+    if (_readingMode == 'madinah_page') {
+      _readingMode = 'continuous';
+      widget.storage.setString('reading_mode', 'continuous');
+    }
     _quranScriptType = widget.storage.getString('quran_script_type', defaultValue: 'hafs');
     _translationEdition = widget.storage.getString('default_translation', defaultValue: 'en.sahih');
     _fontSizeMultiplier = widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
@@ -185,14 +185,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     }
     final theme = Theme.of(context);
     final surahData = allOfflineSurahs[_currentPage];
-    final String currentEnglishName =
-        (_readingMode == 'madinah_page' && _madinahEnglishName != null)
-            ? _madinahEnglishName!
-            : surahData.englishName;
-    final String currentArabicName =
-        (_readingMode == 'madinah_page' && _madinahSurahName != null)
-            ? _madinahSurahName!
-            : surahData.name;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -201,11 +193,11 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              currentEnglishName,
+              surahData.englishName,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              currentArabicName,
+              surahData.name,
               style: TextStyle(
                 fontSize: 11,
                 color: theme.appBarTheme.foregroundColor?.withValues(alpha: 0.7),
@@ -256,14 +248,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
             tooltip: TranslationService.isArabic ? "تغيير نمط العرض" : "Change View Mode",
             color: theme.cardColor,
             onSelected: (mode) {
-              setState(() {
-                _readingMode = mode;
-                if (mode != 'madinah_page') {
-                  _madinahSurahNumber = null;
-                  _madinahSurahName = null;
-                  _madinahEnglishName = null;
-                }
-              });
+              setState(() => _readingMode = mode);
               widget.storage.setString('reading_mode', mode);
             },
             itemBuilder: (context) => [
@@ -273,14 +258,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                   Icon(Icons.menu_book, color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
                   const SizedBox(width: 8),
                   Text(TranslationService.isArabic ? "المصحف المتصل" : "Continuous", style: TextStyle(color: _readingMode == 'continuous' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'continuous' ? FontWeight.bold : null)),
-                ]),
-              ),
-              PopupMenuItem(
-                value: 'madinah_page',
-                child: Row(children: [
-                  Icon(Icons.auto_stories, color: _readingMode == 'madinah_page' ? const Color(0xFFE5C158) : Theme.of(context).disabledColor),
-                  const SizedBox(width: 8),
-                  Text(TranslationService.isArabic ? "صفحات المدينة (١٥ سطر)" : "15-Line Madinah Mushaf", style: TextStyle(color: _readingMode == 'madinah_page' ? const Color(0xFFE5C158) : null, fontWeight: _readingMode == 'madinah_page' ? FontWeight.bold : null)),
                 ]),
               ),
 
@@ -351,38 +328,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
         },
         child: Stack(
           children: [
-            _readingMode == 'madinah_page'
-                ? FutureBuilder<int>(
-                    future: DatabaseService.getInstance().then(
-                      (db) => db.getPageForAyah(
-                        widget.initialSurah.number,
-                        widget.initialAyahNumber ?? 1,
-                      ),
-                    ),
-                    builder: (context, snapshot) {
-                      final initialPage = snapshot.data ?? 1;
-                      return MadinahMushafView(
-                        key: ValueKey('mushaf_view_${_reloadKey}_$initialPage'),
-                        initialPage: initialPage,
-                        storage: widget.storage,
-                        fontSizeMultiplier: _fontSizeMultiplier,
-                        onFontSizeMultiplierChanged: (newScale) {
-                          setState(() => _fontSizeMultiplier = newScale);
-                        },
-                        onSurahChanged: (surahNum, surahName, englishName) {
-                          if (mounted && (_madinahSurahNumber != surahNum)) {
-                            setState(() {
-                              _madinahSurahNumber = surahNum;
-                              _madinahSurahName = surahName;
-                              _madinahEnglishName = englishName;
-                              _currentPage = (surahNum - 1).clamp(0, 113);
-                            });
-                          }
-                        },
-                      );
-                    },
-                  )
-                : PageView.builder(
+            PageView.builder(
                     controller: _pageController,
                     physics: _isPinching
                         ? const NeverScrollableScrollPhysics()

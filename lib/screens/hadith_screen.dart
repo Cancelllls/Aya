@@ -734,6 +734,7 @@ class _HadithScreenState extends State<HadithScreen> {
       defaultValue: 'floating',
     );
     final bool isFloatingNav = bottomNavbarStyle == 'floating';
+    final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Stack(
       children: [
@@ -792,9 +793,11 @@ class _HadithScreenState extends State<HadithScreen> {
                         12,
                         12,
                         // Ensure last card scrolls completely clear of floating pill and bottom navbar
-                        isFloatingNav
-                            ? (totalPages > 1 ? 128.0 : 85.0)
-                            : (totalPages > 1 ? 64.0 : 16.0),
+                        isKeyboardOpen
+                            ? 16.0
+                            : (isFloatingNav
+                                ? (totalPages > 1 ? 128.0 : 85.0)
+                                : (totalPages > 1 ? 64.0 : 16.0)),
                       ),
                       itemCount: pageHadiths.length,
                       itemBuilder: (context, index) {
@@ -1098,7 +1101,8 @@ class _HadithScreenState extends State<HadithScreen> {
         ),
 
         // Sleek, ultra-compact floating pagination capsule
-        if (totalPages > 1 && !_isLoading && _error.isEmpty)
+        // Automatically hidden when virtual keyboard opens to prevent shooting up
+        if (totalPages > 1 && !_isLoading && _error.isEmpty && !isKeyboardOpen)
           Positioned(
             left: 0,
             right: 0,

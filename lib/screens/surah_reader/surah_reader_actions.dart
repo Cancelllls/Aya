@@ -384,7 +384,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
                       '${_currentSurah.englishName} ${_currentSurah.number}:${ayah.numberInSurah}';
                   SharePlus.instance.share(
                     ShareParams(
-                      text: '${ayah.text}\n\n${ayah.translation}\n\n— $ref • Aya App',
+                      text: '${ayah.text}\n\n${cleanTranslationText(ayah.translation)}\n\n— $ref • Aya App',
                     ),
                   );
                 },

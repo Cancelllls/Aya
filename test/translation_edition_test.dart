@@ -5,6 +5,7 @@ import 'package:aya_app/models/quran_models.dart';
 import 'package:aya_app/models/offline_surahs.dart';
 import 'package:aya_app/services/translation_cache_service.dart';
 import 'package:aya_app/services/quran_download_service.dart';
+import 'package:aya_app/utils/text_helpers.dart';
 
 void main() {
   group('TranslationEdition model', () {
@@ -155,6 +156,25 @@ void main() {
         expect(surah.englishName.isNotEmpty, isTrue);
       }
     });
+
+    test('cleanTranslationText removes HTML tags and entities', () {
+      // Clear Quran format check
+      expect(cleanTranslationText('<i>Alif-Lãm-Mĩm.</i>'), 'Alif-Lãm-Mĩm.');
+      expect(
+        cleanTranslationText('<b>Indeed</b>, Allah is with the <i>patient</i>.'),
+        'Indeed, Allah is with the patient.',
+      );
+      expect(
+        cleanTranslationText('Text with &quot;quotes&quot; and &#39;apostrophe&#39; and &amp; ampersand'),
+        'Text with "quotes" and \'apostrophe\' and & ampersand',
+      );
+      expect(
+        cleanTranslationText('<footnote id="1">Note</footnote><sup>1</sup> Guidance for the God-fearing.'),
+        'Guidance for the God-fearing.',
+      );
+      expect(cleanTranslationText(''), '');
+    });
   });
 }
+
 

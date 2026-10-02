@@ -16,6 +16,7 @@ import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/audio_manager.dart';
 import '../../services/tajweed_service.dart';
+import '../../utils/text_helpers.dart';
 import '../../widgets/share_ayah_dialog.dart';
 import '../tajweed_guide_screen.dart';
 

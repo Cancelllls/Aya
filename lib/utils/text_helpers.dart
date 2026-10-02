@@ -95,3 +95,23 @@ List<InlineSpan> parseMarkedSpans(
   }
   return spans;
 }
+
+/// Cleans HTML tags (like <i>, </i>, <b>, </b>, <sup>...</sup>, <footnote>...</footnote>)
+/// and common HTML entities from translation text (such as in The Clear Quran).
+String cleanTranslationText(String text) {
+  if (text.isEmpty) return text;
+  return text
+      .replaceAll(RegExp(r'<footnote\b[^>]*>.*?</footnote>', caseSensitive: false, dotAll: true), '')
+      .replaceAll(RegExp(r'<sup\b[^>]*>.*?</sup>', caseSensitive: false, dotAll: true), '')
+      .replaceAll(RegExp(r'<[^>]*>'), '')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&apos;', "'")
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+

@@ -292,7 +292,7 @@ extension SurahReaderUi on _SurahReaderScreenState {
                       final isRtl = _translationEdition.startsWith('ur.') ||
                           _translationEdition.startsWith('ar.');
                       return Text(
-                        ayah.translation,
+                        cleanTranslationText(ayah.translation),
                         textDirection:
                             isRtl ? TextDirection.rtl : TextDirection.ltr,
                         textAlign: isRtl ? TextAlign.right : TextAlign.left,
