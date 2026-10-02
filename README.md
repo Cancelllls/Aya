@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/Kotlin-Native-purple?style=flat-square&logo=kotlin" alt="Kotlin">
   <img src="https://img.shields.io/badge/Platform-Android%207%E2%80%9316-brightgreen?style=flat-square&logo=android" alt="Android 7–16">
   <img src="https://img.shields.io/badge/Platform-iOS-lightgrey?style=flat-square&logo=apple" alt="iOS">
-  <a href="https://f-droid.org/en/packages/com.quran.aya/"><img src="https://img.shields.io/f-droid/v/com.quran.aya?style=flat-square&logo=f-droid&logoColor=white&color=00B0FF" alt="F-Droid"></a>
+  <img src="https://img.shields.io/f-droid/v/com.quran.aya?style=flat-square&logo=f-droid&logoColor=white&color=00B0FF" alt="F-Droid">
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT">
 </p>
 
@@ -11,17 +11,11 @@
 <p align="center"><strong>Quran · Hadith · Prayer Times · Adhan · Azkar · Qibla · Tracker</strong></p>
 
 <p align="center">
-  <a href="https://f-droid.org/en/packages/com.quran.aya/">
-    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="60">
-  </a>
+  <a href="https://f-droid.org/en/packages/com.quran.aya/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="60"></a>
   &nbsp;&nbsp;
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.quran.aya%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FCancelllls%2FAya%22%2C%22author%22%3A%22Cancelllls%22%2C%22name%22%3A%22Aya%22%7D">
-    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">
-  </a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.quran.aya%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FCancelllls%2FAya%22%2C%22author%22%3A%22Cancelllls%22%2C%22name%22%3A%22Aya%22%7D"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60"></a>
   &nbsp;&nbsp;
-  <a href="https://github.com/Cancelllls/Aya/releases/latest">
-    <img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60">
-  </a>
+  <a href="https://github.com/Cancelllls/Aya/releases/latest"><img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/main/badge_github.png" alt="Get it on GitHub" height="60"></a>
 </p>
 
 ---
