@@ -36,6 +36,7 @@ class SurahReaderScreen extends StatefulWidget {
   final String? readingMode;
   final String? quranScriptType;
   final double? fontSizeMultiplier;
+  final Function(double scale)? onFontSizeMultiplierChanged;
   final VoidCallback? onGoToNext;
   final VoidCallback? onGoToPrev;
   /// External hifz notifier from the pager — when provided, the reader
@@ -55,6 +56,7 @@ class SurahReaderScreen extends StatefulWidget {
     this.readingMode,
     this.quranScriptType,
     this.fontSizeMultiplier,
+    this.onFontSizeMultiplierChanged,
     this.onGoToNext,
     this.onGoToPrev,
     this.hifzNotifier,
@@ -180,6 +182,17 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     _checkBookmarkStatus();
     _loadAllSurahs();
     AudioManager.instance.playState.addListener(_onPlayStateChanged);
+  }
+
+  @override
+  void didUpdateWidget(SurahReaderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.fontSizeMultiplier != null &&
+        widget.fontSizeMultiplier != oldWidget.fontSizeMultiplier) {
+      setState(() {
+        _fontSizeMultiplier = widget.fontSizeMultiplier!;
+      });
+    }
   }
 
   @override
@@ -1143,12 +1156,14 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
             _fontSizeMultiplier = (_baseFontSizeMultiplier * adjustedScale)
                 .clamp(0.5, 3.0);
           });
+          widget.onFontSizeMultiplierChanged?.call(_fontSizeMultiplier);
         },
         onScaleEnd: (details) {
           widget.storage.setDouble(
             'setting_quran_font_size_multiplier',
             _fontSizeMultiplier,
           );
+          widget.onFontSizeMultiplierChanged?.call(_fontSizeMultiplier);
         },
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 350),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +25,7 @@ class MadinahMushafView extends StatefulWidget {
   final StorageService storage;
   final double fontSizeMultiplier;
   final Function(int page)? onPageChanged;
+  final Function(double scale)? onFontSizeMultiplierChanged;
 
   const MadinahMushafView({
     super.key,
@@ -31,6 +33,7 @@ class MadinahMushafView extends StatefulWidget {
     required this.storage,
     this.fontSizeMultiplier = 1.0,
     this.onPageChanged,
+    this.onFontSizeMultiplierChanged,
   });
 
   @override
@@ -43,17 +46,33 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
   final Map<int, List<Map<String, dynamic>>> _pageCache = {};
   Set<String> _bookmarkedAyahs = {};
 
+  late double _scaleMultiplier;
+  bool _isPinching = false;
+  double _basePinchMultiplier = 1.0;
+  bool _showZoomPill = false;
+  Timer? _zoomPillTimer;
+
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialPage.clamp(1, 604);
     _pageController = PageController(initialPage: _currentPage - 1);
+    _scaleMultiplier = widget.fontSizeMultiplier;
     _loadBookmarks();
     AudioManager.instance.playState.addListener(_onAudioPlayStateChanged);
   }
 
   @override
+  void didUpdateWidget(MadinahMushafView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.fontSizeMultiplier != widget.fontSizeMultiplier && !_isPinching) {
+      _scaleMultiplier = widget.fontSizeMultiplier;
+    }
+  }
+
+  @override
   void dispose() {
+    _zoomPillTimer?.cancel();
     AudioManager.instance.playState.removeListener(_onAudioPlayStateChanged);
     _pageController.dispose();
     super.dispose();
@@ -182,15 +201,92 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView.builder(
-      controller: _pageController,
-      itemCount: 604,
-      reverse: true, // Physical Arabic Mushaf pages read Right-to-Left
-      onPageChanged: _onPageSwiped,
-      itemBuilder: (context, index) {
-        final pageNum = index + 1;
-        return _buildSinglePage(pageNum);
+    return GestureDetector(
+      onScaleStart: (details) {
+        if (details.pointerCount >= 2) {
+          _isPinching = true;
+          _basePinchMultiplier = _scaleMultiplier;
+          setState(() {});
+        }
       },
+      onScaleUpdate: (details) {
+        if (_isPinching && details.scale != 1.0) {
+          final double scaleDiff = details.scale - 1.0;
+          final double newScale =
+              (_basePinchMultiplier * (1.0 + scaleDiff * 1.5)).clamp(0.75, 2.2);
+          setState(() {
+            _scaleMultiplier = newScale;
+            _showZoomPill = true;
+          });
+        }
+      },
+      onScaleEnd: (details) {
+        if (_isPinching) {
+          _isPinching = false;
+          widget.storage.setDouble(
+            'setting_quran_font_size_multiplier',
+            _scaleMultiplier,
+          );
+          widget.onFontSizeMultiplierChanged?.call(_scaleMultiplier);
+          setState(() {});
+          _zoomPillTimer?.cancel();
+          _zoomPillTimer = Timer(const Duration(milliseconds: 1000), () {
+            if (mounted) setState(() => _showZoomPill = false);
+          });
+        }
+      },
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: 604,
+            physics: _isPinching
+                ? const NeverScrollableScrollPhysics()
+                : const PageScrollPhysics(),
+            reverse: true, // Physical Arabic Mushaf pages read Right-to-Left
+            onPageChanged: _onPageSwiped,
+            itemBuilder: (context, index) {
+              final pageNum = index + 1;
+              return _buildSinglePage(pageNum);
+            },
+          ),
+          if (_showZoomPill)
+            Positioned(
+              top: 14,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE5C158),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    "${(_scaleMultiplier * 100).toInt()}%",
+                    style: const TextStyle(
+                      color: Color(0xFFE5C158),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -263,6 +359,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                               constraints: BoxConstraints(minHeight: constraints.maxHeight),
                               child: _buildMushafPageBody(
                                 ayahs,
+                                constraints.maxWidth,
                                 constraints.maxHeight,
                                 playState,
                               ),
@@ -404,6 +501,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
 
   Widget _buildMushafPageBody(
     List<Map<String, dynamic>> ayahs,
+    double availableWidth,
     double availableHeight,
     AudioPlayState playState,
   ) {
@@ -432,11 +530,15 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
     }
 
     final double bannerSpace = (bannersCount * 54.0) + (bismillahCount * 28.0);
-    final double availableTextSpace = (availableHeight - bannerSpace).clamp(240.0, 1200.0);
-    final int estimatedLines = (15 - (bannersCount * 3) - (bismillahCount * 1)).clamp(8, 15);
+    final double availableTextSpace = (availableHeight - bannerSpace).clamp(200.0, 1400.0);
+    final int estimatedLines = (15 - (bannersCount * 3) - (bismillahCount * 1)).clamp(6, 15);
     final double targetLineHeightPx = availableTextSpace / estimatedLines;
-    final double baseFontSize = (targetLineHeightPx / 1.82).clamp(14.0, 21.0) * widget.fontSizeMultiplier;
-    final double textLineHeight = (targetLineHeightPx / (baseFontSize / widget.fontSizeMultiplier)).clamp(1.6, 2.0);
+    // Dynamically scale based on width & height with smooth pinch multiplier
+    final double widthFactor = (availableWidth / 360.0).clamp(0.85, 1.35);
+    final double baseFontSize =
+        ((targetLineHeightPx / 1.85) * widthFactor).clamp(13.0, 28.0) * _scaleMultiplier;
+    final double textLineHeight =
+        (targetLineHeightPx / (baseFontSize / _scaleMultiplier)).clamp(1.5, 2.2);
 
     final children = <Widget>[];
 

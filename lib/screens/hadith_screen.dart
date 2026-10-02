@@ -733,12 +733,11 @@ class _HadithScreenState extends State<HadithScreen> {
       'bottom_navbar_style',
       defaultValue: 'floating',
     );
-    final double bottomClearance = bottomNavbarStyle == 'floating' ? 68.0 : 8.0;
+    final bool isFloatingNav = bottomNavbarStyle == 'floating';
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
+    return Stack(
+      children: [
+        Column(
           children: [
             _buildBookSelector(theme),
 
@@ -792,7 +791,10 @@ class _HadithScreenState extends State<HadithScreen> {
                         12,
                         12,
                         12,
-                        totalPages > 1 ? 12 : (12 + bottomClearance),
+                        // Ensure last card scrolls completely clear of floating pill and bottom navbar
+                        isFloatingNav
+                            ? (totalPages > 1 ? 128.0 : 85.0)
+                            : (totalPages > 1 ? 64.0 : 16.0),
                       ),
                       itemCount: pageHadiths.length,
                       itemBuilder: (context, index) {
@@ -1092,65 +1094,156 @@ class _HadithScreenState extends State<HadithScreen> {
                     ),
             ),
 
-            // Pagination Controls
-            if (totalPages > 1 && !_isLoading && _error.isEmpty)
-              Container(
-                padding: EdgeInsets.fromLTRB(16, 4, 16, bottomClearance),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.15))),
-                  color: theme.scaffoldBackgroundColor,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        size: 16,
-                        color: theme.primaryColor,
-                      ),
-                      onPressed: _currentPage > 1
-                          ? () {
-                              setState(() => _currentPage--);
-                              _scrollController.jumpTo(0.0);
-                              if (_activeSearchQuery.isEmpty) {
-                                _loadCurrentPageHadiths();
-                              }
-                            }
-                          : null,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Text(
-                        "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $totalPages",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: theme.primaryColor,
-                      ),
-                      onPressed: _currentPage < totalPages
-                          ? () {
-                              setState(() => _currentPage++);
-                              _scrollController.jumpTo(0.0);
-                              if (_activeSearchQuery.isEmpty) {
-                                _loadCurrentPageHadiths();
-                              }
-                            }
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
+
+        // Sleek, ultra-compact floating pagination capsule
+        if (totalPages > 1 && !_isLoading && _error.isEmpty)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: isFloatingNav ? 76.0 : 12.0,
+            child: Center(
+              child: _buildCompactPaginationPill(theme, totalPages),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCompactPaginationPill(ThemeData theme, int totalPages) {
+    final isAr = TranslationService.isArabic;
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: theme.cardColor.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFE5C158).withValues(alpha: 0.45),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isAr ? Icons.chevron_right : Icons.chevron_left,
+                  size: 18,
+                  color: _currentPage > 1
+                      ? const Color(0xFFE5C158)
+                      : theme.disabledColor.withValues(alpha: 0.35),
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                splashRadius: 16,
+                tooltip: isAr ? 'الصفحة السابقة' : 'Previous Page',
+                onPressed: _currentPage > 1
+                    ? () {
+                        setState(() => _currentPage--);
+                        _scrollController.jumpTo(0.0);
+                        if (_activeSearchQuery.isEmpty) {
+                          _loadCurrentPageHadiths();
+                        }
+                      }
+                    : null,
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _showHadithPageJumpDialog(totalPages),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Text(
+                    "${isAr ? toArabicDigits(_currentPage) : _currentPage} / ${isAr ? toArabicDigits(totalPages) : totalPages}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isAr ? Icons.chevron_left : Icons.chevron_right,
+                  size: 18,
+                  color: _currentPage < totalPages
+                      ? const Color(0xFFE5C158)
+                      : theme.disabledColor.withValues(alpha: 0.35),
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                splashRadius: 16,
+                tooltip: isAr ? 'الصفحة التالية' : 'Next Page',
+                onPressed: _currentPage < totalPages
+                    ? () {
+                        setState(() => _currentPage++);
+                        _scrollController.jumpTo(0.0);
+                        if (_activeSearchQuery.isEmpty) {
+                          _loadCurrentPageHadiths();
+                        }
+                      }
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showHadithPageJumpDialog(int totalPages) {
+    final isAr = TranslationService.isArabic;
+    final controller = TextEditingController(text: _currentPage.toString());
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isAr ? 'الانتقال إلى صفحة' : 'Jump to Page'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: isAr ? 'رقم الصفحة (1 - $totalPages)' : 'Page Number (1 - $totalPages)',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(isAr ? 'إلغاء' : 'Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE5C158)),
+              onPressed: () {
+                final target = int.tryParse(controller.text.trim());
+                if (target != null && target >= 1 && target <= totalPages) {
+                  Navigator.pop(context);
+                  setState(() => _currentPage = target);
+                  _scrollController.jumpTo(0.0);
+                  if (_activeSearchQuery.isEmpty) {
+                    _loadCurrentPageHadiths();
+                  }
+                }
+              },
+              child: Text(isAr ? 'انتقال' : 'Go'),
+            ),
+          ],
+        );
+      },
     );
   }
 

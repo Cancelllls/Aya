@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/quran_models.dart';
 import '../../services/storage_service.dart';
@@ -33,6 +34,10 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   String _readingMode = 'continuous';
   String _quranScriptType = 'hafs';
   double _fontSizeMultiplier = 1.0;
+  bool _isPinching = false;
+  double _basePinchMultiplier = 1.0;
+  bool _showZoomPill = false;
+  Timer? _zoomPillTimer;
   List<dynamic> _dynamicReciters = [];
   // Hifz is a separate notifier — never part of _readingMode, so
   // toggling it never remounts or rebuilds the SurahReaderScreen.
@@ -54,6 +59,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
 
   @override
   void dispose() {
+    _zoomPillTimer?.cancel();
     _pageController.dispose();
     _hifzNotifier.dispose();
     _tajweedNotifier.dispose();
@@ -282,66 +288,160 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
           ),
         ],
       ),
-      body: _readingMode == 'madinah_page'
-          ? FutureBuilder<int>(
-              future: DatabaseService.getInstance().then(
-                (db) => db.getPageForAyah(
-                  widget.initialSurah.number,
-                  widget.initialAyahNumber ?? 1,
+      body: GestureDetector(
+        onScaleStart: (details) {
+          if (details.pointerCount >= 2) {
+            _isPinching = true;
+            _basePinchMultiplier = _fontSizeMultiplier;
+            setState(() {});
+          }
+        },
+        onScaleUpdate: (details) {
+          if (_isPinching && details.scale != 1.0) {
+            final double scaleDiff = details.scale - 1.0;
+            final double newScale =
+                (_basePinchMultiplier * (1.0 + scaleDiff * 1.5)).clamp(0.7, 2.2);
+            setState(() {
+              _fontSizeMultiplier = newScale;
+              _showZoomPill = true;
+            });
+          }
+        },
+        onScaleEnd: (details) {
+          if (_isPinching) {
+            _isPinching = false;
+            widget.storage.setDouble(
+              'setting_quran_font_size_multiplier',
+              _fontSizeMultiplier,
+            );
+            setState(() {});
+            _zoomPillTimer?.cancel();
+            _zoomPillTimer = Timer(const Duration(milliseconds: 1000), () {
+              if (mounted) setState(() => _showZoomPill = false);
+            });
+          }
+        },
+        child: Stack(
+          children: [
+            _readingMode == 'madinah_page'
+                ? FutureBuilder<int>(
+                    future: DatabaseService.getInstance().then(
+                      (db) => db.getPageForAyah(
+                        widget.initialSurah.number,
+                        widget.initialAyahNumber ?? 1,
+                      ),
+                    ),
+                    builder: (context, snapshot) {
+                      final initialPage = snapshot.data ?? 1;
+                      return MadinahMushafView(
+                        key: ValueKey('mushaf_view_${_reloadKey}_$initialPage'),
+                        initialPage: initialPage,
+                        storage: widget.storage,
+                        fontSizeMultiplier: _fontSizeMultiplier,
+                        onFontSizeMultiplierChanged: (newScale) {
+                          setState(() => _fontSizeMultiplier = newScale);
+                        },
+                      );
+                    },
+                  )
+                : PageView.builder(
+                    controller: _pageController,
+                    physics: _isPinching
+                        ? const NeverScrollableScrollPhysics()
+                        : const PageScrollPhysics(),
+                    itemCount: 114,
+                    onPageChanged: (page) => setState(() => _currentPage = page),
+                    itemBuilder: (context, index) {
+                      final surahNum = index + 1;
+                      final data = allOfflineSurahs[index];
+                      final surah = Surah(
+                        number: surahNum,
+                        name: data.name,
+                        englishName: data.englishName,
+                        englishNameTranslation: '',
+                        numberOfAyahs: data.numberOfAyahs,
+                        revelationType: '',
+                      );
+
+                      return SurahReaderScreen(
+                        key: ValueKey(
+                          'surah_${_reloadKey}_${_readingMode}_${_quranScriptType}_$surahNum',
+                        ),
+                        surah: surah,
+                        storage: widget.storage,
+                        initialAyahNumber: surahNum == widget.initialSurah.number
+                            ? widget.initialAyahNumber
+                            : null,
+                        isInsidePager: true,
+                        hideAppBar: true,
+                        readingMode: _readingMode,
+                        hifzNotifier: _hifzNotifier,
+                        tajweedNotifier: _tajweedNotifier,
+                        quranScriptType: _quranScriptType,
+                        fontSizeMultiplier: _fontSizeMultiplier,
+                        onFontSizeMultiplierChanged: (newScale) {
+                          setState(() => _fontSizeMultiplier = newScale);
+                        },
+                        onGoToNext: () {
+                          if (index < 113) {
+                            _pageController.animateToPage(
+                              index + 1,
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeOutCubic,
+                            );
+                          }
+                        },
+                        onGoToPrev: () {
+                          if (index > 0) {
+                            _pageController.animateToPage(
+                              index - 1,
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeOutCubic,
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
+            if (_showZoomPill)
+              Positioned(
+                top: 14,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFE5C158),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      "${(_fontSizeMultiplier * 100).toInt()}%",
+                      style: const TextStyle(
+                        color: Color(0xFFE5C158),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              builder: (context, snapshot) {
-                final initialPage = snapshot.data ?? 1;
-                return MadinahMushafView(
-                  key: ValueKey('mushaf_view_${_reloadKey}_${initialPage}_$_fontSizeMultiplier'),
-                  initialPage: initialPage,
-                  storage: widget.storage,
-                  fontSizeMultiplier: _fontSizeMultiplier,
-                );
-              },
-            )
-          : PageView.builder(
-        controller: _pageController,
-        itemCount: 114,
-        onPageChanged: (page) => setState(() => _currentPage = page),
-        itemBuilder: (context, index) {
-          final surahNum = index + 1;
-          final data = allOfflineSurahs[index];
-          final surah = Surah(
-            number: surahNum,
-            name: data.name,
-            englishName: data.englishName,
-            englishNameTranslation: '',
-            numberOfAyahs: data.numberOfAyahs,
-            revelationType: '',
-          );
-
-          return SurahReaderScreen(
-            key: ValueKey('surah_${_reloadKey}_$_readingMode$_quranScriptType${_fontSizeMultiplier.toStringAsFixed(1)}_$surahNum'),
-            surah: surah,
-            storage: widget.storage,
-            initialAyahNumber: surahNum == widget.initialSurah.number
-                ? widget.initialAyahNumber
-                : null,
-            isInsidePager: true,
-            hideAppBar: true,
-            readingMode: _readingMode,
-            hifzNotifier: _hifzNotifier,
-            tajweedNotifier: _tajweedNotifier,
-            quranScriptType: _quranScriptType,
-            fontSizeMultiplier: _fontSizeMultiplier,
-            onGoToNext: () {
-              if (index < 113) {
-                _pageController.animateToPage(index + 1, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
-              }
-            },
-            onGoToPrev: () {
-              if (index > 0) {
-                _pageController.animateToPage(index - 1, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
-              }
-            },
-          );
-        },
+          ],
+        ),
       ),
     );
   }
