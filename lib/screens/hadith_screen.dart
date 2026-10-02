@@ -816,6 +816,14 @@ class _HadithScreenState extends State<HadithScreen> {
         .take(_pageSize)
         .toList();
 
+    final String bottomNavbarStyle = widget.storage.getString(
+      'bottom_navbar_style',
+      defaultValue: 'floating',
+    );
+    final double bottomNavbarOffset = bottomNavbarStyle == 'floating'
+        ? 76.0 + MediaQuery.of(context).padding.bottom
+        : MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -869,7 +877,12 @@ class _HadithScreenState extends State<HadithScreen> {
                     )
                   : ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        12,
+                        12,
+                        totalPages > 1 ? 12 : (12 + bottomNavbarOffset),
+                      ),
                       itemCount: pageHadiths.length,
                       itemBuilder: (context, index) {
                         final h = pageHadiths[index];
@@ -1100,9 +1113,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                             _displayLang == 'ara')
                                           _searchController.text.trim().isNotEmpty
                                               ? _buildHighlightedText(
-                                                  text: (h['snippetArabic'] != null && h['snippetArabic'].toString().contains('<mark>'))
-                                                      ? h['snippetArabic'].toString()
-                                                      : h['arabic'].toString(),
+                                                  text: h['arabic'].toString(),
                                                   query: _searchController.text,
                                                   style: TextStyle(
                                                     fontFamily: 'Amiri',
@@ -1132,9 +1143,7 @@ class _HadithScreenState extends State<HadithScreen> {
                                             _displayLang == 'eng')
                                           _searchController.text.trim().isNotEmpty
                                               ? _buildHighlightedText(
-                                                  text: (h['snippetEnglish'] != null && h['snippetEnglish'].toString().contains('<mark>'))
-                                                      ? h['snippetEnglish'].toString()
-                                                      : _cleanEnglish(h['english'].toString()),
+                                                  text: _cleanEnglish(h['english'].toString()),
                                                   query: _searchController.text,
                                                   style: TextStyle(
                                                     fontSize: 14,
@@ -1175,7 +1184,7 @@ class _HadithScreenState extends State<HadithScreen> {
             // Pagination Controls
             if (totalPages > 1 && !_isLoading && _error.isEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.fromLTRB(0, 8, 0, 8 + bottomNavbarOffset),
                 decoration: BoxDecoration(
                   border: Border(top: BorderSide(color: theme.dividerColor)),
                   color: theme.scaffoldBackgroundColor,
@@ -1197,7 +1206,7 @@ class _HadithScreenState extends State<HadithScreen> {
                           : null,
                     ),
                     Text(
-                      "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $_totalPages",
+                      "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $totalPages",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.bodyLarge?.color,
@@ -1209,7 +1218,7 @@ class _HadithScreenState extends State<HadithScreen> {
                         size: 16,
                         color: theme.primaryColor,
                       ),
-                      onPressed: _currentPage < _totalPages
+                      onPressed: _currentPage < totalPages
                           ? () {
                               setState(() => _currentPage++);
                               _scrollController.jumpTo(0.0);
@@ -1239,7 +1248,7 @@ class _HadithScreenState extends State<HadithScreen> {
         baseStyle: style,
         highlightColor: highlightColor,
       );
-      return SelectableText.rich(
+      return Text.rich(
         TextSpan(children: spans),
         textAlign: TextAlign.start,
         textDirection: textDirection,
@@ -1247,7 +1256,7 @@ class _HadithScreenState extends State<HadithScreen> {
     }
 
     if (query.trim().isEmpty) {
-      return SelectableText(
+      return Text(
         text,
         style: style,
         textAlign: TextAlign.start,
@@ -1259,7 +1268,7 @@ class _HadithScreenState extends State<HadithScreen> {
     final cleanText = stripTashkeel(text.toLowerCase());
 
     if (!cleanText.contains(cleanQuery)) {
-      return SelectableText(
+      return Text(
         text,
         style: style,
         textAlign: TextAlign.start,
@@ -1284,7 +1293,7 @@ class _HadithScreenState extends State<HadithScreen> {
       ));
     }
 
-    return SelectableText.rich(
+    return Text.rich(
       TextSpan(children: spans),
       textAlign: TextAlign.start,
       textDirection: textDirection,

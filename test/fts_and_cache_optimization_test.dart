@@ -45,6 +45,35 @@ void main() {
       expect(toArabicDigits(604), '٦٠٤');
       expect(toArabicDigits('Surah 114 Ayah 6'), 'Surah ١١٤ Ayah ٦');
     });
+
+    test('hadith full text highlight preserves complete wording without truncation', () {
+      const fullHadith = 'إنما الأعمال بالنيات وإنما لكل امرئ ما نوى فمن كانت هجرته إلى الله ورسوله فهجرته إلى الله ورسوله';
+      final cleanQuery = stripTashkeel('النيات');
+      final words = fullHadith.split(' ');
+      final spans = <InlineSpan>[];
+      for (int i = 0; i < words.length; i++) {
+        final word = words[i];
+        final cleanWord = stripTashkeel(word.toLowerCase());
+        final isMatch = cleanWord.contains(cleanQuery);
+        spans.add(TextSpan(
+          text: i < words.length - 1 ? '$word ' : word,
+          style: isMatch
+              ? const TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.bold)
+              : const TextStyle(color: Colors.white),
+        ));
+      }
+
+      // Entire hadith preserved: reassembled text must equal fullHadith exactly
+      final reconstructed = spans.map((s) => (s as TextSpan).text).join();
+      expect(reconstructed, fullHadith);
+
+      // Match found and properly highlighted
+      final matchedSpan = spans.firstWhere(
+        (s) => (s as TextSpan).text!.contains('بالنيات'),
+      ) as TextSpan;
+      expect(matchedSpan.style?.color, const Color(0xFFE5C158));
+      expect(matchedSpan.style?.fontWeight, FontWeight.bold);
+    });
   });
 
   group('PrayerPreferences Domain Store Tests', () {

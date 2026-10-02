@@ -2,12 +2,11 @@ part of 'surah_reader_screen.dart';
 
 extension SurahReaderAutoscroll on _SurahReaderScreenState {
   void _startAutoScroll({double? customSpeed}) {
+    _resumeTimer?.cancel();
+    _resumeTimer = null;
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;
-
-    _isAutoScrolling = true;
-    _isAutoScrollPaused = false;
 
     if (customSpeed != null) {
       _scrollSpeed = customSpeed;
@@ -33,36 +32,65 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
       _scrollSpeed = step;
     }
 
-    if (_scrollController.hasClients) {
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final currentScroll = _scrollController.position.pixels;
-      final remaining = maxScroll - currentScroll;
-      if (remaining <= 0) {
-        _stopAutoScroll();
-        return;
-      }
+    if (!_scrollController.hasClients) return;
 
-      final durationMs = (remaining / _scrollSpeed * 1000).toInt();
-      _scrollController
-          .animateTo(
-            maxScroll,
-            duration: Duration(milliseconds: durationMs),
-            curve: Curves.linear,
-          )
-          .then((_) {
-            if (_isAutoScrolling &&
-                !_isAutoScrollPaused &&
-                _scrollController.hasClients &&
-                _scrollController.position.pixels >= maxScroll - 1) {
-              _stopAutoScroll();
-            }
-          });
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    final remaining = maxScroll - currentScroll;
+    if (remaining <= 0) {
+      _stopAutoScroll();
+      return;
     }
-    // We cannot call setState here directly, but we can call it if we wrap it, or just ignore it if it's not needed, but wait!
-    // extension on _SurahReaderScreenState does not have setState.
-    // I can just omit setState since we don't have access to it, or pass it.
-    // In fact, wait, extensions DO NOT have `setState`.
-    // Let me just replace the broken header.
+
+    _updateReaderState(() {
+      _isAutoScrolling = true;
+      _isAutoScrollPaused = false;
+    });
+
+    final durationMs = (remaining / _scrollSpeed * 1000).toInt();
+    _scrollController
+        .animateTo(
+          maxScroll,
+          duration: Duration(milliseconds: durationMs),
+          curve: Curves.linear,
+        )
+        .catchError((_) {})
+        .then((_) {
+          if (mounted &&
+              _isAutoScrolling &&
+              !_isAutoScrollPaused &&
+              _scrollController.hasClients &&
+              _scrollController.position.pixels >= maxScroll - 1) {
+            _stopAutoScroll();
+          }
+        });
+  }
+
+  void _pauseAutoScroll() {
+    _resumeTimer?.cancel();
+    _resumeTimer = null;
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(_scrollController.position.pixels);
+    }
+    _updateReaderState(() {
+      _isAutoScrollPaused = true;
+    });
+  }
+
+  void _resumeAutoScroll() {
+    _resumeTimer?.cancel();
+    _resumeTimer = null;
+    _startAutoScroll();
+  }
+
+  void _toggleAutoScroll() {
+    if (!_isAutoScrolling) {
+      _startAutoScroll();
+    } else if (_isAutoScrollPaused) {
+      _resumeAutoScroll();
+    } else {
+      _pauseAutoScroll();
+    }
   }
 
   void _syncAutoScrollWithAudio() async {
@@ -111,15 +139,17 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
 
   void _stopAutoScroll() {
     _resumeTimer?.cancel();
+    _resumeTimer = null;
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(_scrollController.position.pixels);
     }
-    _isAutoScrolling = false;
-    _isAutoScrollPaused = false;
-    setState(() {});
+    _updateReaderState(() {
+      _isAutoScrolling = false;
+      _isAutoScrollPaused = false;
+    });
   }
 
   void _pauseAutoScrollTemporarily() {
@@ -127,25 +157,22 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(_scrollController.position.pixels);
     }
-    setState(() {
+    _updateReaderState(() {
       _isAutoScrollPaused = true;
     });
     _resumeTimer?.cancel();
     _resumeTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && _isAutoScrolling) {
-        setState(() {
-          _isAutoScrollPaused = false;
-        });
-        _startAutoScroll();
+      if (mounted && _isAutoScrolling && _isAutoScrollPaused) {
+        _resumeAutoScroll();
       }
     });
   }
 
   void _changeSpeedLevel(int delta) {
-    setState(() {
+    _updateReaderState(() {
       _speedLevel = (_speedLevel + delta).clamp(1, 5);
     });
-    if (_isAutoScrolling) {
+    if (_isAutoScrolling && !_isAutoScrollPaused) {
       _startAutoScroll();
     }
   }
@@ -226,10 +253,15 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
 
                   return Row(
                     children: [
-                      const Icon(
-                        Icons.swap_vertical_circle_outlined,
-                        color: Color(0xFFE5C158),
-                        size: 18,
+                      GestureDetector(
+                        onTap: _isAutoScrolling ? _stopAutoScroll : null,
+                        child: Icon(
+                          _isAutoScrolling
+                              ? Icons.stop_circle_outlined
+                              : Icons.swap_vertical_circle_outlined,
+                          color: const Color(0xFFE5C158),
+                          size: 18,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -366,7 +398,7 @@ extension SurahReaderAutoscroll on _SurahReaderScreenState {
             const SizedBox(width: 8),
             // Custom compact circular play/pause button
             GestureDetector(
-              onTap: _isAutoScrolling ? _stopAutoScroll : _startAutoScroll,
+              onTap: _toggleAutoScroll,
               child: Container(
                 padding: const EdgeInsets.all(7),
                 decoration: const BoxDecoration(

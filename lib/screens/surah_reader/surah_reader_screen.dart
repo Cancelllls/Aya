@@ -207,6 +207,12 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
     super.dispose();
   }
 
+  void _updateReaderState(VoidCallback fn) {
+    if (mounted) {
+      setState(fn);
+    }
+  }
+
   TextStyle _getArabicTextStyle(
     double fontSize, {
     double? height,
