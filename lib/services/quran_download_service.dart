@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'api_service.dart';
+import 'database_service.dart';
 import 'storage_service.dart';
 import 'qdc_audio_service.dart';
 
@@ -423,11 +424,26 @@ class QuranDownloadService extends ChangeNotifier {
     StorageService storage,
     String tafsirEdition,
   ) async {
-    // Tafsir is now pre-packaged in the local SQLite database, no download needed.
+    if (tafsirEdition == 'ar.muyassar') {
+      _isDownloadingTafsir = false;
+      _tafsirDownloadProgress = 1.0;
+      notifyListeners();
+      return;
+    }
     _isDownloadingTafsir = true;
+    _tafsirDownloadProgress = 0.0;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await ApiService.downloadFullTafsirEdition(
+        tafsirEdition,
+        onProgress: (p) {
+          if (!_isDownloadingTafsir) return;
+          _tafsirDownloadProgress = p;
+          notifyListeners();
+        },
+      );
+    } catch (_) {}
 
     _isDownloadingTafsir = false;
     _tafsirDownloadProgress = 1.0;
@@ -440,15 +456,28 @@ class QuranDownloadService extends ChangeNotifier {
   }
 
   Future<int> getTafsirCountForEdition(String tafsirEdition) async {
-    // Return 114 since all surahs are locally embedded in the SQLite database
-    return 114;
+    if (tafsirEdition == 'ar.muyassar') {
+      return 114;
+    }
+    try {
+      final db = await DatabaseService.getInstance();
+      final downloaded = await db.isTafsirEditionDownloaded(tafsirEdition);
+      return downloaded ? 114 : 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
   Future<void> deleteAllTafsir(
     StorageService storage,
     String tafsirEdition,
   ) async {
-    // Tafsir is now embedded locally in the DB, so we can't delete it
+    if (tafsirEdition != 'ar.muyassar') {
+      try {
+        final db = await DatabaseService.getInstance();
+        await db.deleteTafsirEdition(tafsirEdition);
+      } catch (_) {}
+    }
     _isDownloadingTafsir = false;
     _tafsirDownloadProgress = 0.0;
     notifyListeners();

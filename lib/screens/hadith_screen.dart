@@ -42,13 +42,10 @@ class _HadithScreenState extends State<HadithScreen> {
   List<dynamic>? _crossSearchResults;
   bool _isLoading = false;
   int? _highlightedHadithNumber;
-  bool _isOffline = false;
   String _error = '';
   String _activeSearchQuery = '';
   int _currentPage = 1;
   int _totalHadiths = 0;
-  bool _hasMore = true;
-  bool _loadingMore = false;
   static const int _pageSize = 20;
   late String _displayLang;
   static Map<String, List<String?>>? _gradesLookup;
@@ -74,7 +71,6 @@ class _HadithScreenState extends State<HadithScreen> {
   void initState() {
     super.initState();
     _displayLang = TranslationService.isArabic ? 'ara' : 'eng';
-    _scrollController.addListener(_checkLoadMore);
     // If opened from a bookmark, switch to that book
     if (widget.initialBookId != null) {
       final found = hadithBooks
@@ -118,7 +114,6 @@ class _HadithScreenState extends State<HadithScreen> {
       _error = '';
       _hadithList = [];
       _currentPage = 1;
-      _hasMore = true;
       _activeSearchQuery = '';
       _searchController.clear();
       _crossSearchResults = null;
@@ -145,7 +140,7 @@ class _HadithScreenState extends State<HadithScreen> {
     if (isDownloaded) {
       // Get total count for pagination UI
       _totalHadiths = await db.hadith.getHadithCount(bookId, _displayLang);
-      await _loadHadithPage(db, bookId, 0);
+      await _loadCurrentPageHadiths();
       return;
     }
 
@@ -158,7 +153,8 @@ class _HadithScreenState extends State<HadithScreen> {
           response.body,
         );
         await db.hadith.insertHadithBook(bookId, _displayLang, rawHadiths);
-        await _loadHadithPage(db, bookId, 0);
+        _totalHadiths = await db.hadith.getHadithCount(bookId, _displayLang);
+        await _loadCurrentPageHadiths();
       } else {
         throw Exception('Failed to load online data');
       }
@@ -174,105 +170,50 @@ class _HadithScreenState extends State<HadithScreen> {
     }
   }
 
-  Future<void> _loadHadithPage(DatabaseService db, String bookId, int page, {int batchSize = 75}) async {
-    if (!mounted || (!_hasMore && page > 0)) return;
-    if (page > 0) setState(() => _loadingMore = true);
+  Future<void> _loadCurrentPageHadiths() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
 
-    final offset = page * batchSize;
-    final results = await db.hadith.getHadiths(bookId, _displayLang, batchSize, offset);
-    await _loadGrades();
-
-    if (mounted) {
-      final list = results.map((e) => {
-        'number': e['hadith_number'],
-        'arabic': e['arabic'],
-        'english': e['english'],
-        'searchArText': e['search_arabic'],
-        'searchEnText': e['search_english'],
-        'grades': jsonDecode(e['grades'] ?? '[]'),
-      }).toList();
-      _injectGrades(list, bookId);
-      setState(() {
-        if (page == 0) {
-          _hadithList = list;
-        } else {
-          _hadithList.addAll(list);
-        }
-        _hasMore = _totalHadiths > 0
-            ? _hadithList.length < _totalHadiths
-            : results.length >= batchSize;
-        _isOffline = true;
-        _isLoading = false;
-        _loadingMore = false;
-      });
-    }
-  }
-
-  Future<void> _checkLoadMore() async {
-    if (_loadingMore || !_hasMore || _activeSearchQuery.isNotEmpty) return;
-    final loaded = _hadithList.length;
-    // Load more when user is within 2 pages of the end of loaded data
-    // Load more when within 1 page of end AND not already at total
-    if (_currentPage * _pageSize + _pageSize >= loaded && loaded < _totalHadiths) {
-      _loadingMore = true;
+    try {
+      final bookId = _selectedBook.id;
       final db = await DatabaseService.getInstance();
-      final nextPage = loaded ~/ 75;
-      await _loadHadithPage(db, _selectedBook.id, nextPage);
+      final offset = (_currentPage - 1) * _pageSize;
+      final results = await db.hadith.getHadiths(bookId, _displayLang, _pageSize, offset);
+      await _loadGrades();
+
+      if (mounted) {
+        final list = results.map((e) => {
+          'number': e['hadith_number'],
+          'arabic': e['arabic'],
+          'english': e['english'],
+          'searchArText': e['search_arabic'],
+          'searchEnText': e['search_english'],
+          'grades': jsonDecode(e['grades'] ?? '[]'),
+        }).toList();
+        _injectGrades(list, bookId);
+        setState(() {
+          _hadithList = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = TranslationService.isArabic
+              ? "فشل في تحميل الأحاديث الشريفة."
+              : "Failed to load Hadiths.";
+          _isLoading = false;
+        });
+      }
     }
   }
 
   int get _totalPages {
     if (_totalHadiths > 0) return (_totalHadiths / _pageSize).ceil();
-    return (_hadithList.length / _pageSize).ceil();
-  }
-
-  Future<void> _downloadEntireBook() async {
-    setState(() => _isLoading = true);
-    final bookId = _selectedBook.id;
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final url =
-          'https://cdn.jsdelivr.net/gh/Cancelllls/Islamic-Assets@main/hadith/$_displayLang-$bookId.json';
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        final hadiths = await HadithDatabaseService.parseHadithJson(res.body);
-        final db = await DatabaseService.getInstance();
-        await db.hadith.insertHadithBook(bookId, _displayLang, hadiths);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.isArabic
-                  ? "تم تحميل الكتاب كاملاً بنجاح!"
-                  : "Book downloaded successfully!",
-            ),
-            backgroundColor: const Color(0xFFE5C158),
-          ),
-        );
-        await _loadSelectedBookData();
-      } else {
-        throw Exception('Failed to download');
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? "فشل تحميل الكتاب. حاول مجدداً."
-                : "Download failed. Try again.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
-  }
-
-  String _normalizeArabic(String input) {
-    return input
-        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '') // Remove Tashkeel
-        .replaceAll(RegExp(r'[إأآا]'), 'ا') // Normalize Alef
-        .replaceAll('ة', 'ه') // Normalize Teh Marbuta
-        .replaceAll('ى', 'ي'); // Normalize Alef Maksura
+    return (_hadithList.length / _pageSize).ceil().clamp(1, 99999);
   }
 
   String _cleanEnglish(String text) {
@@ -356,14 +297,6 @@ class _HadithScreenState extends State<HadithScreen> {
     }
   }
 
-  bool _isSahihBook(dynamic h) {
-    final bookId = h['_bookId'] as String? ?? _selectedBook.id;
-    return bookId == 'bukhari' ||
-        bookId == 'muslim' ||
-        bookId == 'riyadussalihin' ||
-        bookId == 'malik';
-  }
-
   List<dynamic> _getFilteredHadiths() {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) {
@@ -391,7 +324,7 @@ class _HadithScreenState extends State<HadithScreen> {
     }
 
     final db = await DatabaseService.getInstance();
-    final results = await db.hadith.searchAllHadiths(_displayLang, query, 100);
+    final results = await db.hadith.searchAllHadiths(_displayLang, query, 500);
 
     // Map book_id back to book display names and inject grades
     final mapped = <Map<String, dynamic>>[];
@@ -441,38 +374,16 @@ class _HadithScreenState extends State<HadithScreen> {
   }
 
   void _jumpToHadithByNumber(int num) async {
-    final idx = _hadithList.indexWhere((element) => element['number'] == num);
-    if (idx != -1) {
-      setState(() {
-        _currentPage = (idx / _pageSize).floor() + 1;
-        _jumpController.clear();
-        _highlightedHadithNumber = num;
-      });
-      _scrollToTop();
-      _autoClearHighlight();
-      return;
-    }
-
-    // Not in cache — load from DB
     final db = await DatabaseService.getInstance();
     final row = await db.hadith.getHadithByNumber(_selectedBook.id, _displayLang, num);
     if (row != null && mounted) {
-      await _loadGrades();
-      final entry = {
-        'number': row['hadith_number'],
-        'arabic': row['arabic'],
-        'english': row['english'],
-        'searchArText': row['search_arabic'],
-        'searchEnText': row['search_english'],
-        'grades': jsonDecode((row['grades'] as String?) ?? '[]'),
-      };
-      _injectGrades([entry], _selectedBook.id);
+      final targetPage = ((num - 1) ~/ _pageSize) + 1;
       setState(() {
-        _hadithList.insert(0, entry);
-        _currentPage = 1;
+        _currentPage = targetPage.clamp(1, _totalPages > 0 ? _totalPages : 1);
         _jumpController.clear();
         _highlightedHadithNumber = num;
       });
+      await _loadCurrentPageHadiths();
       _scrollToTop();
       _autoClearHighlight();
     } else if (mounted) {
@@ -810,19 +721,19 @@ class _HadithScreenState extends State<HadithScreen> {
     // Use real total when browsing; use filtered length when searching
     final totalPages = _activeSearchQuery.isNotEmpty
         ? (filtered.length / _pageSize).ceil()
-        : (_totalPages > 0 ? _totalPages : (filtered.length / _pageSize).ceil());
-    final pageHadiths = filtered
-        .skip((_currentPage - 1) * _pageSize)
-        .take(_pageSize)
-        .toList();
+        : (_totalPages > 0 ? _totalPages : 1);
+    final pageHadiths = _activeSearchQuery.isNotEmpty
+        ? filtered
+            .skip((_currentPage - 1) * _pageSize)
+            .take(_pageSize)
+            .toList()
+        : _hadithList;
 
     final String bottomNavbarStyle = widget.storage.getString(
       'bottom_navbar_style',
       defaultValue: 'floating',
     );
-    final double bottomNavbarOffset = bottomNavbarStyle == 'floating'
-        ? 76.0 + MediaQuery.of(context).padding.bottom
-        : MediaQuery.of(context).padding.bottom;
+    final double bottomClearance = bottomNavbarStyle == 'floating' ? 68.0 : 8.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -881,7 +792,7 @@ class _HadithScreenState extends State<HadithScreen> {
                         12,
                         12,
                         12,
-                        totalPages > 1 ? 12 : (12 + bottomNavbarOffset),
+                        totalPages > 1 ? 12 : (12 + bottomClearance),
                       ),
                       itemCount: pageHadiths.length,
                       itemBuilder: (context, index) {
@@ -1184,9 +1095,9 @@ class _HadithScreenState extends State<HadithScreen> {
             // Pagination Controls
             if (totalPages > 1 && !_isLoading && _error.isEmpty)
               Container(
-                padding: EdgeInsets.fromLTRB(0, 8, 0, 8 + bottomNavbarOffset),
+                padding: EdgeInsets.fromLTRB(16, 4, 16, bottomClearance),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: theme.dividerColor)),
+                  border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.15))),
                   color: theme.scaffoldBackgroundColor,
                 ),
                 child: Row(
@@ -1202,14 +1113,20 @@ class _HadithScreenState extends State<HadithScreen> {
                           ? () {
                               setState(() => _currentPage--);
                               _scrollController.jumpTo(0.0);
+                              if (_activeSearchQuery.isEmpty) {
+                                _loadCurrentPageHadiths();
+                              }
                             }
                           : null,
                     ),
-                    Text(
-                      "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $totalPages",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: theme.textTheme.bodyLarge?.color,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Text(
+                        "${TranslationService.isArabic ? 'صفحة' : 'Page'} $_currentPage / $totalPages",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -1222,7 +1139,9 @@ class _HadithScreenState extends State<HadithScreen> {
                           ? () {
                               setState(() => _currentPage++);
                               _scrollController.jumpTo(0.0);
-                              _checkLoadMore();
+                              if (_activeSearchQuery.isEmpty) {
+                                _loadCurrentPageHadiths();
+                              }
                             }
                           : null,
                     ),

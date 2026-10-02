@@ -103,7 +103,15 @@ extension SurahReaderData on _SurahReaderScreenState {
     if (hasContent) return;
 
     try {
-      await ApiService.fetchTafsirForSurah(_currentSurah.number, _ayahList);
+      final tafsirEdition = widget.storage.getString(
+        'default_tafsir',
+        defaultValue: 'ar.muyassar',
+      );
+      await ApiService.fetchTafsirForSurah(
+        _currentSurah.number,
+        _ayahList,
+        tafsirEdition: tafsirEdition,
+      );
     } catch (_) {}
     _tafsirLoaded = true;
     updateState(() {});

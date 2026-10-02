@@ -192,19 +192,48 @@ class ApiService {
     return list;
   }
 
+  /// Clean HTML tags and common entities from Tafsir text.
+  static String _cleanTafsirHtml(String raw) {
+    return raw
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'")
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
+  }
+
   /// Fetch tafsir text for a surah and merge into existing [ayahs] list.
   static Future<void> fetchTafsirForSurah(
     int surahNumber,
-    List<Ayah> ayahs,
-  ) async {
+    List<Ayah> ayahs, {
+    String tafsirEdition = 'ar.muyassar',
+  }) async {
     final db = await DatabaseService.getInstance();
-    final rows = await db.getTafsirForSurah(surahNumber);
-    final lookup = <int, String>{};
-    for (final r in rows) {
-      lookup[r['ayah_number'] as int] = (r['tafsir'] as String?) ?? '';
+    if (tafsirEdition == 'ar.muyassar') {
+      final rows = await db.getTafsirForSurah(surahNumber);
+      final lookup = <int, String>{};
+      for (final r in rows) {
+        lookup[r['ayah_number'] as int] = (r['tafsir'] as String?) ?? '';
+      }
+      for (final a in ayahs) {
+        a.tafseer = lookup[a.numberInSurah] ?? '';
+      }
+      return;
     }
+
+    // For other editions (e.g. en.ibnkathir, en.maududi):
     for (final a in ayahs) {
-      a.tafseer = lookup[a.numberInSurah] ?? '';
+      final text = await fetchTafsirTextForAyah(
+        tafsirEdition,
+        surahNumber,
+        a.numberInSurah,
+      );
+      a.tafseer = text;
     }
   }
 
@@ -295,11 +324,46 @@ class ApiService {
       return offlineText;
     }
 
+    // 4. Fetch on-demand from Quran.com API with auto-caching into SQLite
+    final tafsirMap = {
+      'ar.muyassar': 16,
+      'ar.jalalayn': 91,
+      'ar.qurtubi': 90,
+      'ar.miqbas': 93,
+      'ar.waseet': 94,
+      'ar.baghawi': 94,
+      'en.ibnkathir': 169,
+      'en.jalalayn': 171,
+      'en.maududi': 168,
+    };
     final isEnglishEdition = editionId.startsWith('en.');
+    final tId = tafsirMap[editionId] ?? (isEnglishEdition ? 169 : 16);
+
+    try {
+      final url = Uri.parse(
+        'https://api.quran.com/api/v4/tafsirs/$tId/by_ayah/$surahNumber:$ayahNumber',
+      );
+      final res = await http.get(url).timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final rawText = data['tafsir']?['text'] as String? ?? '';
+        final cleanText = _cleanTafsirHtml(rawText);
+        if (cleanText.isNotEmpty) {
+          _setTafsirCache(cacheKey, cleanText);
+          await db.saveExtraTafsir(
+            editionId,
+            surahNumber,
+            ayahNumber,
+            cleanText,
+          );
+          return cleanText;
+        }
+      }
+    } catch (_) {}
+
     final fallbackMsg = isEnglishEdition
-        ? 'Tafsir for this verse is unavailable offline.'
-        : 'التفسير غير متوفر لهذه الآية في الطبعة الحالية.';
-    _setTafsirCache(cacheKey, fallbackMsg);
+        ? 'Tafsir for this verse is unavailable offline. Connect to the internet once to load it.'
+        : 'التفسير غير متوفر لهذه الآية دون إنترنت. يرجى الاتصال بالإنترنت لتحميله.';
     return fallbackMsg;
   }
 
@@ -330,7 +394,7 @@ class ApiService {
     for (int surah = 1; surah <= 114; surah++) {
       try {
         final url = Uri.parse(
-          'https://api.quran.com/api/v4/tafsirs/$tId/by_chapter/$surah',
+          'https://api.quran.com/api/v4/tafsirs/$tId/by_chapter/$surah?per_page=300',
         );
         final res = await http
             .get(url)
@@ -345,8 +409,7 @@ class ApiService {
               final sNum = int.tryParse(parts[0]) ?? surah;
               final aNum = int.tryParse(parts[1]) ?? 1;
               final rawText = t['text'] as String? ?? '';
-              final cleanText =
-                  rawText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+              final cleanText = _cleanTafsirHtml(rawText);
               if (cleanText.isNotEmpty) {
                 batchItems.add({
                   'edition_id': editionId,
