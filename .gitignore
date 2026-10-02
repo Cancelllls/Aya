@@ -57,3 +57,6 @@ tools/sharh_cache.json.gz
 # Signing keys
 /android/key.properties
 /android/upload-keystore.jks
+
+# Graphify Knowledge Graph
+graphify-out/
