@@ -3,14 +3,40 @@
   <img src="https://img.shields.io/badge/Kotlin-Native-purple?style=flat-square&logo=kotlin" alt="Kotlin">
   <img src="https://img.shields.io/badge/Platform-Android%207%E2%80%9316-brightgreen?style=flat-square&logo=android" alt="Android 7–16">
   <img src="https://img.shields.io/badge/Platform-iOS-lightgrey?style=flat-square&logo=apple" alt="iOS">
+  <a href="https://f-droid.org/en/packages/com.quran.aya/"><img src="https://img.shields.io/f-droid/v/com.quran.aya?style=flat-square&logo=f-droid&logoColor=white&color=00B0FF" alt="F-Droid"></a>
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT">
 </p>
 
 <h1 align="center">Aya — Islamic Companion App</h1>
 <p align="center"><strong>Quran · Hadith · Prayer Times · Adhan · Azkar · Qibla · Tracker</strong></p>
+
 <p align="center">
-  <a href="https://github.com/Cancelllls/Aya/releases">Download Latest</a>
+  <a href="https://f-droid.org/en/packages/com.quran.aya/">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="60">
+  </a>
 </p>
+
+<p align="center">
+  <a href="https://apps.obtainium.imranr.dev/?r=https://github.com/Cancelllls/Aya">
+    <img src="https://img.shields.io/badge/Obtainium-Add_to_App-2478CC?style=for-the-badge&logo=android&logoColor=white" height="34" alt="Add to Obtainium">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/Cancelllls/Aya/releases/latest">
+    <img src="https://img.shields.io/badge/GitHub-Direct_APK-2ea44f?style=for-the-badge&logo=github&logoColor=white" height="34" alt="Download APK">
+  </a>
+</p>
+
+---
+
+## 📥 Download & Installation
+
+| Source | Type | Updates | Description |
+| :--- | :--- | :--- | :--- |
+| **[F-Droid](https://f-droid.org/en/packages/com.quran.aya/)** | Official FOSS Store | Scheduled (~1–3 days) | Official F-Droid repository build, signed with F-Droid's key. Verified 100% open-source with zero tracking. |
+| **[Obtainium](https://apps.obtainium.imranr.dev/?r=https://github.com/Cancelllls/Aya)** | Direct / In-App | **Instant** | Tracks GitHub Releases directly and delivers automatic updates in the background the moment a tag is published. |
+| **[GitHub Releases](https://github.com/Cancelllls/Aya/releases/latest)** | Manual APK | Direct Download | Standalone signed APKs (`arm64-v8a` for modern devices, `x86_64` for emulators). |
+
+> **Tip for Instant Updates:** If you prefer automatic updates without waiting for F-Droid's scheduled build queue, install **[Obtainium](https://github.com/ImranR98/Obtainium)** on your device and tap **[Add to Obtainium](https://apps.obtainium.imranr.dev/?r=https://github.com/Cancelllls/Aya)**.
 
 ---
 
