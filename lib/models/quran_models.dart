@@ -4,6 +4,7 @@ class TafsirEdition {
   final String mufassir; // Arabic scholar name
   final String mufassirEn; // English scholar name
   final String language; // 'ar' or 'en'
+  final bool isBundled;
 
   const TafsirEdition(
     this.identifier,
@@ -11,6 +12,7 @@ class TafsirEdition {
     this.mufassir,
     this.mufassirEn, {
     this.language = 'ar',
+    this.isBundled = true,
   });
 }
 

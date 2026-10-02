@@ -7,6 +7,7 @@ import 'database_service.dart';
 import 'storage_service.dart';
 import 'qdc_audio_service.dart';
 import 'translation_cache_service.dart';
+import '../models/quran_models.dart';
 
 enum DownloadStatus { notDownloaded, downloading, downloaded, error }
 
@@ -418,20 +419,28 @@ class QuranDownloadService extends ChangeNotifier {
   // --- Tafsir Download Logic ---
   bool _isDownloadingTafsir = false;
   double _tafsirDownloadProgress = 0.0;
+  String? _downloadingTafsirEdition;
   bool get isDownloadingTafsir => _isDownloadingTafsir;
   double get tafsirDownloadProgress => _tafsirDownloadProgress;
+  String? get downloadingTafsirEdition => _downloadingTafsirEdition;
 
   Future<void> downloadAllTafsir(
     StorageService storage,
     String tafsirEdition,
   ) async {
-    if (tafsirEdition == 'ar.muyassar') {
+    final edition = availableTafsirs.firstWhere(
+      (e) => e.identifier == tafsirEdition,
+      orElse: () => TafsirEdition(tafsirEdition, '', '', '', isBundled: false),
+    );
+    if (edition.isBundled || tafsirEdition == 'ar.muyassar') {
       _isDownloadingTafsir = false;
+      _downloadingTafsirEdition = null;
       _tafsirDownloadProgress = 1.0;
       notifyListeners();
       return;
     }
     _isDownloadingTafsir = true;
+    _downloadingTafsirEdition = tafsirEdition;
     _tafsirDownloadProgress = 0.0;
     notifyListeners();
 
@@ -443,21 +452,29 @@ class QuranDownloadService extends ChangeNotifier {
           _tafsirDownloadProgress = p;
           notifyListeners();
         },
+        isCancelled: () => !_isDownloadingTafsir,
       );
     } catch (_) {}
 
     _isDownloadingTafsir = false;
+    _downloadingTafsirEdition = null;
     _tafsirDownloadProgress = 1.0;
     notifyListeners();
   }
 
   void cancelTafsirDownload() {
     _isDownloadingTafsir = false;
+    _downloadingTafsirEdition = null;
+    _tafsirDownloadProgress = 0.0;
     notifyListeners();
   }
 
   Future<int> getTafsirCountForEdition(String tafsirEdition) async {
-    if (tafsirEdition == 'ar.muyassar') {
+    final edition = availableTafsirs.firstWhere(
+      (e) => e.identifier == tafsirEdition,
+      orElse: () => TafsirEdition(tafsirEdition, '', '', '', isBundled: false),
+    );
+    if (edition.isBundled || tafsirEdition == 'ar.muyassar') {
       return 114;
     }
     try {
@@ -473,13 +490,18 @@ class QuranDownloadService extends ChangeNotifier {
     StorageService storage,
     String tafsirEdition,
   ) async {
-    if (tafsirEdition != 'ar.muyassar') {
+    final edition = availableTafsirs.firstWhere(
+      (e) => e.identifier == tafsirEdition,
+      orElse: () => TafsirEdition(tafsirEdition, '', '', '', isBundled: false),
+    );
+    if (!edition.isBundled && tafsirEdition != 'ar.muyassar') {
       try {
         final db = await DatabaseService.getInstance();
         await db.deleteTafsirEdition(tafsirEdition);
       } catch (_) {}
     }
     _isDownloadingTafsir = false;
+    _downloadingTafsirEdition = null;
     _tafsirDownloadProgress = 0.0;
     notifyListeners();
   }
@@ -515,6 +537,7 @@ class QuranDownloadService extends ChangeNotifier {
           _translationDownloadProgress = p;
           notifyListeners();
         },
+        isCancelled: () => !_isDownloadingTranslation,
       );
     } catch (_) {}
 
@@ -527,6 +550,7 @@ class QuranDownloadService extends ChangeNotifier {
   void cancelTranslationDownload() {
     _isDownloadingTranslation = false;
     _downloadingTranslationEdition = null;
+    _translationDownloadProgress = 0.0;
     notifyListeners();
   }
 

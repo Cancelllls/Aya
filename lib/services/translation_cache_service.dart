@@ -34,6 +34,7 @@ class TranslationCacheService {
     String editionId, {
     Function(double progress)? onProgress,
     Function(String log)? onLog,
+    bool Function()? isCancelled,
   }) async {
     final edition = availableTranslations
         .where((e) => e.identifier == editionId)
@@ -46,6 +47,7 @@ class TranslationCacheService {
       onProgress?.call(1.0);
       return 6236;
     }
+    if (isCancelled?.call() == true) return 0;
 
     final cdnUrl = '$_cdnBase/${edition.cdnFile}';
     final fallbackUrl = '$_fallbackBase/${edition.cdnFile}';
@@ -84,11 +86,13 @@ class TranslationCacheService {
     }
 
     onProgress?.call(0.7);
+    if (isCancelled?.call() == true) return 0;
     final jsonStr = utf8.decode(bytes);
     final rawMap = jsonDecode(jsonStr) as Map<String, dynamic>;
 
     final items = <Map<String, dynamic>>[];
     for (final entry in rawMap.entries) {
+      if (isCancelled?.call() == true) return 0;
       final parts = entry.key.split(':');
       if (parts.length == 2) {
         final s = int.tryParse(parts[0]);
@@ -106,6 +110,7 @@ class TranslationCacheService {
       }
     }
 
+    if (isCancelled?.call() == true) return 0;
     onProgress?.call(0.85);
     final db = await DatabaseService.getInstance();
     await db.saveExtraTranslationsBatch(editionId, items);
@@ -130,6 +135,17 @@ class TranslationCacheService {
     if (text != null) {
       cacheAyah(edition, surahNumber, ayahNumber, text);
       return text;
+    }
+    if (edition != 'en.sahih') {
+      try {
+        await downloadFromCdn(edition);
+        final fresh =
+            await db.getExtraTranslation(edition, surahNumber, ayahNumber);
+        if (fresh != null) {
+          cacheAyah(edition, surahNumber, ayahNumber, fresh);
+          return fresh;
+        }
+      } catch (_) {}
     }
     return null;
   }

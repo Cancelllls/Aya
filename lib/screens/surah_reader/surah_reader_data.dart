@@ -127,10 +127,12 @@ extension SurahReaderData on _SurahReaderScreenState {
         'default_tafsir',
         defaultValue: 'ar.muyassar',
       );
-      final translationEdition = widget.storage.getString(
-        'default_translation',
-        defaultValue: 'en.sahih',
-      );
+      final translationEdition = widget.translationEdition ??
+          widget.storage.getString(
+            'default_translation',
+            defaultValue: 'en.sahih',
+          );
+      _translationEdition = translationEdition;
 
       List<Ayah> list;
       if (_quranScriptType == 'hafs') {

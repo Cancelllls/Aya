@@ -34,6 +34,7 @@ class SurahReaderScreen extends StatefulWidget {
   final bool isInsidePager;
   final bool hideAppBar;
   final String? readingMode;
+  final String? translationEdition;
   final String? quranScriptType;
   final double? fontSizeMultiplier;
   final Function(double scale)? onFontSizeMultiplierChanged;
@@ -54,6 +55,7 @@ class SurahReaderScreen extends StatefulWidget {
     this.isInsidePager = false,
     this.hideAppBar = false,
     this.readingMode,
+    this.translationEdition,
     this.quranScriptType,
     this.fontSizeMultiplier,
     this.onFontSizeMultiplierChanged,
@@ -80,6 +82,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
   double _baseFontSizeMultiplier = 1.0;
   String _readingMode =
       'translation'; // 'translation', 'arabic_only', 'tafseer', 'continuous'
+  String _translationEdition = 'en.sahih';
   String _quranScriptType = 'hafs';
   bool _isBookmarked = false;
   int? _bookmarkedAyahNumber;
@@ -177,6 +180,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       'quran_font',
       defaultValue: 'font-amiri',
     );
+    _translationEdition = widget.translationEdition ??
+        widget.storage.getString(
+          'default_translation',
+          defaultValue: 'en.sahih',
+        );
     _loadAyahs();
     _fetchDynamicReciters(_quranScriptType);
     _checkBookmarkStatus();
@@ -192,6 +200,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
       setState(() {
         _fontSizeMultiplier = widget.fontSizeMultiplier!;
       });
+    }
+    if (widget.translationEdition != null &&
+        widget.translationEdition != oldWidget.translationEdition) {
+      _translationEdition = widget.translationEdition!;
+      _loadAyahs();
     }
   }
 
@@ -1059,6 +1072,72 @@ class _SurahReaderScreenState extends State<SurahReaderScreen>
                                     },
                                   ),
                                 ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                TranslationService.isArabic
+                                    ? "ترجمة المعاني"
+                                    : "Translation",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: theme.textTheme.bodyMedium?.color
+                                      ?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              Container(
+                                width: 170,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: theme.dividerColor,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: availableTranslations.any(
+                                    (t) => t.identifier == _translationEdition,
+                                  )
+                                      ? _translationEdition
+                                      : 'en.sahih',
+                                  dropdownColor: theme.cardColor,
+                                  underline: const SizedBox(),
+                                  icon: const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Color(0xFFE5C158),
+                                  ),
+                                  items: availableTranslations.map((t) {
+                                    return DropdownMenuItem(
+                                      value: t.identifier,
+                                      child: Text(
+                                        TranslationService.isArabic
+                                            ? t.nameAr
+                                            : t.name,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (v) async {
+                                    if (v != null) {
+                                      _translationEdition = v;
+                                      await widget.storage.setString(
+                                        'default_translation',
+                                        v,
+                                      );
+                                      setModalState(() {});
+                                      setState(() {});
+                                      await _loadAyahs();
+                                    }
+                                  },
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 20),

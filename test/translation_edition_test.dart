@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/models/quran_models.dart';
 import 'package:aya_app/services/translation_cache_service.dart';
+import 'package:aya_app/services/quran_download_service.dart';
 
 void main() {
   group('TranslationEdition model', () {
@@ -91,6 +92,41 @@ void main() {
       expect(parsed.length, 2);
       expect(parsed['1:1'], originalMap['1:1']);
       expect(parsed['1:2'], originalMap['1:2']);
+    });
+  });
+
+  group('TafsirEdition bundled & download service tests', () {
+    test('all availableTafsirs are marked as bundled offline', () {
+      expect(availableTafsirs.length, 8);
+      for (final edition in availableTafsirs) {
+        expect(edition.isBundled, isTrue,
+            reason: '${edition.identifier} must be bundled');
+      }
+    });
+
+    test('getTafsirCountForEdition returns 114 for bundled editions', () async {
+      final service = QuranDownloadService.instance;
+      for (final edition in availableTafsirs) {
+        final count = await service.getTafsirCountForEdition(edition.identifier);
+        expect(count, 114,
+            reason: '${edition.identifier} should return 114 surahs');
+      }
+    });
+
+    test('cancelTafsirDownload resets downloading state', () {
+      final service = QuranDownloadService.instance;
+      service.cancelTafsirDownload();
+      expect(service.isDownloadingTafsir, isFalse);
+      expect(service.downloadingTafsirEdition, isNull);
+      expect(service.tafsirDownloadProgress, 0.0);
+    });
+
+    test('cancelTranslationDownload resets downloading state', () {
+      final service = QuranDownloadService.instance;
+      service.cancelTranslationDownload();
+      expect(service.isDownloadingTranslation, isFalse);
+      expect(service.downloadingTranslationEdition, isNull);
+      expect(service.translationDownloadProgress, 0.0);
     });
   });
 }

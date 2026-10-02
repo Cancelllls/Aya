@@ -13,6 +13,7 @@ import '../models/quran_models.dart';
 import '../models/prayer_models.dart';
 import 'database_service.dart';
 import 'translation_service.dart';
+import 'translation_cache_service.dart';
 
 /// Service handling network calls for prayer times and Quran data.
 /// Uses primary free APIs with graceful fallbacks.
@@ -178,6 +179,16 @@ class ApiService {
         surahNumber,
         translationEdition,
       );
+      if (extraTranslations.isEmpty) {
+        try {
+          await TranslationCacheService.instance
+              .downloadFromCdn(translationEdition);
+          extraTranslations = await db.getExtraTranslationsForSurah(
+            surahNumber,
+            translationEdition,
+          );
+        } catch (_) {}
+      }
     }
 
     final list = <Ayah>[];
@@ -421,6 +432,7 @@ class ApiService {
   static Future<void> downloadFullTafsirEdition(
     String editionId, {
     void Function(double progress)? onProgress,
+    bool Function()? isCancelled,
   }) async {
     final db = await DatabaseService.getInstance();
     if (editionId == 'ar.muyassar') {
@@ -442,6 +454,9 @@ class ApiService {
     final List<Map<String, dynamic>> batchItems = [];
 
     for (int surah = 1; surah <= 114; surah++) {
+      if (isCancelled?.call() == true) {
+        break;
+      }
       try {
         final url = Uri.parse(
           'https://api.quran.com/api/v4/tafsirs/$tId/by_chapter/$surah?per_page=300',

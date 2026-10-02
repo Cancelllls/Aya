@@ -287,16 +287,25 @@ extension SurahReaderUi on _SurahReaderScreenState {
                   const SizedBox(height: 12),
                   Divider(color: theme.dividerColor, height: 1),
                   const SizedBox(height: 8),
-                  Text(
-                    ayah.translation,
-                    style: TextStyle(fontFamily: 'Inter',
-                      fontSize: 14 * _fontSizeMultiplier,
-                      // ignore: deprecated_member_use
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
-                        0.85,
-                      ),
-                      height: 1.5,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final isRtl = _translationEdition.startsWith('ur.') ||
+                          _translationEdition.startsWith('ar.');
+                      return Text(
+                        ayah.translation,
+                        textDirection:
+                            isRtl ? TextDirection.rtl : TextDirection.ltr,
+                        textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: isRtl ? 'Amiri' : 'Inter',
+                          fontSize: (isRtl ? 15 : 14) * _fontSizeMultiplier,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.85,
+                          ),
+                          height: isRtl ? 1.7 : 1.5,
+                        ),
+                      );
+                    },
                   ),
                 ] else if (_readingMode == 'tafseer') ...[
                   const SizedBox(height: 12),

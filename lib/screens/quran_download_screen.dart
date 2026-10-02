@@ -181,7 +181,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       builder: (ctx) => _TranslationPickerSheet(
         storage: widget.storage,
@@ -204,7 +204,7 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       builder: (ctx) => _TafsirPickerSheet(
         storage: widget.storage,
@@ -809,6 +809,9 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
     final progress = QuranDownloadService.instance.tafsirDownloadProgress;
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -832,7 +835,7 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            isAr ? "اختر تفسيراً للتحميل" : "Choose a Tafsir to Download",
+            isAr ? "اختر تفسيراً للتحميل والقراءة" : "Choose a Tafsir for Reading",
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -842,8 +845,8 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
           const SizedBox(height: 4),
           Text(
             isAr
-                ? "يمكنك تحميل تفسير كامل للقراءة بدون إنترنت"
-                : "Download any full Tafsir for offline reading",
+                ? "جميع التفاسير المعتمدة مضمنة محلياً أو قابلة للتحميل للقراءة بدون إنترنت"
+                : "All verified Tafsirs are bundled locally or downloadable for offline reading",
             style: TextStyle(
               fontSize: 11,
               color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
@@ -857,192 +860,246 @@ class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
               child: CircularProgressIndicator(color: Color(0xFFE5C158)),
             )
           else
-            ...availableTafsirs.map((edition) {
-              final count = _counts[edition.identifier] ?? 0;
-              final isFull = count >= 114;
-              final isActive = edition.identifier == widget.currentEdition;
-              final isThisDownloading =
-                  _downloading == edition.identifier && isDownloading;
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: availableTafsirs.map((edition) {
+                  final count = _counts[edition.identifier] ?? 0;
+                  final isBundled = edition.isBundled || edition.identifier == 'ar.muyassar';
+                  final isFull = isBundled || count >= 114;
+                  final isActive = edition.identifier == widget.currentEdition;
+                  final isThisDownloading =
+                      _downloading == edition.identifier && isDownloading;
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? const Color(0xFFE5C158).withValues(alpha: 0.08)
-                      : theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isActive
-                        ? const Color(0xFFE5C158).withValues(alpha: 0.5)
-                        : theme.dividerColor.withValues(alpha: 0.15),
-                    width: isActive ? 1.5 : 1,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 2,
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? const Color(0xFFE5C158).withValues(alpha: 0.08)
+                          : theme.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isActive
+                            ? const Color(0xFFE5C158)
+                            : theme.dividerColor.withValues(alpha: 0.15),
+                        width: isActive ? 1.5 : 1,
                       ),
-                      leading: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: isFull
-                            ? Colors.green.withValues(alpha: 0.15)
-                            : const Color(0xFFE5C158).withValues(alpha: 0.1),
-                        child: Icon(
-                          isFull ? Icons.check_circle : Icons.book_outlined,
-                          size: 18,
-                          color: isFull
-                              ? Colors.green
-                              : const Color(0xFFE5C158),
-                        ),
-                      ),
-                      title: Text(
-                        edition.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                        textDirection: TextDirection.rtl,
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isAr ? edition.mufassir : edition.mufassirEn,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                              color: theme.primaryColor.withValues(alpha: 0.7),
-                            ),
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 2,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            isFull
-                                ? (isAr
-                                      ? "✓ مكتمل (١١٤ سورة)"
-                                      : "✓ Complete (114 Surahs)")
-                                : count > 0
-                                ? (isAr
-                                      ? "جزئي · $count من ١١٤ سورة"
-                                      : "Partial · $count of 114 Surahs")
-                                : (isAr ? "غير محمّل" : "Not downloaded"),
-                            style: TextStyle(
-                              fontSize: 10,
+                          leading: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: isFull
+                                ? Colors.green.withValues(alpha: 0.15)
+                                : const Color(0xFFE5C158).withValues(alpha: 0.1),
+                            child: Icon(
+                              isFull ? Icons.check_circle : Icons.book_outlined,
+                              size: 18,
                               color: isFull
                                   ? Colors.green
-                                  : count > 0
-                                  ? Colors.orange
-                                  : theme.textTheme.bodyMedium?.color
-                                        ?.withValues(alpha: 0.45),
+                                  : const Color(0xFFE5C158),
                             ),
                           ),
-                        ],
-                      ),
-                      trailing: isThisDownloading
-                          ? SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: progress,
-                                    strokeWidth: 3,
-                                    color: const Color(0xFFE5C158),
+                          title: Text(
+                            edition.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                            textDirection: TextDirection.rtl,
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr ? edition.mufassir : edition.mufassirEn,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontStyle: FontStyle.italic,
+                                  color: theme.primaryColor.withValues(alpha: 0.7),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isBundled
+                                    ? (isAr
+                                          ? "✓ مضمّن محلياً (كامل)"
+                                          : "✓ Bundled locally (Complete)")
+                                    : isFull
+                                    ? (isAr
+                                          ? "✓ مكتمل (١١٤ سورة)"
+                                          : "✓ Complete (114 Surahs)")
+                                    : count > 0
+                                    ? (isAr
+                                          ? "جزئي · $count من ١١٤ سورة"
+                                          : "Partial · $count of 114 Surahs")
+                                    : (isAr ? "غير محمّل" : "Not downloaded"),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isFull
+                                      ? Colors.green
+                                      : count > 0
+                                      ? Colors.orange
+                                      : theme.textTheme.bodyMedium?.color
+                                            ?.withValues(alpha: 0.45),
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: isBundled
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
                                   ),
-                                  Text(
-                                    "${(progress * 100).toInt()}%",
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    isAr ? "مضمّن" : "Bundled",
                                     style: const TextStyle(
-                                      fontSize: 8,
-                                      color: Color(0xFFE5C158),
+                                      color: Colors.green,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ],
-                              ),
-                            )
-                          : isFull
-                          ? GestureDetector(
-                              onTap: () async {
-                                await QuranDownloadService.instance
-                                    .deleteAllTafsir(
-                                      widget.storage,
-                                      edition.identifier,
-                                    );
-                                await _loadCounts();
-                              },
-                              child: const Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: Colors.redAccent,
-                              ),
-                            )
-                          : GestureDetector(
-                              onTap: isDownloading
-                                  ? null
-                                  : () async {
-                                      widget.onEditionChanged(
-                                        edition.identifier,
-                                      );
-                                      setState(
-                                        () => _downloading = edition.identifier,
-                                      );
-                                      await QuranDownloadService.instance
-                                          .downloadAllTafsir(
-                                            widget.storage,
+                                )
+                              : isThisDownloading
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          CircularProgressIndicator(
+                                            value: progress > 0 ? progress : null,
+                                            strokeWidth: 2.5,
+                                            color: const Color(0xFFE5C158),
+                                          ),
+                                          Text(
+                                            "${(progress * 100).toInt()}%",
+                                            style: const TextStyle(
+                                              fontSize: 7,
+                                              color: Color(0xFFE5C158),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.cancel_outlined,
+                                        size: 20,
+                                        color: Colors.redAccent,
+                                      ),
+                                      tooltip: isAr ? "إلغاء" : "Cancel",
+                                      onPressed: () {
+                                        QuranDownloadService.instance.cancelTafsirDownload();
+                                        setState(() => _downloading = null);
+                                      },
+                                    ),
+                                  ],
+                                )
+                              : isFull
+                              ? GestureDetector(
+                                  onTap: () async {
+                                    await QuranDownloadService.instance
+                                        .deleteAllTafsir(
+                                          widget.storage,
+                                          edition.identifier,
+                                        );
+                                    await _loadCounts();
+                                  },
+                                  child: const Icon(
+                                    Icons.delete_outline,
+                                    size: 20,
+                                    color: Colors.redAccent,
+                                  ),
+                                )
+                              : GestureDetector(
+                                  onTap: isDownloading
+                                      ? null
+                                      : () async {
+                                          widget.onEditionChanged(
                                             edition.identifier,
                                           );
-                                      await _loadCounts();
-                                      setState(() => _downloading = null);
-                                    },
-                              child: Icon(
-                                Icons.download_rounded,
-                                size: 22,
-                                color: isDownloading
-                                    ? theme.disabledColor
-                                    : const Color(0xFFE5C158),
+                                          setState(
+                                            () => _downloading = edition.identifier,
+                                          );
+                                          await QuranDownloadService.instance
+                                              .downloadAllTafsir(
+                                                widget.storage,
+                                                edition.identifier,
+                                              );
+                                          await _loadCounts();
+                                          setState(() => _downloading = null);
+                                        },
+                                  child: Icon(
+                                    Icons.download_rounded,
+                                    size: 22,
+                                    color: isDownloading
+                                        ? theme.disabledColor
+                                        : const Color(0xFFE5C158),
+                                  ),
+                                ),
+                          onTap: () {
+                            widget.onEditionChanged(edition.identifier);
+                            Navigator.pop(context);
+                          },
+                        ),
+                        if (isThisDownloading)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 14,
+                              right: 14,
+                              bottom: 8,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 4,
+                                backgroundColor: const Color(
+                                  0xFFE5C158,
+                                ).withValues(alpha: 0.15),
+                                color: const Color(0xFFE5C158),
                               ),
                             ),
-                      onTap: () => widget.onEditionChanged(edition.identifier),
-                    ),
-                    if (isThisDownloading)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 14,
-                          right: 14,
-                          bottom: 8,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 4,
-                            backgroundColor: const Color(
-                              0xFFE5C158,
-                            ).withValues(alpha: 0.15),
-                            color: const Color(0xFFE5C158),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            }),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           if (isDownloading)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 8),
               child: TextButton.icon(
                 icon: const Icon(
                   Icons.cancel_outlined,
                   color: Colors.redAccent,
-                  size: 16,
+                  size: 18,
                 ),
                 label: Text(
                   isAr ? "إلغاء التحميل" : "Cancel Download",
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   QuranDownloadService.instance.cancelTafsirDownload();
@@ -1252,13 +1309,27 @@ class _TranslationPickerSheetState extends State<_TranslationPickerSheet> {
                                     color: const Color(0xFFE5C158),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Text(
                                   "${(progress * 100).toInt()}%",
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                ),
+                                const SizedBox(width: 4),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.cancel_outlined,
+                                    size: 18,
+                                    color: Colors.redAccent,
+                                  ),
+                                  tooltip: isAr ? "إلغاء" : "Cancel",
+                                  onPressed: () {
+                                    QuranDownloadService.instance
+                                        .cancelTranslationDownload();
+                                    setState(() => _downloading = null);
+                                  },
                                 ),
                               ],
                             )
@@ -1346,6 +1417,12 @@ class _TranslationPickerSheetState extends State<_TranslationPickerSheet> {
                       ),
                       onTap: () {
                         widget.onEditionChanged(edition.identifier);
+                        if (!edition.isBundled && (_counts[edition.identifier] ?? 0) < 5000) {
+                          QuranDownloadService.instance.downloadAllTranslation(
+                            widget.storage,
+                            edition.identifier,
+                          );
+                        }
                         Navigator.pop(context);
                       },
                     ),

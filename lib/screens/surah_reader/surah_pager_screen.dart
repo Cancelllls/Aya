@@ -33,6 +33,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   int _reloadKey = 0;
   String _readingMode = 'continuous';
   String _quranScriptType = 'hafs';
+  String _translationEdition = 'en.sahih';
   double _fontSizeMultiplier = 1.0;
   bool _isPinching = false;
   double _basePinchMultiplier = 1.0;
@@ -52,6 +53,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _pageController = PageController(initialPage: _currentPage);
     _readingMode = widget.storage.getString('reading_mode', defaultValue: 'continuous');
     _quranScriptType = widget.storage.getString('quran_script_type', defaultValue: 'hafs');
+    _translationEdition = widget.storage.getString('default_translation', defaultValue: 'en.sahih');
     _fontSizeMultiplier = widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
     _tajweedNotifier.value = widget.storage.getBool('tajweed_enabled', defaultValue: true);
     _loadBookmarks();
@@ -170,6 +172,14 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final freshTranslation = widget.storage.getString(
+      'default_translation',
+      defaultValue: 'en.sahih',
+    );
+    if (freshTranslation != _translationEdition) {
+      _translationEdition = freshTranslation;
+      _reloadKey++;
+    }
     final theme = Theme.of(context);
     final surahData = allOfflineSurahs[_currentPage];
 
@@ -365,10 +375,11 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
 
                       return SurahReaderScreen(
                         key: ValueKey(
-                          'surah_${_reloadKey}_${_readingMode}_${_quranScriptType}_$surahNum',
+                          'surah_${_reloadKey}_${_translationEdition}_${_readingMode}_${_quranScriptType}_$surahNum',
                         ),
                         surah: surah,
                         storage: widget.storage,
+                        translationEdition: _translationEdition,
                         initialAyahNumber: surahNum == widget.initialSurah.number
                             ? widget.initialAyahNumber
                             : null,
@@ -607,6 +618,8 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                         onChanged: (v) async {
                           if (v != null) {
                             storedTranslation = v;
+                            _translationEdition = v;
+                            _reloadKey++;
                             await widget.storage.setString('default_translation', v);
                             setModalState(() {});
                             if (mounted) setState(() {});
