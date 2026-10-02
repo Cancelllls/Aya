@@ -45,6 +45,9 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _tajweedNotifier = ValueNotifier(true);
   final ValueNotifier<Set<int>> _bookmarksNotifier = ValueNotifier({});
+  int? _madinahSurahNumber;
+  String? _madinahSurahName;
+  String? _madinahEnglishName;
 
   @override
   void initState() {
@@ -182,6 +185,14 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     }
     final theme = Theme.of(context);
     final surahData = allOfflineSurahs[_currentPage];
+    final String currentEnglishName =
+        (_readingMode == 'madinah_page' && _madinahEnglishName != null)
+            ? _madinahEnglishName!
+            : surahData.englishName;
+    final String currentArabicName =
+        (_readingMode == 'madinah_page' && _madinahSurahName != null)
+            ? _madinahSurahName!
+            : surahData.name;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -190,11 +201,11 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              surahData.englishName,
+              currentEnglishName,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              surahData.name,
+              currentArabicName,
               style: TextStyle(
                 fontSize: 11,
                 color: theme.appBarTheme.foregroundColor?.withValues(alpha: 0.7),
@@ -245,7 +256,14 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
             tooltip: TranslationService.isArabic ? "تغيير نمط العرض" : "Change View Mode",
             color: theme.cardColor,
             onSelected: (mode) {
-              setState(() => _readingMode = mode);
+              setState(() {
+                _readingMode = mode;
+                if (mode != 'madinah_page') {
+                  _madinahSurahNumber = null;
+                  _madinahSurahName = null;
+                  _madinahEnglishName = null;
+                }
+              });
               widget.storage.setString('reading_mode', mode);
             },
             itemBuilder: (context) => [
@@ -350,6 +368,16 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
                         fontSizeMultiplier: _fontSizeMultiplier,
                         onFontSizeMultiplierChanged: (newScale) {
                           setState(() => _fontSizeMultiplier = newScale);
+                        },
+                        onSurahChanged: (surahNum, surahName, englishName) {
+                          if (mounted && (_madinahSurahNumber != surahNum)) {
+                            setState(() {
+                              _madinahSurahNumber = surahNum;
+                              _madinahSurahName = surahName;
+                              _madinahEnglishName = englishName;
+                              _currentPage = (surahNum - 1).clamp(0, 113);
+                            });
+                          }
                         },
                       );
                     },

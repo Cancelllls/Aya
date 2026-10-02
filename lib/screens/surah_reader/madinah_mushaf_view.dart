@@ -26,6 +26,7 @@ class MadinahMushafView extends StatefulWidget {
   final StorageService storage;
   final double fontSizeMultiplier;
   final Function(int page)? onPageChanged;
+  final Function(int surahNumber, String surahName, String englishName)? onSurahChanged;
   final Function(double scale)? onFontSizeMultiplierChanged;
 
   const MadinahMushafView({
@@ -34,6 +35,7 @@ class MadinahMushafView extends StatefulWidget {
     required this.storage,
     this.fontSizeMultiplier = 1.0,
     this.onPageChanged,
+    this.onSurahChanged,
     this.onFontSizeMultiplierChanged,
   });
 
@@ -61,6 +63,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
     _scaleMultiplier = widget.fontSizeMultiplier;
     _loadBookmarks();
     AudioManager.instance.playState.addListener(_onAudioPlayStateChanged);
+    _notifySurahForPage(_currentPage);
   }
 
   @override
@@ -185,10 +188,29 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
     return results;
   }
 
+  Future<void> _notifySurahForPage(int page) async {
+    try {
+      final ayahs = await _loadPage(page);
+      if (ayahs.isNotEmpty && mounted) {
+        final firstAyah = ayahs.first;
+        final surahNum = firstAyah['surah_number'] as int? ?? 1;
+        if (surahNum >= 1 && surahNum <= 114) {
+          final surahData = allOfflineSurahs[surahNum - 1];
+          widget.onSurahChanged?.call(
+            surahData.number,
+            surahData.name,
+            surahData.englishName,
+          );
+        }
+      }
+    } catch (_) {}
+  }
+
   void _onPageSwiped(int index) {
     final page = index + 1;
     setState(() => _currentPage = page);
     widget.onPageChanged?.call(page);
+    _notifySurahForPage(page);
 
     // Save reading progress
     final cached = _pageCache[page];
@@ -323,7 +345,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
         final surahDisplayName = surahData?.name ?? firstAyah['surah_name'] ?? '';
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(16),
@@ -345,24 +367,27 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
               _buildPageHeader(surahDisplayName, juzNumber),
               const Divider(height: 1, color: Color(0x22E5C158)),
 
-              // Main Page Verses Content with dynamic sizing
+              // Main Page Verses Content with dynamic sizing - single screen fit with zero scrolling
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return ValueListenableBuilder<AudioPlayState>(
                         valueListenable: AudioManager.instance.playState,
                         builder: (context, playState, _) {
-                          return SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                              child: _buildMushafPageBody(
-                                ayahs,
-                                constraints.maxWidth,
-                                constraints.maxHeight,
-                                playState,
+                          return Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.center,
+                              child: SizedBox(
+                                width: constraints.maxWidth,
+                                child: _buildMushafPageBody(
+                                  ayahs,
+                                  constraints.maxWidth,
+                                  constraints.maxHeight,
+                                  playState,
+                                ),
                               ),
                             ),
                           );
@@ -386,7 +411,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
   Widget _buildPageHeader(String surahName, int juz) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -394,7 +419,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
             surahName,
             style: const TextStyle(
               fontFamily: 'Amiri',
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
@@ -530,16 +555,25 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
       }
     }
 
-    final double bannerSpace = (bannersCount * 54.0) + (bismillahCount * 28.0);
-    final double availableTextSpace = (availableHeight - bannerSpace).clamp(200.0, 1400.0);
-    final int estimatedLines = (15 - (bannersCount * 3) - (bismillahCount * 1)).clamp(6, 15);
-    final double targetLineHeightPx = availableTextSpace / estimatedLines;
-    // Dynamically scale based on width & height with smooth pinch multiplier
-    final double widthFactor = (availableWidth / 360.0).clamp(0.85, 1.35);
+    final double bannerSpace = (bannersCount * 36.0) + (bismillahCount * 22.0);
+    final double availableTextSpace = (availableHeight - bannerSpace).clamp(160.0, 1400.0);
+
+    // Count total characters on this page to gauge text density
+    final int totalChars = ayahs.fold<int>(
+      0,
+      (sum, a) => sum + ((a['text_arabic'] as String? ?? '').length),
+    );
+
+    // An average line in Amiri font fits ~26 to 52 chars depending on width
+    final double charsPerLine = (availableWidth / 9.2).clamp(26.0, 52.0);
+    final double estimatedLines = (totalChars / charsPerLine).clamp(10.0, 24.0);
+
+    // Target line height to perfectly fill available vertical space
+    final double targetLineHeightPx = (availableTextSpace / estimatedLines);
     final double baseFontSize =
-        ((targetLineHeightPx / 1.85) * widthFactor).clamp(13.0, 28.0) * _scaleMultiplier;
+        ((targetLineHeightPx / 1.55)).clamp(12.0, 24.0) * _scaleMultiplier;
     final double textLineHeight =
-        (targetLineHeightPx / (baseFontSize / _scaleMultiplier)).clamp(1.5, 2.2);
+        (targetLineHeightPx / (baseFontSize / _scaleMultiplier)).clamp(1.20, 1.50);
 
     final children = <Widget>[];
 
@@ -556,13 +590,13 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
         if (surahNum != 1 && surahNum != 9) {
           children.add(
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 4.0),
+              padding: EdgeInsets.symmetric(vertical: 2.0),
               child: Center(
                 child: Text(
                   'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
                   style: TextStyle(
                     fontFamily: 'Amiri',
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFFE5C158),
                   ),
@@ -643,20 +677,21 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.min,
       children: children,
     );
   }
 
   Widget _buildSurahTitleBanner(Surah surah) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFE5C158).withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: const Color(0xFFE5C158).withValues(alpha: 0.35),
-          width: 1.5,
+          width: 1.2,
         ),
       ),
       child: Row(
@@ -668,7 +703,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                 : surah.revelationType,
             style: const TextStyle(
               fontFamily: 'Amiri',
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
@@ -677,7 +712,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
             surah.name,
             style: const TextStyle(
               fontFamily: 'Amiri',
-              fontSize: 18,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
@@ -688,7 +723,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                 : '${surah.numberOfAyahs} v.',
             style: const TextStyle(
               fontFamily: 'Amiri',
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Color(0xFFE5C158),
             ),
@@ -913,7 +948,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
       loadedTafsirs['ar.muyassar'] = rawTafsir;
     }
 
-    String selectedLang = 'all';
+    String selectedLang = TranslationService.isArabic ? 'ar' : 'en'; // 'ar' or 'en'
     final surahNum = ayah['surah_number'] as int? ?? 1;
     final ayahNum = ayah['ayah_number'] as int? ?? 1;
 
@@ -930,11 +965,9 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
 
         return StatefulBuilder(
           builder: (context, sheetSetState) {
-            final filteredTafsirs = availableTafsirs.where((e) {
-              if (selectedLang == 'ar') return e.language == 'ar';
-              if (selectedLang == 'en') return e.language == 'en';
-              return true;
-            }).toList();
+            final filteredTafsirs = availableTafsirs
+                .where((e) => e.language == selectedLang)
+                .toList();
 
             return Container(
               height: MediaQuery.of(context).size.height * 0.80,
@@ -958,7 +991,7 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                             ),
                           ),
                           Text(
-                            isAr ? 'جميع التفاسير المتاحة' : 'Available Tafsirs',
+                            isAr ? 'التفاسير المتاحة' : 'Available Tafsirs',
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
@@ -974,30 +1007,21 @@ class _MadinahMushafViewState extends State<MadinahMushafView> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Language Filter Bar (ALL | AR | EN)
+                  // Language Filter Bar (Arabic | English)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ChoiceChip(
-                        label: Text(isAr ? 'الكل' : 'All'),
-                        selected: selectedLang == 'all',
-                        selectedColor: const Color(0xFFE5C158),
-                        onSelected: (val) {
-                          if (val) sheetSetState(() => selectedLang = 'all');
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: Text(isAr ? 'عربي فقط' : 'Arabic Only'),
+                        label: Text(isAr ? 'العربية' : 'Arabic'),
                         selected: selectedLang == 'ar',
                         selectedColor: const Color(0xFFE5C158),
                         onSelected: (val) {
                           if (val) sheetSetState(() => selectedLang = 'ar');
                         },
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       ChoiceChip(
-                        label: Text(isAr ? 'English فقط' : 'English Only'),
+                        label: const Text('English'),
                         selected: selectedLang == 'en',
                         selectedColor: const Color(0xFFE5C158),
                         onSelected: (val) {

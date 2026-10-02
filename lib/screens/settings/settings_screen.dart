@@ -61,7 +61,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-amiri';
   String _tafsirEdition = 'ar.muyassar';
-  String _translationEdition = 'en.sahih';
 
   // Add calculation settings
   int _calcMethod = 2;
@@ -119,10 +118,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     _tafsirEdition = widget.storage.getString(
       'default_tafsir',
       defaultValue: 'ar.muyassar',
-    );
-    _translationEdition = widget.storage.getString(
-      'default_translation',
-      defaultValue: 'en.sahih',
     );
 
     _calcMethod = widget.storage.getInt('calc_method', defaultValue: 2);
@@ -653,16 +648,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
   }
 
-  Future<void> _changeTranslationEdition(String? val) async {
-    if (val != null) {
-      setState(() {
-        _translationEdition = val;
-      });
-      await widget.storage.setString('default_translation', val);
-      widget.onThemeChanged();
-    }
-  }
-
   /// Debounced wrapper — batches rapid-fire settings toggles into one reschedule.
   void _debouncedReschedule() {
     _rescheduleTimer?.cancel();
@@ -830,7 +815,6 @@ class _SettingsScreenState extends State<SettingsScreen>
                   _themePreset = 'dark';
                   _quranFont = 'font-amiri';
                   _tafsirEdition = 'ar.muyassar';
-                  _translationEdition = 'en.sahih';
                   _calcMethod = 2;
                   _asrMethod = 0;
                   _continuousPlay = true;

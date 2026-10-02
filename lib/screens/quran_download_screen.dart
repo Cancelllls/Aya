@@ -194,29 +194,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     );
   }
 
-  void _openTafsirPicker() {
-    final currentTafsir = widget.storage.getString(
-      'default_tafsir',
-      defaultValue: 'ar.muyassar',
-    );
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      builder: (ctx) => _TafsirPickerSheet(
-        storage: widget.storage,
-        currentEdition: currentTafsir,
-        onEditionChanged: (id) {
-          widget.storage.setString('default_tafsir', id);
-          if (mounted) setState(() {});
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -240,11 +217,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                 ? "ترجمات القرآن"
                 : "Translations",
             onPressed: _openTranslationPicker,
-          ),
-          IconButton(
-            icon: const Icon(Icons.menu_book, color: Color(0xFFE5C158)),
-            tooltip: TranslationService.isArabic ? "التفاسير" : "Tafsirs",
-            onPressed: _openTafsirPicker,
           ),
         ],
       ),
@@ -454,72 +426,37 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                           height: 24,
                           color: theme.dividerColor.withValues(alpha: 0.1),
                         ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: const Color(0xFFE5C158)
-                                        .withValues(alpha: 0.4),
-                                  ),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.translate,
-                                  size: 16,
-                                  color: Color(0xFFE5C158),
-                                ),
-                                label: Text(
-                                  TranslationService.isArabic
-                                      ? "الترجمات (CDN)"
-                                      : "Translations (CDN)",
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFE5C158),
-                                  ),
-                                ),
-                                onPressed: _openTranslationPicker,
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: const Color(0xFFE5C158)
+                                    .withValues(alpha: 0.4),
+                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: const Color(0xFFE5C158)
-                                        .withValues(alpha: 0.4),
-                                  ),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.menu_book,
-                                  size: 16,
-                                  color: Color(0xFFE5C158),
-                                ),
-                                label: Text(
-                                  TranslationService.isArabic
-                                      ? "التفاسير"
-                                      : "Tafsirs",
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFE5C158),
-                                  ),
-                                ),
-                                onPressed: _openTafsirPicker,
+                            icon: const Icon(
+                              Icons.translate,
+                              size: 16,
+                              color: Color(0xFFE5C158),
+                            ),
+                            label: Text(
+                              TranslationService.isArabic
+                                  ? "ترجمات القرآن (CDN)"
+                                  : "Translations (CDN)",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFE5C158),
                               ),
                             ),
-                          ],
+                            onPressed: _openTranslationPicker,
+                          ),
                         ),
                       ],
                     ),
@@ -746,370 +683,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
             QuranDownloadService.instance.downloadSurah(surahNum, _reciter),
       );
     }
-  }
-}
-
-// ─── Tafsir Picker Bottom Sheet ───────────────────────────────────────────────
-class _TafsirPickerSheet extends StatefulWidget {
-  final StorageService storage;
-  final String currentEdition;
-  final ValueChanged<String> onEditionChanged;
-
-  const _TafsirPickerSheet({
-    required this.storage,
-    required this.currentEdition,
-    required this.onEditionChanged,
-  });
-
-  @override
-  State<_TafsirPickerSheet> createState() => _TafsirPickerSheetState();
-}
-
-class _TafsirPickerSheetState extends State<_TafsirPickerSheet> {
-  Map<String, int> _counts = {};
-  bool _loading = true;
-  String? _downloading;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCounts();
-    QuranDownloadService.instance.addListener(_onServiceUpdate);
-  }
-
-  @override
-  void dispose() {
-    QuranDownloadService.instance.removeListener(_onServiceUpdate);
-    super.dispose();
-  }
-
-  void _onServiceUpdate() {
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _loadCounts() async {
-    final Map<String, int> counts = {};
-    for (final t in availableTafsirs) {
-      counts[t.identifier] = await QuranDownloadService.instance
-          .getTafsirCountForEdition(t.identifier);
-    }
-    if (mounted) {
-      setState(() {
-        _counts = counts;
-        _loading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isAr = TranslationService.isArabic;
-    final isDownloading = QuranDownloadService.instance.isDownloadingTafsir;
-    final progress = QuranDownloadService.instance.tafsirDownloadProgress;
-
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        top: 20,
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.dividerColor.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            isAr ? "اختر تفسيراً للتحميل والقراءة" : "Choose a Tafsir for Reading",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Color(0xFFE5C158),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isAr
-                ? "جميع التفاسير المعتمدة مضمنة محلياً أو قابلة للتحميل للقراءة بدون إنترنت"
-                : "All verified Tafsirs are bundled locally or downloadable for offline reading",
-            style: TextStyle(
-              fontSize: 11,
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(color: Color(0xFFE5C158)),
-            )
-          else
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: availableTafsirs.map((edition) {
-                  final count = _counts[edition.identifier] ?? 0;
-                  final isBundled = edition.isBundled || edition.identifier == 'ar.muyassar';
-                  final isFull = isBundled || count >= 114;
-                  final isActive = edition.identifier == widget.currentEdition;
-                  final isThisDownloading =
-                      _downloading == edition.identifier && isDownloading;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? const Color(0xFFE5C158).withValues(alpha: 0.08)
-                          : theme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isActive
-                            ? const Color(0xFFE5C158)
-                            : theme.dividerColor.withValues(alpha: 0.15),
-                        width: isActive ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 2,
-                          ),
-                          leading: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: isFull
-                                ? Colors.green.withValues(alpha: 0.15)
-                                : const Color(0xFFE5C158).withValues(alpha: 0.1),
-                            child: Icon(
-                              isFull ? Icons.check_circle : Icons.book_outlined,
-                              size: 18,
-                              color: isFull
-                                  ? Colors.green
-                                  : const Color(0xFFE5C158),
-                            ),
-                          ),
-                          title: Text(
-                            edition.name,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: theme.textTheme.bodyLarge?.color,
-                            ),
-                            textDirection: TextDirection.rtl,
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isAr ? edition.mufassir : edition.mufassirEn,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontStyle: FontStyle.italic,
-                                  color: theme.primaryColor.withValues(alpha: 0.7),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isBundled
-                                    ? (isAr
-                                          ? "✓ مضمّن محلياً (كامل)"
-                                          : "✓ Bundled locally (Complete)")
-                                    : isFull
-                                    ? (isAr
-                                          ? "✓ مكتمل (١١٤ سورة)"
-                                          : "✓ Complete (114 Surahs)")
-                                    : count > 0
-                                    ? (isAr
-                                          ? "جزئي · $count من ١١٤ سورة"
-                                          : "Partial · $count of 114 Surahs")
-                                    : (isAr ? "غير محمّل" : "Not downloaded"),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isFull
-                                      ? Colors.green
-                                      : count > 0
-                                      ? Colors.orange
-                                      : theme.textTheme.bodyMedium?.color
-                                            ?.withValues(alpha: 0.45),
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: isBundled
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    isAr ? "مضمّن" : "Bundled",
-                                    style: const TextStyle(
-                                      color: Colors.green,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                )
-                              : isThisDownloading
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          CircularProgressIndicator(
-                                            value: progress > 0 ? progress : null,
-                                            strokeWidth: 2.5,
-                                            color: const Color(0xFFE5C158),
-                                          ),
-                                          Text(
-                                            "${(progress * 100).toInt()}%",
-                                            style: const TextStyle(
-                                              fontSize: 7,
-                                              color: Color(0xFFE5C158),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.cancel_outlined,
-                                        size: 20,
-                                        color: Colors.redAccent,
-                                      ),
-                                      tooltip: isAr ? "إلغاء" : "Cancel",
-                                      onPressed: () {
-                                        QuranDownloadService.instance.cancelTafsirDownload();
-                                        setState(() => _downloading = null);
-                                      },
-                                    ),
-                                  ],
-                                )
-                              : isFull
-                              ? GestureDetector(
-                                  onTap: () async {
-                                    await QuranDownloadService.instance
-                                        .deleteAllTafsir(
-                                          widget.storage,
-                                          edition.identifier,
-                                        );
-                                    await _loadCounts();
-                                  },
-                                  child: const Icon(
-                                    Icons.delete_outline,
-                                    size: 20,
-                                    color: Colors.redAccent,
-                                  ),
-                                )
-                              : GestureDetector(
-                                  onTap: isDownloading
-                                      ? null
-                                      : () async {
-                                          widget.onEditionChanged(
-                                            edition.identifier,
-                                          );
-                                          setState(
-                                            () => _downloading = edition.identifier,
-                                          );
-                                          await QuranDownloadService.instance
-                                              .downloadAllTafsir(
-                                                widget.storage,
-                                                edition.identifier,
-                                              );
-                                          await _loadCounts();
-                                          setState(() => _downloading = null);
-                                        },
-                                  child: Icon(
-                                    Icons.download_rounded,
-                                    size: 22,
-                                    color: isDownloading
-                                        ? theme.disabledColor
-                                        : const Color(0xFFE5C158),
-                                  ),
-                                ),
-                          onTap: () {
-                            widget.onEditionChanged(edition.identifier);
-                            Navigator.pop(context);
-                          },
-                        ),
-                        if (isThisDownloading)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 14,
-                              right: 14,
-                              bottom: 8,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: progress,
-                                minHeight: 4,
-                                backgroundColor: const Color(
-                                  0xFFE5C158,
-                                ).withValues(alpha: 0.15),
-                                color: const Color(0xFFE5C158),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          if (isDownloading)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: TextButton.icon(
-                icon: const Icon(
-                  Icons.cancel_outlined,
-                  color: Colors.redAccent,
-                  size: 18,
-                ),
-                label: Text(
-                  isAr ? "إلغاء التحميل" : "Cancel Download",
-                  style: const TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () {
-                  QuranDownloadService.instance.cancelTafsirDownload();
-                  setState(() => _downloading = null);
-                },
-              ),
-            ),
-        ],
-      ),
-    );
   }
 }
 

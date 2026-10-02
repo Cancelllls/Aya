@@ -7,7 +7,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
       loadedTafsirs['ar.muyassar'] = ayah.tafseer;
     }
 
-    String selectedLang = 'all'; // 'all', 'ar', 'en'
+    String selectedLang = TranslationService.isArabic ? 'ar' : 'en'; // 'ar' or 'en'
 
     showModalBottomSheet(
       context: context,
@@ -22,11 +22,9 @@ extension SurahReaderActions on _SurahReaderScreenState {
 
         return StatefulBuilder(
           builder: (context, sheetSetState) {
-            final filteredTafsirs = availableTafsirs.where((e) {
-              if (selectedLang == 'ar') return e.language == 'ar';
-              if (selectedLang == 'en') return e.language == 'en';
-              return true;
-            }).toList();
+            final filteredTafsirs = availableTafsirs
+                .where((e) => e.language == selectedLang)
+                .toList();
 
             return Container(
               height: MediaQuery.of(context).size.height * 0.80,
@@ -50,7 +48,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
                             ),
                           ),
                           Text(
-                            isAr ? 'جميع التفاسير المتاحة' : 'Available Tafsirs',
+                            isAr ? 'التفاسير المتاحة' : 'Available Tafsirs',
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
@@ -66,30 +64,21 @@ extension SurahReaderActions on _SurahReaderScreenState {
                   ),
                   const SizedBox(height: 10),
 
-                  // Language Filter Bar (ALL | AR | EN)
+                  // Language Filter Bar (Arabic | English)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ChoiceChip(
-                        label: Text(isAr ? 'الكل' : 'All'),
-                        selected: selectedLang == 'all',
-                        selectedColor: const Color(0xFFE5C158),
-                        onSelected: (val) {
-                          if (val) sheetSetState(() => selectedLang = 'all');
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: Text(isAr ? 'عربي فقط' : 'Arabic Only'),
+                        label: Text(isAr ? 'العربية' : 'Arabic'),
                         selected: selectedLang == 'ar',
                         selectedColor: const Color(0xFFE5C158),
                         onSelected: (val) {
                           if (val) sheetSetState(() => selectedLang = 'ar');
                         },
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       ChoiceChip(
-                        label: Text(isAr ? 'English فقط' : 'English Only'),
+                        label: const Text('English'),
                         selected: selectedLang == 'en',
                         selectedColor: const Color(0xFFE5C158),
                         onSelected: (val) {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/models/quran_models.dart';
+import 'package:aya_app/models/offline_surahs.dart';
 import 'package:aya_app/services/translation_cache_service.dart';
 import 'package:aya_app/services/quran_download_service.dart';
 
@@ -128,5 +129,32 @@ void main() {
       expect(service.downloadingTranslationEdition, isNull);
       expect(service.translationDownloadProgress, 0.0);
     });
+
+    test('binary Tafsir language selection strictly filters by ar or en', () {
+      final arOnly = availableTafsirs.where((e) => e.language == 'ar').toList();
+      final enOnly = availableTafsirs.where((e) => e.language == 'en').toList();
+
+      expect(arOnly.isNotEmpty, isTrue);
+      expect(enOnly.isNotEmpty, isTrue);
+      expect(arOnly.every((e) => e.language == 'ar'), isTrue);
+      expect(enOnly.every((e) => e.language == 'en'), isTrue);
+
+      // Verify no overlap and all editions belong to either ar or en
+      expect(arOnly.length + enOnly.length, availableTafsirs.length);
+      for (final t in arOnly) {
+        expect(enOnly.contains(t), isFalse);
+      }
+    });
+
+    test('allOfflineSurahs provides valid Arabic and English names for 114 Surahs', () {
+      expect(allOfflineSurahs.length, 114);
+      for (int i = 0; i < 114; i++) {
+        final surah = allOfflineSurahs[i];
+        expect(surah.number, i + 1);
+        expect(surah.name.isNotEmpty, isTrue);
+        expect(surah.englishName.isNotEmpty, isTrue);
+      }
+    });
   });
 }
+
