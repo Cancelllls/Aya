@@ -1,6 +1,23 @@
 {
   "versions": [
     {
+      "version": "1.3.6",
+      "date": "2026-10-03",
+      "title": "Sunni Endowment Iraq Calculation & Regional Astronomical Presets",
+      "changes": {
+        "en": [
+          "Sunni Endowment (Iraq) — Added dedicated prayer calculation method with official 19.5° Fajr and 17.5° Isha angles",
+          "Smart Iraq Detection — Automatic location detection for Baghdad, Mosul, Basra, Erbil, and Iraqi cities",
+          "Regional Presets — Explicit astronomical calculation parameters for France, Russia, UAE, and Turkey"
+        ],
+        "ar": [
+          "ديوان الوقف السني (العراق) — إضافة طريقة حساب مخصصة تعتمد الزوايا الفلكية الرسمية (١٩.٥° للفجر و ١٧.٥° للعشاء)",
+          "تحديد تلقائي للعراق — التعرف التلقائي على بغداد والموصل والبصرة وأربيل ومحافظات العراق",
+          "معايير فلكية إقليمية — ضبط دقيق لمعايير الحساب لكل من فرنسا وروسيا والإمارات وتركيا"
+        ]
+      }
+    },
+    {
       "version": "1.3.5",
       "date": "2026-10-02",
       "title": "Multi-Edition Quran Translations & Performance Enhancements",

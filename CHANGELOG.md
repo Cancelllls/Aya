@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.6] - 2026-10-03
+
+### Added
+- **Sunni Endowment (Iraq) Method**: Official calculation method for Iraq with 19.5° Fajr and 17.5° Isha angles.
+- **Smart City Detection for Iraq**: Automatic location detection for Baghdad, Mosul, Basra, Erbil, Kirkuk, Anbar, and Iraqi governorates.
+- **Regional Calculation Presets**: Explicit calculation parameters for France (12°/12°), Russia (16°/15°), UAE (18.2°/18.2°), and Turkey (18°/17°).
+
 ## [1.3.5] - 2026-10-02
 
 ### Added
