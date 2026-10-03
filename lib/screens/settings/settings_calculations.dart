@@ -58,6 +58,10 @@ extension SettingsCalculationsSection on _SettingsScreenState {
                         child: Text(isAr ? "الهيئة المصرية العامة للمساحة" : "Egyptian Survey"),
                       ),
                       DropdownMenuItem(
+                        value: 6,
+                        child: Text(isAr ? "ديوان الوقف السني (العراق)" : "Sunni Endowment (Iraq)"),
+                      ),
+                      DropdownMenuItem(
                         value: 10,
                         child: Text(isAr ? "وزارة الأوقاف (قطر)" : "Qatar Awqaf"),
                       ),

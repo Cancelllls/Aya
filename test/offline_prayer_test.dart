@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aya_app/services/offline_prayer_service.dart';
+import 'package:aya_app/services/storage/prayer_preferences.dart';
 import 'package:aya_app/models/prayer_models.dart';
 
 void main() {
@@ -72,6 +74,31 @@ void main() {
       expect(dataIsna.fajr, isNot(dataMakkah.fajr));
     });
 
+    test('calculates prayer times for Baghdad using Sunni Endowment Iraq (method 6)', () async {
+      final dataIraq = await OfflinePrayerService.getPrayerTimes(
+        latitude: 33.3152,
+        longitude: 44.3661,
+        method: 6,
+        school: 0,
+      );
+      expect(dataIraq, isA<PrayerTimeData>());
+      expect(dataIraq.fajr, isNotEmpty);
+      expect(dataIraq.dhuhr, isNotEmpty);
+      expect(dataIraq.asr, isNotEmpty);
+      expect(dataIraq.maghrib, isNotEmpty);
+      expect(dataIraq.isha, isNotEmpty);
+
+      // Method 6 (Sunni Endowment Iraq 19.5°/17.5°) should match Method 5 (Egyptian 19.5°/17.5°)
+      final dataEgypt = await OfflinePrayerService.getPrayerTimes(
+        latitude: 33.3152,
+        longitude: 44.3661,
+        method: 5,
+        school: 0,
+      );
+      expect(dataIraq.fajr, equals(dataEgypt.fajr));
+      expect(dataIraq.isha, equals(dataEgypt.isha));
+    });
+
     test('monthly calendar generates 28-31 days', () async {
       final month = await OfflinePrayerService.getMonthlyCalendar(
         month: 7, year: 2026,
@@ -83,6 +110,18 @@ void main() {
         expect(day['timings']['Fajr'], isNotEmpty);
         expect(day['timings']['Isha'], isNotEmpty);
       }
+    });
+
+    test('PrayerPreferences determineSmartCalculationMethod detects Iraq cities', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final prayerPrefs = PrayerPreferences(prefs);
+
+      expect(prayerPrefs.determineSmartCalculationMethod('Baghdad', 'Iraq'), 6);
+      expect(prayerPrefs.determineSmartCalculationMethod('بغداد', 'العراق'), 6);
+      expect(prayerPrefs.determineSmartCalculationMethod('Mosul', 'Iraq'), 6);
+      expect(prayerPrefs.determineSmartCalculationMethod('Erbil', 'Iraq'), 6);
+      expect(prayerPrefs.determineSmartCalculationMethod('Basra', 'Iraq'), 6);
     });
   });
 }

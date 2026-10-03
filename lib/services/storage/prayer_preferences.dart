@@ -25,7 +25,30 @@ class PrayerPreferences {
   /// Automatically resolves best calculation method for a given city and country.
   int determineSmartCalculationMethod(String city, String country) {
     final loc = '$city $country'.toLowerCase();
-    if (loc.contains('egypt') ||
+    if (loc.contains('iraq') ||
+        loc.contains('عراق') ||
+        loc.contains('baghdad') ||
+        loc.contains('بغداد') ||
+        loc.contains('mosul') ||
+        loc.contains('الموصل') ||
+        loc.contains('basra') ||
+        loc.contains('البصرة') ||
+        loc.contains('erbil') ||
+        loc.contains('أربيل') ||
+        loc.contains('kirkuk') ||
+        loc.contains('كركوك') ||
+        loc.contains('sulaymaniyah') ||
+        loc.contains('السليمانية') ||
+        loc.contains('anbar') ||
+        loc.contains('الأنبار') ||
+        loc.contains('fallujah') ||
+        loc.contains('الفلوجة') ||
+        loc.contains('najaf') ||
+        loc.contains('النجف') ||
+        loc.contains('karbala') ||
+        loc.contains('كربلاء')) {
+      return 6; // Sunni Endowment (Iraq)
+    } else if (loc.contains('egypt') ||
         loc.contains('مصر') ||
         loc.contains('alexandria') ||
         loc.contains('الإسكندرية') ||

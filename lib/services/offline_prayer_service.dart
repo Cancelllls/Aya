@@ -42,10 +42,14 @@ class OfflinePrayerService {
       case 5:
         params = CalculationMethod.egyptian.getParameters();
         break;
+      case 6: // Sunni Endowment in Iraq (19.5° Fajr / 17.5° Isha)
+        params = CalculationMethod.egyptian.getParameters();
+        break;
       case 7:
         params = CalculationMethod.tehran.getParameters();
         break;
       case 8:
+      case 16: // UAE (GAIAE) / Dubai
         params = CalculationMethod.dubai.getParameters();
         break;
       case 9:
@@ -57,11 +61,14 @@ class OfflinePrayerService {
       case 11:
         params = CalculationMethod.singapore.getParameters();
         break;
-      case 12:
+      case 12: // France (UOIF)
+        params = CalculationParameters(fajrAngle: 12.0, ishaAngle: 12.0, method: CalculationMethod.other);
+        break;
+      case 13: // Turkey (Diyanet)
         params = CalculationMethod.turkey.getParameters();
         break;
-      case 13:
-        params = CalculationMethod.other.getParameters();
+      case 14: // Russia (SAMR)
+        params = CalculationParameters(fajrAngle: 16.0, ishaAngle: 15.0, method: CalculationMethod.other);
         break;
       default:
         params = CalculationMethod.other.getParameters();
@@ -134,10 +141,14 @@ class OfflinePrayerService {
       case 5:
         params = CalculationMethod.egyptian.getParameters();
         break;
+      case 6: // Sunni Endowment in Iraq (19.5° Fajr / 17.5° Isha)
+        params = CalculationMethod.egyptian.getParameters();
+        break;
       case 7:
         params = CalculationMethod.tehran.getParameters();
         break;
       case 8:
+      case 16: // UAE (GAIAE) / Dubai
         params = CalculationMethod.dubai.getParameters();
         break;
       case 9:
@@ -149,8 +160,14 @@ class OfflinePrayerService {
       case 11:
         params = CalculationMethod.singapore.getParameters();
         break;
-      case 12:
+      case 12: // France (UOIF)
+        params = CalculationParameters(fajrAngle: 12.0, ishaAngle: 12.0, method: CalculationMethod.other);
+        break;
+      case 13: // Turkey (Diyanet)
         params = CalculationMethod.turkey.getParameters();
+        break;
+      case 14: // Russia (SAMR)
+        params = CalculationParameters(fajrAngle: 16.0, ishaAngle: 15.0, method: CalculationMethod.other);
         break;
       default:
         params = CalculationMethod.other.getParameters();
