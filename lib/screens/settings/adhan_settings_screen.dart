@@ -22,6 +22,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   bool _loading = true;
   AudioPlayer? _previewPlayer;
   String? _previewingReciter;
+  String? _previewingTone;
 
   Map<String, dynamic> _healthStatus = {};
 
@@ -106,7 +107,32 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   @override
   void dispose() {
     _previewPlayer?.dispose();
+    AdhanAudioService.instance.stopPreview();
     super.dispose();
+  }
+
+  Future<void> _toggleTonePreview(String tone) async {
+    if (_previewingTone == tone) {
+      await AdhanAudioService.instance.stopPreview();
+      if (mounted) {
+        setState(() {
+          _previewingTone = null;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _previewingTone = tone;
+        });
+      }
+      await AdhanAudioService.instance.playNotificationTonePreview(tone);
+    }
+  }
+
+  Future<void> _changeNotificationSoundTone(String val) async {
+    await _storage?.setString('notification_sound_tone', val);
+    setState(() {});
+    await _rescheduleAlarms();
   }
 
   Future<void> _togglePreview(String reciterKey, bool isFajr) async {
@@ -324,6 +350,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   Widget _buildQuickBatchCard(bool isAr, Color primaryColor, ThemeData theme) {
     final allAdhansMode = _getAllAdhansCurrentMode();
     final allPreMode = _getAllPreAdhansCurrentMode();
+    final currentSoundTone = _storage?.getString('notification_sound_tone', defaultValue: 'chime') ?? 'chime';
 
     return Card(
       elevation: 0,
@@ -452,6 +479,74 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       onChanged: (val) {
                         if (val != null && val != 'custom') {
                           _setAllPreAdhansMode(val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Notification Tone / Pre-Adhan Audio Selector
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    isAr ? 'نغمة التنبيهات:' : 'Notification Tone:',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+                if (currentSoundTone != 'system') ...[
+                  IconButton(
+                    iconSize: 22,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(
+                      _previewingTone == currentSoundTone
+                          ? Icons.stop_circle_rounded
+                          : Icons.play_circle_fill_rounded,
+                      color: primaryColor,
+                    ),
+                    tooltip: isAr ? 'استماع' : 'Preview',
+                    onPressed: () => _toggleTonePreview(currentSoundTone),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: ['chime', 'call', 'takbeer', 'system'].contains(currentSoundTone)
+                          ? currentSoundTone
+                          : 'chime',
+                      items: [
+                        DropdownMenuItem(
+                          value: 'chime',
+                          child: Text(isAr ? 'نغمة هادئة' : 'Gentle Chime', style: const TextStyle(fontSize: 12.5)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'call',
+                          child: Text(isAr ? 'نداء الأذان' : 'Voice Call', style: const TextStyle(fontSize: 12.5)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'takbeer',
+                          child: Text(isAr ? 'تكبيرات' : 'Takbeer', style: const TextStyle(fontSize: 12.5)),
+                        ),
+                        DropdownMenuItem(
+                          value: 'system',
+                          child: Text(isAr ? 'نغمة النظام' : 'System Default', style: const TextStyle(fontSize: 12.5)),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          _changeNotificationSoundTone(val);
                         }
                       },
                     ),

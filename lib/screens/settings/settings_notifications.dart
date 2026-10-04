@@ -67,38 +67,12 @@ extension SettingsNotificationsSection on _SettingsScreenState {
     _debouncedReschedule();
   }
 
-  Future<void> _changeNotificationSoundTone(String val) async {
-    setState(() {
-      _notificationSoundTone = val;
-    });
-    await widget.storage.setString('notification_sound_tone', val);
-    _debouncedReschedule();
-  }
-
   Future<void> _changeDefaultAdhanReciter(String val) async {
     setState(() {
       _adhanReciter = val;
     });
     await widget.storage.setString('adhan_reciter', val);
     _debouncedReschedule();
-  }
-
-  Future<void> _toggleTonePreview(String tone) async {
-    if (_previewingTone == tone) {
-      await AdhanAudioService.instance.stopPreview();
-      if (mounted) {
-        setState(() {
-          _previewingTone = null;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _previewingTone = tone;
-        });
-      }
-      await AdhanAudioService.instance.playNotificationTonePreview(tone);
-    }
   }
 
   List<Widget> _buildNotificationsSection(ThemeData theme) {
@@ -181,67 +155,6 @@ extension SettingsNotificationsSection on _SettingsScreenState {
                         _changeNotificationLang(val);
                       }
                     },
-                  ),
-                ),
-                Divider(
-                  height: 1,
-                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
-                ),
-
-                // 2. Notification Sound / Tone Selector with Live Preview
-                ListTile(
-                  leading: Icon(Icons.music_note_outlined, color: primary),
-                  title: Text(
-                    isAr ? "نغمة التنبيهات والإشعارات" : "Notification Sound & Tone",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    isAr
-                        ? "نغمة التنبيه المسبق وتذكيرات الصلاة"
-                        : "Tone for pre-adhan alerts and prayer reminders",
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_notificationSoundTone != 'system')
-                        IconButton(
-                          icon: Icon(
-                            _previewingTone == _notificationSoundTone
-                                ? Icons.stop_circle_rounded
-                                : Icons.play_circle_fill_rounded,
-                            color: primary,
-                          ),
-                          tooltip: isAr ? 'استماع' : 'Preview',
-                          onPressed: () => _toggleTonePreview(_notificationSoundTone),
-                        ),
-                      SettingsValueChip<String>(
-                        value: _notificationSoundTone,
-                        label: isAr ? 'نغمة التنبيه' : 'Notification Tone',
-                        items: [
-                          DropdownMenuItem(
-                            value: 'chime',
-                            child: Text(isAr ? "نغمة هادئة" : "Gentle Chime"),
-                          ),
-                          DropdownMenuItem(
-                            value: 'call',
-                            child: Text(isAr ? "نداء الأذان" : "Voice Call"),
-                          ),
-                          DropdownMenuItem(
-                            value: 'takbeer',
-                            child: Text(isAr ? "تكبيرات" : "Takbeer"),
-                          ),
-                          DropdownMenuItem(
-                            value: 'system',
-                            child: Text(isAr ? "نغمة النظام" : "System Default"),
-                          ),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            _changeNotificationSoundTone(val);
-                          }
-                        },
-                      ),
-                    ],
                   ),
                 ),
                 Divider(
