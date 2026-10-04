@@ -71,6 +71,10 @@ class AdhanAudioService {
     }
   }
 
+  Future<void> playPreAdhanPreview([String lang = 'ar']) async {
+    await playNotificationTonePreview('call');
+  }
+
   Future<void> playNotificationTonePreview(String tone) async {
     await stopPreview();
     _previewPlayer = AudioPlayer();

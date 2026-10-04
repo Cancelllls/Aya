@@ -64,7 +64,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
     try {
       await NotificationService().scheduleDailyReminders(widget.storage);
     } catch (_) {}
-    _scheduleAlarms();
+    _debouncedReschedule();
   }
 
   Future<void> _changeNotificationSoundTone(String val) async {
@@ -72,7 +72,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
       _notificationSoundTone = val;
     });
     await widget.storage.setString('notification_sound_tone', val);
-    _scheduleAlarms();
+    _debouncedReschedule();
   }
 
   Future<void> _changeDefaultAdhanReciter(String val) async {
@@ -80,7 +80,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
       _adhanReciter = val;
     });
     await widget.storage.setString('adhan_reciter', val);
-    _scheduleAlarms();
+    _debouncedReschedule();
   }
 
   Future<void> _toggleTonePreview(String tone) async {
