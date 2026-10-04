@@ -207,6 +207,52 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     return 'custom';
   }
 
+  Future<void> _applyRemindersToAll() async {
+    for (final p in _prayers) {
+      await _storage?.setBool('pre_adhan_${p}_early_enabled', true);
+      await _storage?.setInt('pre_adhan_${p}_early_minutes', p == 'fajr' ? 45 : 30);
+      await _storage?.setBool('pre_adhan_${p}_iqamah_enabled', true);
+      await _storage?.setInt('pre_adhan_${p}_iqamah_minutes', p == 'maghrib' ? 10 : (p == 'fajr' ? 25 : 15));
+    }
+    setState(() {});
+    _rescheduleAlarms();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? 'تم تفعيل التنبيهات المتعددة (مبكر + إقامة) لجميع الصلوات!'
+                : 'Multiple reminders (Early + Iqamah) applied to all prayers!',
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> _applyGlobalReciter(String reciter) async {
+    await _storage?.setString('adhan_reciter', reciter);
+    for (final p in _prayers) {
+      if (p != 'fajr') {
+        await _storage?.setString('adhan_reciter_$p', reciter);
+      }
+    }
+    setState(() {});
+    _rescheduleAlarms();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            TranslationService.isArabic
+                ? 'تم تطبيق المؤذن على جميع الصلوات!'
+                : 'Adhan reciter applied to all prayers!',
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = TranslationService.isArabic;
@@ -412,6 +458,67 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Global Reciter Row
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    isAr ? 'المؤذن الموحد للصلوات:' : 'Default Reciter (All):',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _standardRecitersEn.containsKey(_storage?.getString('adhan_reciter', defaultValue: 'mishary'))
+                          ? _storage?.getString('adhan_reciter', defaultValue: 'mishary')
+                          : 'mishary',
+                      items: (isAr ? _standardRecitersAr : _standardRecitersEn).entries.map((e) {
+                        return DropdownMenuItem<String>(
+                          value: e.key,
+                          child: Text(e.value, style: const TextStyle(fontSize: 12.5)),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          _applyGlobalReciter(val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Batch apply multi-reminders button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryColor,
+                  side: BorderSide(color: primaryColor.withValues(alpha: 0.35)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+                icon: const Icon(Icons.more_time_rounded, size: 18),
+                label: Text(
+                  isAr ? 'تفعيل التنبيهات المتعددة لجميع الصلوات' : 'Apply Multi-Reminders to All Prayers',
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                onPressed: _applyRemindersToAll,
+              ),
             ),
           ],
         ),
@@ -658,6 +765,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     final currentPreMode = _storage?.getString(preModeKey, defaultValue: 'vibrate') ?? 'vibrate';
     final currentReciter = _storage?.getString(reciterKeyName) ?? _storage?.getString('adhan_reciter', defaultValue: 'mishary') ?? 'mishary';
 
+    final bool earlyEnabled = _storage?.getBool('pre_adhan_${prayer}_early_enabled', defaultValue: false) ?? false;
+    final int earlyMins = _storage?.getInt('pre_adhan_${prayer}_early_minutes', defaultValue: prayer == 'fajr' ? 45 : 30) ?? (prayer == 'fajr' ? 45 : 30);
+
+    final bool iqamahEnabled = _storage?.getBool('pre_adhan_${prayer}_iqamah_enabled', defaultValue: false) ?? false;
+    final int iqamahMins = _storage?.getInt('pre_adhan_${prayer}_iqamah_minutes', defaultValue: prayer == 'maghrib' ? 10 : (prayer == 'fajr' ? 25 : 15)) ?? (prayer == 'maghrib' ? 10 : (prayer == 'fajr' ? 25 : 15));
+
     final reciterOptions = prayer == 'fajr'
         ? (isAr ? _fajrRecitersAr : _fajrRecitersEn)
         : (isAr ? _standardRecitersAr : _standardRecitersEn);
@@ -681,8 +794,8 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
         ),
         subtitle: Text(
           isAr
-              ? '${_getModeLabel(currentMode, isAr)} • تنبيه مسبق: $currentOffset د'
-              : '${_getModeLabel(currentMode, isAr)} • Pre-alert: ${currentOffset}m',
+              ? '${_getModeLabel(currentMode, isAr)} • تنبيه: $currentOffset د${earlyEnabled ? ' • مبكر: $earlyMins د' : ''}${iqamahEnabled ? ' • إقامة: $iqamahMins د' : ''}'
+              : '${_getModeLabel(currentMode, isAr)} • Pre: ${currentOffset}m${earlyEnabled ? ' • Early: ${earlyMins}m' : ''}${iqamahEnabled ? ' • Iqamah: ${iqamahMins}m' : ''}',
           style: TextStyle(fontSize: 12.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
         ),
         children: [
@@ -859,6 +972,155 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         }
                       },
                     ),
+                  ),
+                ),
+
+                const Divider(height: 24),
+
+                // Multi-Reminders Header
+                Row(
+                  children: [
+                    Icon(Icons.more_time_rounded, color: primaryColor, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      isAr ? 'تنبيهات إضافية للصلاة (تنبيه متعدد):' : 'Additional Reminders (Multi-Alert):',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // 1. Early Reminder Tile & Controls
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        activeColor: primaryColor,
+                        title: Text(
+                          isAr ? '⏰ تنبيه مبكر (استيقاظ / قيام)' : '⏰ Early Alert (Tahajjud / Pre-wake)',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          isAr ? 'تنبيه إضافي قبل الأذان بوقت كافٍ' : 'Additional wake-up alert before adhan',
+                          style: TextStyle(fontSize: 11.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                        ),
+                        value: earlyEnabled,
+                        onChanged: (val) async {
+                          await _storage?.setBool('pre_adhan_${prayer}_early_enabled', val);
+                          setState(() {});
+                          _rescheduleAlarms();
+                        },
+                      ),
+                      if (earlyEnabled) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              isAr ? 'وقت التنبيه المبكر:' : 'Early Alert Time:',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '$earlyMins ${isAr ? 'د قبل الأذان' : 'mins before'}',
+                                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 11.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Slider(
+                          min: 15,
+                          max: 90,
+                          divisions: 15,
+                          value: earlyMins.toDouble().clamp(15.0, 90.0),
+                          activeColor: primaryColor,
+                          onChanged: (val) async {
+                            await _storage?.setInt('pre_adhan_${prayer}_early_minutes', val.toInt());
+                            setState(() {});
+                            _rescheduleAlarms();
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // 2. Post-Adhan / Iqamah Reminder Tile & Controls
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        activeColor: primaryColor,
+                        title: Text(
+                          isAr ? '🕌 تذكير الإقامة ومتابعة الأداء' : '🕌 Iqamah / Post-Adhan Alert',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          isAr ? 'تنبيه بعد الأذان لدخول موعد الإقامة أو الصلاة' : 'Alert after adhan for iqamah and prayer performance',
+                          style: TextStyle(fontSize: 11.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                        ),
+                        value: iqamahEnabled,
+                        onChanged: (val) async {
+                          await _storage?.setBool('pre_adhan_${prayer}_iqamah_enabled', val);
+                          setState(() {});
+                          _rescheduleAlarms();
+                        },
+                      ),
+                      if (iqamahEnabled) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              isAr ? 'وقت تذكير الإقامة:' : 'Iqamah Alert Time:',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '$iqamahMins ${isAr ? 'د بعد الأذان' : 'mins after'}',
+                                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 11.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Slider(
+                          min: 5,
+                          max: 45,
+                          divisions: 8,
+                          value: iqamahMins.toDouble().clamp(5.0, 45.0),
+                          activeColor: primaryColor,
+                          onChanged: (val) async {
+                            await _storage?.setInt('pre_adhan_${prayer}_iqamah_minutes', val.toInt());
+                            setState(() {});
+                            _rescheduleAlarms();
+                          },
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],

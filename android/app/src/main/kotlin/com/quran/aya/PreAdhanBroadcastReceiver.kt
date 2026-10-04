@@ -23,8 +23,15 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
         val alertMode = intent.getStringExtra("ALERT_MODE") ?: "vibrate"
 
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
-        val isAr = langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
+        val notifLang = prefs.getString("flutter.notification_lang", "follow_app") ?: "follow_app"
+        val isAr = when (notifLang) {
+            "ar" -> true
+            "en" -> false
+            else -> {
+                val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
+                langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
+            }
+        }
 
         val prayerName = when (rawPrayerName.lowercase()) {
             "fajr", "الفجر" -> if (isAr) "الفجر" else "Fajr"
@@ -51,11 +58,28 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
         if (effectiveAlertMode == "off") return
 
         val isSound = effectiveAlertMode == "sound" || effectiveAlertMode == "real_reciter"
-        val channelId = if (isSound) "pre_adhan_sound_channel_v2" else "pre_adhan_silent_channel_v2"
+        val soundTone = prefs.getString("flutter.notification_sound_tone", "chime") ?: "chime"
+        val soundRawName = when (soundTone) {
+            "call" -> "prayer_reminder_call"
+            "takbeer" -> "adhan_meshary_al_fasy_kuwait"
+            "system" -> null
+            else -> "default_pre_adhan"
+        }
+        val channelId = if (!isSound) {
+            "pre_adhan_silent_channel_v2"
+        } else if (soundRawName != null) {
+            "pre_adhan_tone_${soundTone}_v1"
+        } else {
+            "pre_adhan_system_channel_v1"
+        }
         val notifManager = NotificationManagerCompat.from(context)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val soundUri = Uri.parse("android.resource://${context.packageName}/raw/default_pre_adhan")
+            val soundUri = if (soundRawName != null) {
+                Uri.parse("android.resource://${context.packageName}/raw/$soundRawName")
+            } else {
+                android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
+            }
             val channel = NotificationChannel(
                 channelId,
                 if (isSound) "Pre-Adhan Sound Alerts" else "Pre-Adhan Silent Alerts",
@@ -90,15 +114,17 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             "ic_notification", "drawable", context.packageName
         )
 
-        val title = if (rawPrayerName.startsWith("⚠️")) {
-            rawPrayerName
-        } else {
-            if (isAr) "اقترب موعد الأذان" else "Adhan is approaching"
+        val title = when {
+            rawPrayerName.startsWith("⚠️") -> rawPrayerName
+            rawPrayerName.startsWith("⏰") -> if (isAr) "⏰ تنبيه مبكر للصلاة" else "⏰ Early Prayer Reminder"
+            rawPrayerName.startsWith("🕌") || minutesBefore < 0 -> if (isAr) "🕌 إقامة الصلاة" else "🕌 Iqamah Reminder"
+            else -> if (isAr) "اقترب موعد الأذان" else "Adhan is approaching"
         }
-        val body = if (rawPrayerName.startsWith("⚠️")) {
-            if (isAr) "تنبيه عاجل قبل انتهاء وقت الصلاة ⚠️" else "Urgent alert before prayer window closes ⚠️"
-        } else {
-            if (isAr) "بقي $minutesBefore دقائق على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
+        val body = when {
+            rawPrayerName.startsWith("⚠️") -> if (isAr) "تنبيه عاجل قبل انتهاء وقت الصلاة ⚠️" else "Urgent alert before prayer window closes ⚠️"
+            rawPrayerName.startsWith("⏰") -> if (isAr) "بقي $minutesBefore دقيقة على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
+            rawPrayerName.startsWith("🕌") || minutesBefore < 0 -> if (isAr) "حان الآن موعد إقامة صلاة $prayerName" else "It is now time for $prayerName prayer Iqamah"
+            else -> if (isAr) "بقي $minutesBefore دقائق على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
         }
 
         val notifBuilder = NotificationCompat.Builder(context, channelId)
@@ -120,14 +146,13 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
 
         if (alertMode == "sound" || alertMode == "real_reciter") {
             try {
-                var soundResId = context.resources.getIdentifier("default_pre_adhan", "raw", context.packageName)
-                if (soundResId == 0) {
-                    soundResId = context.resources.getIdentifier("prayer_reminder_call", "raw", context.packageName)
-                }
-                if (soundResId != 0) {
-                    val player = android.media.MediaPlayer.create(context, soundResId)
-                    player?.start()
-                    player?.setOnCompletionListener { mp -> mp.release() }
+                if (soundRawName != null) {
+                    val soundResId = context.resources.getIdentifier(soundRawName, "raw", context.packageName)
+                    if (soundResId != 0) {
+                        val player = android.media.MediaPlayer.create(context, soundResId)
+                        player?.start()
+                        player?.setOnCompletionListener { mp -> mp.release() }
+                    }
                 }
             } catch (_: Exception) {}
         }

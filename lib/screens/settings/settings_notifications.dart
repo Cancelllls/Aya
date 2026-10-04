@@ -56,9 +56,74 @@ extension SettingsNotificationsSection on _SettingsScreenState {
     } catch (_) {}
   }
 
+  Future<void> _changeNotificationLang(String val) async {
+    setState(() {
+      _notificationLang = val;
+    });
+    await widget.storage.setString('notification_lang', val);
+    try {
+      await NotificationService().scheduleDailyReminders(widget.storage);
+    } catch (_) {}
+    _scheduleAlarms();
+  }
+
+  Future<void> _changeNotificationSoundTone(String val) async {
+    setState(() {
+      _notificationSoundTone = val;
+    });
+    await widget.storage.setString('notification_sound_tone', val);
+    _scheduleAlarms();
+  }
+
+  Future<void> _changeDefaultAdhanReciter(String val) async {
+    setState(() {
+      _adhanReciter = val;
+    });
+    await widget.storage.setString('adhan_reciter', val);
+    _scheduleAlarms();
+  }
+
+  Future<void> _toggleTonePreview(String tone) async {
+    if (_previewingTone == tone) {
+      await AdhanAudioService.instance.stopPreview();
+      if (mounted) {
+        setState(() {
+          _previewingTone = null;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _previewingTone = tone;
+        });
+      }
+      await AdhanAudioService.instance.playNotificationTonePreview(tone);
+    }
+  }
+
   List<Widget> _buildNotificationsSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
     final primary = theme.colorScheme.primary;
+
+    final standardReciters = isAr
+        ? {
+            'mishary': 'مشاري العفاسي (الكويت)',
+            'abdul_basit': 'عبد الباسط عبد الصمد (مصر)',
+            'manssour': 'منصور الزهراني (السعودية)',
+            'maghriby': 'نور الدين الهذيوي (القدس)',
+            'kazabri': 'عمر القزابري (المغرب)',
+            'riad': 'رياض الجزائري (الجزائر)',
+            'nakshabandi': 'سيد النقشبندي (مصر)',
+          }
+        : {
+            'mishary': 'Mishary Al-Afasy (Kuwait)',
+            'abdul_basit': 'Abdul Basit (Egypt)',
+            'manssour': 'Manssour Al-Zahrani (Saudi Arabia)',
+            'maghriby': 'Nurdin Al-Maghriby (Al-Quds)',
+            'kazabri': 'Omar Al-Kazabri (Morocco)',
+            'riad': 'Riad Al-Djazairi (Algeria)',
+            'nakshabandi': 'Sayed Al-Nakshabandi (Egypt)',
+          };
 
     return [
       // === SECTION 1: ADHAN & ALERTS ===
@@ -82,18 +147,154 @@ extension SettingsNotificationsSection on _SettingsScreenState {
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
+                // 1. Notification Language (independent of app language)
                 ListTile(
-                  leading: Icon(Icons.tune_outlined, color: primary),
+                  leading: Icon(Icons.language_outlined, color: primary),
                   title: Text(
-                    isAr
-                        ? "إعدادات الأذان والتنبيه المسبق (لكل صلاة)"
-                        : "Adhan & Pre-Alert Customization",
+                    isAr ? "لغة الإشعارات والتنبيهات" : "Notification Language",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     isAr
-                        ? "تخصيص صوت المؤذن، التنبيه المسبق، التدرج بالصوت، والوضع الصامت التلقائي"
-                        : "Per-prayer reciters, pre-alerts, volume ramp & auto-DND",
+                        ? "تحديد لغة نصوص الأذان والتنبيهات بشكل مستقل"
+                        : "Alert & reminder language independent of app language",
+                  ),
+                  trailing: SettingsValueChip<String>(
+                    value: _notificationLang,
+                    label: isAr ? 'لغة الإشعارات' : 'Notification Language',
+                    items: [
+                      DropdownMenuItem(
+                        value: 'follow_app',
+                        child: Text(isAr ? "حسب لغة التطبيق" : "Follow App Language"),
+                      ),
+                      DropdownMenuItem(
+                        value: 'ar',
+                        child: Text(isAr ? "العربية (Arabic)" : "Arabic (العربية)"),
+                      ),
+                      DropdownMenuItem(
+                        value: 'en',
+                        child: Text(isAr ? "الإنجليزية (English)" : "English"),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        _changeNotificationLang(val);
+                      }
+                    },
+                  ),
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+
+                // 2. Notification Sound / Tone Selector with Live Preview
+                ListTile(
+                  leading: Icon(Icons.music_note_outlined, color: primary),
+                  title: Text(
+                    isAr ? "نغمة التنبيهات والإشعارات" : "Notification Sound & Tone",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isAr
+                        ? "نغمة التنبيه المسبق وتذكيرات الصلاة"
+                        : "Tone for pre-adhan alerts and prayer reminders",
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_notificationSoundTone != 'system')
+                        IconButton(
+                          icon: Icon(
+                            _previewingTone == _notificationSoundTone
+                                ? Icons.stop_circle_rounded
+                                : Icons.play_circle_fill_rounded,
+                            color: primary,
+                          ),
+                          tooltip: isAr ? 'استماع' : 'Preview',
+                          onPressed: () => _toggleTonePreview(_notificationSoundTone),
+                        ),
+                      SettingsValueChip<String>(
+                        value: _notificationSoundTone,
+                        label: isAr ? 'نغمة التنبيه' : 'Notification Tone',
+                        items: [
+                          DropdownMenuItem(
+                            value: 'chime',
+                            child: Text(isAr ? "نغمة هادئة" : "Gentle Chime"),
+                          ),
+                          DropdownMenuItem(
+                            value: 'call',
+                            child: Text(isAr ? "نداء الأذان" : "Voice Call"),
+                          ),
+                          DropdownMenuItem(
+                            value: 'takbeer',
+                            child: Text(isAr ? "تكبيرات" : "Takbeer"),
+                          ),
+                          DropdownMenuItem(
+                            value: 'system',
+                            child: Text(isAr ? "نغمة النظام" : "System Default"),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            _changeNotificationSoundTone(val);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+
+                // 3. Default Adhan Reciter Voice
+                ListTile(
+                  leading: Icon(Icons.record_voice_over_outlined, color: primary),
+                  title: Text(
+                    isAr ? "صوت الأذان العام المفضل" : "Default Adhan Sound",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isAr
+                        ? "المؤذن الافتراضي لجميع مواقيت الصلاة"
+                        : "Global reciter voice for all prayer times",
+                  ),
+                  trailing: SettingsValueChip<String>(
+                    value: standardReciters.containsKey(_adhanReciter) ? _adhanReciter : 'mishary',
+                    label: isAr ? 'صوت المؤذن' : 'Adhan Reciter',
+                    items: standardReciters.entries.map((e) {
+                      return DropdownMenuItem<String>(
+                        value: e.key,
+                        child: Text(e.value),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        _changeDefaultAdhanReciter(val);
+                      }
+                    },
+                  ),
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+
+                // 4. Per-Prayer & Multi-Reminder Customization Sub-screen
+                ListTile(
+                  leading: Icon(Icons.tune_outlined, color: primary),
+                  title: Text(
+                    isAr
+                        ? "تخصيص الأذان والتنبيهات المتعددة (لكل صلاة)"
+                        : "Adhan & Multi-Reminder Customization",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isAr
+                        ? "تخصيص كل صلاة على حدة، تنبيهات مبكرة، وتنبيه الإقامة"
+                        : "Per-prayer reciters, early pre-alerts & iqamah reminders",
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {

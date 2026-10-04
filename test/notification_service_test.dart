@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/services/notification_service.dart';
 import 'package:aya_app/services/adhan_audio_service.dart';
+import 'package:aya_app/services/translation_service.dart';
 
 void main() {
   group('AdhanAudioService reciter mappings', () {
@@ -49,20 +50,55 @@ void main() {
     });
 
     test('notification IDs do not overlap between types', () {
-      // Prayer IDs: 1-70 base, +2000 pre-adhan, +5000 tracker
+      // Prayer IDs: 1-70 base, +2000 pre-adhan, +2500 early, +2800 iqamah, +4000 jumuah, +5000 tracker, +6000/+7000/+8000 escalating
       // Reminder IDs: 3000 morning, 3001 evening, 3002-3008 verse
       final prayerBase = {for (int i = 1; i <= 70; i++) i};
       final preAdhan = {for (int i = 1; i <= 70; i++) i + 2000};
-      final tracker = {for (int i = 1; i <= 70; i++) i + 5000};
+      final earlyPreAdhan = {for (int i = 1; i <= 70; i++) i + 2500};
+      final iqamahReminders = {for (int i = 1; i <= 70; i++) i + 2800};
       final reminders = {3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008};
+      final jumuah = {for (int i = 1; i <= 70; i++) i + 4000};
+      final tracker = {for (int i = 1; i <= 70; i++) i + 5000};
+      final escalating = {
+        for (int i = 1; i <= 70; i++) ...[i + 6000, i + 7000, i + 8000],
+      };
+      final media = {8888};
+      final events = {for (int i = 9000; i <= 9050; i++) i};
 
-      // Check no overlap
-      expect(prayerBase.intersection(preAdhan), isEmpty);
-      expect(prayerBase.intersection(tracker), isEmpty);
-      expect(prayerBase.intersection(reminders), isEmpty);
-      expect(preAdhan.intersection(tracker), isEmpty);
-      expect(preAdhan.intersection(reminders), isEmpty);
-      expect(tracker.intersection(reminders), isEmpty);
+      final allGroups = [
+        prayerBase,
+        preAdhan,
+        earlyPreAdhan,
+        iqamahReminders,
+        reminders,
+        jumuah,
+        tracker,
+        escalating,
+        media,
+        events,
+      ];
+
+      for (int i = 0; i < allGroups.length; i++) {
+        for (int j = i + 1; j < allGroups.length; j++) {
+          expect(
+            allGroups[i].intersection(allGroups[j]),
+            isEmpty,
+            reason: 'Group $i and Group $j have overlapping notification IDs',
+          );
+        }
+      }
+    });
+
+    test('resolveIsArabic correctly prioritizes notification_lang over app language', () {
+      TranslationService.setLanguage('en');
+      expect(NotificationService.resolveIsArabic('ar'), isTrue);
+      expect(NotificationService.resolveIsArabic('en'), isFalse);
+      expect(NotificationService.resolveIsArabic('follow_app'), isFalse);
+
+      TranslationService.setLanguage('ar');
+      expect(NotificationService.resolveIsArabic('ar'), isTrue);
+      expect(NotificationService.resolveIsArabic('en'), isFalse);
+      expect(NotificationService.resolveIsArabic('follow_app'), isTrue);
     });
   });
 }

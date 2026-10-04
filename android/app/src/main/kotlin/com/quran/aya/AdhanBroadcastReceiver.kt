@@ -37,8 +37,15 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         val maxDurationMs = intent.getIntExtra("MAX_DURATION_MS", 0)
 
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
-        val isAr = langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
+        val notifLang = prefs.getString("flutter.notification_lang", "follow_app") ?: "follow_app"
+        val isAr = when (notifLang) {
+            "ar" -> true
+            "en" -> false
+            else -> {
+                val langCode = prefs.getString("flutter.lang_code", "ar") ?: "ar"
+                langCode == "ar" || prefs.getBoolean("flutter.widget_is_arabic", true)
+            }
+        }
 
         val prayerName = when (rawPrayerName.lowercase()) {
             "fajr", "الفجر" -> if (isAr) "الفجر" else "Fajr"

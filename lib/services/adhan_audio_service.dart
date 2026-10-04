@@ -71,17 +71,26 @@ class AdhanAudioService {
     }
   }
 
-  Future<void> playPreAdhanPreview(String lang) async {
+  Future<void> playNotificationTonePreview(String tone) async {
     await stopPreview();
     _previewPlayer = AudioPlayer();
 
-    final urls = preAdhanVoiceUrls['standard'];
-    if (urls != null) {
-      final filename = urls[lang];
-      if (filename != null) {
-        await _previewPlayer!.play(AssetSource('audio/adhan/$filename'));
-      }
+    String assetPath;
+    switch (tone) {
+      case 'call':
+        assetPath = 'audio/adhan/prayer_reminder_call.mp3';
+        break;
+      case 'takbeer':
+        assetPath = 'audio/adhan/adhan_meshary_al_fasy_kuwait.mp3';
+        break;
+      case 'system':
+        return; // System sound cannot be played via asset
+      case 'chime':
+      default:
+        assetPath = 'audio/default_pre_adhan.mp3';
+        break;
     }
+    await _previewPlayer!.play(AssetSource(assetPath));
   }
 
   Future<void> stopPreview() async {

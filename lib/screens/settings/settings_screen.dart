@@ -94,6 +94,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   int _preAdhanDuration = 10; // minutes before adhan
   String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
+  String _notificationLang = 'follow_app'; // follow_app, ar, en
+  String _notificationSoundTone = 'chime'; // chime, call, takbeer, system
+  String? _previewingTone;
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
   bool _autoDndEnabled = false;
   int _autoDndDuration = 20;
@@ -200,6 +203,14 @@ class _SettingsScreenState extends State<SettingsScreen>
     _adhanReciter = widget.storage.getString(
       'adhan_reciter',
       defaultValue: 'mishary',
+    );
+    _notificationLang = widget.storage.getString(
+      'notification_lang',
+      defaultValue: 'follow_app',
+    );
+    _notificationSoundTone = widget.storage.getString(
+      'notification_sound_tone',
+      defaultValue: 'chime',
     );
     _athanStopGesture = widget.storage.getString(
       'athan_stop_gesture',
