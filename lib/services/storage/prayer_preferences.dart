@@ -113,7 +113,7 @@ class PrayerPreferences {
     return 3; // Muslim World League (MWL) as general fallback
   }
 
-  /// Sets location coordinates and updates calculation method automatically.
+  /// Sets location coordinates and ensures calculation method defaults to Auto (0) if unset.
   Future<bool> setLocation(
     String city,
     String country,
@@ -129,8 +129,10 @@ class PrayerPreferences {
       'source': source,
     };
 
-    final smartMethod = determineSmartCalculationMethod(city, country);
-    await _prefs.setInt('calc_method', smartMethod);
+    final currentMethod = _prefs.getInt('calc_method');
+    if (currentMethod == null) {
+      await _prefs.setInt('calc_method', 0);
+    }
     return await _prefs.setString('user_location', jsonEncode(data));
   }
 }

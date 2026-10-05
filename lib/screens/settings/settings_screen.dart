@@ -63,7 +63,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _tafsirEdition = 'ar.muyassar';
 
   // Add calculation settings
-  int _calcMethod = 2;
+  int _calcMethod = 0;
+  double _customFajrAngle = 18.0;
+  double _customIshaAngle = 17.0;
   int _asrMethod = 0;
   bool _continuousPlay = true;
   bool _hideContinuousBorders = false;
@@ -121,7 +123,15 @@ class _SettingsScreenState extends State<SettingsScreen>
       defaultValue: 'ar.muyassar',
     );
 
-    _calcMethod = widget.storage.getInt('calc_method', defaultValue: 2);
+    _calcMethod = widget.storage.getInt('calc_method', defaultValue: 0);
+    _customFajrAngle = widget.storage.getDouble(
+      'custom_fajr_angle',
+      defaultValue: 18.0,
+    );
+    _customIshaAngle = widget.storage.getDouble(
+      'custom_isha_angle',
+      defaultValue: 17.0,
+    );
     _asrMethod = widget.storage.getInt('asr_method', defaultValue: 0);
     _continuousPlay = widget.storage.getBool(
       'setting_continuous_play',
@@ -353,7 +363,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       if (val > 0 && wasOff) {
         final granted = await _ensureAdhanPermissions();
         if (!granted) {
-          setState(() { _preAdhanDuration = 0; });
+          setState(() {
+            _preAdhanDuration = 0;
+          });
           await widget.storage.setInt('pre_adhan_duration', 0);
           return;
         }
@@ -427,19 +439,22 @@ class _SettingsScreenState extends State<SettingsScreen>
       final canSchedule = await NotificationService.canScheduleExactAlarms();
 
       final missing = <String>[];
-      if (!canSchedule) missing.add(
-        TranslationService.isArabic
-            ? 'المنبهات الدقيقة (Alarms & Reminders)'
-            : 'Exact Alarm schedule',
-      );
-      if (!hasNotif) missing.add(
-        TranslationService.isArabic ? 'الإشعارات' : 'Notification access',
-      );
-      if (!hasLocation) missing.add(
-        TranslationService.isArabic
-            ? 'الموقع (السماح دائماً)'
-            : 'Location (Allow all the time)',
-      );
+      if (!canSchedule)
+        missing.add(
+          TranslationService.isArabic
+              ? 'المنبهات الدقيقة (Alarms & Reminders)'
+              : 'Exact Alarm schedule',
+        );
+      if (!hasNotif)
+        missing.add(
+          TranslationService.isArabic ? 'الإشعارات' : 'Notification access',
+        );
+      if (!hasLocation)
+        missing.add(
+          TranslationService.isArabic
+              ? 'الموقع (السماح دائماً)'
+              : 'Location (Allow all the time)',
+        );
 
       if (missing.isEmpty) return true;
 
@@ -453,7 +468,10 @@ class _SettingsScreenState extends State<SettingsScreen>
             TranslationService.isArabic
                 ? "صلاحيات مطلوبة"
                 : "Permissions Required",
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE5C158)),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFE5C158),
+            ),
           ),
           content: Text(
             TranslationService.isArabic
@@ -472,7 +490,9 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
-                TranslationService.isArabic ? "منح الصلاحيات" : "Grant Permissions",
+                TranslationService.isArabic
+                    ? "منح الصلاحيات"
+                    : "Grant Permissions",
                 style: const TextStyle(color: Colors.black),
               ),
             ),
@@ -575,7 +595,10 @@ class _SettingsScreenState extends State<SettingsScreen>
               ],
               Text(
                 isAr ? "تبرع عبر باي بال:" : "Donate via PayPal:",
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
@@ -614,7 +637,10 @@ class _SettingsScreenState extends State<SettingsScreen>
         _themePreset = val;
       });
       await widget.storage.setString('theme_preset', val);
-      await widget.storage.setBool('widget_is_dark', widget.storage.isDarkMode());
+      await widget.storage.setBool(
+        'widget_is_dark',
+        widget.storage.isDarkMode(),
+      );
       widget.onThemeChanged();
       try {
         await _platform.invokeMethod('updateWidget');
@@ -642,7 +668,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
   }
 
-
   Future<void> _changeTafsirEdition(String? val) async {
     if (val != null) {
       setState(() {
@@ -664,7 +689,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _rescheduleAlarms() async {
     try {
       final loc = widget.storage.getLocation();
-      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final method = widget.storage.getInt('calc_method', defaultValue: 0);
       final school = widget.storage.getInt('asr_method', defaultValue: 0);
 
       final PrayerTimeData data = await ApiService.fetchPrayerTimes(
@@ -685,6 +710,60 @@ class _SettingsScreenState extends State<SettingsScreen>
       await widget.storage.setInt('calc_method', val);
       widget.onThemeChanged();
       _debouncedReschedule();
+    }
+  }
+
+  Future<void> _changeCustomFajrAngle(double val) async {
+    setState(() {
+      _customFajrAngle = val;
+    });
+    await widget.storage.setDouble('custom_fajr_angle', val);
+    widget.onThemeChanged();
+    _debouncedReschedule();
+  }
+
+  Future<void> _changeCustomIshaAngle(double val) async {
+    setState(() {
+      _customIshaAngle = val;
+    });
+    await widget.storage.setDouble('custom_isha_angle', val);
+    widget.onThemeChanged();
+    _debouncedReschedule();
+  }
+
+  String _getSmartMethodName(bool isAr) {
+    final loc = widget.storage.getLocation();
+    final smartId = widget.storage.determineSmartCalculationMethod(
+      loc['city']?.toString() ?? '',
+      loc['country']?.toString() ?? '',
+    );
+    switch (smartId) {
+      case 1:
+        return isAr ? "جامعة العلوم الإسلامية بكراتشي" : "Karachi (UISK)";
+      case 2:
+        return isAr ? "أمريكا الشمالية (ISNA)" : "ISNA (North America)";
+      case 3:
+        return isAr ? "رابطة العالم الإسلامي" : "Muslim World League";
+      case 4:
+        return isAr ? "جامعة أم القرى (مكة)" : "Umm Al-Qura (Makkah)";
+      case 5:
+        return isAr ? "الهيئة المصرية العامة للمساحة" : "Egyptian Survey";
+      case 6:
+        return isAr ? "ديوان الوقف السني (العراق)" : "Sunni Endowment (Iraq)";
+      case 10:
+        return isAr ? "وزارة الأوقاف (قطر)" : "Qatar Awqaf";
+      case 11:
+        return isAr ? "المجلس الإسلامي السنغافوري" : "Singapore (MUIS)";
+      case 12:
+        return isAr ? "اتحاد المنظمات (فرنسا)" : "France (UOIF)";
+      case 13:
+        return isAr ? "تركيا (الشؤون الدينية)" : "Turkey (Diyanet)";
+      case 14:
+        return isAr ? "الإدارة الدينية (روسيا)" : "Russia (SAMR)";
+      case 16:
+        return isAr ? "الهيئة العامة للأوقاف (الإمارات)" : "UAE (GAIAE)";
+      default:
+        return isAr ? "رابطة العالم الإسلامي" : "Muslim World League";
     }
   }
 
@@ -772,7 +851,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                 );
                 await widget.storage.setString('default_reciter', 'ar.alafasy');
                 await widget.storage.setString('default_tafsir', 'ar.muyassar');
-                await widget.storage.setString('default_translation', 'en.sahih');
+                await widget.storage.setString(
+                  'default_translation',
+                  'en.sahih',
+                );
                 await widget.storage.setString('lang_code', 'ar');
                 await widget.storage.setString('quran_bookmarks', '[]');
                 await widget.storage.setString('custom_dhikrs', '[]');
@@ -903,7 +985,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                 Text(
                   '${TranslationService.t('version_prefix')} $appVersion',
                   style: TextStyle(
-                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(
+                      alpha: 0.4,
+                    ),
                     fontSize: 11,
                   ),
                 ),

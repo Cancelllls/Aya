@@ -155,7 +155,11 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       final map = isFajr
           ? AdhanAudioService.fajrReciterUrls
           : AdhanAudioService.standardReciterUrls;
-      final fileName = map[reciterKey] ?? (isFajr ? 'adhan_fajr_meshary_al_fasy_kuwait.mp3' : 'adhan_meshary_al_fasy_kuwait.mp3');
+      final fileName =
+          map[reciterKey] ??
+          (isFajr
+              ? 'adhan_fajr_meshary_al_fasy_kuwait.mp3'
+              : 'adhan_meshary_al_fasy_kuwait.mp3');
       await _previewPlayer?.stop();
       await _previewPlayer?.setAsset('assets/audio/adhan/$fileName');
       await _previewPlayer?.play();
@@ -181,7 +185,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     if (_storage == null) return;
     try {
       final loc = _storage!.getLocation();
-      final method = _storage!.getInt('calc_method', defaultValue: 2);
+      final method = _storage!.getInt('calc_method', defaultValue: 0);
       final school = _storage!.getInt('asr_method', defaultValue: 0);
 
       PrayerTimeData data;
@@ -225,7 +229,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   String _getAllAdhansCurrentMode() {
     final modes = _prayers
-        .map((p) => _storage?.getString('adhan_mode_$p', defaultValue: 'real_reciter') ?? 'real_reciter')
+        .map(
+          (p) =>
+              _storage?.getString(
+                'adhan_mode_$p',
+                defaultValue: 'real_reciter',
+              ) ??
+              'real_reciter',
+        )
         .toSet();
     if (modes.length == 1) {
       return modes.first;
@@ -235,7 +246,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   String _getAllPreAdhansCurrentMode() {
     final modes = _prayers
-        .map((p) => _storage?.getString('pre_adhan_${p}_mode', defaultValue: 'vibrate') ?? 'vibrate')
+        .map(
+          (p) =>
+              _storage?.getString(
+                'pre_adhan_${p}_mode',
+                defaultValue: 'vibrate',
+              ) ??
+              'vibrate',
+        )
         .toSet();
     if (modes.length == 1) {
       return modes.first;
@@ -246,9 +264,15 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   Future<void> _applyRemindersToAll() async {
     for (final p in _prayers) {
       await _storage?.setBool('pre_adhan_${p}_early_enabled', true);
-      await _storage?.setInt('pre_adhan_${p}_early_minutes', p == 'fajr' ? 45 : 30);
+      await _storage?.setInt(
+        'pre_adhan_${p}_early_minutes',
+        p == 'fajr' ? 45 : 30,
+      );
       await _storage?.setBool('pre_adhan_${p}_iqamah_enabled', true);
-      await _storage?.setInt('pre_adhan_${p}_iqamah_minutes', p == 'maghrib' ? 10 : (p == 'fajr' ? 25 : 15));
+      await _storage?.setInt(
+        'pre_adhan_${p}_iqamah_minutes',
+        p == 'maghrib' ? 10 : (p == 'fajr' ? 25 : 15),
+      );
     }
     setState(() {});
     _debouncedReschedule();
@@ -297,7 +321,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isAr ? 'تخصيص الأذان والتنبيهات' : 'Adhan & Alert Settings'),
+        title: Text(
+          isAr ? 'تخصيص الأذان والتنبيهات' : 'Adhan & Alert Settings',
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -322,7 +348,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Text(
-                      isAr ? 'تخصيص الصلوات الفردية' : 'Per-Prayer Customization',
+                      isAr
+                          ? 'تخصيص الصلوات الفردية'
+                          : 'Per-Prayer Customization',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -332,7 +360,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  ..._prayers.map((prayer) => _buildPrayerCard(prayer, isAr, primaryColor, theme)),
+                  ..._prayers.map(
+                    (prayer) =>
+                        _buildPrayerCard(prayer, isAr, primaryColor, theme),
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -360,7 +391,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   Widget _buildQuickBatchCard(bool isAr, Color primaryColor, ThemeData theme) {
     final allAdhansMode = _getAllAdhansCurrentMode();
     final allPreMode = _getAllPreAdhansCurrentMode();
-    final currentSoundTone = _storage?.getString('notification_sound_tone', defaultValue: 'chime') ?? 'chime';
+    final currentSoundTone =
+        _storage?.getString('notification_sound_tone', defaultValue: 'chime') ??
+        'chime';
 
     return Card(
       elevation: 0,
@@ -379,7 +412,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Icon(Icons.bolt, color: primaryColor, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  isAr ? 'ضبط الأذان والتنبيه المسبق' : 'Adhan & Pre-Alert Presets',
+                  isAr
+                      ? 'ضبط الأذان والتنبيه المسبق'
+                      : 'Adhan & Pre-Alert Presets',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -393,7 +428,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               isAr
                   ? 'تعيين النمط للصلوات الخمس (صوت، اهتزاز فقط، أو تخصيص يدوي)'
                   : 'Set alert mode for 5 prayers (Sound, Vibrate only, Off, or Manual).',
-              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
+              ),
             ),
             const SizedBox(height: 14),
 
@@ -403,7 +443,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Expanded(
                   child: Text(
                     isAr ? 'نمط الأذان:' : 'Adhan Preset:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 Container(
@@ -411,7 +454,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -432,7 +477,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         if (allAdhansMode == 'custom')
                           DropdownMenuItem(
                             value: 'custom',
-                            child: Text(isAr ? 'تخصيص يدوي' : 'Custom / Manual'),
+                            child: Text(
+                              isAr ? 'تخصيص يدوي' : 'Custom / Manual',
+                            ),
                           ),
                       ],
                       onChanged: (val) {
@@ -454,7 +501,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Expanded(
                   child: Text(
                     isAr ? 'التنبيه المسبق:' : 'Pre-Alert Preset:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 Container(
@@ -462,7 +512,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -483,7 +535,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         if (allPreMode == 'custom')
                           DropdownMenuItem(
                             value: 'custom',
-                            child: Text(isAr ? 'تخصيص يدوي' : 'Custom / Manual'),
+                            child: Text(
+                              isAr ? 'تخصيص يدوي' : 'Custom / Manual',
+                            ),
                           ),
                       ],
                       onChanged: (val) {
@@ -505,14 +559,20 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Expanded(
                   child: Text(
                     isAr ? 'نغمة التنبيهات:' : 'Notification Tone:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 if (currentSoundTone != 'system') ...[
                   IconButton(
                     iconSize: 22,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                     icon: Icon(
                       _previewingTone == currentSoundTone
                           ? Icons.stop_circle_rounded
@@ -529,29 +589,49 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: ['chime', 'call', 'takbeer', 'system'].contains(currentSoundTone)
+                      value:
+                          [
+                            'chime',
+                            'call',
+                            'takbeer',
+                            'system',
+                          ].contains(currentSoundTone)
                           ? currentSoundTone
                           : 'chime',
                       items: [
                         DropdownMenuItem(
                           value: 'chime',
-                          child: Text(isAr ? 'نغمة هادئة' : 'Gentle Chime', style: const TextStyle(fontSize: 12.5)),
+                          child: Text(
+                            isAr ? 'نغمة هادئة' : 'Gentle Chime',
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'call',
-                          child: Text(isAr ? 'نداء الأذان' : 'Voice Call', style: const TextStyle(fontSize: 12.5)),
+                          child: Text(
+                            isAr ? 'نداء الأذان' : 'Voice Call',
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'takbeer',
-                          child: Text(isAr ? 'تكبيرات' : 'Takbeer', style: const TextStyle(fontSize: 12.5)),
+                          child: Text(
+                            isAr ? 'تكبيرات' : 'Takbeer',
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'system',
-                          child: Text(isAr ? 'نغمة النظام' : 'System Default', style: const TextStyle(fontSize: 12.5)),
+                          child: Text(
+                            isAr ? 'نغمة النظام' : 'System Default',
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
                         ),
                       ],
                       onChanged: (val) {
@@ -573,7 +653,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Expanded(
                   child: Text(
                     isAr ? 'المؤذن الموحد للصلوات:' : 'Default Reciter (All):',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 Container(
@@ -581,19 +664,36 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: _standardRecitersEn.containsKey(_storage?.getString('adhan_reciter', defaultValue: 'mishary'))
-                          ? _storage?.getString('adhan_reciter', defaultValue: 'mishary')
+                      value:
+                          _standardRecitersEn.containsKey(
+                            _storage?.getString(
+                              'adhan_reciter',
+                              defaultValue: 'mishary',
+                            ),
+                          )
+                          ? _storage?.getString(
+                              'adhan_reciter',
+                              defaultValue: 'mishary',
+                            )
                           : 'mishary',
-                      items: (isAr ? _standardRecitersAr : _standardRecitersEn).entries.map((e) {
-                        return DropdownMenuItem<String>(
-                          value: e.key,
-                          child: Text(e.value, style: const TextStyle(fontSize: 12.5)),
-                        );
-                      }).toList(),
+                      items: (isAr ? _standardRecitersAr : _standardRecitersEn)
+                          .entries
+                          .map((e) {
+                            return DropdownMenuItem<String>(
+                              value: e.key,
+                              child: Text(
+                                e.value,
+                                style: const TextStyle(fontSize: 12.5),
+                              ),
+                            );
+                          })
+                          .toList(),
                       onChanged: (val) {
                         if (val != null) {
                           _applyGlobalReciter(val);
@@ -614,13 +714,20 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: primaryColor,
                   side: BorderSide(color: primaryColor.withValues(alpha: 0.35)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                 ),
                 icon: const Icon(Icons.more_time_rounded, size: 18),
                 label: Text(
-                  isAr ? 'تفعيل التنبيهات المتعددة لجميع الصلوات' : 'Apply Multi-Reminders to All Prayers',
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                  isAr
+                      ? 'تفعيل التنبيهات المتعددة لجميع الصلوات'
+                      : 'Apply Multi-Reminders to All Prayers',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onPressed: _applyRemindersToAll,
               ),
@@ -645,13 +752,17 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               : Colors.amber.withValues(alpha: 0.3),
         ),
       ),
-      color: isHealthy ? Colors.teal.withValues(alpha: 0.08) : Colors.amber.withValues(alpha: 0.08),
+      color: isHealthy
+          ? Colors.teal.withValues(alpha: 0.08)
+          : Colors.amber.withValues(alpha: 0.08),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
             Icon(
-              isHealthy ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+              isHealthy
+                  ? Icons.check_circle_rounded
+                  : Icons.warning_amber_rounded,
               color: isHealthy ? Colors.teal : Colors.amber.shade800,
               size: 30,
             ),
@@ -662,14 +773,22 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 children: [
                   Text(
                     isHealthy
-                        ? (isAr ? 'منبهات الأذان نشطة وفعالة' : 'Adhan System Healthy')
-                        : (isAr ? 'تحذير حالة التنبيهات' : 'Alarm Status Warning'),
+                        ? (isAr
+                              ? 'منبهات الأذان نشطة وفعالة'
+                              : 'Adhan System Healthy')
+                        : (isAr
+                              ? 'تحذير حالة التنبيهات'
+                              : 'Alarm Status Warning'),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       color: isHealthy
-                          ? (theme.brightness == Brightness.dark ? Colors.teal.shade200 : Colors.teal.shade900)
-                          : (theme.brightness == Brightness.dark ? Colors.amber.shade200 : Colors.amber.shade900),
+                          ? (theme.brightness == Brightness.dark
+                                ? Colors.teal.shade200
+                                : Colors.teal.shade900)
+                          : (theme.brightness == Brightness.dark
+                                ? Colors.amber.shade200
+                                : Colors.amber.shade900),
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -680,8 +799,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     style: TextStyle(
                       fontSize: 12.5,
                       color: isHealthy
-                          ? (theme.brightness == Brightness.dark ? Colors.teal.shade300 : Colors.teal.shade800)
-                          : (theme.brightness == Brightness.dark ? Colors.amber.shade300 : Colors.amber.shade900),
+                          ? (theme.brightness == Brightness.dark
+                                ? Colors.teal.shade300
+                                : Colors.teal.shade800)
+                          : (theme.brightness == Brightness.dark
+                                ? Colors.amber.shade300
+                                : Colors.amber.shade900),
                     ),
                   ),
                 ],
@@ -717,7 +840,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 Icon(Icons.science_outlined, color: primaryColor, size: 22),
                 const SizedBox(width: 10),
                 Text(
-                  isAr ? 'تجربة المنبهات والتنبيهات المباشرة' : 'Test Live Alarms & Notifications',
+                  isAr
+                      ? 'تجربة المنبهات والتنبيهات المباشرة'
+                      : 'Test Live Alarms & Notifications',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -731,7 +856,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               isAr
                   ? 'جدولة منبه تجريبي يعمل بعد ٥ ثوانٍ لاختبار صوت الأذان والتنبيه المسبق'
                   : 'Schedule a test alarm that fires in 5 seconds to test background audio.',
-              style: TextStyle(fontSize: 12.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+              style: TextStyle(
+                fontSize: 12.5,
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
+              ),
             ),
             const SizedBox(height: 14),
             Row(
@@ -741,21 +871,34 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     icon: const Icon(Icons.notifications_active, size: 18),
                     label: Text(
                       isAr ? 'تجربة الأذان (٥ث)' : 'Test Adhan (5s)',
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () async {
-                      final testTime = DateTime.now().add(const Duration(seconds: 5));
-                      final selectedReciter = _storage?.getString('adhan_reciter_dhuhr') ??
-                          _storage?.getString('adhan_reciter', defaultValue: 'mishary') ??
+                      final testTime = DateTime.now().add(
+                        const Duration(seconds: 5),
+                      );
+                      final selectedReciter =
+                          _storage?.getString('adhan_reciter_dhuhr') ??
+                          _storage?.getString(
+                            'adhan_reciter',
+                            defaultValue: 'mishary',
+                          ) ??
                           'mishary';
-                      final rawName = AdhanAudioService.standardReciterUrls[selectedReciter]
-                          ?.replaceAll('.mp3', '') ?? 'adhan_meshary_al_fasy_kuwait';
+                      final rawName =
+                          AdhanAudioService.standardReciterUrls[selectedReciter]
+                              ?.replaceAll('.mp3', '') ??
+                          'adhan_meshary_al_fasy_kuwait';
                       await AdhanNativeController.instance.schedulePrayerAlarm(
                         id: 9999,
                         time: testTime,
@@ -783,21 +926,29 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     icon: const Icon(Icons.alarm_on, size: 18),
                     label: Text(
                       isAr ? 'تنبيه مسبق (٥ث)' : 'Test Pre-Alert (5s)',
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () async {
-                      final testTime = DateTime.now().add(const Duration(seconds: 5));
-                      await AdhanNativeController.instance.schedulePreAdhanAlarm(
-                        id: 9998,
-                        time: testTime,
-                        prayerName: isAr ? 'الظهر' : 'Dhuhr',
-                        minutesBefore: 15,
-                        alertMode: 'sound',
+                      final testTime = DateTime.now().add(
+                        const Duration(seconds: 5),
                       );
+                      await AdhanNativeController.instance
+                          .schedulePreAdhanAlarm(
+                            id: 9998,
+                            time: testTime,
+                            prayerName: isAr ? 'الظهر' : 'Dhuhr',
+                            minutesBefore: 15,
+                            alertMode: 'sound',
+                          );
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -819,21 +970,36 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.warning_amber_rounded, size: 18, color: Colors.orangeAccent),
+                icon: const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: Colors.orangeAccent,
+                ),
                 label: Text(
-                  isAr ? 'تجربة تنبيه قرب انتهاء الوقت (٥ث)' : 'Test End-of-Window Alert (5s)',
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  isAr
+                      ? 'تجربة تنبيه قرب انتهاء الوقت (٥ث)'
+                      : 'Test End-of-Window Alert (5s)',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () async {
-                  final testTime = DateTime.now().add(const Duration(seconds: 5));
+                  final testTime = DateTime.now().add(
+                    const Duration(seconds: 5),
+                  );
                   await AdhanNativeController.instance.schedulePreAdhanAlarm(
                     id: 9997,
                     time: testTime,
-                    prayerName: isAr ? '⚠️ ينتهي وقت صلاة الظهر قريباً' : '⚠️ Dhuhr time ending soon',
+                    prayerName: isAr
+                        ? '⚠️ ينتهي وقت صلاة الظهر قريباً'
+                        : '⚠️ Dhuhr time ending soon',
                     minutesBefore: 15,
                     alertMode: 'sound',
                   );
@@ -858,23 +1024,61 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     );
   }
 
-  Widget _buildPrayerCard(String prayer, bool isAr, Color primaryColor, ThemeData theme) {
+  Widget _buildPrayerCard(
+    String prayer,
+    bool isAr,
+    Color primaryColor,
+    ThemeData theme,
+  ) {
     final prayerName = isAr ? _prayerNamesAr[prayer]! : _prayerNamesEn[prayer]!;
     final String modeKey = 'adhan_mode_$prayer';
     final String offsetKey = 'pre_adhan_${prayer}_minutes';
     final String preModeKey = 'pre_adhan_${prayer}_mode';
-    final String reciterKeyName = prayer == 'fajr' ? 'fajr_adhan_reciter' : 'adhan_reciter_$prayer';
+    final String reciterKeyName = prayer == 'fajr'
+        ? 'fajr_adhan_reciter'
+        : 'adhan_reciter_$prayer';
 
-    final currentMode = _storage?.getString(modeKey, defaultValue: 'real_reciter') ?? 'real_reciter';
-    final currentOffset = _storage?.getInt(offsetKey, defaultValue: prayer == 'fajr' ? 20 : (prayer == 'maghrib' ? 10 : 15)) ?? 15;
-    final currentPreMode = _storage?.getString(preModeKey, defaultValue: 'vibrate') ?? 'vibrate';
-    final currentReciter = _storage?.getString(reciterKeyName) ?? _storage?.getString('adhan_reciter', defaultValue: 'mishary') ?? 'mishary';
+    final currentMode =
+        _storage?.getString(modeKey, defaultValue: 'real_reciter') ??
+        'real_reciter';
+    final currentOffset =
+        _storage?.getInt(
+          offsetKey,
+          defaultValue: prayer == 'fajr' ? 20 : (prayer == 'maghrib' ? 10 : 15),
+        ) ??
+        15;
+    final currentPreMode =
+        _storage?.getString(preModeKey, defaultValue: 'vibrate') ?? 'vibrate';
+    final currentReciter =
+        _storage?.getString(reciterKeyName) ??
+        _storage?.getString('adhan_reciter', defaultValue: 'mishary') ??
+        'mishary';
 
-    final bool earlyEnabled = _storage?.getBool('pre_adhan_${prayer}_early_enabled', defaultValue: false) ?? false;
-    final int earlyMins = _storage?.getInt('pre_adhan_${prayer}_early_minutes', defaultValue: prayer == 'fajr' ? 45 : 30) ?? (prayer == 'fajr' ? 45 : 30);
+    final bool earlyEnabled =
+        _storage?.getBool(
+          'pre_adhan_${prayer}_early_enabled',
+          defaultValue: false,
+        ) ??
+        false;
+    final int earlyMins =
+        _storage?.getInt(
+          'pre_adhan_${prayer}_early_minutes',
+          defaultValue: prayer == 'fajr' ? 45 : 30,
+        ) ??
+        (prayer == 'fajr' ? 45 : 30);
 
-    final bool iqamahEnabled = _storage?.getBool('pre_adhan_${prayer}_iqamah_enabled', defaultValue: false) ?? false;
-    final int iqamahMins = _storage?.getInt('pre_adhan_${prayer}_iqamah_minutes', defaultValue: prayer == 'maghrib' ? 10 : (prayer == 'fajr' ? 25 : 15)) ?? (prayer == 'maghrib' ? 10 : (prayer == 'fajr' ? 25 : 15));
+    final bool iqamahEnabled =
+        _storage?.getBool(
+          'pre_adhan_${prayer}_iqamah_enabled',
+          defaultValue: false,
+        ) ??
+        false;
+    final int iqamahMins =
+        _storage?.getInt(
+          'pre_adhan_${prayer}_iqamah_minutes',
+          defaultValue: prayer == 'maghrib' ? 10 : (prayer == 'fajr' ? 25 : 15),
+        ) ??
+        (prayer == 'maghrib' ? 10 : (prayer == 'fajr' ? 25 : 15));
 
     final reciterOptions = prayer == 'fajr'
         ? (isAr ? _fajrRecitersAr : _fajrRecitersEn)
@@ -901,7 +1105,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           isAr
               ? '${_getModeLabel(currentMode, isAr)} • تنبيه: $currentOffset د${earlyEnabled ? ' • مبكر: $earlyMins د' : ''}${iqamahEnabled ? ' • إقامة: $iqamahMins د' : ''}'
               : '${_getModeLabel(currentMode, isAr)} • Pre: ${currentOffset}m${earlyEnabled ? ' • Early: ${earlyMins}m' : ''}${iqamahEnabled ? ' • Iqamah: ${iqamahMins}m' : ''}',
-          style: TextStyle(fontSize: 12.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+          style: TextStyle(
+            fontSize: 12.5,
+            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+          ),
         ),
         children: [
           Padding(
@@ -915,27 +1122,64 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 // Adhan Alert Mode Dropdown
                 Text(
                   isAr ? 'نمط تنبيه الأذان:' : 'Adhan Alert Mode:',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.3,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: currentMode,
                       items: [
-                        DropdownMenuItem(value: 'real_reciter', child: Text(isAr ? 'أذان كامل (صوت المؤذن)' : 'Full Adhan (Full Audio)')),
-                        DropdownMenuItem(value: 'takbeer_only', child: Text(isAr ? 'التكبير فقط (١٥ ثانية)' : 'Takbeer Only (15s)')),
-                        DropdownMenuItem(value: 'beep', child: Text(isAr ? 'نغمة تنبيه قصيرة' : 'Short Chime/Beep')),
-                        DropdownMenuItem(value: 'vibrate', child: Text(isAr ? 'اهتزاز فقط' : 'Vibrate Only')),
-                        DropdownMenuItem(value: 'silent', child: Text(isAr ? 'إشعار صامت' : 'Silent Notification')),
-                        DropdownMenuItem(value: 'off', child: Text(isAr ? 'إيقاف التنبيه' : 'Off')),
+                        DropdownMenuItem(
+                          value: 'real_reciter',
+                          child: Text(
+                            isAr
+                                ? 'أذان كامل (صوت المؤذن)'
+                                : 'Full Adhan (Full Audio)',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'takbeer_only',
+                          child: Text(
+                            isAr
+                                ? 'التكبير فقط (١٥ ثانية)'
+                                : 'Takbeer Only (15s)',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'beep',
+                          child: Text(
+                            isAr ? 'نغمة تنبيه قصيرة' : 'Short Chime/Beep',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'vibrate',
+                          child: Text(isAr ? 'اهتزاز فقط' : 'Vibrate Only'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'silent',
+                          child: Text(
+                            isAr ? 'إشعار صامت' : 'Silent Notification',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'off',
+                          child: Text(isAr ? 'إيقاف التنبيه' : 'Off'),
+                        ),
                       ],
                       onChanged: (val) async {
                         if (val != null) {
@@ -950,13 +1194,17 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 const SizedBox(height: 14),
 
                 // Reciter Selection with Preview Button
-                if (currentMode == 'real_reciter' || currentMode == 'takbeer_only') ...[
+                if (currentMode == 'real_reciter' ||
+                    currentMode == 'takbeer_only') ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         isAr ? 'المؤذن المفضل:' : 'Preferred Reciter:',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                        ),
                       ),
                       TextButton.icon(
                         icon: Icon(
@@ -970,7 +1218,11 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           _previewingReciter == currentReciter
                               ? (isAr ? 'إيقاف' : 'Stop')
                               : (isAr ? 'استماع' : 'Listen'),
-                          style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12.5),
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
                         ),
                         onPressed: () {
                           _togglePreview(currentReciter, prayer == 'fajr');
@@ -981,18 +1233,26 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                      border: Border.all(
+                        color: theme.dividerColor.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         isExpanded: true,
-                        value: reciterOptions.containsKey(currentReciter) ? currentReciter : 'mishary',
+                        value: reciterOptions.containsKey(currentReciter)
+                            ? currentReciter
+                            : 'mishary',
                         items: reciterOptions.entries.map((e) {
                           return DropdownMenuItem<String>(
                             value: e.key,
-                            child: Text(e.value, style: const TextStyle(fontSize: 13.5)),
+                            child: Text(
+                              e.value,
+                              style: const TextStyle(fontSize: 13.5),
+                            ),
                           );
                         }).toList(),
                         onChanged: (val) async {
@@ -1018,17 +1278,27 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   children: [
                     Text(
                       isAr ? 'وقت التنبيه المسبق:' : 'Pre-Adhan Alert Time:',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: primaryColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '$currentOffset ${isAr ? 'دقيقة قبل الأذان' : 'mins before'}',
-                        style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12.5),
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ),
                   ],
@@ -1049,25 +1319,46 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 // Pre-Adhan Alert Mode
                 Text(
                   isAr ? 'صوت التنبيه المسبق:' : 'Pre-Adhan Alert Sound:',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.3,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: currentPreMode,
                       items: [
-                        DropdownMenuItem(value: 'sound', child: Text(isAr ? 'نغمة تنبيه' : 'Chime Tone')),
-                        DropdownMenuItem(value: 'vibrate', child: Text(isAr ? 'اهتزاز فقط' : 'Vibrate Only')),
-                        DropdownMenuItem(value: 'silent', child: Text(isAr ? 'إشعار صامت' : 'Silent')),
-                        DropdownMenuItem(value: 'off', child: Text(isAr ? 'إيقاف التنبيه المسبق' : 'Disabled')),
+                        DropdownMenuItem(
+                          value: 'sound',
+                          child: Text(isAr ? 'نغمة تنبيه' : 'Chime Tone'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'vibrate',
+                          child: Text(isAr ? 'اهتزاز فقط' : 'Vibrate Only'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'silent',
+                          child: Text(isAr ? 'إشعار صامت' : 'Silent'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'off',
+                          child: Text(
+                            isAr ? 'إيقاف التنبيه المسبق' : 'Disabled',
+                          ),
+                        ),
                       ],
                       onChanged: (val) async {
                         if (val != null) {
@@ -1085,11 +1376,20 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 // Multi-Reminders Header
                 Row(
                   children: [
-                    Icon(Icons.more_time_rounded, color: primaryColor, size: 18),
+                    Icon(
+                      Icons.more_time_rounded,
+                      color: primaryColor,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Text(
-                      isAr ? 'تنبيهات إضافية للصلاة (تنبيه متعدد):' : 'Additional Reminders (Multi-Alert):',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      isAr
+                          ? 'تنبيهات إضافية للصلاة (تنبيه متعدد):'
+                          : 'Additional Reminders (Multi-Alert):',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                      ),
                     ),
                   ],
                 ),
@@ -1097,11 +1397,18 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
                 // 1. Early Reminder Tile & Controls
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.2,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -1109,16 +1416,30 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         activeColor: primaryColor,
                         title: Text(
-                          isAr ? '⏰ تنبيه مبكر (استيقاظ / قيام)' : '⏰ Early Alert (Tahajjud / Pre-wake)',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          isAr
+                              ? '⏰ تنبيه مبكر (استيقاظ / قيام)'
+                              : '⏰ Early Alert (Tahajjud / Pre-wake)',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
-                          isAr ? 'تنبيه إضافي قبل الأذان بوقت كافٍ' : 'Additional wake-up alert before adhan',
-                          style: TextStyle(fontSize: 11.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                          isAr
+                              ? 'تنبيه إضافي قبل الأذان بوقت كافٍ'
+                              : 'Additional wake-up alert before adhan',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.6),
+                          ),
                         ),
                         value: earlyEnabled,
                         onChanged: (val) async {
-                          await _storage?.setBool('pre_adhan_${prayer}_early_enabled', val);
+                          await _storage?.setBool(
+                            'pre_adhan_${prayer}_early_enabled',
+                            val,
+                          );
                           setState(() {});
                           _debouncedReschedule();
                         },
@@ -1128,18 +1449,30 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              isAr ? 'وقت التنبيه المبكر:' : 'Early Alert Time:',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                              isAr
+                                  ? 'وقت التنبيه المبكر:'
+                                  : 'Early Alert Time:',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: primaryColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '$earlyMins ${isAr ? 'د قبل الأذان' : 'mins before'}',
-                                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 11.5),
+                                style: TextStyle(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11.5,
+                                ),
                               ),
                             ),
                           ],
@@ -1151,7 +1484,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           value: earlyMins.toDouble().clamp(15.0, 90.0),
                           activeColor: primaryColor,
                           onChanged: (val) async {
-                            await _storage?.setInt('pre_adhan_${prayer}_early_minutes', val.toInt());
+                            await _storage?.setInt(
+                              'pre_adhan_${prayer}_early_minutes',
+                              val.toInt(),
+                            );
                             setState(() {});
                             _debouncedReschedule();
                           },
@@ -1165,11 +1501,18 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
                 // 2. Post-Adhan / Iqamah Reminder Tile & Controls
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.2,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -1177,16 +1520,30 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                         activeColor: primaryColor,
                         title: Text(
-                          isAr ? '🕌 تذكير الإقامة ومتابعة الأداء' : '🕌 Iqamah / Post-Adhan Alert',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          isAr
+                              ? '🕌 تذكير الإقامة ومتابعة الأداء'
+                              : '🕌 Iqamah / Post-Adhan Alert',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
-                          isAr ? 'تنبيه بعد الأذان لدخول موعد الإقامة أو الصلاة' : 'Alert after adhan for iqamah and prayer performance',
-                          style: TextStyle(fontSize: 11.5, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                          isAr
+                              ? 'تنبيه بعد الأذان لدخول موعد الإقامة أو الصلاة'
+                              : 'Alert after adhan for iqamah and prayer performance',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.6),
+                          ),
                         ),
                         value: iqamahEnabled,
                         onChanged: (val) async {
-                          await _storage?.setBool('pre_adhan_${prayer}_iqamah_enabled', val);
+                          await _storage?.setBool(
+                            'pre_adhan_${prayer}_iqamah_enabled',
+                            val,
+                          );
                           setState(() {});
                           _debouncedReschedule();
                         },
@@ -1196,18 +1553,30 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              isAr ? 'وقت تذكير الإقامة:' : 'Iqamah Alert Time:',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                              isAr
+                                  ? 'وقت تذكير الإقامة:'
+                                  : 'Iqamah Alert Time:',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: primaryColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '$iqamahMins ${isAr ? 'د بعد الأذان' : 'mins after'}',
-                                style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 11.5),
+                                style: TextStyle(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11.5,
+                                ),
                               ),
                             ),
                           ],
@@ -1219,7 +1588,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           value: iqamahMins.toDouble().clamp(5.0, 45.0),
                           activeColor: primaryColor,
                           onChanged: (val) async {
-                            await _storage?.setInt('pre_adhan_${prayer}_iqamah_minutes', val.toInt());
+                            await _storage?.setInt(
+                              'pre_adhan_${prayer}_iqamah_minutes',
+                              val.toInt(),
+                            );
                             setState(() {});
                             _debouncedReschedule();
                           },
@@ -1237,13 +1609,20 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   }
 
   Widget _buildGlobalOptions(bool isAr, Color primaryColor, ThemeData theme) {
-    final bool volumeRamp = _storage?.getBool('volume_ramp_up', defaultValue: true) ?? true;
-    final bool postDua = _storage?.getBool('post_adhan_dua', defaultValue: true) ?? true;
-    final bool autoDnd = _storage?.getBool('auto_dnd_enabled', defaultValue: false) ?? false;
-    final int dndMins = _storage?.getInt('auto_dnd_minutes', defaultValue: 20) ?? 20;
-    final bool escalating = _storage?.getBool('escalating_reminders', defaultValue: false) ?? false;
-    final bool jumuah = _storage?.getBool('jumuah_reminder', defaultValue: true) ?? true;
-    final int jumuahMins = _storage?.getInt('jumuah_minutes_before', defaultValue: 60) ?? 60;
+    final bool volumeRamp =
+        _storage?.getBool('volume_ramp_up', defaultValue: true) ?? true;
+    final bool postDua =
+        _storage?.getBool('post_adhan_dua', defaultValue: true) ?? true;
+    final bool autoDnd =
+        _storage?.getBool('auto_dnd_enabled', defaultValue: false) ?? false;
+    final int dndMins =
+        _storage?.getInt('auto_dnd_minutes', defaultValue: 20) ?? 20;
+    final bool escalating =
+        _storage?.getBool('escalating_reminders', defaultValue: false) ?? false;
+    final bool jumuah =
+        _storage?.getBool('jumuah_reminder', defaultValue: true) ?? true;
+    final int jumuahMins =
+        _storage?.getInt('jumuah_minutes_before', defaultValue: 60) ?? 60;
 
     return Card(
       elevation: 0,
@@ -1255,8 +1634,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
         children: [
           SwitchListTile(
             activeColor: primaryColor,
-            title: Text(isAr ? 'التدرج في رفع الصوت' : 'Gradual Volume Ramp-Up'),
-            subtitle: Text(isAr ? 'يبدأ الأذان بصوت خفيض ثم يرتفع تدريجياً' : 'Starts soft and ramps to full volume over 5 seconds'),
+            title: Text(
+              isAr ? 'التدرج في رفع الصوت' : 'Gradual Volume Ramp-Up',
+            ),
+            subtitle: Text(
+              isAr
+                  ? 'يبدأ الأذان بصوت خفيض ثم يرتفع تدريجياً'
+                  : 'Starts soft and ramps to full volume over 5 seconds',
+            ),
             value: volumeRamp,
             onChanged: (val) async {
               await _storage?.setBool('volume_ramp_up', val);
@@ -1266,8 +1651,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           const Divider(height: 1),
           SwitchListTile(
             activeColor: primaryColor,
-            title: Text(isAr ? 'إشعار دعاء ما بعد الأذان' : 'Post-Adhan Dua Notification'),
-            subtitle: Text(isAr ? 'عرض إشعار دعاء الوسيلة والفضيلة بعد انتهاء الأذان' : 'Shows Dua Al-Waseela text notification when adhan ends'),
+            title: Text(
+              isAr ? 'إشعار دعاء ما بعد الأذان' : 'Post-Adhan Dua Notification',
+            ),
+            subtitle: Text(
+              isAr
+                  ? 'عرض إشعار دعاء الوسيلة والفضيلة بعد انتهاء الأذان'
+                  : 'Shows Dua Al-Waseela text notification when adhan ends',
+            ),
             value: postDua,
             onChanged: (val) async {
               await _storage?.setBool('post_adhan_dua', val);
@@ -1277,8 +1668,16 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           const Divider(height: 1),
           SwitchListTile(
             activeColor: primaryColor,
-            title: Text(isAr ? 'وضع عدم الإزعاج التلقائي أثناء الصلاة' : 'Auto Silence (DND) During Prayer'),
-            subtitle: Text(isAr ? 'تفعيل الوضع الصامت تلقائياً عند وقت الصلاة واستعادته بعدها' : 'Automatically silences phone during prayer time and restores sound afterwards'),
+            title: Text(
+              isAr
+                  ? 'وضع عدم الإزعاج التلقائي أثناء الصلاة'
+                  : 'Auto Silence (DND) During Prayer',
+            ),
+            subtitle: Text(
+              isAr
+                  ? 'تفعيل الوضع الصامت تلقائياً عند وقت الصلاة واستعادته بعدها'
+                  : 'Automatically silences phone during prayer time and restores sound afterwards',
+            ),
             value: autoDnd,
             onChanged: (val) async {
               await _storage?.setBool('auto_dnd_enabled', val);
@@ -1287,13 +1686,19 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           ),
           if (autoDnd)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     isAr ? 'مدة الوضع الصامت:' : 'Silence Duration:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1303,8 +1708,23 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
-                        value: [15, 20, 25, 30, 45].contains(dndMins) ? dndMins : 20,
-                        items: [15, 20, 25, 30, 45].map((m) => DropdownMenuItem(value: m, child: Text('$m ${isAr ? 'دقيقة' : 'mins'}', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)))).toList(),
+                        value: [15, 20, 25, 30, 45].contains(dndMins)
+                            ? dndMins
+                            : 20,
+                        items: [15, 20, 25, 30, 45]
+                            .map(
+                              (m) => DropdownMenuItem(
+                                value: m,
+                                child: Text(
+                                  '$m ${isAr ? 'دقيقة' : 'mins'}',
+                                  style: TextStyle(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (val) async {
                           if (val != null) {
                             await _storage?.setInt('auto_dnd_minutes', val);
@@ -1321,8 +1741,16 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           const Divider(height: 1),
           SwitchListTile(
             activeColor: primaryColor,
-            title: Text(isAr ? 'تنبيهات قرب انتهاء وقت الصلاة' : 'Escalating End-of-Window Alerts'),
-            subtitle: Text(isAr ? 'تنبيه عاجل قبل ١٥ دقيقة من انتهاء النافذة الشرعية للصلاة' : 'Urgent notification 15 mins before prayer window closes'),
+            title: Text(
+              isAr
+                  ? 'تنبيهات قرب انتهاء وقت الصلاة'
+                  : 'Escalating End-of-Window Alerts',
+            ),
+            subtitle: Text(
+              isAr
+                  ? 'تنبيه عاجل قبل ١٥ دقيقة من انتهاء النافذة الشرعية للصلاة'
+                  : 'Urgent notification 15 mins before prayer window closes',
+            ),
             value: escalating,
             onChanged: (val) async {
               await _storage?.setBool('escalating_reminders', val);
@@ -1332,14 +1760,22 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           ),
           if (escalating)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      isAr ? 'نهاية وقت العشاء المستحب:' : 'Isha Preferred Window End:',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      isAr
+                          ? 'نهاية وقت العشاء المستحب:'
+                          : 'Isha Preferred Window End:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                      ),
                     ),
                   ),
                   Container(
@@ -1350,26 +1786,46 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        value: _storage?.getString('isha_end_window_fiqh', defaultValue: 'shafi') ?? 'shafi',
+                        value:
+                            _storage?.getString(
+                              'isha_end_window_fiqh',
+                              defaultValue: 'shafi',
+                            ) ??
+                            'shafi',
                         items: [
                           DropdownMenuItem(
                             value: 'shafi',
                             child: Text(
-                              isAr ? 'منتصف الليل (الشافعية والجمهور)' : 'Midnight (Shafi\'i/Majority)',
-                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12.5),
+                              isAr
+                                  ? 'منتصف الليل (الشافعية والجمهور)'
+                                  : 'Midnight (Shafi\'i/Majority)',
+                              style: TextStyle(
+                                color: primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'hanafi',
                             child: Text(
-                              isAr ? 'ثلث الليل (الحنفية)' : '1/3 of Night (Hanafi)',
-                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12.5),
+                              isAr
+                                  ? 'ثلث الليل (الحنفية)'
+                                  : '1/3 of Night (Hanafi)',
+                              style: TextStyle(
+                                color: primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
                             ),
                           ),
                         ],
                         onChanged: (val) async {
                           if (val != null) {
-                            await _storage?.setString('isha_end_window_fiqh', val);
+                            await _storage?.setString(
+                              'isha_end_window_fiqh',
+                              val,
+                            );
                             setState(() {});
                             _debouncedReschedule();
                           }
@@ -1383,8 +1839,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           const Divider(height: 1),
           SwitchListTile(
             activeColor: primaryColor,
-            title: Text(isAr ? 'تنبيه خاص بصلاة الجمعة' : 'Special Jumu\'ah Reminder'),
-            subtitle: Text(isAr ? 'تنبيه مبكر يوم الجمعة للاستعداد للصلاة' : 'Early reminder on Fridays before Dhuhr time'),
+            title: Text(
+              isAr ? 'تنبيه خاص بصلاة الجمعة' : 'Special Jumu\'ah Reminder',
+            ),
+            subtitle: Text(
+              isAr
+                  ? 'تنبيه مبكر يوم الجمعة للاستعداد للصلاة'
+                  : 'Early reminder on Fridays before Dhuhr time',
+            ),
             value: jumuah,
             onChanged: (val) async {
               await _storage?.setBool('jumuah_reminder', val);
@@ -1394,13 +1856,21 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           ),
           if (jumuah)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isAr ? 'التنبيه قبل صلاة الجمعة بـ:' : 'Jumu\'ah Reminder Offset:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    isAr
+                        ? 'التنبيه قبل صلاة الجمعة بـ:'
+                        : 'Jumu\'ah Reminder Offset:',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1410,11 +1880,29 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
-                        value: [30, 45, 60, 90].contains(jumuahMins) ? jumuahMins : 60,
-                        items: [30, 45, 60, 90].map((m) => DropdownMenuItem(value: m, child: Text('$m ${isAr ? 'دقيقة' : 'mins'}', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)))).toList(),
+                        value: [30, 45, 60, 90].contains(jumuahMins)
+                            ? jumuahMins
+                            : 60,
+                        items: [30, 45, 60, 90]
+                            .map(
+                              (m) => DropdownMenuItem(
+                                value: m,
+                                child: Text(
+                                  '$m ${isAr ? 'دقيقة' : 'mins'}',
+                                  style: TextStyle(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (val) async {
                           if (val != null) {
-                            await _storage?.setInt('jumuah_minutes_before', val);
+                            await _storage?.setInt(
+                              'jumuah_minutes_before',
+                              val,
+                            );
                             setState(() {});
                             _debouncedReschedule();
                           }
@@ -1428,7 +1916,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           const Divider(height: 1),
           // Hijri Date Offset (+/- 2 Days)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1438,12 +1929,22 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                     children: [
                       Text(
                         isAr ? 'تعديل التاريخ الهجري:' : 'Hijri Date Offset:',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isAr ? 'تعديل اليوم ليتوافق مع رؤية الهلال المحلية' : 'Adjust day offset to match local moon sighting',
-                        style: TextStyle(fontSize: 11, color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+                        isAr
+                            ? 'تعديل اليوم ليتوافق مع رؤية الهلال المحلية'
+                            : 'Adjust day offset to match local moon sighting',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1456,14 +1957,27 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
-                      value: _storage?.getInt('hijri_day_offset', defaultValue: 0) ?? 0,
+                      value:
+                          _storage?.getInt(
+                            'hijri_day_offset',
+                            defaultValue: 0,
+                          ) ??
+                          0,
                       items: [-2, -1, 0, 1, 2].map((off) {
                         final label = off == 0
                             ? (isAr ? 'تلقائي (0)' : 'Exact (0)')
-                            : (off > 0 ? '+$off ${isAr ? 'يوم' : 'day'}' : '$off ${isAr ? 'يوم' : 'day'}');
+                            : (off > 0
+                                  ? '+$off ${isAr ? 'يوم' : 'day'}'
+                                  : '$off ${isAr ? 'يوم' : 'day'}');
                         return DropdownMenuItem(
                           value: off,
-                          child: Text(label, style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         );
                       }).toList(),
                       onChanged: (val) async {
@@ -1483,11 +1997,18 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           ListTile(
             leading: Icon(Icons.battery_saver_rounded, color: primaryColor),
             title: Text(
-              isAr ? 'إعدادات التشغيل التلقائي (حماية من الإغلاق)' : 'Device Auto-Start Settings',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+              isAr
+                  ? 'إعدادات التشغيل التلقائي (حماية من الإغلاق)'
+                  : 'Device Auto-Start Settings',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.5,
+              ),
             ),
             subtitle: Text(
-              isAr ? 'تسهيل عمل الأذان في الخلفية على أجهزة شاومي وسامسونج وغيرها' : 'Ensure background adhan reliability on Xiaomi, Samsung, etc.',
+              isAr
+                  ? 'تسهيل عمل الأذان في الخلفية على أجهزة شاومي وسامسونج وغيرها'
+                  : 'Ensure background adhan reliability on Xiaomi, Samsung, etc.',
               style: const TextStyle(fontSize: 11.5),
             ),
             trailing: Icon(Icons.chevron_right, color: primaryColor),

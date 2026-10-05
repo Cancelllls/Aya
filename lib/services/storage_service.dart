@@ -29,12 +29,20 @@ class StorageService {
     if (_instance == null) {
       _instance = StorageService._();
       _prefs = await SharedPreferences.getInstance();
-      _db = await DatabaseService.getInstance();
       _instance!.prayer = PrayerPreferences(_prefs!);
-      _instance!.readingTracker = ReadingTrackerStore(_prefs!, _db!);
-      await _migrateIfNeeded();
+      try {
+        _db = await DatabaseService.getInstance();
+        _instance!.readingTracker = ReadingTrackerStore(_prefs!, _db!);
+        await _migrateIfNeeded();
+      } catch (_) {}
     }
     return _instance!;
+  }
+
+  static void resetForTesting() {
+    _instance = null;
+    _prefs = null;
+    _db = null;
   }
 
   static Future<void> _migrateIfNeeded() async {
@@ -154,18 +162,13 @@ class StorageService {
     double lat,
     double lng,
     String source,
-  ) =>
-      prayer.setLocation(city, country, lat, lng, source);
+  ) => prayer.setLocation(city, country, lat, lng, source);
 
   // Bookmarks (Delegated to ReadingTrackerStore)
   Future<List<Map<String, dynamic>>> getBookmarks() =>
       readingTracker.getBookmarks();
 
-  Future<void> addBookmark(
-    int surahNumber,
-    String surahName,
-    int ayahNumber,
-  ) =>
+  Future<void> addBookmark(int surahNumber, String surahName, int ayahNumber) =>
       readingTracker.addBookmark(surahNumber, surahName, ayahNumber);
 
   Future<void> removeBookmark(int surahNumber, {int? ayahNumber}) =>
@@ -228,13 +231,12 @@ class StorageService {
     int ayahNum,
     String reciter,
     String surahName,
-  ) =>
-      readingTracker.saveLastAudioPosition(
-        surahNum,
-        ayahNum,
-        reciter,
-        surahName,
-      );
+  ) => readingTracker.saveLastAudioPosition(
+    surahNum,
+    ayahNum,
+    reciter,
+    surahName,
+  );
 
   Future<void> saveLastAudioTimestamp(int positionMs) =>
       readingTracker.saveLastAudioTimestamp(positionMs);

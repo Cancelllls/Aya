@@ -21,8 +21,10 @@ import '../utils/text_helpers.dart';
 class ApiService {
   /// Flavor detection: 'fdroid' or 'play'.
   /// Defaults to 'fdroid' for 100% open-source privacy compliance.
-  static const String appFlavor =
-      String.fromEnvironment('FLAVOR', defaultValue: 'fdroid');
+  static const String appFlavor = String.fromEnvironment(
+    'FLAVOR',
+    defaultValue: 'fdroid',
+  );
   // ─── Prayer Times ────────────────────────────────────────────────────────
   static Future<void> cachePrayerTimes(String key, PrayerTimeData data) async {
     try {
@@ -94,12 +96,16 @@ class ApiService {
     int latitudeAdjustmentMethod = 3,
     int midnightMode = 0,
     int adjustment = 0,
+    double? customFajr,
+    double? customIsha,
   }) async {
     return OfflinePrayerService.getPrayerTimes(
       latitude: latitude,
       longitude: longitude,
       method: method,
       school: school,
+      customFajr: customFajr,
+      customIsha: customIsha,
     );
   }
 
@@ -182,8 +188,9 @@ class ApiService {
       );
       if (extraTranslations.isEmpty) {
         try {
-          await TranslationCacheService.instance
-              .downloadFromCdn(translationEdition);
+          await TranslationCacheService.instance.downloadFromCdn(
+            translationEdition,
+          );
           extraTranslations = await db.getExtraTranslationsForSurah(
             surahNumber,
             translationEdition,
@@ -195,7 +202,8 @@ class ApiService {
     final list = <Ayah>[];
     for (var row in ayahsRaw) {
       final ayahNum = row['ayah_number'] as int? ?? 0;
-      final transText = (extraTranslations != null &&
+      final transText =
+          (extraTranslations != null &&
               extraTranslations.containsKey(ayahNum) &&
               extraTranslations[ayahNum]!.isNotEmpty)
           ? extraTranslations[ayahNum]!
@@ -230,7 +238,9 @@ class ApiService {
       final rows = await db.getAyahsForSurah(surahNumber);
       final lookup = <int, String>{};
       for (final r in rows) {
-        lookup[r['ayah_number'] as int] = cleanTranslationText((r['text_english'] as String?) ?? '');
+        lookup[r['ayah_number'] as int] = cleanTranslationText(
+          (r['text_english'] as String?) ?? '',
+        );
       }
       for (final a in ayahs) {
         if (lookup.containsKey(a.numberInSurah)) {
@@ -338,8 +348,14 @@ class ApiService {
   }
 
   /// Returns true if the tafsir for this ayah is already in the memory cache.
-  static bool isTafsirCached(String editionId, int surahNumber, int ayahNumber) {
-    return _tafsirMemoryCache.containsKey('$editionId:$surahNumber:$ayahNumber');
+  static bool isTafsirCached(
+    String editionId,
+    int surahNumber,
+    int ayahNumber,
+  ) {
+    return _tafsirMemoryCache.containsKey(
+      '$editionId:$surahNumber:$ayahNumber',
+    );
   }
 
   /// Fetch specific Tafsir text for a single Ayah given an edition ID.
@@ -462,9 +478,7 @@ class ApiService {
         final url = Uri.parse(
           'https://api.quran.com/api/v4/tafsirs/$tId/by_chapter/$surah?per_page=300',
         );
-        final res = await http
-            .get(url)
-            .timeout(const Duration(seconds: 15));
+        final res = await http.get(url).timeout(const Duration(seconds: 15));
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
           final tafsirsList = data['tafsirs'] as List? ?? [];
@@ -591,21 +605,29 @@ class ApiService {
       final uri = Uri.parse(
         'https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude&lang=$langParam',
       );
-      final response = await http.get(uri, headers: {
-        'User-Agent': 'AyaIslamicApp/1.0 (https://github.com/Cancellls/Aya)',
-      }).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'User-Agent':
+                  'AyaIslamicApp/1.0 (https://github.com/Cancellls/Aya)',
+            },
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final features = data['features'] as List?;
         if (features != null && features.isNotEmpty) {
-            final props = features.first['properties'] as Map<String, dynamic>?;
+          final props = features.first['properties'] as Map<String, dynamic>?;
           if (props != null) {
             final street = (props['street'] as String?)?.trim();
             final name = (props['name'] as String?)?.trim();
-            final district = (props['district'] as String?)?.trim() ??
+            final district =
+                (props['district'] as String?)?.trim() ??
                 (props['locality'] as String?)?.trim();
-            final city = (props['city'] as String?)?.trim() ??
+            final city =
+                (props['city'] as String?)?.trim() ??
                 (props['town'] as String?)?.trim() ??
                 (props['village'] as String?)?.trim() ??
                 (props['state'] as String?)?.trim();

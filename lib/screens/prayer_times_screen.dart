@@ -30,8 +30,10 @@ class PrayerTimesScreen extends StatefulWidget {
 class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   PrayerTimeData? _prayerData;
   bool _isLoading = true;
-  int _calcMethod = 2; // ISNA
+  int _calcMethod = 0; // Auto
   int _asrMethod = 0; // Standard (Shafi'i)
+  double _customFajr = 18.0;
+  double _customIsha = 17.0;
   int _selectedSubTab = 0;
   List<dynamic>? _monthlyData;
 
@@ -45,8 +47,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   void initState() {
     super.initState();
     _selectedSubTab = widget.initialSubTab;
-    _calcMethod = widget.storage.getInt('calc_method', defaultValue: 2);
+    _calcMethod = widget.storage.getInt('calc_method', defaultValue: 0);
     _asrMethod = widget.storage.getInt('asr_method', defaultValue: 0);
+    _customFajr = widget.storage.getDouble(
+      'custom_fajr_angle',
+      defaultValue: 18.0,
+    );
+    _customIsha = widget.storage.getDouble(
+      'custom_isha_angle',
+      defaultValue: 17.0,
+    );
     _calendarMonth = DateTime.now().month;
     _calendarYear = DateTime.now().year;
     _loadPrayerTimes();
@@ -62,6 +72,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         longitude: loc['longitude'] ?? 31.2357,
         method: _calcMethod,
         school: _asrMethod,
+        customFajr: _customFajr,
+        customIsha: _customIsha,
       );
 
       final now = DateTime.now();
@@ -74,6 +86,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           school: _asrMethod,
           month: now.month,
           year: now.year,
+          customFajr: _customFajr,
+          customIsha: _customIsha,
         );
       } catch (_) {}
 
@@ -111,6 +125,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         school: _asrMethod,
         month: _calendarMonth,
         year: _calendarYear,
+        customFajr: _customFajr,
+        customIsha: _customIsha,
       );
       setState(() {
         _monthlyData = monthlyList;
@@ -244,7 +260,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   : "Choose when you would like to receive a notification alert for this Islamic event:",
               style: TextStyle(
                 fontSize: 13,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -349,12 +367,25 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
         _selectedSubTab = widget.initialSubTab;
       });
     }
-    final newCalc = widget.storage.getInt('calc_method', defaultValue: 2);
+    final newCalc = widget.storage.getInt('calc_method', defaultValue: 0);
     final newAsr = widget.storage.getInt('asr_method', defaultValue: 0);
-    if (newCalc != _calcMethod || newAsr != _asrMethod) {
+    final newFajr = widget.storage.getDouble(
+      'custom_fajr_angle',
+      defaultValue: 18.0,
+    );
+    final newIsha = widget.storage.getDouble(
+      'custom_isha_angle',
+      defaultValue: 17.0,
+    );
+    if (newCalc != _calcMethod ||
+        newAsr != _asrMethod ||
+        newFajr != _customFajr ||
+        newIsha != _customIsha) {
       setState(() {
         _calcMethod = newCalc;
         _asrMethod = newAsr;
+        _customFajr = newFajr;
+        _customIsha = newIsha;
       });
       _loadPrayerTimes();
     }
@@ -692,12 +723,34 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
   String _getGregMonthName(int month, bool isArabic) {
     const en = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     const ar = [
-      '', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      '',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
     ];
     if (month >= 1 && month <= 12) {
       return isArabic ? ar[month] : en[month];
@@ -707,12 +760,34 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
   String _getHijriMonthName(int month, bool isArabic) {
     const en = [
-      '', 'Muharram', 'Safar', "Rabi' I", "Rabi' II", "Jumada I", "Jumada II",
-      'Rajab', "Sha'ban", 'Ramadan', 'Shawwal', "Dhu al-Qi'dah", "Dhu al-Hijjah"
+      '',
+      'Muharram',
+      'Safar',
+      "Rabi' I",
+      "Rabi' II",
+      "Jumada I",
+      "Jumada II",
+      'Rajab',
+      "Sha'ban",
+      'Ramadan',
+      'Shawwal',
+      "Dhu al-Qi'dah",
+      "Dhu al-Hijjah",
     ];
     const ar = [
-      '', 'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
-      'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+      '',
+      'محرم',
+      'صفر',
+      'ربيع الأول',
+      'ربيع الآخر',
+      'جمادى الأولى',
+      'جمادى الآخرة',
+      'رجب',
+      'شعبان',
+      'رمضان',
+      'شوال',
+      'ذو القعدة',
+      'ذو الحجة',
     ];
     if (month >= 1 && month <= 12) {
       return isArabic ? ar[month] : en[month];
@@ -722,12 +797,34 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
   String _getHijriMonthShort(int month, bool isArabic) {
     const en = [
-      '', 'Muh.', 'Saf.', 'Rab. I', 'Rab. II', 'Jum. I', 'Jum. II',
-      'Raj.', 'Sha.', 'Ram.', 'Shaw.', 'Dhu Q.', 'Dhu H.'
+      '',
+      'Muh.',
+      'Saf.',
+      'Rab. I',
+      'Rab. II',
+      'Jum. I',
+      'Jum. II',
+      'Raj.',
+      'Sha.',
+      'Ram.',
+      'Shaw.',
+      'Dhu Q.',
+      'Dhu H.',
     ];
     const ar = [
-      '', 'محرم', 'صفر', 'ربيع ١', 'ربيع ٢', 'جمادى ١', 'جمادى ٢',
-      'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+      '',
+      'محرم',
+      'صفر',
+      'ربيع ١',
+      'ربيع ٢',
+      'جمادى ١',
+      'جمادى ٢',
+      'رجب',
+      'شعبان',
+      'رمضان',
+      'شوال',
+      'ذو القعدة',
+      'ذو الحجة',
     ];
     if (month >= 1 && month <= 12) {
       return isArabic ? ar[month] : en[month];
@@ -743,7 +840,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final endName = _getHijriMonthName(hEnd.hMonth, isArabic);
 
     if (hStart.hMonth == hEnd.hMonth) {
-      return isArabic ? "$startName ${hStart.hYear} هـ" : "$startName ${hStart.hYear}";
+      return isArabic
+          ? "$startName ${hStart.hYear} هـ"
+          : "$startName ${hStart.hYear}";
     }
     if (hStart.hYear == hEnd.hYear) {
       return isArabic
@@ -759,7 +858,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     if (days == 0) return isArabic ? 'اليوم' : 'Today';
     if (days == 1) return isArabic ? 'غداً' : 'Tomorrow';
     if (days == 2) return isArabic ? 'بعد يومين' : 'in 2 days';
-    if (days > 2 && days <= 10) return isArabic ? 'بعد $days أيام' : 'in $days days';
+    if (days > 2 && days <= 10)
+      return isArabic ? 'بعد $days أيام' : 'in $days days';
     if (days > 10) return isArabic ? 'بعد $days يوم' : 'in $days days';
     return isArabic ? 'انتهت' : 'Passed';
   }
@@ -770,21 +870,99 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final hNow = HijriCalendar.fromDate(today);
 
     final holyEvents = [
-      {'m': 1, 'd': 1, 'ar': 'رأس السنة الهجرية', 'en': 'Islamic New Year', 'icon': '🌙'},
+      {
+        'm': 1,
+        'd': 1,
+        'ar': 'رأس السنة الهجرية',
+        'en': 'Islamic New Year',
+        'icon': '🌙',
+      },
       {'m': 1, 'd': 9, 'ar': 'تاسوعاء', 'en': "Tasu'a", 'icon': '🕌'},
-      {'m': 1, 'd': 10, 'ar': 'يوم عاشوراء', 'en': 'Day of Ashura', 'icon': '🕌'},
-      {'m': 3, 'd': 12, 'ar': 'المولد النبوي الشريف', 'en': 'Mawlid al-Nabi', 'icon': '🕌'},
-      {'m': 7, 'd': 1, 'ar': 'أول شهر رجب', 'en': 'First Day of Rajab', 'icon': '🌙'},
-      {'m': 7, 'd': 2, 'ar': 'ليلة الرغائب', 'en': 'Laylat al-Raghaib', 'icon': '🤲'},
-      {'m': 7, 'd': 27, 'ar': 'ليلة الإسراء والمعراج', 'en': "Isra' and Mi'raj", 'icon': '🕌'},
-      {'m': 8, 'd': 1, 'ar': 'أول شهر شعبان', 'en': "First Day of Sha'ban", 'icon': '🌙'},
-      {'m': 8, 'd': 15, 'ar': 'ليلة النصف من شعبان', 'en': "Mid-Sha'ban", 'icon': '🌕'},
-      {'m': 9, 'd': 1, 'ar': 'بداية شهر رمضان المبارك', 'en': 'Start of Ramadan', 'icon': '🌙'},
-      {'m': 9, 'd': 27, 'ar': 'ليلة القدر (المتحراة)', 'en': 'Laylat al-Qadr', 'icon': '🤲'},
-      {'m': 10, 'd': 1, 'ar': 'عيد الفطر المبارك', 'en': 'Eid al-Fitr', 'icon': '✨'},
-      {'m': 12, 'd': 1, 'ar': 'أول ذي الحجة (العشر الأوائل)', 'en': 'First Day of Dhu al-Hijjah', 'icon': '🌙'},
+      {
+        'm': 1,
+        'd': 10,
+        'ar': 'يوم عاشوراء',
+        'en': 'Day of Ashura',
+        'icon': '🕌',
+      },
+      {
+        'm': 3,
+        'd': 12,
+        'ar': 'المولد النبوي الشريف',
+        'en': 'Mawlid al-Nabi',
+        'icon': '🕌',
+      },
+      {
+        'm': 7,
+        'd': 1,
+        'ar': 'أول شهر رجب',
+        'en': 'First Day of Rajab',
+        'icon': '🌙',
+      },
+      {
+        'm': 7,
+        'd': 2,
+        'ar': 'ليلة الرغائب',
+        'en': 'Laylat al-Raghaib',
+        'icon': '🤲',
+      },
+      {
+        'm': 7,
+        'd': 27,
+        'ar': 'ليلة الإسراء والمعراج',
+        'en': "Isra' and Mi'raj",
+        'icon': '🕌',
+      },
+      {
+        'm': 8,
+        'd': 1,
+        'ar': 'أول شهر شعبان',
+        'en': "First Day of Sha'ban",
+        'icon': '🌙',
+      },
+      {
+        'm': 8,
+        'd': 15,
+        'ar': 'ليلة النصف من شعبان',
+        'en': "Mid-Sha'ban",
+        'icon': '🌕',
+      },
+      {
+        'm': 9,
+        'd': 1,
+        'ar': 'بداية شهر رمضان المبارك',
+        'en': 'Start of Ramadan',
+        'icon': '🌙',
+      },
+      {
+        'm': 9,
+        'd': 27,
+        'ar': 'ليلة القدر (المتحراة)',
+        'en': 'Laylat al-Qadr',
+        'icon': '🤲',
+      },
+      {
+        'm': 10,
+        'd': 1,
+        'ar': 'عيد الفطر المبارك',
+        'en': 'Eid al-Fitr',
+        'icon': '✨',
+      },
+      {
+        'm': 12,
+        'd': 1,
+        'ar': 'أول ذي الحجة (العشر الأوائل)',
+        'en': 'First Day of Dhu al-Hijjah',
+        'icon': '🌙',
+      },
       {'m': 12, 'd': 9, 'ar': 'يوم عرفة', 'en': 'Day of Arafah', 'icon': '🤲'},
-      {'m': 12, 'd': 10, 'ar': 'عيد الأضحى المبارك', 'en': 'Eid al-Adha', 'icon': '🕌'},
+      {
+        'm': 12,
+        'd': 10,
+        'ar': 'عيد الأضحى المبارك',
+        'en': 'Eid al-Adha',
+        'icon': '🕌',
+      },
     ];
 
     final upcoming = <Map<String, dynamic>>[];
@@ -835,7 +1013,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       }
     }
 
-    upcoming.sort((a, b) => (a['daysRemaining'] as int).compareTo(b['daysRemaining'] as int));
+    upcoming.sort(
+      (a, b) =>
+          (a['daysRemaining'] as int).compareTo(b['daysRemaining'] as int),
+    );
     return upcoming;
   }
 
@@ -858,7 +1039,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final spanningHijri = _getSpanningHijriTitle(_calendarYear, _calendarMonth);
 
     final firstDayOfMonth = DateTime(_calendarYear, _calendarMonth, 1);
-    final daysInCurrentMonth = DateTime(_calendarYear, _calendarMonth + 1, 0).day;
+    final daysInCurrentMonth = DateTime(
+      _calendarYear,
+      _calendarMonth + 1,
+      0,
+    ).day;
     final leadingPadding = firstDayOfMonth.weekday % 7; // Sunday = 0
     final prevMonthLastDay = DateTime(_calendarYear, _calendarMonth, 0);
     final daysInPrevMonth = prevMonthLastDay.day;
@@ -868,7 +1053,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     // 1. Leading days (adjacent previous month)
     for (int i = leadingPadding - 1; i >= 0; i--) {
       final dayNum = daysInPrevMonth - i;
-      final date = DateTime(prevMonthLastDay.year, prevMonthLastDay.month, dayNum);
+      final date = DateTime(
+        prevMonthLastDay.year,
+        prevMonthLastDay.month,
+        dayNum,
+      );
       final hijri = HijriCalendar.fromDate(date);
       gridCells.add({
         'date': date,
@@ -912,7 +1101,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     }
 
     final weekdayHeadersEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    final weekdayHeadersAr = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+    final weekdayHeadersAr = [
+      'أحد',
+      'اثنين',
+      'ثلاثاء',
+      'أربعاء',
+      'خميس',
+      'جمعة',
+      'سبت',
+    ];
     final weekdayHeaders = isArabic ? weekdayHeadersAr : weekdayHeadersEn;
 
     final now = DateTime.now();
@@ -1031,12 +1228,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   final bool isCurrentMonth = cell['isCurrentMonth'];
                   final bool isFirstOfHijri = cell['isFirstOfHijriMonth'];
 
-                  final bool isToday = isCurrentMonth &&
+                  final bool isToday =
+                      isCurrentMonth &&
                       date.year == now.year &&
                       date.month == now.month &&
                       date.day == now.day;
 
-                  final bool isSelected = isCurrentMonth &&
+                  final bool isSelected =
+                      isCurrentMonth &&
                       date.year == _selectedCalendarDay.year &&
                       date.month == _selectedCalendarDay.month &&
                       date.day == _selectedCalendarDay.day;
@@ -1044,9 +1243,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   final dayStr = date.day.toString().padLeft(2, '0');
                   final monthStr = date.month.toString().padLeft(2, '0');
                   final fullDateFormatted = "$dayStr-$monthStr-${date.year}";
-                  final hasEvent = events.any((e) => e['gregDate'] == fullDateFormatted);
+                  final hasEvent = events.any(
+                    (e) => e['gregDate'] == fullDateFormatted,
+                  );
 
-                  final hijriShortName = _getHijriMonthShort(hijri.hMonth, isArabic);
+                  final hijriShortName = _getHijriMonthShort(
+                    hijri.hMonth,
+                    isArabic,
+                  );
 
                   if (!isCurrentMonth) {
                     return Opacity(
@@ -1088,19 +1292,21 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                         color: isSelected
                             ? const Color(0xFFE5C158).withValues(alpha: 0.22)
                             : isToday
-                                ? const Color(0xFFE5C158).withValues(alpha: 0.10)
-                                : (hasEvent
-                                    ? const Color(0xFFE5C158).withValues(alpha: 0.04)
-                                    : theme.cardColor.withValues(alpha: 0.5)),
+                            ? const Color(0xFFE5C158).withValues(alpha: 0.10)
+                            : (hasEvent
+                                  ? const Color(
+                                      0xFFE5C158,
+                                    ).withValues(alpha: 0.04)
+                                  : theme.cardColor.withValues(alpha: 0.5)),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFFE5C158)
                               : isToday
-                                  ? const Color(0xFFE5C158).withValues(alpha: 0.7)
-                                  : Theme.of(context)
-                                      .dividerColor
-                                      .withValues(alpha: 0.10),
+                              ? const Color(0xFFE5C158).withValues(alpha: 0.7)
+                              : Theme.of(
+                                  context,
+                                ).dividerColor.withValues(alpha: 0.10),
                           width: isSelected ? 2.0 : (isToday ? 1.5 : 1.0),
                         ),
                       ),
@@ -1140,9 +1346,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                                 fontWeight: FontWeight.w500,
                                 color: isSelected || isToday
                                     ? const Color(0xFFE5C158)
-                                    : theme.textTheme.bodyMedium?.color?.withValues(
-                                        alpha: 0.55,
-                                      ),
+                                    : theme.textTheme.bodyMedium?.color
+                                          ?.withValues(alpha: 0.55),
                               ),
                             ),
                           if (hasEvent)
@@ -1171,8 +1376,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   Widget _buildSelectedDayPrayerTimes(ThemeData theme) {
     final isArabic = TranslationService.isArabic;
     final selectedDayStr = _selectedCalendarDay.day.toString().padLeft(2, '0');
-    final selectedMonthStr = _selectedCalendarDay.month.toString().padLeft(2, '0');
-    final selectedFullDate = "$selectedDayStr-$selectedMonthStr-${_selectedCalendarDay.year}";
+    final selectedMonthStr = _selectedCalendarDay.month.toString().padLeft(
+      2,
+      '0',
+    );
+    final selectedFullDate =
+        "$selectedDayStr-$selectedMonthStr-${_selectedCalendarDay.year}";
 
     Map<String, dynamic>? selectedDayData;
     if (_monthlyData != null) {
@@ -1186,20 +1395,26 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     }
 
     final now = DateTime.now();
-    final isToday = _selectedCalendarDay.year == now.year &&
+    final isToday =
+        _selectedCalendarDay.year == now.year &&
         _selectedCalendarDay.month == now.month &&
         _selectedCalendarDay.day == now.day;
 
     final hijri = HijriCalendar.fromDate(_selectedCalendarDay);
     final hijriMonthName = _getHijriMonthName(hijri.hMonth, isArabic);
-    final gregMonthName = _getGregMonthName(_selectedCalendarDay.month, isArabic);
+    final gregMonthName = _getGregMonthName(
+      _selectedCalendarDay.month,
+      isArabic,
+    );
 
     final String dateTitle = isArabic
         ? "${_selectedCalendarDay.day} $gregMonthName ${_selectedCalendarDay.year} · ${hijri.hDay} $hijriMonthName ${hijri.hYear} هـ"
         : "${_getGregMonthName(_selectedCalendarDay.month, false)} ${_selectedCalendarDay.day}, ${_selectedCalendarDay.year} · $hijriMonthName ${hijri.hDay}, ${hijri.hYear} AH";
 
     final events = _getHijriEventsForMonth();
-    final dayEvents = events.where((e) => e['gregDate'] == selectedFullDate).toList();
+    final dayEvents = events
+        .where((e) => e['gregDate'] == selectedFullDate)
+        .toList();
     final hasEvent = dayEvents.isNotEmpty;
     final eventTitle = hasEvent ? dayEvents.first['title'] as String : '';
 
@@ -1234,7 +1449,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 ),
                 if (isToday)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE5C158).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -1258,7 +1476,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             if (hasEvent) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE5C158).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(10),
@@ -1314,12 +1535,42 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
               // 6 Prayer Times Strip
               Row(
                 children: [
-                  _buildMiniPrayerPill(theme, TranslationService.t('fajr'), _fmt(timings['Fajr']), Icons.cloud_queue),
-                  _buildMiniPrayerPill(theme, TranslationService.t('sunrise'), _fmt(timings['Sunrise']), Icons.wb_sunny_outlined),
-                  _buildMiniPrayerPill(theme, TranslationService.t('dhuhr'), _fmt(timings['Dhuhr']), Icons.wb_sunny),
-                  _buildMiniPrayerPill(theme, TranslationService.t('asr'), _fmt(timings['Asr']), Icons.wb_twilight),
-                  _buildMiniPrayerPill(theme, TranslationService.t('maghrib'), _fmt(timings['Maghrib']), Icons.wb_cloudy_outlined),
-                  _buildMiniPrayerPill(theme, TranslationService.t('isha'), _fmt(timings['Isha']), Icons.nights_stay),
+                  _buildMiniPrayerPill(
+                    theme,
+                    TranslationService.t('fajr'),
+                    _fmt(timings['Fajr']),
+                    Icons.cloud_queue,
+                  ),
+                  _buildMiniPrayerPill(
+                    theme,
+                    TranslationService.t('sunrise'),
+                    _fmt(timings['Sunrise']),
+                    Icons.wb_sunny_outlined,
+                  ),
+                  _buildMiniPrayerPill(
+                    theme,
+                    TranslationService.t('dhuhr'),
+                    _fmt(timings['Dhuhr']),
+                    Icons.wb_sunny,
+                  ),
+                  _buildMiniPrayerPill(
+                    theme,
+                    TranslationService.t('asr'),
+                    _fmt(timings['Asr']),
+                    Icons.wb_twilight,
+                  ),
+                  _buildMiniPrayerPill(
+                    theme,
+                    TranslationService.t('maghrib'),
+                    _fmt(timings['Maghrib']),
+                    Icons.wb_cloudy_outlined,
+                  ),
+                  _buildMiniPrayerPill(
+                    theme,
+                    TranslationService.t('isha'),
+                    _fmt(timings['Isha']),
+                    Icons.nights_stay,
+                  ),
                 ],
               ),
           ],
@@ -1357,7 +1608,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
-                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  color: theme.textTheme.bodyMedium?.color?.withValues(
+                    alpha: 0.7,
+                  ),
                 ),
               ),
             ),
@@ -1430,7 +1683,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.10),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.10),
                   ),
                 ),
                 child: InkWell(
@@ -1448,7 +1703,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE5C158).withValues(alpha: 0.12),
+                            color: const Color(
+                              0xFFE5C158,
+                            ).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -1493,9 +1750,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE5C158).withValues(
-                              alpha: days == 0 ? 0.9 : 0.18,
-                            ),
+                            color: const Color(
+                              0xFFE5C158,
+                            ).withValues(alpha: days == 0 ? 0.9 : 0.18),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: const Color(0xFFE5C158),
@@ -1654,7 +1911,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           children: [
             TextButton.icon(
               icon: Icon(
-                _showRawPrayerTable ? Icons.calendar_month : Icons.table_chart_outlined,
+                _showRawPrayerTable
+                    ? Icons.calendar_month
+                    : Icons.table_chart_outlined,
                 size: 18,
                 color: const Color(0xFFE5C158),
               ),

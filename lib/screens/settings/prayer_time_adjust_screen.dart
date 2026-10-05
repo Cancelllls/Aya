@@ -17,7 +17,14 @@ class PrayerTimeAdjustScreen extends StatefulWidget {
 class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
   final Map<String, int> _offsets = {};
 
-  final List<String> _prayers = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  final List<String> _prayers = [
+    'fajr',
+    'sunrise',
+    'dhuhr',
+    'asr',
+    'maghrib',
+    'isha',
+  ];
 
   final Map<String, String> _prayerNamesAr = {
     'fajr': 'الفجر',
@@ -71,7 +78,7 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
   Future<void> _rescheduleAlarms() async {
     try {
       final loc = widget.storage.getLocation();
-      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final method = widget.storage.getInt('calc_method', defaultValue: 0);
       final school = widget.storage.getInt('asr_method', defaultValue: 0);
 
       final PrayerTimeData data = await ApiService.fetchPrayerTimes(
@@ -151,7 +158,9 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
                       style: TextStyle(
                         fontSize: 13.5,
                         height: 1.4,
-                        color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.85),
+                        color: theme.textTheme.bodyLarge?.color?.withValues(
+                          alpha: 0.85,
+                        ),
                       ),
                     ),
                   ),
@@ -162,7 +171,9 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
           const SizedBox(height: 16),
 
           ..._prayers.map((prayer) {
-            final name = isAr ? _prayerNamesAr[prayer]! : _prayerNamesEn[prayer]!;
+            final name = isAr
+                ? _prayerNamesAr[prayer]!
+                : _prayerNamesEn[prayer]!;
             final currentVal = _offsets[prayer] ?? 0;
 
             return Card(
@@ -189,17 +200,27 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
                                 color: primaryColor.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(Icons.access_time_filled, size: 20, color: primaryColor),
+                              child: Icon(
+                                Icons.access_time_filled,
+                                size: 20,
+                                color: primaryColor,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Text(
                               name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: currentVal == 0
                                 ? theme.disabledColor.withValues(alpha: 0.1)
@@ -214,7 +235,8 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               color: currentVal == 0
-                                  ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5)
+                                  ? theme.textTheme.bodyMedium?.color
+                                        ?.withValues(alpha: 0.5)
                                   : primaryColor,
                             ),
                           ),
@@ -227,7 +249,8 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
                         IconButton(
                           icon: const Icon(Icons.remove_circle_outline),
                           color: primaryColor,
-                          onPressed: () => _updateOffset(prayer, currentVal - 1),
+                          onPressed: () =>
+                              _updateOffset(prayer, currentVal - 1),
                         ),
                         Expanded(
                           child: Slider(
@@ -242,7 +265,8 @@ class _PrayerTimeAdjustScreenState extends State<PrayerTimeAdjustScreen> {
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline),
                           color: primaryColor,
-                          onPressed: () => _updateOffset(prayer, currentVal + 1),
+                          onPressed: () =>
+                              _updateOffset(prayer, currentVal + 1),
                         ),
                       ],
                     ),

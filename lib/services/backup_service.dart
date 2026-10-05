@@ -17,24 +17,47 @@ class BackupService {
     // Collect settings as proper types
     final settings = <String, dynamic>{};
     final strKeys = [
-      'prayer_method', 'prayer_school',
-      'adhan_alert_mode', 'pre_adhan_alert_mode', 'quran_font',
-      'theme_preset', 'lang_code', 'reading_mode',
+      'prayer_method',
+      'prayer_school',
+      'adhan_alert_mode',
+      'pre_adhan_alert_mode',
+      'quran_font',
+      'theme_preset',
+      'lang_code',
+      'reading_mode',
     ];
     for (var key in strKeys) {
       final v = storage.getString(key);
       if (v.isNotEmpty) settings[key] = v;
     }
-    final intKeys = ['calc_method', 'asr_method', 'first_day_of_week', 'pre_adhan_duration', 'focus_lock_duration'];
+    final intKeys = [
+      'calc_method',
+      'asr_method',
+      'first_day_of_week',
+      'pre_adhan_duration',
+      'focus_lock_duration',
+    ];
     for (var key in intKeys) {
-      final v = storage.getInt(key, defaultValue: -1);
-      if (v != -1) settings[key] = v;
+      final v = storage.getInt(key, defaultValue: -999);
+      if (v != -999) settings[key] = v;
+    }
+    final dblKeys = ['custom_fajr_angle', 'custom_isha_angle'];
+    for (var key in dblKeys) {
+      final v = storage.getDouble(key, defaultValue: -1.0);
+      if (v != -1.0) settings[key] = v;
     }
     final boolKeys = [
-      'morning_azkar_reminder', 'evening_azkar_reminder', 'todays_verse_reminder',
-      'ramadan_imsak_enabled', 'ramadan_iftar_enabled', 'islamic_events_enabled',
-      'swipe_surah_navigation', 'hide_full_surah_disclaimer',
-      'use_24h_format', 'continuous_play', 'auto_bookmark',
+      'morning_azkar_reminder',
+      'evening_azkar_reminder',
+      'todays_verse_reminder',
+      'ramadan_imsak_enabled',
+      'ramadan_iftar_enabled',
+      'islamic_events_enabled',
+      'swipe_surah_navigation',
+      'hide_full_surah_disclaimer',
+      'use_24h_format',
+      'continuous_play',
+      'auto_bookmark',
     ];
     for (var key in boolKeys) {
       final v = storage.getBool(key);
@@ -44,9 +67,14 @@ class BackupService {
     final azkar = storage.getStringList('custom_dhikrs') ?? [];
 
     // Prayer tracker — convert int values to int for safe JSON encoding
-    final rawTracker = await db.getPrayerTrackerRange('2020-01-01', '2030-01-01');
+    final rawTracker = await db.getPrayerTrackerRange(
+      '2020-01-01',
+      '2030-01-01',
+    );
     final tracker = rawTracker.map((row) {
-      return row.map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0));
+      return row.map(
+        (k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0),
+      );
     }).toList();
 
     return {
@@ -66,10 +94,16 @@ class BackupService {
     int imported = 0;
 
     final bookmarks = (data['bookmarks'] as List?)?.cast<String>() ?? [];
-    if (bookmarks.isNotEmpty) { await storage.setStringList('hadith_bookmarks', bookmarks); imported++; }
+    if (bookmarks.isNotEmpty) {
+      await storage.setStringList('hadith_bookmarks', bookmarks);
+      imported++;
+    }
 
     final qbm = (data['quran_bookmarks'] as List?)?.cast<String>() ?? [];
-    if (qbm.isNotEmpty) { await storage.setStringList('quran_bookmarks', qbm); imported++; }
+    if (qbm.isNotEmpty) {
+      await storage.setStringList('quran_bookmarks', qbm);
+      imported++;
+    }
 
     final settings = data['settings'] as Map<String, dynamic>? ?? {};
     for (var e in settings.entries) {
@@ -78,13 +112,22 @@ class BackupService {
       } else if (e.value is bool) {
         await storage.setBool(e.key, e.value as bool);
       } else if (e.value is num) {
-        await storage.setInt(e.key, (e.value as num).toInt());
+        if (e.key == 'custom_fajr_angle' ||
+            e.key == 'custom_isha_angle' ||
+            e.value is double) {
+          await storage.setDouble(e.key, (e.value as num).toDouble());
+        } else {
+          await storage.setInt(e.key, (e.value as num).toInt());
+        }
       }
     }
     if (settings.isNotEmpty) imported++;
 
     final azkar = (data['custom_azkar'] as List?)?.cast<String>() ?? [];
-    if (azkar.isNotEmpty) { await storage.setStringList('custom_dhikrs', azkar); imported++; }
+    if (azkar.isNotEmpty) {
+      await storage.setStringList('custom_dhikrs', azkar);
+      imported++;
+    }
 
     final tracker = data['prayer_tracker'] as List? ?? [];
     for (var item in tracker) {
@@ -113,7 +156,9 @@ class BackupService {
   static Future<void> shareBackup() async {
     final path = await exportToFile();
     final file = XFile(path, mimeType: 'application/json');
-    await SharePlus.instance.share(ShareParams(files: [file], text: 'Aya Backup'));
+    await SharePlus.instance.share(
+      ShareParams(files: [file], text: 'Aya Backup'),
+    );
   }
 
   /// Read backup from a user-specified file path.

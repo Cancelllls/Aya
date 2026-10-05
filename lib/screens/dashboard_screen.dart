@@ -16,6 +16,8 @@ import 'tasbih_screen.dart';
 import '../services/quran_verses.dart';
 import '../services/offline_prayer_service.dart';
 import 'prayer_tracker_screen.dart';
+import 'prophets_stories_screen.dart';
+import 'sirah_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final StorageService storage;
@@ -47,6 +49,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   Map<String, dynamic>? _lastLoadedLocation;
   int? _lastLoadedCalcMethod;
   int? _lastLoadedAsrMethod;
+  double? _lastLoadedFajrAngle;
+  double? _lastLoadedIshaAngle;
   late PredefinedVerse _randomVerse;
 
   static const List<Map<String, String>> _versePresets = [
@@ -130,15 +134,25 @@ class _DashboardScreenState extends State<DashboardScreen>
   void didUpdateWidget(covariant DashboardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     final location = widget.storage.getLocation();
-    final method = widget.storage.getInt('calc_method', defaultValue: 2);
+    final method = widget.storage.getInt('calc_method', defaultValue: 0);
     final school = widget.storage.getInt('asr_method', defaultValue: 0);
+    final fajrAngle = widget.storage.getDouble(
+      'custom_fajr_angle',
+      defaultValue: 18.0,
+    );
+    final ishaAngle = widget.storage.getDouble(
+      'custom_isha_angle',
+      defaultValue: 17.0,
+    );
 
     if (_lastLoadedLocation == null ||
         _lastLoadedLocation!['latitude'] != location['latitude'] ||
         _lastLoadedLocation!['longitude'] != location['longitude'] ||
         _lastLoadedLocation!['city'] != location['city'] ||
         _lastLoadedCalcMethod != method ||
-        _lastLoadedAsrMethod != school) {
+        _lastLoadedAsrMethod != school ||
+        _lastLoadedFajrAngle != fajrAngle ||
+        _lastLoadedIshaAngle != ishaAngle) {
       _loadPrayerTimes();
     }
   }
@@ -202,18 +216,30 @@ class _DashboardScreenState extends State<DashboardScreen>
         _hasError = false;
       });
       final loc = widget.storage.getLocation();
-      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final method = widget.storage.getInt('calc_method', defaultValue: 0);
       final school = widget.storage.getInt('asr_method', defaultValue: 0);
+      final fajrAngle = widget.storage.getDouble(
+        'custom_fajr_angle',
+        defaultValue: 18.0,
+      );
+      final ishaAngle = widget.storage.getDouble(
+        'custom_isha_angle',
+        defaultValue: 17.0,
+      );
 
       _lastLoadedLocation = loc;
       _lastLoadedCalcMethod = method;
       _lastLoadedAsrMethod = school;
+      _lastLoadedFajrAngle = fajrAngle;
+      _lastLoadedIshaAngle = ishaAngle;
 
       PrayerTimeData data = await ApiService.fetchPrayerTimes(
         latitude: loc['latitude'] ?? 30.0444,
         longitude: loc['longitude'] ?? 31.2357,
         method: method,
         school: school,
+        customFajr: fajrAngle,
+        customIsha: ishaAngle,
       );
 
       setState(() {
@@ -558,8 +584,16 @@ class _DashboardScreenState extends State<DashboardScreen>
         final loc = widget.storage.getLocation();
         final lat = (loc['latitude'] as num?)?.toDouble() ?? 30.0444;
         final lng = (loc['longitude'] as num?)?.toDouble() ?? 31.2357;
-        final method = widget.storage.getInt('calc_method', defaultValue: 5);
+        final method = widget.storage.getInt('calc_method', defaultValue: 0);
         final school = widget.storage.getInt('asr_method', defaultValue: 0);
+        final customFajr = widget.storage.getDouble(
+          'custom_fajr_angle',
+          defaultValue: 18.0,
+        );
+        final customIsha = widget.storage.getDouble(
+          'custom_isha_angle',
+          defaultValue: 17.0,
+        );
 
         final scheduleJson = await OfflinePrayerService.get30DaysScheduleJson(
           latitude: lat,
@@ -568,11 +602,15 @@ class _DashboardScreenState extends State<DashboardScreen>
           school: school,
           use24h: use24h,
           isArabic: TranslationService.isArabic,
+          customFajr: customFajr,
+          customIsha: customIsha,
         );
         await prefs.setString('widget_prayer_schedule_30d', scheduleJson);
         await prefs.setDouble('widget_user_latitude', lat);
         await prefs.setDouble('widget_user_longitude', lng);
         await prefs.setInt('widget_calc_method', method);
+        await prefs.setDouble('widget_custom_fajr_angle', customFajr);
+        await prefs.setDouble('widget_custom_isha_angle', customIsha);
         await prefs.setInt('widget_asr_method', school);
         await prefs.setBool('widget_time_format_24h', use24h);
       } catch (_) {}
@@ -601,9 +639,18 @@ class _DashboardScreenState extends State<DashboardScreen>
       children: [
         Icon(icon, size: 14, color: const Color(0xFFE5C158)),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
         Text(
-          formatPrayerTime(time, use24h: widget.storage.getBool('use_24h_format', defaultValue: false)),
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+        Text(
+          formatPrayerTime(
+            time,
+            use24h: widget.storage.getBool(
+              'use_24h_format',
+              defaultValue: false,
+            ),
+          ),
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
       ],
@@ -633,7 +680,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.15),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.4),
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -679,7 +728,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: theme.cardColor,
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                      ),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -724,8 +775,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).shadowColor
-                              .withValues(alpha: 0.05),
+                          color: Theme.of(
+                            context,
+                          ).shadowColor.withValues(alpha: 0.05),
                           blurRadius: 10,
                         ),
                       ],
@@ -739,8 +791,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981)
-                                .withValues(alpha: 0.15),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -779,9 +832,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _pill(theme, TranslationService.t('sunrise'), _prayerData!.sunrise, Icons.wb_sunny_outlined),
-                            _pill(theme, TranslationService.t('fajr'), _prayerData!.fajr, Icons.cloud_queue),
-                            _pill(theme, TranslationService.t('sunset'), _prayerData!.sunset, Icons.wb_twilight),
+                            _pill(
+                              theme,
+                              TranslationService.t('sunrise'),
+                              _prayerData!.sunrise,
+                              Icons.wb_sunny_outlined,
+                            ),
+                            _pill(
+                              theme,
+                              TranslationService.t('fajr'),
+                              _prayerData!.fajr,
+                              Icons.cloud_queue,
+                            ),
+                            _pill(
+                              theme,
+                              TranslationService.t('sunset'),
+                              _prayerData!.sunset,
+                              Icons.wb_twilight,
+                            ),
                           ],
                         ),
                       ],
@@ -884,15 +952,31 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     GridServiceCard(
                       theme: theme,
-                      icon: Icons.wb_sunny_outlined,
-                      title: TranslationService.t('morning_azkar'),
-                      onTap: () => widget.onTabChange(3, subTab: 0),
+                      icon: Icons.auto_stories,
+                      title: TranslationService.t('stories_of_prophets'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ProphetsStoriesScreen(storage: widget.storage),
+                          ),
+                        );
+                      },
                     ),
                     GridServiceCard(
                       theme: theme,
-                      icon: Icons.nights_stay_outlined,
-                      title: TranslationService.t('evening_azkar'),
-                      onTap: () => widget.onTabChange(3, subTab: 1),
+                      icon: Icons.history_edu,
+                      title: TranslationService.t('prophetic_sirah'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                SirahScreen(storage: widget.storage),
+                          ),
+                        );
+                      },
                     ),
                     GridServiceCard(
                       theme: theme,
@@ -958,8 +1042,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 11,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 
-                          0.8,
+                        color: theme.textTheme.bodyMedium?.color?.withValues(
+                          alpha: 0.8,
                         ),
                       ),
                     ),

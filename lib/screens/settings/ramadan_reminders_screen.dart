@@ -22,15 +22,24 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
   @override
   void initState() {
     super.initState();
-    _imsakEnabled = widget.storage.getBool('ramadan_imsak_enabled', defaultValue: true);
-    _imsakOffset = widget.storage.getInt('ramadan_imsak_offset', defaultValue: 0);
-    _iftarEnabled = widget.storage.getBool('ramadan_iftar_enabled', defaultValue: true);
+    _imsakEnabled = widget.storage.getBool(
+      'ramadan_imsak_enabled',
+      defaultValue: true,
+    );
+    _imsakOffset = widget.storage.getInt(
+      'ramadan_imsak_offset',
+      defaultValue: 0,
+    );
+    _iftarEnabled = widget.storage.getBool(
+      'ramadan_iftar_enabled',
+      defaultValue: true,
+    );
   }
 
   Future<void> _rescheduleAlarms() async {
     try {
       final loc = widget.storage.getLocation();
-      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final method = widget.storage.getInt('calc_method', defaultValue: 0);
       final school = widget.storage.getInt('asr_method', defaultValue: 0);
 
       final PrayerTimeData data = await ApiService.fetchPrayerTimes(
@@ -56,12 +65,20 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
         padding: const EdgeInsets.all(16.0),
         children: [
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               children: [
                 SwitchListTile(
-                  title: Text(isAr ? 'تنبيه الإمساك (السحور)' : 'Imsak / Suhoor Alert'),
-                  subtitle: Text(isAr ? 'تنبيه عند اقتراب وقت الفجر للتوقف عن الطعام' : 'Alert before Fajr time to stop eating for the fast'),
+                  title: Text(
+                    isAr ? 'تنبيه الإمساك (السحور)' : 'Imsak / Suhoor Alert',
+                  ),
+                  subtitle: Text(
+                    isAr
+                        ? 'تنبيه عند اقتراب وقت الفجر للتوقف عن الطعام'
+                        : 'Alert before Fajr time to stop eating for the fast',
+                  ),
                   value: _imsakEnabled,
                   onChanged: (val) async {
                     setState(() {
@@ -74,17 +91,28 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
                 if (_imsakEnabled) ...[
                   const Divider(height: 1),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(isAr ? 'وقت الإمساك قبل الفجر بـ:' : 'Imsak offset before Fajr:'),
+                        Text(
+                          isAr
+                              ? 'وقت الإمساك قبل الفجر بـ:'
+                              : 'Imsak offset before Fajr:',
+                        ),
                         DropdownButton<int>(
                           value: _imsakOffset,
                           items: [0, 5, 10, 15].map((m) {
                             return DropdownMenuItem<int>(
                               value: m,
-                              child: Text(m == 0 ? (isAr ? 'عند الفجر (0)' : 'At Fajr (0)') : '$m ${isAr ? "دقائق" : "mins"}'),
+                              child: Text(
+                                m == 0
+                                    ? (isAr ? 'عند الفجر (0)' : 'At Fajr (0)')
+                                    : '$m ${isAr ? "دقائق" : "mins"}',
+                              ),
                             );
                           }).toList(),
                           onChanged: (val) async {
@@ -92,7 +120,10 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
                               setState(() {
                                 _imsakOffset = val;
                               });
-                              await widget.storage.setInt('ramadan_imsak_offset', val);
+                              await widget.storage.setInt(
+                                'ramadan_imsak_offset',
+                                val,
+                              );
                               _rescheduleAlarms();
                             }
                           },
@@ -104,7 +135,11 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
                 const Divider(height: 1),
                 SwitchListTile(
                   title: Text(isAr ? 'تنبيه الإفطار' : 'Iftar Alert'),
-                  subtitle: Text(isAr ? 'تنبيه ودعاء عند دخول وقت المغرب' : 'Alert and Dua at Maghrib time'),
+                  subtitle: Text(
+                    isAr
+                        ? 'تنبيه ودعاء عند دخول وقت المغرب'
+                        : 'Alert and Dua at Maghrib time',
+                  ),
                   value: _iftarEnabled,
                   onChanged: (val) async {
                     setState(() {

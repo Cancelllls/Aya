@@ -132,7 +132,7 @@ class _MainScaffoldState extends State<MainScaffold>
         }
 
         await widget.storage.setLocation(city, country, lat, lon, 'gps');
-        final method = widget.storage.getInt('calc_method', defaultValue: 2);
+        final method = widget.storage.getInt('calc_method', defaultValue: 0);
         final school = widget.storage.getInt('asr_method', defaultValue: 0);
         final prayerData = await ApiService.fetchPrayerTimes(
           latitude: lat,
@@ -193,7 +193,7 @@ class _MainScaffoldState extends State<MainScaffold>
   Future<void> _rescheduleAllAlarms() async {
     try {
       final loc = widget.storage.getLocation();
-      final method = widget.storage.getInt('calc_method', defaultValue: 2);
+      final method = widget.storage.getInt('calc_method', defaultValue: 0);
       final school = widget.storage.getInt('asr_method', defaultValue: 0);
 
       final PrayerTimeData data = await ApiService.fetchPrayerTimes(
@@ -550,8 +550,8 @@ class _MainScaffoldState extends State<MainScaffold>
                     bottomPosition: bottomNavbarStyle == 'floating'
                         ? 16.0 + MediaQuery.of(context).padding.bottom
                         : kBottomNavigationBarHeight +
-                            MediaQuery.of(context).padding.bottom +
-                            8.0,
+                              MediaQuery.of(context).padding.bottom +
+                              8.0,
                     isDark: isDark,
                     theme: theme,
                   ),
@@ -600,8 +600,9 @@ class _MainScaffoldState extends State<MainScaffold>
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFFE5C158)
-                                                .withValues(alpha: 0.15),
+                                            color: const Color(
+                                              0xFFE5C158,
+                                            ).withValues(alpha: 0.15),
                                             blurRadius: 40,
                                             spreadRadius: 2,
                                           ),

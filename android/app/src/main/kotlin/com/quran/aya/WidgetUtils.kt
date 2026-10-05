@@ -440,9 +440,11 @@ object WidgetUtils {
         val method = getSafeInt(prefs, "widget_calc_method", 5)
         val madhab = getSafeInt(prefs, "widget_asr_method", 0)
         val use24h = getSafeBoolean(prefs, "widget_time_format_24h", false)
+        val customFajr = getSafeDouble(prefs, "widget_custom_fajr_angle", 18.0)
+        val customIsha = getSafeDouble(prefs, "widget_custom_isha_angle", 17.0)
 
         val cal = Calendar.getInstance()
-        val todayPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic)
+        val todayPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic, customFajr, customIsha)
 
         // Check if any prayer today is upcoming
         for (item in todayPrayers.values) {
@@ -454,7 +456,7 @@ object WidgetUtils {
 
         // All today passed, compute tomorrow
         cal.add(Calendar.DAY_OF_YEAR, 1)
-        val tomorrowPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic)
+        val tomorrowPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic, customFajr, customIsha)
         val tomorrowFajr = tomorrowPrayers["fajr"]
         if (tomorrowFajr != null) {
             val allTimes = tomorrowPrayers.mapValues { it.value.formattedTime }
@@ -471,7 +473,9 @@ object WidgetUtils {
         method: Int,
         madhab: Int,
         use24h: Boolean,
-        isArabic: Boolean
+        isArabic: Boolean,
+        customFajr: Double = 18.0,
+        customIsha: Double = 17.0
     ): Map<String, UpcomingPrayerInfo> {
         val y = cal.get(Calendar.YEAR)
         val m = cal.get(Calendar.MONTH) + 1
@@ -515,6 +519,7 @@ object WidgetUtils {
 
         // Method angles
         val (fajrAngle, ishaAngle, ishaFixedMinutes) = when (method) {
+            -1 -> Triple(customFajr, customIsha, 0) // Custom angles
             1 -> Triple(18.0, 18.0, 0) // Karachi
             2 -> Triple(15.0, 15.0, 0) // North America (ISNA)
             3 -> Triple(18.0, 17.0, 0) // MWL

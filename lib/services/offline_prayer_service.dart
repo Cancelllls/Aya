@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:adhan/adhan.dart';
 import 'package:hijri/hijri_calendar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
+import 'storage/prayer_preferences.dart';
 
 class OfflinePrayerService {
   static String _formatTime(DateTime? dt) {
@@ -12,77 +14,153 @@ class OfflinePrayerService {
     return "${rounded.hour.toString().padLeft(2, '0')}:${rounded.minute.toString().padLeft(2, '0')}";
   }
 
+  /// Resolves CalculationParameters based on method, school, and optional custom angles.
+  /// Method 0: Auto (determines best method based on stored user location)
+  /// Method -1: Custom (uses custom Fajr and Isha depression angles)
+  static Future<CalculationParameters> resolveCalculationParameters({
+    required int method,
+    required int school,
+    double? customFajr,
+    double? customIsha,
+  }) async {
+    int effectiveMethod = method;
+    double? fajrAngle = customFajr;
+    double? ishaAngle = customIsha;
+
+    try {
+      final storage = await StorageService.getInstance();
+      if (effectiveMethod == 0) {
+        final loc = storage.getLocation();
+        effectiveMethod = storage.determineSmartCalculationMethod(
+          loc['city']?.toString() ?? '',
+          loc['country']?.toString() ?? '',
+        );
+      }
+      if (effectiveMethod == -1 || method == -1) {
+        fajrAngle ??= storage.getDouble(
+          'custom_fajr_angle',
+          defaultValue: 18.0,
+        );
+        ishaAngle ??= storage.getDouble(
+          'custom_isha_angle',
+          defaultValue: 17.0,
+        );
+      }
+    } catch (_) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final prayerPrefs = PrayerPreferences(prefs);
+        if (effectiveMethod == 0) {
+          final loc = prayerPrefs.getLocation();
+          effectiveMethod = prayerPrefs.determineSmartCalculationMethod(
+            loc['city']?.toString() ?? '',
+            loc['country']?.toString() ?? '',
+          );
+        }
+        if (effectiveMethod == -1 || method == -1) {
+          fajrAngle ??= prefs.getDouble('custom_fajr_angle') ?? 18.0;
+          ishaAngle ??= prefs.getDouble('custom_isha_angle') ?? 17.0;
+        }
+      } catch (_) {}
+    }
+
+    CalculationParameters params;
+    if (effectiveMethod == -1 || method == -1) {
+      params = CalculationParameters(
+        fajrAngle: fajrAngle ?? 18.0,
+        ishaAngle: ishaAngle ?? 17.0,
+        method: CalculationMethod.other,
+      );
+    } else {
+      switch (effectiveMethod) {
+        case 1:
+          params = CalculationMethod.karachi.getParameters();
+          break;
+        case 2:
+          params = CalculationMethod.north_america.getParameters();
+          break;
+        case 3:
+          params = CalculationMethod.muslim_world_league.getParameters();
+          break;
+        case 4:
+          params = CalculationMethod.umm_al_qura.getParameters();
+          break;
+        case 5:
+          params = CalculationMethod.egyptian.getParameters();
+          break;
+        case 6: // Sunni Endowment in Iraq (19.5° Fajr / 17.5° Isha)
+          params = CalculationMethod.egyptian.getParameters();
+          break;
+        case 7:
+          params = CalculationMethod.tehran.getParameters();
+          break;
+        case 8:
+        case 16: // UAE (GAIAE) / Dubai
+          params = CalculationMethod.dubai.getParameters();
+          break;
+        case 9:
+          params = CalculationMethod.kuwait.getParameters();
+          break;
+        case 10:
+          params = CalculationMethod.qatar.getParameters();
+          break;
+        case 11:
+          params = CalculationMethod.singapore.getParameters();
+          break;
+        case 12: // France (UOIF)
+          params = CalculationParameters(
+            fajrAngle: 12.0,
+            ishaAngle: 12.0,
+            method: CalculationMethod.other,
+          );
+          break;
+        case 13: // Turkey (Diyanet)
+          params = CalculationMethod.turkey.getParameters();
+          break;
+        case 14: // Russia (SAMR)
+          params = CalculationParameters(
+            fajrAngle: 16.0,
+            ishaAngle: 15.0,
+            method: CalculationMethod.other,
+          );
+          break;
+        default:
+          params = CalculationMethod.other.getParameters();
+          break;
+      }
+    }
+
+    params.madhab = school == 1 ? Madhab.hanafi : Madhab.shafi;
+    if (params.method != CalculationMethod.umm_al_qura &&
+        params.method != CalculationMethod.qatar) {
+      params.highLatitudeRule = HighLatitudeRule.twilight_angle;
+    }
+
+    return params;
+  }
+
   static Future<PrayerTimeData> getPrayerTimes({
     required double latitude,
     required double longitude,
     required int method,
     required int school,
     DateTime? date,
+    double? customFajr,
+    double? customIsha,
   }) async {
     final now = date ?? DateTime.now();
     final coords = Coordinates(latitude, longitude);
 
-    CalculationParameters params;
-    switch (method) {
-      case 0:
-        params = CalculationMethod.other.getParameters();
-        break;
-      case 1:
-        params = CalculationMethod.karachi.getParameters();
-        break;
-      case 2:
-        params = CalculationMethod.north_america.getParameters();
-        break;
-      case 3:
-        params = CalculationMethod.muslim_world_league.getParameters();
-        break;
-      case 4:
-        params = CalculationMethod.umm_al_qura.getParameters();
-        break;
-      case 5:
-        params = CalculationMethod.egyptian.getParameters();
-        break;
-      case 6: // Sunni Endowment in Iraq (19.5° Fajr / 17.5° Isha)
-        params = CalculationMethod.egyptian.getParameters();
-        break;
-      case 7:
-        params = CalculationMethod.tehran.getParameters();
-        break;
-      case 8:
-      case 16: // UAE (GAIAE) / Dubai
-        params = CalculationMethod.dubai.getParameters();
-        break;
-      case 9:
-        params = CalculationMethod.kuwait.getParameters();
-        break;
-      case 10:
-        params = CalculationMethod.qatar.getParameters();
-        break;
-      case 11:
-        params = CalculationMethod.singapore.getParameters();
-        break;
-      case 12: // France (UOIF)
-        params = CalculationParameters(fajrAngle: 12.0, ishaAngle: 12.0, method: CalculationMethod.other);
-        break;
-      case 13: // Turkey (Diyanet)
-        params = CalculationMethod.turkey.getParameters();
-        break;
-      case 14: // Russia (SAMR)
-        params = CalculationParameters(fajrAngle: 16.0, ishaAngle: 15.0, method: CalculationMethod.other);
-        break;
-      default:
-        params = CalculationMethod.other.getParameters();
-        break;
-    }
-
-    params.madhab = school == 1 ? Madhab.hanafi : Madhab.shafi;
-    if (params.method != CalculationMethod.umm_al_qura && params.method != CalculationMethod.qatar) {
-      params.highLatitudeRule = HighLatitudeRule.twilight_angle;
-    }
+    final params = await resolveCalculationParameters(
+      method: method,
+      school: school,
+      customFajr: customFajr,
+      customIsha: customIsha,
+    );
 
     final dateComps = DateComponents.from(now);
     final prayerTimes = PrayerTimes(coords, dateComps, params);
-    
+
     int hijriOffset = 0;
     try {
       final storage = await StorageService.getInstance();
@@ -116,69 +194,19 @@ class OfflinePrayerService {
     required int school,
     bool use24h = false,
     bool isArabic = true,
+    double? customFajr,
+    double? customIsha,
   }) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final coords = Coordinates(latitude, longitude);
 
-    CalculationParameters params;
-    switch (method) {
-      case 0:
-        params = CalculationMethod.other.getParameters();
-        break;
-      case 1:
-        params = CalculationMethod.karachi.getParameters();
-        break;
-      case 2:
-        params = CalculationMethod.north_america.getParameters();
-        break;
-      case 3:
-        params = CalculationMethod.muslim_world_league.getParameters();
-        break;
-      case 4:
-        params = CalculationMethod.umm_al_qura.getParameters();
-        break;
-      case 5:
-        params = CalculationMethod.egyptian.getParameters();
-        break;
-      case 6: // Sunni Endowment in Iraq (19.5° Fajr / 17.5° Isha)
-        params = CalculationMethod.egyptian.getParameters();
-        break;
-      case 7:
-        params = CalculationMethod.tehran.getParameters();
-        break;
-      case 8:
-      case 16: // UAE (GAIAE) / Dubai
-        params = CalculationMethod.dubai.getParameters();
-        break;
-      case 9:
-        params = CalculationMethod.kuwait.getParameters();
-        break;
-      case 10:
-        params = CalculationMethod.qatar.getParameters();
-        break;
-      case 11:
-        params = CalculationMethod.singapore.getParameters();
-        break;
-      case 12: // France (UOIF)
-        params = CalculationParameters(fajrAngle: 12.0, ishaAngle: 12.0, method: CalculationMethod.other);
-        break;
-      case 13: // Turkey (Diyanet)
-        params = CalculationMethod.turkey.getParameters();
-        break;
-      case 14: // Russia (SAMR)
-        params = CalculationParameters(fajrAngle: 16.0, ishaAngle: 15.0, method: CalculationMethod.other);
-        break;
-      default:
-        params = CalculationMethod.other.getParameters();
-        break;
-    }
-
-    params.madhab = school == 1 ? Madhab.hanafi : Madhab.shafi;
-    if (params.method != CalculationMethod.umm_al_qura &&
-        params.method != CalculationMethod.qatar) {
-      params.highLatitudeRule = HighLatitudeRule.twilight_angle;
-    }
+    final params = await resolveCalculationParameters(
+      method: method,
+      school: school,
+      customFajr: customFajr,
+      customIsha: customIsha,
+    );
 
     final List<Map<String, dynamic>> schedule = [];
     for (int i = 0; i < 30; i++) {
@@ -225,6 +253,8 @@ class OfflinePrayerService {
     required int school,
     required int month,
     required int year,
+    double? customFajr,
+    double? customIsha,
   }) async {
     final List<Map<String, dynamic>> monthData = [];
     final daysInMonth = DateTime(year, month + 1, 0).day;
@@ -237,6 +267,8 @@ class OfflinePrayerService {
         method: method,
         school: school,
         date: date,
+        customFajr: customFajr,
+        customIsha: customIsha,
       );
       final hijri = HijriCalendar.fromDate(date);
 
