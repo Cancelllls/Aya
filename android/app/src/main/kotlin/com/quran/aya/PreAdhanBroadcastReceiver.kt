@@ -33,22 +33,27 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             }
         }
 
-        val prayerName = when (rawPrayerName.lowercase()) {
-            "fajr", "الفجر" -> if (isAr) "الفجر" else "Fajr"
-            "dhuhr", "الظهر" -> if (isAr) "الظهر" else "Dhuhr"
-            "asr", "العصر" -> if (isAr) "العصر" else "Asr"
-            "maghrib", "المغرب" -> if (isAr) "المغرب" else "Maghrib"
-            "isha", "العشاء" -> if (isAr) "العشاء" else "Isha"
-            else -> rawPrayerName
-        }
+        val isJumuah = rawPrayerName.contains("الجمعة") || rawPrayerName.contains("jumu", ignoreCase = true)
+        val isWarning = rawPrayerName.startsWith("⚠️")
+        val isEarly = rawPrayerName.startsWith("⏰") || rawPrayerName.contains("مبكر", ignoreCase = true) || rawPrayerName.contains("early", ignoreCase = true)
+        val isIqamah = (!isJumuah && !isWarning && !isEarly) && (rawPrayerName.startsWith("🕌") || minutesBefore < 0 || rawPrayerName.contains("إقامة") || rawPrayerName.contains("iqamah", ignoreCase = true))
 
         val pKey = when {
-            rawPrayerName.contains("fajr", ignoreCase = true) || rawPrayerName.contains("الفجر") -> "fajr"
-            rawPrayerName.contains("dhuhr", ignoreCase = true) || rawPrayerName.contains("الظهر") -> "dhuhr"
-            rawPrayerName.contains("asr", ignoreCase = true) || rawPrayerName.contains("العصر") -> "asr"
-            rawPrayerName.contains("maghrib", ignoreCase = true) || rawPrayerName.contains("المغرب") -> "maghrib"
-            rawPrayerName.contains("isha", ignoreCase = true) || rawPrayerName.contains("العشاء") -> "isha"
+            rawPrayerName.contains("fajr", ignoreCase = true) || rawPrayerName.contains("فجر") -> "fajr"
+            rawPrayerName.contains("dhuhr", ignoreCase = true) || rawPrayerName.contains("ظهر") -> "dhuhr"
+            rawPrayerName.contains("asr", ignoreCase = true) || rawPrayerName.contains("عصر") -> "asr"
+            rawPrayerName.contains("maghrib", ignoreCase = true) || rawPrayerName.contains("مغرب") -> "maghrib"
+            rawPrayerName.contains("isha", ignoreCase = true) || rawPrayerName.contains("عشاء") -> "isha"
             else -> rawPrayerName.lowercase().trim()
+        }
+
+        val prayerName = when (pKey) {
+            "fajr" -> if (isAr) "الفجر" else "Fajr"
+            "dhuhr" -> if (isAr) "الظهر" else "Dhuhr"
+            "asr" -> if (isAr) "العصر" else "Asr"
+            "maghrib" -> if (isAr) "المغرب" else "Maghrib"
+            "isha" -> if (isAr) "العشاء" else "Isha"
+            else -> rawPrayerName
         }
 
         val storedPreMode = prefs.getString("flutter.pre_adhan_${pKey}_mode", null)
@@ -114,17 +119,47 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             "ic_notification", "drawable", context.packageName
         )
 
-        val title = when {
-            rawPrayerName.startsWith("⚠️") -> rawPrayerName
-            rawPrayerName.startsWith("⏰") -> if (isAr) "⏰ تنبيه مبكر للصلاة" else "⏰ Early Prayer Reminder"
-            rawPrayerName.startsWith("🕌") || minutesBefore < 0 -> if (isAr) "🕌 إقامة الصلاة" else "🕌 Iqamah Reminder"
-            else -> if (isAr) "اقترب موعد الأذان" else "Adhan is approaching"
+        val absMinutes = kotlin.math.abs(minutesBefore)
+        val minutesStr = if (!isAr) {
+            "$absMinutes minute${if (absMinutes == 1) "" else "s"}"
+        } else {
+            when (absMinutes) {
+                1 -> "دقيقة واحدة"
+                2 -> "دقيقتين"
+                in 3..10 -> "$absMinutes دقائق"
+                else -> "$absMinutes دقيقة"
+            }
         }
-        val body = when {
-            rawPrayerName.startsWith("⚠️") -> if (isAr) "تنبيه عاجل قبل انتهاء وقت الصلاة ⚠️" else "Urgent alert before prayer window closes ⚠️"
-            rawPrayerName.startsWith("⏰") -> if (isAr) "بقي $minutesBefore دقيقة على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
-            rawPrayerName.startsWith("🕌") || minutesBefore < 0 -> if (isAr) "حان الآن موعد إقامة صلاة $prayerName" else "It is now time for $prayerName prayer Iqamah"
-            else -> if (isAr) "بقي $minutesBefore دقائق على أذان $prayerName" else "$minutesBefore minutes remaining until $prayerName Adhan"
+
+        val (title, body) = when {
+            isWarning -> {
+                val t = if (isAr) "⚠️ تنبيه قرب انتهاء الوقت" else "⚠️ Prayer Time Ending Soon"
+                val cleanMsg = rawPrayerName.removePrefix("⚠️").trim()
+                val b = if (cleanMsg.isNotEmpty() && cleanMsg != "Prayer") cleanMsg else {
+                    if (isAr) "سارع بأداء صلاة $prayerName قبل خروج وقتها" else "Hurry to pray $prayerName before its time ends"
+                }
+                Pair(t, b)
+            }
+            isJumuah -> {
+                val t = if (isAr) "🕌 صلاة الجمعة" else "🕌 Jumu'ah Prayer"
+                val b = if (isAr) "بقي $minutesStr على صلاة الجمعة، تهيأ للذهاب إلى المسجد" else "$minutesStr remaining until Jumu'ah prayer"
+                Pair(t, b)
+            }
+            isEarly -> {
+                val t = if (isAr) "⏰ تنبيه مبكر للصلاة" else "⏰ Early Prayer Reminder"
+                val b = if (isAr) "بقي $minutesStr على أذان صلاة $prayerName" else "$minutesStr remaining until $prayerName Adhan"
+                Pair(t, b)
+            }
+            isIqamah -> {
+                val t = if (isAr) "🕌 إقامة الصلاة" else "🕌 Iqamah Reminder"
+                val b = if (isAr) "حان الآن موعد إقامة صلاة $prayerName" else "It is now time for $prayerName prayer Iqamah"
+                Pair(t, b)
+            }
+            else -> {
+                val t = if (isAr) "اقترب موعد الأذان" else "Adhan is approaching"
+                val b = if (isAr) "بقي $minutesStr على أذان $prayerName" else "$minutesStr remaining until $prayerName Adhan"
+                Pair(t, b)
+            }
         }
 
         val notifBuilder = NotificationCompat.Builder(context, channelId)

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../services/storage_service.dart';
@@ -23,6 +24,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   AudioPlayer? _previewPlayer;
   String? _previewingReciter;
   String? _previewingTone;
+  Timer? _debounceRescheduleTimer;
 
   Map<String, dynamic> _healthStatus = {};
 
@@ -106,6 +108,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   @override
   void dispose() {
+    _debounceRescheduleTimer?.cancel();
     _previewPlayer?.dispose();
     AdhanAudioService.instance.stopPreview();
     super.dispose();
@@ -132,7 +135,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   Future<void> _changeNotificationSoundTone(String val) async {
     await _storage?.setString('notification_sound_tone', val);
     setState(() {});
-    await _rescheduleAlarms();
+    _debouncedReschedule();
   }
 
   Future<void> _togglePreview(String reciterKey, bool isFajr) async {
@@ -165,6 +168,13 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
         _previewingReciter = null;
       });
     }
+  }
+
+  void _debouncedReschedule() {
+    _debounceRescheduleTimer?.cancel();
+    _debounceRescheduleTimer = Timer(const Duration(milliseconds: 600), () {
+      _rescheduleAlarms();
+    });
   }
 
   Future<void> _rescheduleAlarms() async {
@@ -201,7 +211,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       await _storage?.setString('adhan_mode_$p', mode);
     }
     setState(() {});
-    _rescheduleAlarms();
+    _debouncedReschedule();
   }
 
   Future<void> _setAllPreAdhansMode(String mode) async {
@@ -210,7 +220,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       await _storage?.setString('pre_adhan_${p}_mode', mode);
     }
     setState(() {});
-    _rescheduleAlarms();
+    _debouncedReschedule();
   }
 
   String _getAllAdhansCurrentMode() {
@@ -241,7 +251,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       await _storage?.setInt('pre_adhan_${p}_iqamah_minutes', p == 'maghrib' ? 10 : (p == 'fajr' ? 25 : 15));
     }
     setState(() {});
-    _rescheduleAlarms();
+    _debouncedReschedule();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -264,7 +274,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       }
     }
     setState(() {});
-    _rescheduleAlarms();
+    _debouncedReschedule();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -931,7 +941,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         if (val != null) {
                           await _storage?.setString(modeKey, val);
                           setState(() {});
-                          _rescheduleAlarms();
+                          _debouncedReschedule();
                         }
                       },
                     ),
@@ -990,7 +1000,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                             await _storage?.setString(reciterKeyName, val);
                             await _storage?.setString('adhan_reciter', val);
                             setState(() {});
-                            _rescheduleAlarms();
+                            _debouncedReschedule();
                           }
                         },
                       ),
@@ -1032,7 +1042,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   onChanged: (val) async {
                     await _storage?.setInt(offsetKey, val.toInt());
                     setState(() {});
-                    _rescheduleAlarms();
+                    _debouncedReschedule();
                   },
                 ),
 
@@ -1063,7 +1073,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         if (val != null) {
                           await _storage?.setString(preModeKey, val);
                           setState(() {});
-                          _rescheduleAlarms();
+                          _debouncedReschedule();
                         }
                       },
                     ),
@@ -1110,7 +1120,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         onChanged: (val) async {
                           await _storage?.setBool('pre_adhan_${prayer}_early_enabled', val);
                           setState(() {});
-                          _rescheduleAlarms();
+                          _debouncedReschedule();
                         },
                       ),
                       if (earlyEnabled) ...[
@@ -1143,7 +1153,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           onChanged: (val) async {
                             await _storage?.setInt('pre_adhan_${prayer}_early_minutes', val.toInt());
                             setState(() {});
-                            _rescheduleAlarms();
+                            _debouncedReschedule();
                           },
                         ),
                       ],
@@ -1178,7 +1188,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         onChanged: (val) async {
                           await _storage?.setBool('pre_adhan_${prayer}_iqamah_enabled', val);
                           setState(() {});
-                          _rescheduleAlarms();
+                          _debouncedReschedule();
                         },
                       ),
                       if (iqamahEnabled) ...[
@@ -1211,7 +1221,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           onChanged: (val) async {
                             await _storage?.setInt('pre_adhan_${prayer}_iqamah_minutes', val.toInt());
                             setState(() {});
-                            _rescheduleAlarms();
+                            _debouncedReschedule();
                           },
                         ),
                       ],
@@ -1317,7 +1327,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             onChanged: (val) async {
               await _storage?.setBool('escalating_reminders', val);
               setState(() {});
-              _rescheduleAlarms();
+              _debouncedReschedule();
             },
           ),
           if (escalating)
@@ -1361,7 +1371,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           if (val != null) {
                             await _storage?.setString('isha_end_window_fiqh', val);
                             setState(() {});
-                            _rescheduleAlarms();
+                            _debouncedReschedule();
                           }
                         },
                       ),
@@ -1379,7 +1389,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             onChanged: (val) async {
               await _storage?.setBool('jumuah_reminder', val);
               setState(() {});
-              _rescheduleAlarms();
+              _debouncedReschedule();
             },
           ),
           if (jumuah)
@@ -1406,6 +1416,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           if (val != null) {
                             await _storage?.setInt('jumuah_minutes_before', val);
                             setState(() {});
+                            _debouncedReschedule();
                           }
                         },
                       ),

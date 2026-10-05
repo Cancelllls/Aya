@@ -47,22 +47,22 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             }
         }
 
-        val prayerName = when (rawPrayerName.lowercase()) {
-            "fajr", "الفجر" -> if (isAr) "الفجر" else "Fajr"
-            "dhuhr", "الظهر" -> if (isAr) "الظهر" else "Dhuhr"
-            "asr", "العصر" -> if (isAr) "العصر" else "Asr"
-            "maghrib", "المغرب" -> if (isAr) "المغرب" else "Maghrib"
-            "isha", "العشاء" -> if (isAr) "العشاء" else "Isha"
-            else -> rawPrayerName
+        val pKey = when {
+            rawPrayerName.contains("fajr", ignoreCase = true) || rawPrayerName.contains("فجر") -> "fajr"
+            rawPrayerName.contains("dhuhr", ignoreCase = true) || rawPrayerName.contains("ظهر") -> "dhuhr"
+            rawPrayerName.contains("asr", ignoreCase = true) || rawPrayerName.contains("عصر") -> "asr"
+            rawPrayerName.contains("maghrib", ignoreCase = true) || rawPrayerName.contains("مغرب") -> "maghrib"
+            rawPrayerName.contains("isha", ignoreCase = true) || rawPrayerName.contains("عشاء") -> "isha"
+            else -> rawPrayerName.lowercase().trim()
         }
 
-        val pKey = when {
-            rawPrayerName.contains("fajr", ignoreCase = true) || rawPrayerName.contains("الفجر") -> "fajr"
-            rawPrayerName.contains("dhuhr", ignoreCase = true) || rawPrayerName.contains("الظهر") -> "dhuhr"
-            rawPrayerName.contains("asr", ignoreCase = true) || rawPrayerName.contains("العصر") -> "asr"
-            rawPrayerName.contains("maghrib", ignoreCase = true) || rawPrayerName.contains("المغرب") -> "maghrib"
-            rawPrayerName.contains("isha", ignoreCase = true) || rawPrayerName.contains("العشاء") -> "isha"
-            else -> rawPrayerName.lowercase().trim()
+        val prayerName = when (pKey) {
+            "fajr" -> if (isAr) "الفجر" else "Fajr"
+            "dhuhr" -> if (isAr) "الظهر" else "Dhuhr"
+            "asr" -> if (isAr) "العصر" else "Asr"
+            "maghrib" -> if (isAr) "المغرب" else "Maghrib"
+            "isha" -> if (isAr) "العشاء" else "Isha"
+            else -> rawPrayerName
         }
 
         // ── Check live user preferences (strictly respect vibration/silent mode) ──
@@ -90,7 +90,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         val now = System.currentTimeMillis()
         if (scheduledTimestamp > 0 && now - scheduledTimestamp > 5 * 60 * 1000) {
             val iconRes = context.resources.getIdentifier("ic_notification", "drawable", context.packageName)
-            val missedTitle = if (isAr) "⚠️ فاتك وقت $prayerName" else "⚠️ Missed $prayerName prayer time"
+            val missedTitle = if (isAr) "⚠️ فاتك وقت صلاة $prayerName" else "⚠️ Missed $prayerName prayer time"
             val missedText = if (isAr) "تأخر التنبيه بسبب وضع توفير الطاقة" else "Alert delayed due to battery saver"
             val missedNotif = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(if (iconRes != 0) iconRes else android.R.drawable.ic_popup_reminder)
@@ -137,7 +137,7 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         )
 
         val fullScreenIntent = Intent(context, AdhanLockscreenActivity::class.java).apply {
-            putExtra("PRAYER_NAME", rawPrayerName)
+            putExtra("PRAYER_NAME", prayerName)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val fullScreenPending = PendingIntent.getActivity(

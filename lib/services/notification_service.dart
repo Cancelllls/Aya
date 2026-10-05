@@ -124,6 +124,11 @@ class NotificationService {
   String? _lastAudioSubtitle;
   bool? _lastAudioIsPlaying;
 
+  bool _isScheduling = false;
+  bool _pendingReschedule = false;
+  PrayerTimeData? _pendingPrayerData;
+  StorageService? _pendingStorage;
+
   DateTime _parsePrayerToday(DateTime dt, String timeStr) {
     final year = dt.year;
     final month = dt.month.toString().padLeft(2, '0');
@@ -483,14 +488,23 @@ class NotificationService {
         prayerData.isha.isNotEmpty;
     if (!isValid) return;
 
-    // Guard: all prayer-critical notifications (adhan, pre-adhan, tracker,
-    // ramadan, islamic events) use exact alarms. Skip everything and warn
-    // once if the permission is missing (mirrors Five Prayers).
-    final canSchedule = await canScheduleExactAlarms();
-    if (!canSchedule) {
-      await _warnMissingExactAlarmPermission();
+    if (_isScheduling) {
+      _pendingReschedule = true;
+      _pendingPrayerData = prayerData;
+      _pendingStorage = storage;
       return;
     }
+    _isScheduling = true;
+
+    try {
+      // Guard: all prayer-critical notifications (adhan, pre-adhan, tracker,
+      // ramadan, islamic events) use exact alarms. Skip everything and warn
+      // once if the permission is missing (mirrors Five Prayers).
+      final canSchedule = await canScheduleExactAlarms();
+      if (!canSchedule) {
+        await _warnMissingExactAlarmPermission();
+        return;
+      }
 
     // Cancel all existing prayer notifications
     final List<Future<void>> cancelFutures = [];
@@ -668,9 +682,7 @@ class NotificationService {
               id: notificationId,
               time: scheduledDate,
               mp3ResName: getAdhanSound(name),
-              prayerName: isAr
-                  ? 'حان الآن موعد صلاة $localizedName'
-                  : 'Time for $localizedName prayer',
+              prayerName: localizedName,
               enableVibration: prayerAdhanMode != 'silent',
             );
           } catch (_) {}
@@ -689,9 +701,7 @@ class NotificationService {
               await AdhanNativeController.instance.schedulePreAdhanAlarm(
                 id: preNotificationId,
                 time: preAzanTime,
-                prayerName: isAr
-                    ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName'
-                    : '$preAdhanMins minutes remaining until $localizedName Adhan',
+                prayerName: localizedName,
                 minutesBefore: preAdhanMins,
                 alertMode: preAdhanAlertMode,
               );
@@ -727,13 +737,15 @@ class NotificationService {
                 ),
               );
 
+              final preMinUnit = (preAdhanMins >= 3 && preAdhanMins <= 10) ? 'دقائق' : 'دقيقة';
+              final preEnUnit = preAdhanMins == 1 ? 'minute' : 'minutes';
               try {
                 await _notificationsPlugin.zonedSchedule(
                   id: preNotificationId,
                   title: isAr ? 'اقترب موعد الأذان' : 'Adhan is approaching',
                   body: isAr
-                      ? 'بقي $preAdhanMins دقائق على أذان الـ $localizedName.'
-                      : '$preAdhanMins minutes remaining until $localizedName Adhan.',
+                      ? 'بقي $preAdhanMins $preMinUnit على أذان $localizedName.'
+                      : '$preAdhanMins $preEnUnit remaining until $localizedName Adhan.',
                   scheduledDate: tzPreDateTime,
                   notificationDetails: preDetails,
                   androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -760,9 +772,7 @@ class NotificationService {
               await AdhanNativeController.instance.schedulePreAdhanAlarm(
                 id: earlyNotifId,
                 time: earlyTime,
-                prayerName: isAr
-                    ? '⏰ تنبيه مبكر: بقي $earlyMins دقيقة على أذان $localizedName'
-                    : '⏰ Early reminder: $earlyMins minutes until $localizedName Adhan',
+                prayerName: '⏰ $localizedName',
                 minutesBefore: earlyMins,
                 alertMode: earlyMode,
               );
@@ -790,13 +800,15 @@ class NotificationService {
                 audioAttributesUsage: AudioAttributesUsage.alarm,
               );
 
+              final earlyMinUnit = (earlyMins >= 3 && earlyMins <= 10) ? 'دقائق' : 'دقيقة';
+              final earlyEnUnit = earlyMins == 1 ? 'minute' : 'minutes';
               try {
                 await _notificationsPlugin.zonedSchedule(
                   id: earlyNotifId,
                   title: isAr ? '⏰ تنبيه مبكر للصلاة' : '⏰ Early Prayer Reminder',
                   body: isAr
-                      ? 'بقي $earlyMins دقيقة على أذان صلاة $localizedName.'
-                      : '$earlyMins minutes remaining until $localizedName Adhan.',
+                      ? 'بقي $earlyMins $earlyMinUnit على أذان صلاة $localizedName.'
+                      : '$earlyMins $earlyEnUnit remaining until $localizedName Adhan.',
                   scheduledDate: tzEarlyDateTime,
                   notificationDetails: NotificationDetails(
                     android: earlyAndroidDetails,
@@ -828,9 +840,7 @@ class NotificationService {
               await AdhanNativeController.instance.schedulePreAdhanAlarm(
                 id: iqamahNotifId,
                 time: iqamahTime,
-                prayerName: isAr
-                    ? '🕌 حان موعد إقامة صلاة $localizedName'
-                    : '🕌 Time for $localizedName prayer Iqamah',
+                prayerName: '🕌 $localizedName',
                 minutesBefore: -iqamahMins,
                 alertMode: iqamahMode,
               );
@@ -892,7 +902,7 @@ class NotificationService {
                 await AdhanNativeController.instance.schedulePreAdhanAlarm(
                   id: notificationId + 4000,
                   time: jumuahTime,
-                  prayerName: isAr ? '🕌 اقتربت صلاة الجمعة' : '🕌 Jumu\'ah prayer is approaching',
+                  prayerName: isAr ? '🕌 الجمعة' : '🕌 Jumu\'ah',
                   minutesBefore: jumuahMins,
                   alertMode: preAdhanAlertMode,
                 );
@@ -1122,9 +1132,20 @@ class NotificationService {
       }
       id++;
     }
+    } finally {
+      _isScheduling = false;
+      if (_pendingReschedule && _pendingPrayerData != null && _pendingStorage != null) {
+        final nextData = _pendingPrayerData!;
+        final nextStorage = _pendingStorage!;
+        _pendingReschedule = false;
+        _pendingPrayerData = null;
+        _pendingStorage = null;
+        unawaited(schedulePrayerAlarms(nextData, nextStorage));
+      }
+    }
   }
 
-  String _arabicPrayerName(String englishName) {
+  static String arabicPrayerName(String englishName) {
     switch (englishName.toLowerCase()) {
       case 'fajr':
         return 'الفجر';
@@ -1142,6 +1163,17 @@ class NotificationService {
         return englishName;
     }
   }
+
+  static String formatMinutesGrammar(int minutes, bool isArabic) {
+    final abs = minutes.abs();
+    if (!isArabic) return '$abs minute${abs == 1 ? '' : 's'}';
+    if (abs == 1) return 'دقيقة واحدة';
+    if (abs == 2) return 'دقيقتين';
+    if (abs >= 3 && abs <= 10) return '$abs دقائق';
+    return '$abs دقيقة';
+  }
+
+  String _arabicPrayerName(String englishName) => arabicPrayerName(englishName);
 
   Future<void> scheduleDailyReminders(StorageService storage) async {
     // Cancel previous notifications

@@ -100,5 +100,28 @@ void main() {
       expect(NotificationService.resolveIsArabic('en'), isFalse);
       expect(NotificationService.resolveIsArabic('follow_app'), isTrue);
     });
+
+    test('arabicPrayerName returns canonical clean Arabic names without duplicate prefixes', () {
+      expect(NotificationService.arabicPrayerName('Fajr'), 'الفجر');
+      expect(NotificationService.arabicPrayerName('Dhuhr'), 'الظهر');
+      expect(NotificationService.arabicPrayerName('Asr'), 'العصر');
+      expect(NotificationService.arabicPrayerName('Maghrib'), 'المغرب');
+      expect(NotificationService.arabicPrayerName('Isha'), 'العشاء');
+      expect(NotificationService.arabicPrayerName('Sunrise'), 'الشروق');
+    });
+
+    test('formatMinutesGrammar adheres to strict Arabic dual, plural, and accusative rules', () {
+      expect(NotificationService.formatMinutesGrammar(1, true), 'دقيقة واحدة');
+      expect(NotificationService.formatMinutesGrammar(2, true), 'دقيقتين');
+      expect(NotificationService.formatMinutesGrammar(5, true), '5 دقائق');
+      expect(NotificationService.formatMinutesGrammar(10, true), '10 دقائق');
+      expect(NotificationService.formatMinutesGrammar(15, true), '15 دقيقة');
+      expect(NotificationService.formatMinutesGrammar(30, true), '30 دقيقة');
+      expect(NotificationService.formatMinutesGrammar(45, true), '45 دقيقة');
+
+      expect(NotificationService.formatMinutesGrammar(1, false), '1 minute');
+      expect(NotificationService.formatMinutesGrammar(5, false), '5 minutes');
+      expect(NotificationService.formatMinutesGrammar(15, false), '15 minutes');
+    });
   });
 }
