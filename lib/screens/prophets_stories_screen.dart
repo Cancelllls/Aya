@@ -6,6 +6,7 @@ import '../models/islamic_library_models.dart';
 import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../theme/app_colors.dart';
+import 'full_book_reader_screen.dart';
 
 class ProphetsStoriesScreen extends StatefulWidget {
   final StorageService storage;
@@ -220,6 +221,64 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                   style: TextStyle(
                     color: Colors.white.withAlpha(200),
                     fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FullBookReaderScreen(
+                          bookKey: 'qisas_al_anbiya',
+                          defaultTitleAr: 'قصص الأنبياء (ابن كثير)',
+                          defaultTitleEn: 'Stories of the Prophets (Ibn Kathir)',
+                          storage: widget.storage,
+                        ),
+                      ),
+                    ).then((_) => setState(() {}));
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(30),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.gold.withAlpha(140)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.menu_book, color: AppColors.gold, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                TranslationService.isArabic
+                                    ? 'قراءة كتاب قصص الأنبياء كاملاً (ابن كثير)'
+                                    : 'Read Full Book: Stories of the Prophets',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                TranslationService.isArabic
+                                    ? '٨٨٨ صفحة وفهرس تفصيلي مع البحث'
+                                    : '888 unabridged pages with full index & search',
+                                style: TextStyle(
+                                  color: Colors.white.withAlpha(190),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, color: AppColors.gold, size: 14),
+                      ],
+                    ),
                   ),
                 ),
               ],

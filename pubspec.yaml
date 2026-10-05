@@ -98,6 +98,7 @@ flutter:
     - assets/timestamps/
     - assets/fonts/
     - assets/db/
+    - assets/books/
 
   fonts:
     - family: Amiri

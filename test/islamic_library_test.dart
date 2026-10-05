@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/data/prophets_data.dart';
 import 'package:aya_app/data/sirah_data.dart';
 import 'package:aya_app/services/translation_service.dart';
+import 'package:aya_app/services/islamic_book_service.dart';
 
 void main() {
   group('Stories of the Prophets (Qisas al-Anbiya) Tests', () {
@@ -120,6 +121,32 @@ void main() {
           reason: 'AR and EN should differ for $key',
         );
       }
+    });
+  });
+
+  group('Full Islamic Books Service Tests', () {
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    test('loads and parses full Raheeq Al-Makhtum book (452 pages)', () async {
+      final book = await IslamicBookService.loadBook('raheeq_makhtum');
+      expect(book.titleAr, contains('الرحيق المختوم'));
+      expect(book.allPages.length, equals(452));
+      expect(book.chapters.length, greaterThan(50));
+
+      final searchResults = IslamicBookService.searchBook(book, 'الحديبية');
+      expect(searchResults, isNotEmpty);
+      expect(searchResults.first.pageNum, greaterThan(0));
+    });
+
+    test('loads and parses full Qisas al-Anbiya book (888 pages)', () async {
+      final book = await IslamicBookService.loadBook('qisas_al_anbiya');
+      expect(book.titleAr, contains('قصص الأنبياء'));
+      expect(book.allPages.length, equals(888));
+      expect(book.chapters.length, greaterThan(20));
+
+      final searchResults = IslamicBookService.searchBook(book, 'إبراهيم');
+      expect(searchResults, isNotEmpty);
+      expect(searchResults.first.pageNum, greaterThan(0));
     });
   });
 }
