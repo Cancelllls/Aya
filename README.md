@@ -104,55 +104,6 @@
 
 Aya is engineered with a **100% local-first, offline-ready architecture**. All core features — Quran mushaf, Hadith collections, Tafsir commentaries, classical Prophetic literature, mathematical prayer calculations, native Android adhan alarms, and home screen widgets — execute with zero runtime network dependencies.
 
-```mermaid
-flowchart TD
-    subgraph UI["Presentation Layer (Flutter 3.x)"]
-        Dashboard["Dashboard & Prayers Bar"]
-        Mushaf["Quran Mushaf & Surah Pager (10 Qira'at)"]
-        HadithUI["Hadith Browser (13 Collections)"]
-        LibraryUI["Prophets & Sirah Milestone Catalogs"]
-        Reader["Scoped Classical Book Reader (AR / EN)"]
-        WidgetsUI["8 Native Android Home Screen Widgets"]
-    end
-
-    subgraph Domain["Business Logic & Services"]
-        PrayerEngine["OfflinePrayerService (Adhan Lib + Hijri)"]
-        BookService["IslamicBookService (Gzip Loader, Scoper, FTS)"]
-        AudioEngine["AudioManager & QDC Per-Ayah Timestamps"]
-        HadithService["HadithDatabaseService & SharhCache"]
-        TrackerCalc["PrayerTrackerStatsCalculator"]
-    end
-
-    subgraph Native["Native Android & Kotlin (com.adhan.app / com.quran.aya)"]
-        MethodChannels["MethodChannel Bridge (12 Channels)"]
-        AlarmEngine["AlarmManager + AdhanBroadcastReceiver"]
-        SensorEngine["Accelerometer (Flip-to-Silence) + MediaSession"]
-        WidgetProviders["Kotlin AppWidgetProvider Classes (8 Widgets)"]
-    end
-
-    subgraph Storage["100% Offline Local Data Layer"]
-        DB["SQLite aya_app.db (v10, WAL Mode, FTS5)"]
-        GzipBooks["4 Classical Books (1,823 Pages, Gzip JSON)"]
-        BundledTafsir["10 Bundled Tafsir Editions (8 AR + 2 EN)"]
-        BundledAudio["Offline Adhan MP3s & Per-Ayah Timestamps"]
-        Prefs["SharedPreferences (Settings, Bookmarks, Reading Progress)"]
-    end
-
-    subgraph Remote["Optional Remote Fallbacks (Non-Critical)"]
-        CDN["jsDelivr / Islamic Network CDN"]
-        Dorar["Dorar Hadith Grading API"]
-        MP3Quran["mp3quran.net API v3"]
-    end
-
-    UI --> Domain
-    Domain --> Storage
-    Domain --> MethodChannels
-    MethodChannels --> Native
-    Domain -. Optional Fallback .-> Remote
-```
-
-### Directory Structure
-
 ```
 lib/
 ├── main.dart                         # App entry, locale detection, theming (~110 lines)
