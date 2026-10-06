@@ -96,7 +96,7 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
       } else {
         final langSuffix = _isEnglish ? '_en' : '';
         final savedPage = IslamicBookService.getLastReadPage(
-          _isScopedMode ? '${widget.bookKey}_scoped_${currentStart}$langSuffix' : '${widget.bookKey}$langSuffix',
+          _isScopedMode ? '${widget.bookKey}_scoped_$currentStart$langSuffix' : '${widget.bookKey}$langSuffix',
           widget.storage,
         );
         targetIndex = (savedPage - 1).clamp(0, activeBook.allPages.length - 1);
@@ -175,7 +175,7 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
     final currentStart = _isEnglish ? (widget.startPageEn ?? widget.startPage) : widget.startPage;
     final langSuffix = _isEnglish ? '_en' : '';
     final saveKey = _isScopedMode
-        ? '${widget.bookKey}_scoped_${currentStart}$langSuffix'
+        ? '${widget.bookKey}_scoped_$currentStart$langSuffix'
         : '${widget.bookKey}$langSuffix';
     IslamicBookService.saveLastReadPage(saveKey, index + 1, widget.storage);
   }
@@ -192,7 +192,7 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
     final currentStart = _isEnglish ? (widget.startPageEn ?? widget.startPage) : widget.startPage;
     final langSuffix = _isEnglish ? '_en' : '';
     final saveKey = _isScopedMode
-        ? '${widget.bookKey}_scoped_${currentStart}$langSuffix'
+        ? '${widget.bookKey}_scoped_$currentStart$langSuffix'
         : '${widget.bookKey}$langSuffix';
     IslamicBookService.saveLastReadPage(saveKey, targetIndex + 1, widget.storage);
   }
