@@ -206,15 +206,19 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _BookSearchSheet(
-        book: _book!,
-        onSelectPage: (pageNum) {
-          Navigator.pop(ctx);
-          // pageNum in search result is 1-based pageNum or index
-          final index = _book!.allPages.indexWhere((p) => p.pageNum == pageNum);
-          final target = index != -1 ? index + 1 : pageNum;
-          _jumpToPage(target);
-        },
+      builder: (ctx) => Directionality(
+        textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+        child: _BookSearchSheet(
+          book: _book!,
+          isEnglish: _isEnglish,
+          onSelectPage: (pageNum) {
+            Navigator.pop(ctx);
+            // pageNum in search result is 1-based pageNum or index
+            final index = _book!.allPages.indexWhere((p) => p.pageNum == pageNum);
+            final target = index != -1 ? index + 1 : pageNum;
+            _jumpToPage(target);
+          },
+        ),
       ),
     );
   }
@@ -228,21 +232,24 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _TableOfContentsSheet(
-        book: _book!,
-        currentPage: _currentPageIndex + 1,
-        isScoped: _isScopedMode,
-        isEnglish: _isEnglish,
-        onToggleFullBook: _rawFullBook != null ? () {
-          Navigator.pop(ctx);
-          _toggleFullBookMode();
-        } : null,
-        onSelectPage: (pageNum) {
-          Navigator.pop(ctx);
-          final index = _book!.allPages.indexWhere((p) => p.pageNum >= pageNum);
-          final target = index != -1 ? index + 1 : pageNum;
-          _jumpToPage(target);
-        },
+      builder: (ctx) => Directionality(
+        textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+        child: _TableOfContentsSheet(
+          book: _book!,
+          currentPage: _currentPageIndex + 1,
+          isScoped: _isScopedMode,
+          isEnglish: _isEnglish,
+          onToggleFullBook: _rawFullBook != null ? () {
+            Navigator.pop(ctx);
+            _toggleFullBookMode();
+          } : null,
+          onSelectPage: (pageNum) {
+            Navigator.pop(ctx);
+            final index = _book!.allPages.indexWhere((p) => p.pageNum >= pageNum);
+            final target = index != -1 ? index + 1 : pageNum;
+            _jumpToPage(target);
+          },
+        ),
       ),
     );
   }
@@ -270,53 +277,62 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            TranslationService.isArabic ? widget.defaultTitleAr : widget.defaultTitleEn,
+      return Directionality(
+        textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              _isEnglish ? widget.defaultTitleEn : widget.defaultTitleAr,
+            ),
           ),
-        ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('جاري فتح الكتاب...'),
-            ],
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(_isEnglish ? 'Opening book...' : 'جاري فتح الكتاب...'),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (_error != null || _book == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            TranslationService.isArabic ? widget.defaultTitleAr : widget.defaultTitleEn,
+      return Directionality(
+        textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              _isEnglish ? widget.defaultTitleEn : widget.defaultTitleAr,
+            ),
           ),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-                const SizedBox(height: 12),
-                Text('تعذر فتح الكتاب: $_error', textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isLoading = true;
-                      _error = null;
-                    });
-                    _loadBook();
-                  },
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                  const SizedBox(height: 12),
+                  Text(
+                    _isEnglish ? 'Failed to open book: $_error' : 'تعذر فتح الكتاب: $_error',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isLoading = true;
+                        _error = null;
+                      });
+                      _loadBook();
+                    },
+                    child: Text(_isEnglish ? 'Retry' : 'إعادة المحاولة'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -334,18 +350,20 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
         IslamicBookService.getBookmarks(bookmarkKey, widget.storage)
             .contains(_currentPageIndex + 1);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _isEnglish ? _book!.titleEn : _book!.titleAr,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+    return Directionality(
+      textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEnglish ? _book!.titleEn : _book!.titleAr,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             Text(
               _isScopedMode
                   ? (TranslationService.isArabic ? 'قسم مخصص من الكتاب' : 'Dedicated Section')
@@ -421,21 +439,14 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  tooltip: _isEnglish ? 'Previous Page' : 'الصفحة التالية',
-                  onPressed: _isEnglish
-                      ? (_currentPageIndex > 0
-                          ? () => _pageController.previousPage(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                              )
-                          : null)
-                      : (_currentPageIndex < _book!.allPages.length - 1
-                          ? () => _pageController.nextPage(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                              )
-                          : null),
+                  icon: Icon(_isEnglish ? Icons.chevron_left : Icons.chevron_right),
+                  tooltip: _isEnglish ? 'Previous Page' : 'الصفحة السابقة',
+                  onPressed: _currentPageIndex > 0
+                      ? () => _pageController.previousPage(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                          )
+                      : null,
                 ),
                 InkWell(
                   onTap: () => _showJumpToPageDialog(context),
@@ -455,21 +466,14 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  tooltip: _isEnglish ? 'Next Page' : 'الصفحة السابقة',
-                  onPressed: _isEnglish
-                      ? (_currentPageIndex < _book!.allPages.length - 1
-                          ? () => _pageController.nextPage(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                              )
-                          : null)
-                      : (_currentPageIndex > 0
-                          ? () => _pageController.previousPage(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                              )
-                          : null),
+                  icon: Icon(_isEnglish ? Icons.chevron_right : Icons.chevron_left),
+                  tooltip: _isEnglish ? 'Next Page' : 'الصفحة التالية',
+                  onPressed: _currentPageIndex < _book!.allPages.length - 1
+                      ? () => _pageController.nextPage(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                          )
+                      : null,
                 ),
               ],
             ),
@@ -540,7 +544,7 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
           Expanded(
             child: PageView.builder(
               controller: _pageController,
-              reverse: !_isEnglish, // Physical Arabic: RTL; English: LTR
+              reverse: false, // Natural page movement governed by Directionality (Arabic: RTL; English: LTR)
               itemCount: _book!.allPages.length,
               onPageChanged: _onPageChanged,
               itemBuilder: (context, index) {
@@ -565,6 +569,7 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -572,51 +577,54 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
     final textController = TextEditingController(text: '${_currentPageIndex + 1}');
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(TranslationService.isArabic ? 'انتقال إلى صفحة' : 'Jump to Page'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              TranslationService.isArabic
-                  ? 'أدخل رقم الصفحة بين ١ و ${_book!.allPages.length}'
-                  : 'Enter page number between 1 and ${_book!.allPages.length}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+      builder: (ctx) => Directionality(
+        textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(_isEnglish ? 'Jump to Page' : 'انتقال إلى صفحة'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEnglish
+                    ? 'Enter page number between 1 and ${_book!.allPages.length}'
+                    : 'أدخل رقم الصفحة بين ١ و ${_book!.allPages.length}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+                ),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: '1 - ${_book!.allPages.length}',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(_isEnglish ? 'Cancel' : 'إلغاء'),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: textController,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: '1 - ${_book!.allPages.length}',
-                border: const OutlineInputBorder(),
-              ),
+            ElevatedButton(
+              onPressed: () {
+                final raw = textController.text.trim();
+                final normalized = IslamicBookService.normalizeDigits(raw);
+                final val = int.tryParse(normalized);
+                if (val != null && val >= 1 && val <= _book!.allPages.length) {
+                  Navigator.pop(ctx);
+                  _jumpToPage(val);
+                }
+              },
+              child: Text(_isEnglish ? 'Go' : 'انتقال'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(TranslationService.isArabic ? 'إلغاء' : 'Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final raw = textController.text.trim();
-              final normalized = IslamicBookService.normalizeDigits(raw);
-              final val = int.tryParse(normalized);
-              if (val != null && val >= 1 && val <= _book!.allPages.length) {
-                Navigator.pop(ctx);
-                _jumpToPage(val);
-              }
-            },
-            child: Text(TranslationService.isArabic ? 'انتقال' : 'Go'),
-          ),
-        ],
       ),
     );
   }
@@ -741,10 +749,12 @@ class _TableOfContentsSheet extends StatelessWidget {
 
 class _BookSearchSheet extends StatefulWidget {
   final FullIslamicBook book;
+  final bool isEnglish;
   final Function(int) onSelectPage;
 
   const _BookSearchSheet({
     required this.book,
+    this.isEnglish = false,
     required this.onSelectPage,
   });
 
@@ -795,11 +805,11 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
               controller: _controller,
-              textDirection: TextDirection.rtl,
+              textDirection: widget.isEnglish ? TextDirection.ltr : TextDirection.rtl,
               decoration: InputDecoration(
-                hintText: TranslationService.isArabic
-                    ? 'ابحث في نصوص الكتاب...'
-                    : 'Search inside book...',
+                hintText: widget.isEnglish
+                    ? 'Search inside book...'
+                    : 'ابحث في نصوص الكتاب...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(
@@ -832,7 +842,9 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
               child: Row(
                 children: [
                   Text(
-                    'تم العثور على ${_results.length} نتيجة',
+                    widget.isEnglish
+                        ? 'Found ${_results.length} result${_results.length == 1 ? '' : 's'}'
+                        : 'تم العثور على ${_results.length} نتيجة',
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.colorScheme.onSurface.withAlpha(150),
@@ -846,12 +858,12 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
                 ? Center(
                     child: Text(
                       _hasSearched
-                          ? (TranslationService.isArabic
-                              ? 'لم يتم العثور على نتائج'
-                              : 'No matches found')
-                          : (TranslationService.isArabic
-                              ? 'اكتب كلمة للبحث في الكتاب'
-                              : 'Type a word to search'),
+                          ? (widget.isEnglish
+                              ? 'No matches found'
+                              : 'لم يتم العثور على نتائج')
+                          : (widget.isEnglish
+                              ? 'Type a word to search'
+                              : 'اكتب كلمة للبحث في الكتاب'),
                       style: TextStyle(
                         color: theme.colorScheme.onSurface.withAlpha(140),
                       ),
@@ -869,7 +881,7 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
                       return ListTile(
                         title: Text(
                           item.chapterTitle,
-                          textDirection: TextDirection.rtl,
+                          textDirection: widget.isEnglish ? TextDirection.ltr : TextDirection.rtl,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -880,7 +892,7 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             item.snippet,
-                            textDirection: TextDirection.rtl,
+                            textDirection: widget.isEnglish ? TextDirection.ltr : TextDirection.rtl,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -896,7 +908,7 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            'ص ${item.pageNum}',
+                            widget.isEnglish ? 'P. ${item.pageNum}' : 'ص ${item.pageNum}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFFB45309),
