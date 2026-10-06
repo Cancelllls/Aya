@@ -31,6 +31,8 @@ class ProphetStory {
   final String summaryAr;
   final String summaryEn;
   final List<StorySection> sections;
+  final int? bookStartPage;
+  final int? bookEndPage;
 
   const ProphetStory({
     required this.id,
@@ -45,6 +47,8 @@ class ProphetStory {
     required this.summaryAr,
     required this.summaryEn,
     required this.sections,
+    this.bookStartPage,
+    this.bookEndPage,
   });
 }
 
@@ -61,6 +65,8 @@ class SirahChapter {
   final String summaryEn;
   final int readTimeMinutes;
   final List<StorySection> sections;
+  final int? bookStartPage;
+  final int? bookEndPage;
 
   const SirahChapter({
     required this.id,
@@ -75,5 +81,7 @@ class SirahChapter {
     required this.summaryEn,
     required this.readTimeMinutes,
     required this.sections,
+    this.bookStartPage,
+    this.bookEndPage,
   });
 }

@@ -18,12 +18,26 @@ def clean_html(raw_html):
     text = re.sub(r'<[^>]+>', '', text)
     # Unescape HTML entities
     text = text.replace('&nbsp;', ' ').replace('&quot;', '"').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+    # Remove Shamela volume/page stamps like [ص: ١٢٣] or [جـ ١ ص ٢]
+    text = re.sub(r'\[\s*(?:ص|جـ|ج)\s*:[^\]]*\]', '', text)
+    # Remove footnote markers like (١), (2), [١], [1], (*), etc.
+    text = re.sub(r'\([٠-٩\d]+\)', '', text)
+    text = re.sub(r'\[[٠-٩\d]+\]', '', text)
+    text = re.sub(r'\(\s*\*\s*\)', '', text)
+    text = re.sub(r'\[\s*\*\s*\]', '', text)
+    # Unwrap editorial brackets around words: [كلمة] -> كلمة
+    text = re.sub(r'\[\s*([^\]]*?)\s*\]', r'\1', text)
+    # Remove empty brackets [] or ()
+    text = re.sub(r'\[\s*\]', '', text)
+    text = re.sub(r'\(\s*\)', '', text)
+    # Clean multiple spaces on same line
+    text = re.sub(r'[ \t]+', ' ', text)
     # Clean up excessive newlines
     lines = [line.strip() for line in text.split('\n')]
     cleaned_lines = []
     prev_empty = False
     for line in lines:
-        if not line:
+        if not line or line in ['[]', '()', '*', '(*)', '[*]']:
             if not prev_empty:
                 cleaned_lines.append('')
                 prev_empty = True

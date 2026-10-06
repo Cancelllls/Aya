@@ -223,64 +223,6 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                     fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FullBookReaderScreen(
-                          bookKey: 'qisas_al_anbiya',
-                          defaultTitleAr: 'قصص الأنبياء (ابن كثير)',
-                          defaultTitleEn: 'Stories of the Prophets (Ibn Kathir)',
-                          storage: widget.storage,
-                        ),
-                      ),
-                    ).then((_) => setState(() {}));
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(30),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.gold.withAlpha(140)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.menu_book, color: AppColors.gold, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                TranslationService.isArabic
-                                    ? 'قراءة كتاب قصص الأنبياء كاملاً (ابن كثير)'
-                                    : 'Read Full Book: Stories of the Prophets',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                TranslationService.isArabic
-                                    ? '٨٨٨ صفحة وفهرس تفصيلي مع البحث'
-                                    : '888 unabridged pages with full index & search',
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(190),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios, color: AppColors.gold, size: 14),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -521,6 +463,65 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                                                   ),
                                                 ),
                                               ),
+                                          if (story.bookStartPage != null && story.bookEndPage != null)
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => FullBookReaderScreen(
+                                                      bookKey: story.id == 25 ? 'raheeq_makhtum' : 'qisas_al_anbiya',
+                                                      defaultTitleAr: story.id == 25
+                                                          ? 'السيرة النبوية (الرحيق المختوم)'
+                                                          : 'قصة ${story.nameAr} (ابن كثير)',
+                                                      defaultTitleEn: story.id == 25 ? 'Prophetic Sirah' : 'Story of ${story.nameEn}',
+                                                      storage: widget.storage,
+                                                      startPage: story.bookStartPage,
+                                                      endPage: story.bookEndPage,
+                                                      scopeTitleAr: story.id == 25
+                                                          ? 'الرحيق المختوم: ${story.nameAr}'
+                                                          : 'قصص الأنبياء (ابن كثير): ${story.nameAr}',
+                                                      scopeTitleEn: story.id == 25
+                                                          ? 'The Sealed Nectar: ${story.nameEn}'
+                                                          : 'Ibn Kathir: ${story.nameEn}',
+                                                    ),
+                                                  ),
+                                                ).then((_) => setState(() {}));
+                                              },
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 3,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.gold.withAlpha(35),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: AppColors.gold.withAlpha(120)),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(Icons.menu_book, color: AppColors.gold, size: 12),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      story.id == 25
+                                                          ? (TranslationService.isArabic
+                                                              ? 'الرحيق المختوم (٤٥٢ ص)'
+                                                              : 'Sealed Nectar (452p)')
+                                                          : (TranslationService.isArabic
+                                                              ? 'ابن كثير (${story.bookEndPage! - story.bookStartPage! + 1} ص)'
+                                                              : 'Ibn Kathir (${story.bookEndPage! - story.bookStartPage! + 1}p)'),
+                                                      style: const TextStyle(
+                                                        color: Color(0xFFB45309),
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ],
@@ -869,7 +870,99 @@ class _ProphetReaderScreenState extends State<ProphetReaderScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
+
+            if (widget.story.bookStartPage != null && widget.story.bookEndPage != null) ...[
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullBookReaderScreen(
+                        bookKey: widget.story.id == 25 ? 'raheeq_makhtum' : 'qisas_al_anbiya',
+                        defaultTitleAr: widget.story.id == 25
+                            ? 'السيرة النبوية (الرحيق المختوم)'
+                            : 'قصة ${widget.story.nameAr} (ابن كثير)',
+                        defaultTitleEn: widget.story.id == 25
+                            ? 'Prophetic Sirah'
+                            : 'Story of ${widget.story.nameEn}',
+                        storage: widget.storage,
+                        startPage: widget.story.bookStartPage,
+                        endPage: widget.story.bookEndPage,
+                        scopeTitleAr: widget.story.id == 25
+                            ? 'الرحيق المختوم: ${widget.story.nameAr}'
+                            : 'قصص الأنبياء (ابن كثير): ${widget.story.nameAr}',
+                        scopeTitleEn: widget.story.id == 25
+                            ? 'The Sealed Nectar: ${widget.story.nameEn}'
+                            : 'Ibn Kathir: ${widget.story.nameEn}',
+                      ),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.teal.withAlpha(isDark ? 45 : 25),
+                        AppColors.gold.withAlpha(isDark ? 35 : 18),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.gold.withAlpha(120), width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withAlpha(40),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.auto_stories, color: AppColors.gold, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.story.id == 25
+                                  ? (TranslationService.isArabic
+                                      ? 'قراءة كتاب الرحيق المختوم كاملاً'
+                                      : 'Read The Sealed Nectar Full Book')
+                                  : (TranslationService.isArabic
+                                      ? 'قراءة قصة ${widget.story.nameAr} كاملة'
+                                      : 'Read Full Story of ${widget.story.nameEn}'),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              widget.story.id == 25
+                                  ? (TranslationService.isArabic
+                                      ? '٤٥٢ صفحة - السيرة النبوية الشريفة للمباركفوري'
+                                      : '452 pages - Complete prophetic biography')
+                                  : (TranslationService.isArabic
+                                      ? 'النص الكامل من كتاب قصص الأنبياء لابن كثير (${widget.story.bookEndPage! - widget.story.bookStartPage! + 1} صفحة)'
+                                      : 'Complete unabridged text from Ibn Kathir (${widget.story.bookEndPage! - widget.story.bookStartPage! + 1} pages)'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface.withAlpha(160),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.gold),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ] else ...[
+              const SizedBox(height: 24),
+            ],
 
             // Sections
             ...widget.story.sections.map(

@@ -44,6 +44,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Baqarah 2:37',
         ),
       ],
+      bookStartPage: 1,
+      bookEndPage: 87,
     ),
     ProphetStory(
       id: 2,
@@ -74,6 +76,8 @@ class ProphetsData {
           quranRef: 'Surah Maryam 19:56-57',
         ),
       ],
+      bookStartPage: 88,
+      bookEndPage: 131,
     ),
     ProphetStory(
       id: 3,
@@ -117,6 +121,8 @@ class ProphetsData {
           quranRef: 'Surah Hud 11:44',
         ),
       ],
+      bookStartPage: 132,
+      bookEndPage: 179,
     ),
     ProphetStory(
       id: 4,
@@ -160,6 +166,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Haqqah 69:7',
         ),
       ],
+      bookStartPage: 180,
+      bookEndPage: 195,
     ),
     ProphetStory(
       id: 5,
@@ -203,6 +211,8 @@ class ProphetsData {
           quranRef: 'Surah Al-A\'raf 7:77',
         ),
       ],
+      bookStartPage: 196,
+      bookEndPage: 203,
     ),
     ProphetStory(
       id: 6,
@@ -251,6 +261,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Baqarah 2:127',
         ),
       ],
+      bookStartPage: 204,
+      bookEndPage: 307,
     ),
     ProphetStory(
       id: 7,
@@ -294,6 +306,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Hijr 15:74',
         ),
       ],
+      bookStartPage: 208,
+      bookEndPage: 216,
     ),
     ProphetStory(
       id: 8,
@@ -324,6 +338,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Saffat 37:102',
         ),
       ],
+      bookStartPage: 217,
+      bookEndPage: 234,
     ),
     ProphetStory(
       id: 9,
@@ -354,6 +370,8 @@ class ProphetsData {
           quranRef: 'Surah Hud 11:71',
         ),
       ],
+      bookStartPage: 235,
+      bookEndPage: 240,
     ),
     ProphetStory(
       id: 10,
@@ -384,6 +402,8 @@ class ProphetsData {
           quranRef: 'Surah Yusuf 12:86',
         ),
       ],
+      bookStartPage: 323,
+      bookEndPage: 345,
     ),
     ProphetStory(
       id: 11,
@@ -427,6 +447,8 @@ class ProphetsData {
           quranRef: 'Surah Yusuf 12:92',
         ),
       ],
+      bookStartPage: 346,
+      bookEndPage: 377,
     ),
     ProphetStory(
       id: 12,
@@ -457,6 +479,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Anbiya 21:83',
         ),
       ],
+      bookStartPage: 378,
+      bookEndPage: 388,
     ),
     ProphetStory(
       id: 13,
@@ -487,6 +511,8 @@ class ProphetsData {
           quranRef: 'Surah Hud 11:88',
         ),
       ],
+      bookStartPage: 389,
+      bookEndPage: 391,
     ),
     ProphetStory(
       id: 14,
@@ -534,6 +560,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Shu\'ara 26:62-63',
         ),
       ],
+      bookStartPage: 392,
+      bookEndPage: 412,
     ),
     ProphetStory(
       id: 15,
@@ -564,6 +592,8 @@ class ProphetsData {
           quranRef: 'Surah Ta-Ha 20:29-31',
         ),
       ],
+      bookStartPage: 413,
+      bookEndPage: 416,
     ),
     ProphetStory(
       id: 16,
@@ -594,6 +624,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Anbiya 21:85-86',
         ),
       ],
+      bookStartPage: 417,
+      bookEndPage: 612,
     ),
     ProphetStory(
       id: 17,
@@ -624,6 +656,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Anbiya 21:79',
         ),
       ],
+      bookStartPage: 462,
+      bookEndPage: 545,
     ),
     ProphetStory(
       id: 18,
@@ -654,6 +688,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Naml 27:44',
         ),
       ],
+      bookStartPage: 628,
+      bookEndPage: 645,
     ),
     ProphetStory(
       id: 19,
@@ -684,6 +720,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Saffat 37:125-126',
         ),
       ],
+      bookStartPage: 646,
+      bookEndPage: 660,
     ),
     ProphetStory(
       id: 20,
@@ -714,6 +752,8 @@ class ProphetsData {
           quranRef: 'Surah Sad 38:48',
         ),
       ],
+      bookStartPage: 661,
+      bookEndPage: 710,
     ),
     ProphetStory(
       id: 21,
@@ -744,6 +784,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Anbiya 21:87',
         ),
       ],
+      bookStartPage: 711,
+      bookEndPage: 728,
     ),
     ProphetStory(
       id: 22,
@@ -774,6 +816,8 @@ class ProphetsData {
           quranRef: 'Surah Ali \'Imran 3:38',
         ),
       ],
+      bookStartPage: 729,
+      bookEndPage: 765,
     ),
     ProphetStory(
       id: 23,
@@ -804,6 +848,8 @@ class ProphetsData {
           quranRef: 'Surah Maryam 19:12-13',
         ),
       ],
+      bookStartPage: 766,
+      bookEndPage: 797,
     ),
     ProphetStory(
       id: 24,
@@ -847,6 +893,8 @@ class ProphetsData {
           quranRef: 'Surah An-Nisa 4:157-158',
         ),
       ],
+      bookStartPage: 798,
+      bookEndPage: 888,
     ),
     ProphetStory(
       id: 25,
@@ -887,6 +935,8 @@ class ProphetsData {
           quranRef: 'Surah Al-Qalam 68:4',
         ),
       ],
+      bookStartPage: 1,
+      bookEndPage: 452,
     ),
   ];
 }

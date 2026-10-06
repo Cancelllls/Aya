@@ -44,6 +44,8 @@ class SirahData {
           quranRef: 'Surah Al-Fil 105:1',
         ),
       ],
+      bookStartPage: 1,
+      bookEndPage: 44,
     ),
     SirahChapter(
       id: 2,
@@ -74,6 +76,8 @@ class SirahData {
           quranRef: 'Surah Ad-Duha 93:6-7',
         ),
       ],
+      bookStartPage: 45,
+      bookEndPage: 48,
     ),
     SirahChapter(
       id: 3,
@@ -110,6 +114,8 @@ class SirahData {
               'Impressed by his uprightness, Khadijah proposed marriage. When Quraish rebuilt the Kaaba and fought over who would place the Black Stone, they chose him as arbiter. He placed the stone upon a cloak and invited each tribe\'s leader to lift it together.',
         ),
       ],
+      bookStartPage: 49,
+      bookEndPage: 54,
     ),
     SirahChapter(
       id: 4,
@@ -148,6 +154,8 @@ class SirahData {
               'Returning trembling with awe, he cried: "Cover me! Cover me!" Khadijah comforted him with immortal words: "Never! By Allah, He will never disgrace you; you maintain family ties, tell the truth, help the poor, host guests, and stand for justice."',
         ),
       ],
+      bookStartPage: 55,
+      bookEndPage: 63,
     ),
     SirahChapter(
       id: 5,
@@ -178,6 +186,8 @@ class SirahData {
           quranRef: 'Surah Al-Waqi\'ah 56:10-11',
         ),
       ],
+      bookStartPage: 64,
+      bookEndPage: 102,
     ),
     SirahChapter(
       id: 6,
@@ -216,6 +226,8 @@ class SirahData {
               'The oligarchs subjected vulnerable slaves to brutal torture under the scorching sun. Bilal cried "Ahad, Ahad" (One, One) while weighed beneath boulder stones, and Sumayyah and Yasir were martyred as the first champions of faith.',
         ),
       ],
+      bookStartPage: 103,
+      bookEndPage: 116,
     ),
     SirahChapter(
       id: 7,
@@ -241,6 +253,8 @@ class SirahData {
               'When Quraish sent envoys laden with gifts to extradite the refugees, Ja\'far stood before the royal court and described how Islam brought them from ignorance into truth and purity. Reciting Surah Maryam, Negus wept and granted them eternal protection.',
         ),
       ],
+      bookStartPage: 117,
+      bookEndPage: 128,
     ),
     SirahChapter(
       id: 8,
@@ -274,6 +288,8 @@ class SirahData {
               'Within a single year, Abu Talib—his worldly defender—and Khadijah—the anchor of his emotional solace—passed away, leaving the Prophet with profound sorrow as Quraish intensified their brutality.',
         ),
       ],
+      bookStartPage: 129,
+      bookEndPage: 139,
     ),
     SirahChapter(
       id: 9,
@@ -307,6 +323,8 @@ class SirahData {
               'He turned to Allah with the immortal prayer: "O Allah, to You alone I complain of my weakness, my lack of resources, and my insignificance before people... As long as You are not displeased with me, I do not care, for Your protection is all-encompassing."',
         ),
       ],
+      bookStartPage: 140,
+      bookEndPage: 157,
     ),
     SirahChapter(
       id: 10,
@@ -345,6 +363,8 @@ class SirahData {
               'Ascending beyond the heavenly realms to the Divine Presence, fifty prayers were initially decreed, then reduced through the Prophet\'s humble plea to five daily prayers—rewarded as fifty in merit.',
         ),
       ],
+      bookStartPage: 158,
+      bookEndPage: 183,
     ),
     SirahChapter(
       id: 11,
@@ -370,6 +390,8 @@ class SirahData {
               'Armed only with Quran and gentleness, Mus\'ab guided tribal chieftains including Sa\'d ibn Mu\'adh to Islam. In the Second Pledge of Al-Aqabah, 73 men and 2 women from Yathrib pledged to shelter and protect the Prophet.',
         ),
       ],
+      bookStartPage: 184,
+      bookEndPage: 210,
     ),
     SirahChapter(
       id: 12,
@@ -408,6 +430,8 @@ class SirahData {
               'Reaching Quba, he built Islam’s first mosque, then rode into Yathrib (renamed Al-Madinah Al-Munawwarah) welcomed with joyous odes, letting his camel choose the site for the Prophet\'s Mosque.',
         ),
       ],
+      bookStartPage: 211,
+      bookEndPage: 263,
     ),
     SirahChapter(
       id: 13,
@@ -446,6 +470,8 @@ class SirahData {
               'The Prophet formulated the Constitution of Madinah, establishing religious freedom, joint civil defense, equal protection under the rule of law, and mutual social solidarity regardless of tribe.',
         ),
       ],
+      bookStartPage: 264,
+      bookEndPage: 307,
     ),
     SirahChapter(
       id: 14,
@@ -476,6 +502,8 @@ class SirahData {
           quranRef: 'Surah Ali \'Imran 3:123',
         ),
       ],
+      bookStartPage: 308,
+      bookEndPage: 330,
     ),
     SirahChapter(
       id: 15,
@@ -509,6 +537,8 @@ class SirahData {
               'Hamzah and Mus\'ab fell in heroic defense. Devoted companions formed a human shield around the Prophet. Revelation descended comforting the believers and teaching that inner discipline supersedes worldly ambition.',
         ),
       ],
+      bookStartPage: 331,
+      bookEndPage: 332,
     ),
     SirahChapter(
       id: 16,
@@ -547,6 +577,8 @@ class SirahData {
           quranRef: 'Surah Al-Ahzab 33:9',
         ),
       ],
+      bookStartPage: 333,
+      bookEndPage: 354,
     ),
     SirahChapter(
       id: 17,
@@ -575,6 +607,8 @@ class SirahData {
           quranRef: 'Surah Al-Fath 48:1',
         ),
       ],
+      bookStartPage: 355,
+      bookEndPage: 361,
     ),
     SirahChapter(
       id: 18,
@@ -600,6 +634,8 @@ class SirahData {
               'Sealing his letters with "Muhammad Messenger of Allah," emissaries reached world empires stating: "Embrace Islam and you will be safe; Allah will bestow upon you a double reward." This affirmed Islam as a universal call to all humankind.',
         ),
       ],
+      bookStartPage: 362,
+      bookEndPage: 388,
     ),
     SirahChapter(
       id: 19,
@@ -638,6 +674,8 @@ class SirahData {
               'Facing the very citizens who had plotted his death and exiled him, he asked: "What do you think I will do with you?" They said: "You are a noble brother, son of a noble brother." He replied: "I speak as Yusuf spoke: No blame upon you today. Go, you are free!"',
         ),
       ],
+      bookStartPage: 389,
+      bookEndPage: 393,
     ),
     SirahChapter(
       id: 20,
@@ -663,6 +701,8 @@ class SirahData {
               'Ambushed by archers at Hunayn, the vanguard retreated in confusion, but the Prophet stood firm calling: "I am the Prophet without falsehood, I am the son of Abdul-Muttalib!" rallying the army. Later at Tabuk, Uthman equipped an entire expeditionary force.',
         ),
       ],
+      bookStartPage: 394,
+      bookEndPage: 417,
     ),
     SirahChapter(
       id: 21,
@@ -693,6 +733,8 @@ class SirahData {
           quranRef: 'Surah Al-Ma\'idah 5:3',
         ),
       ],
+      bookStartPage: 418,
+      bookEndPage: 425,
     ),
     SirahChapter(
       id: 22,
@@ -731,6 +773,8 @@ class SirahData {
           quranRef: 'Surah Ali \'Imran 3:144',
         ),
       ],
+      bookStartPage: 426,
+      bookEndPage: 452,
     ),
   ];
 }

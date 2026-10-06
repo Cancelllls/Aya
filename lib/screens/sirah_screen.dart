@@ -228,64 +228,6 @@ class _SirahScreenState extends State<SirahScreen> {
                     fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FullBookReaderScreen(
-                          bookKey: 'raheeq_makhtum',
-                          defaultTitleAr: 'الرحيق المختوم (المباركفوري)',
-                          defaultTitleEn: 'Ar-Raheeq Al-Makhtum (The Sealed Nectar)',
-                          storage: widget.storage,
-                        ),
-                      ),
-                    ).then((_) => setState(() {}));
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(30),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.gold.withAlpha(140)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.menu_book, color: AppColors.gold, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                TranslationService.isArabic
-                                    ? 'قراءة كتاب الرحيق المختوم كاملاً (المباركفوري)'
-                                    : 'Read Full Book: The Sealed Nectar',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                TranslationService.isArabic
-                                    ? '٤٥٢ صفحة - السيرة النبوية الشريفة كاملة مع الفهرس'
-                                    : '452 unabridged pages with full index & search',
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(190),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios, color: AppColors.gold, size: 14),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -551,6 +493,53 @@ class _SirahScreenState extends State<SirahScreen> {
                                                   .withAlpha(140),
                                             ),
                                           ),
+                                          const Spacer(),
+                                          if (chapter.bookStartPage != null && chapter.bookEndPage != null)
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => FullBookReaderScreen(
+                                                      bookKey: 'raheeq_makhtum',
+                                                      defaultTitleAr: 'فصل: ${chapter.titleAr}',
+                                                      defaultTitleEn: 'Chapter: ${chapter.titleEn}',
+                                                      storage: widget.storage,
+                                                      startPage: chapter.bookStartPage,
+                                                      endPage: chapter.bookEndPage,
+                                                      scopeTitleAr: 'الرحيق المختوم: ${chapter.titleAr}',
+                                                      scopeTitleEn: 'The Sealed Nectar: ${chapter.titleEn}',
+                                                    ),
+                                                  ),
+                                                ).then((_) => setState(() {}));
+                                              },
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.gold.withAlpha(35),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: AppColors.gold.withAlpha(120)),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(Icons.menu_book, color: AppColors.gold, size: 12),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      TranslationService.isArabic
+                                                          ? 'الرحيق المختوم (${chapter.bookEndPage! - chapter.bookStartPage! + 1} ص)'
+                                                          : 'Sealed Nectar (${chapter.bookEndPage! - chapter.bookStartPage! + 1}p)',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFFB45309),
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ],
@@ -937,7 +926,83 @@ class _SirahReaderScreenState extends State<SirahReaderScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
+
+            if (_currentChapter.bookStartPage != null && _currentChapter.bookEndPage != null) ...[
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullBookReaderScreen(
+                        bookKey: 'raheeq_makhtum',
+                        defaultTitleAr: 'فصل: ${_currentChapter.titleAr}',
+                        defaultTitleEn: 'Chapter: ${_currentChapter.titleEn}',
+                        storage: widget.storage,
+                        startPage: _currentChapter.bookStartPage,
+                        endPage: _currentChapter.bookEndPage,
+                        scopeTitleAr: 'الرحيق المختوم: ${_currentChapter.titleAr}',
+                        scopeTitleEn: 'The Sealed Nectar: ${_currentChapter.titleEn}',
+                      ),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.teal.withAlpha(isDark ? 45 : 25),
+                        AppColors.gold.withAlpha(isDark ? 35 : 18),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.gold.withAlpha(120), width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withAlpha(40),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.auto_stories, color: AppColors.gold, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              TranslationService.isArabic
+                                  ? 'قراءة أحداث هذا الفصل من الرحيق المختوم'
+                                  : 'Read Full Chapter from The Sealed Nectar',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              TranslationService.isArabic
+                                  ? 'النص الكامل غير مختصر للمباركفوري (${_currentChapter.bookEndPage! - _currentChapter.bookStartPage! + 1} صفحة)'
+                                  : 'Complete unabridged text (${_currentChapter.bookEndPage! - _currentChapter.bookStartPage! + 1} pages)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface.withAlpha(160),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.gold),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ] else ...[
+              const SizedBox(height: 24),
+            ],
 
             // Sections
             ..._currentChapter.sections.map(

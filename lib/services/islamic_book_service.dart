@@ -149,12 +149,96 @@ class IslamicBookService {
     return book;
   }
 
-  static List<BookSearchResult> searchBook(FullIslamicBook book, String query) {
+  static String normalizeDigits(String input) {
+    const eastern = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    for (int i = 0; i < eastern.length; i++) {
+      input = input.replaceAll(eastern[i], '$i');
+    }
+    return input;
+  }
+
+  static String cleanText(String text) {
+    if (text.isEmpty) return text;
+    var t = text.replaceAll(RegExp(r'\[\s*(?:ص|جـ|ج)\s*:[^\]]*\]'), '');
+    t = t.replaceAll(RegExp(r'\([٠-٩\d]+\)'), '');
+    t = t.replaceAll(RegExp(r'\[[٠-٩\d]+\]'), '');
+    t = t.replaceAll(RegExp(r'\(\s*\*\s*\)'), '');
+    t = t.replaceAllMapped(RegExp(r'\[\s*([^\]]*?)\s*\]'), (m) => m[1] ?? '');
+    t = t.replaceAll(RegExp(r'\[\s*\]'), '');
+    t = t.replaceAll(RegExp(r'\(\s*\)'), '');
+    t = t.replaceAll(RegExp(r'[ \t]+'), ' ');
+    return t.trim();
+  }
+
+  static FullIslamicBook getScopedBook(
+    FullIslamicBook book,
+    int startPage,
+    int endPage, {
+    String? scopeTitleAr,
+    String? scopeTitleEn,
+  }) {
+    if (startPage < 1) startPage = 1;
+    if (endPage > book.allPages.length) endPage = book.allPages.length;
+    if (startPage > endPage) startPage = endPage;
+
+    final slicedPages = book.allPages
+        .sublist(startPage - 1, endPage)
+        .map((p) => BookPage(
+              pageId: p.pageId,
+              pageNum: p.pageNum,
+              title: cleanText(p.title),
+              text: cleanText(p.text),
+            ))
+        .toList();
+
+    // Collect overlapping chapters
+    final relevantChapters = <BookChapter>[];
+    for (final ch in book.chapters) {
+      if (ch.endPage >= startPage && ch.startPage <= endPage) {
+        final chPages = ch.pages
+            .where((p) => p.pageNum >= startPage && p.pageNum <= endPage)
+            .map((p) => BookPage(
+                  pageId: p.pageId,
+                  pageNum: p.pageNum,
+                  title: cleanText(p.title),
+                  text: cleanText(p.text),
+                ))
+            .toList();
+
+        relevantChapters.add(BookChapter(
+          chapterIndex: relevantChapters.length + 1,
+          title: cleanText(ch.title),
+          startPage: ch.startPage.clamp(startPage, endPage),
+          endPage: ch.endPage.clamp(startPage, endPage),
+          pages: chPages,
+        ));
+      }
+    }
+
+    return FullIslamicBook(
+      bookId: '${book.bookId}_scoped_${startPage}_$endPage',
+      titleAr: scopeTitleAr ?? book.titleAr,
+      titleEn: scopeTitleEn ?? book.titleEn,
+      authorAr: book.authorAr,
+      authorEn: book.authorEn,
+      totalPages: slicedPages.length,
+      totalChapters: relevantChapters.length,
+      chapters: relevantChapters,
+      allPages: slicedPages,
+    );
+  }
+
+  static List<BookSearchResult> searchBook(
+    FullIslamicBook book,
+    String query, {
+    List<BookPage>? pagesToSearch,
+  }) {
     if (query.trim().isEmpty) return [];
     final cleanQuery = query.trim().toLowerCase();
     final results = <BookSearchResult>[];
+    final pages = pagesToSearch ?? book.allPages;
 
-    for (final page in book.allPages) {
+    for (final page in pages) {
       final textLower = page.text.toLowerCase();
       final titleLower = page.title.toLowerCase();
 
@@ -208,8 +292,8 @@ class IslamicBookService {
       bookmarks.remove(pageNum);
     } else {
       bookmarks.add(pageNum);
-      bookmarks.sort();
     }
+    bookmarks.sort();
     storage.setString('book_bookmarks_$bookKey', jsonEncode(bookmarks));
   }
 }

@@ -11,6 +11,10 @@ class FullBookReaderScreen extends StatefulWidget {
   final String defaultTitleEn;
   final StorageService storage;
   final int? initialPage;
+  final int? startPage;
+  final int? endPage;
+  final String? scopeTitleAr;
+  final String? scopeTitleEn;
 
   const FullBookReaderScreen({
     super.key,
@@ -19,6 +23,10 @@ class FullBookReaderScreen extends StatefulWidget {
     required this.defaultTitleEn,
     required this.storage,
     this.initialPage,
+    this.startPage,
+    this.endPage,
+    this.scopeTitleAr,
+    this.scopeTitleEn,
   });
 
   @override
@@ -26,9 +34,11 @@ class FullBookReaderScreen extends StatefulWidget {
 }
 
 class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
+  FullIslamicBook? _rawFullBook;
   FullIslamicBook? _book;
   bool _isLoading = true;
   String? _error;
+  bool _isScopedMode = false;
 
   late PageController _pageController;
   int _currentPageIndex = 0;
@@ -39,25 +49,56 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
   void initState() {
     super.initState();
     _fontSize = widget.storage.getDouble('book_reader_font_size', defaultValue: 19.0);
+    _isScopedMode = widget.startPage != null && widget.endPage != null;
+    _pageController = PageController(initialPage: 0);
     _loadBook();
   }
 
   Future<void> _loadBook() async {
     try {
-      final book = await IslamicBookService.loadBook(widget.bookKey);
+      final fullBook = await IslamicBookService.loadBook(widget.bookKey);
       if (!mounted) return;
 
-      int startPage = widget.initialPage ??
-          IslamicBookService.getLastReadPage(widget.bookKey, widget.storage);
+      FullIslamicBook activeBook;
+      if (_isScopedMode && widget.startPage != null && widget.endPage != null) {
+        activeBook = IslamicBookService.getScopedBook(
+          fullBook,
+          widget.startPage!,
+          widget.endPage!,
+          scopeTitleAr: widget.scopeTitleAr,
+          scopeTitleEn: widget.scopeTitleEn,
+        );
+      } else {
+        activeBook = fullBook;
+      }
 
-      if (startPage < 1) startPage = 1;
-      if (startPage > book.allPages.length) startPage = book.allPages.length;
+      int targetIndex = 0;
+      if (widget.initialPage != null) {
+        if (_isScopedMode && widget.startPage != null) {
+          // Map initialPage relative to scope
+          if (widget.initialPage! >= widget.startPage!) {
+            targetIndex = (widget.initialPage! - widget.startPage!).clamp(0, activeBook.allPages.length - 1);
+          } else {
+            targetIndex = (widget.initialPage! - 1).clamp(0, activeBook.allPages.length - 1);
+          }
+        } else {
+          targetIndex = (widget.initialPage! - 1).clamp(0, activeBook.allPages.length - 1);
+        }
+      } else {
+        final savedPage = IslamicBookService.getLastReadPage(
+          _isScopedMode ? '${widget.bookKey}_scoped_${widget.startPage}' : widget.bookKey,
+          widget.storage,
+        );
+        targetIndex = (savedPage - 1).clamp(0, activeBook.allPages.length - 1);
+      }
 
-      _currentPageIndex = startPage - 1;
+      _currentPageIndex = targetIndex;
+      _pageController.dispose();
       _pageController = PageController(initialPage: _currentPageIndex);
 
       setState(() {
-        _book = book;
+        _rawFullBook = fullBook;
+        _book = activeBook;
         _isLoading = false;
       });
     } catch (e) {
@@ -69,11 +110,39 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
     }
   }
 
+  void _toggleFullBookMode() {
+    if (_rawFullBook == null) return;
+    setState(() {
+      _isLoading = true;
+      _isScopedMode = !_isScopedMode;
+    });
+
+    FullIslamicBook nextBook;
+    if (_isScopedMode && widget.startPage != null && widget.endPage != null) {
+      nextBook = IslamicBookService.getScopedBook(
+        _rawFullBook!,
+        widget.startPage!,
+        widget.endPage!,
+        scopeTitleAr: widget.scopeTitleAr,
+        scopeTitleEn: widget.scopeTitleEn,
+      );
+    } else {
+      nextBook = _rawFullBook!;
+    }
+
+    _currentPageIndex = 0;
+    _pageController.dispose();
+    _pageController = PageController(initialPage: 0);
+
+    setState(() {
+      _book = nextBook;
+      _isLoading = false;
+    });
+  }
+
   @override
   void dispose() {
-    if (_book != null) {
-      _pageController.dispose();
-    }
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -81,18 +150,25 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
     setState(() {
       _currentPageIndex = index;
     });
-    if (_book != null && index < _book!.allPages.length) {
-      final pageNum = _book!.allPages[index].pageNum;
-      IslamicBookService.saveLastReadPage(widget.bookKey, pageNum, widget.storage);
-    }
+    final saveKey = _isScopedMode
+        ? '${widget.bookKey}_scoped_${widget.startPage}'
+        : widget.bookKey;
+    IslamicBookService.saveLastReadPage(saveKey, index + 1, widget.storage);
   }
 
   void _jumpToPage(int pageNum) {
-    if (_book == null) return;
-    final index = (_book!.allPages.indexWhere((p) => p.pageNum == pageNum));
-    final targetIndex = index != -1 ? index : (pageNum - 1).clamp(0, _book!.allPages.length - 1);
-
-    _pageController.jumpToPage(targetIndex);
+    if (_book == null || _book!.allPages.isEmpty) return;
+    final targetIndex = (pageNum - 1).clamp(0, _book!.allPages.length - 1);
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(targetIndex);
+    }
+    setState(() {
+      _currentPageIndex = targetIndex;
+    });
+    final saveKey = _isScopedMode
+        ? '${widget.bookKey}_scoped_${widget.startPage}'
+        : widget.bookKey;
+    IslamicBookService.saveLastReadPage(saveKey, targetIndex + 1, widget.storage);
   }
 
   void _openSearchDialog() {
@@ -108,7 +184,10 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
         book: _book!,
         onSelectPage: (pageNum) {
           Navigator.pop(ctx);
-          _jumpToPage(pageNum);
+          // pageNum in search result is 1-based pageNum or index
+          final index = _book!.allPages.indexWhere((p) => p.pageNum == pageNum);
+          final target = index != -1 ? index + 1 : pageNum;
+          _jumpToPage(target);
         },
       ),
     );
@@ -126,12 +205,36 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
       builder: (ctx) => _TableOfContentsSheet(
         book: _book!,
         currentPage: _currentPageIndex + 1,
+        isScoped: _isScopedMode,
+        onToggleFullBook: _rawFullBook != null ? () {
+          Navigator.pop(ctx);
+          _toggleFullBookMode();
+        } : null,
         onSelectPage: (pageNum) {
           Navigator.pop(ctx);
-          _jumpToPage(pageNum);
+          final index = _book!.allPages.indexWhere((p) => p.pageNum >= pageNum);
+          final target = index != -1 ? index + 1 : pageNum;
+          _jumpToPage(target);
         },
       ),
     );
+  }
+
+  String get _currentHeadline {
+    if (_book == null || _book!.allPages.isEmpty) return '';
+    final page = _currentPageIndex < _book!.allPages.length ? _book!.allPages[_currentPageIndex] : null;
+    if (page != null && page.title.isNotEmpty) {
+      return IslamicBookService.cleanText(page.title);
+    }
+    // Search matching chapter
+    if (page != null) {
+      for (final ch in _book!.chapters) {
+        if (page.pageNum >= ch.startPage && page.pageNum <= ch.endPage) {
+          return IslamicBookService.cleanText(ch.title);
+        }
+      }
+    }
+    return TranslationService.isArabic ? _book!.titleAr : _book!.titleEn;
   }
 
   @override
@@ -197,9 +300,12 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
         ? _book!.allPages[_currentPageIndex]
         : null;
 
+    final bookmarkKey = _isScopedMode
+        ? '${widget.bookKey}_scoped_${widget.startPage}'
+        : widget.bookKey;
     final isBookmarked = currentPage != null &&
-        IslamicBookService.getBookmarks(widget.bookKey, widget.storage)
-            .contains(currentPage.pageNum);
+        IslamicBookService.getBookmarks(bookmarkKey, widget.storage)
+            .contains(_currentPageIndex + 1);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -210,17 +316,18 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
             Text(
               TranslationService.isArabic ? _book!.titleAr : _book!.titleEn,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            if (currentPage != null && currentPage.title.isNotEmpty)
-              Text(
-                currentPage.title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurface.withAlpha(160),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              _isScopedMode
+                  ? (TranslationService.isArabic ? 'قسم مخصص من الكتاب' : 'Dedicated Section')
+                  : (TranslationService.isArabic ? 'الكتاب كاملاً' : 'Full Book'),
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.onSurface.withAlpha(160),
               ),
+            ),
           ],
         ),
         actions: [
@@ -234,8 +341,8 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
               if (currentPage != null) {
                 HapticFeedback.lightImpact();
                 IslamicBookService.toggleBookmark(
-                  widget.bookKey,
-                  currentPage.pageNum,
+                  bookmarkKey,
+                  _currentPageIndex + 1,
                   widget.storage,
                 );
                 setState(() {});
@@ -263,13 +370,15 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Page navigation
+            // Page navigation with RTL awareness
             Row(
               children: [
+                // Left arrow: advances to next page in RTL physical layout
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
-                  onPressed: _currentPageIndex > 0
-                      ? () => _pageController.previousPage(
+                  tooltip: TranslationService.isArabic ? 'الصفحة التالية' : 'Next Page',
+                  onPressed: _currentPageIndex < _book!.allPages.length - 1
+                      ? () => _pageController.nextPage(
                             duration: const Duration(milliseconds: 250),
                             curve: Curves.easeInOut,
                           )
@@ -278,8 +387,12 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
                 InkWell(
                   onTap: () => _showJumpToPageDialog(context),
                   borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
                       TranslationService.isArabic
                           ? 'ص ${_currentPageIndex + 1} / ${_book!.allPages.length}'
@@ -288,10 +401,12 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
                     ),
                   ),
                 ),
+                // Right arrow: returns to previous page in RTL physical layout
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: _currentPageIndex < _book!.allPages.length - 1
-                      ? () => _pageController.nextPage(
+                  tooltip: TranslationService.isArabic ? 'الصفحة السابقة' : 'Previous Page',
+                  onPressed: _currentPageIndex > 0
+                      ? () => _pageController.previousPage(
                             duration: const Duration(milliseconds: 250),
                             curve: Curves.easeInOut,
                           )
@@ -329,53 +444,66 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
           ],
         ),
       ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: _book!.allPages.length,
-        onPageChanged: _onPageChanged,
-        itemBuilder: (context, index) {
-          final page = _book!.allPages[index];
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (page.title.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.teal.withAlpha(isDark ? 30 : 15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: const Border(
-                        right: BorderSide(color: AppColors.teal, width: 4),
-                      ),
-                    ),
+      body: Column(
+        children: [
+          // FIXED HEADLINE: Pinned permanently at the top, does NOT move or scroll with pages
+          if (_currentHeadline.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withAlpha(isDark ? 80 : 120),
+                border: Border(
+                  bottom: BorderSide(color: theme.dividerColor.withAlpha(40)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.menu_book, size: 18, color: AppColors.teal),
+                  const SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      page.title,
+                      _currentHeadline,
                       textDirection: TextDirection.rtl,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 17,
                         fontWeight: FontWeight.bold,
+                        fontSize: 14,
                         color: AppColors.teal,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
                 ],
-                SelectableText(
-                  page.text,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    fontSize: _fontSize,
-                    height: 1.8,
-                    letterSpacing: 0.2,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
+              ),
             ),
-          );
-        },
+          // Scrollable and swipeable text body
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              reverse: true, // Physical Arabic book swiping: Right-to-Left
+              itemCount: _book!.allPages.length,
+              onPageChanged: _onPageChanged,
+              itemBuilder: (context, index) {
+                final page = _book!.allPages[index];
+                final cleanText = IslamicBookService.cleanText(page.text);
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: SelectableText(
+                    cleanText,
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      height: 1.85,
+                      letterSpacing: 0.2,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -386,14 +514,30 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(TranslationService.isArabic ? 'انتقال إلى صفحة' : 'Jump to Page'),
-        content: TextField(
-          controller: textController,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: '1 - ${_book!.allPages.length}',
-            border: const OutlineInputBorder(),
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              TranslationService.isArabic
+                  ? 'أدخل رقم الصفحة بين ١ و ${_book!.allPages.length}'
+                  : 'Enter page number between 1 and ${_book!.allPages.length}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: '1 - ${_book!.allPages.length}',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -402,8 +546,10 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              final val = int.tryParse(textController.text.trim());
-              if (val != null) {
+              final raw = textController.text.trim();
+              final normalized = IslamicBookService.normalizeDigits(raw);
+              final val = int.tryParse(normalized);
+              if (val != null && val >= 1 && val <= _book!.allPages.length) {
                 Navigator.pop(ctx);
                 _jumpToPage(val);
               }
@@ -419,11 +565,15 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
 class _TableOfContentsSheet extends StatelessWidget {
   final FullIslamicBook book;
   final int currentPage;
+  final bool isScoped;
+  final VoidCallback? onToggleFullBook;
   final Function(int) onSelectPage;
 
   const _TableOfContentsSheet({
     required this.book,
     required this.currentPage,
+    required this.isScoped,
+    this.onToggleFullBook,
     required this.onSelectPage,
   });
 
@@ -451,13 +601,29 @@ class _TableOfContentsSheet extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 const Spacer(),
-                Text(
-                  '${book.chapters.length} فصلاً',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withAlpha(140),
+                if (onToggleFullBook != null)
+                  TextButton.icon(
+                    onPressed: onToggleFullBook,
+                    icon: Icon(
+                      isScoped ? Icons.menu_book : Icons.filter_alt_outlined,
+                      size: 16,
+                      color: AppColors.gold,
+                    ),
+                    label: Text(
+                      isScoped
+                          ? (TranslationService.isArabic ? 'عرض الكتاب كاملاً' : 'Full Book')
+                          : (TranslationService.isArabic ? 'عرض القسم المخصص' : 'Scoped'),
+                      style: const TextStyle(fontSize: 12, color: AppColors.gold, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                else
+                  Text(
+                    '${book.chapters.length} فصلاً',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withAlpha(140),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -570,7 +736,7 @@ class _BookSearchSheetState extends State<_BookSearchSheet> {
               textDirection: TextDirection.rtl,
               decoration: InputDecoration(
                 hintText: TranslationService.isArabic
-                    ? 'ابحث في كامل نصوص الكتاب...'
+                    ? 'ابحث في نصوص الكتاب...'
                     : 'Search inside book...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _controller.text.isNotEmpty

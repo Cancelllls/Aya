@@ -148,5 +148,61 @@ void main() {
       expect(searchResults, isNotEmpty);
       expect(searchResults.first.pageNum, greaterThan(0));
     });
+
+    test('cleanText removes redundant footnotes and editorial brackets', () {
+      const sample = 'ابْن كثير: (١) هُوَ أَبُو الْفِدَاء عماد الدّين [١] إِسْمَاعِيل [ص: ٤٥] [ ] ( ) (*) بن عمر [وصفته]';
+      final cleaned = IslamicBookService.cleanText(sample);
+      expect(cleaned, isNot(contains('(١)')));
+      expect(cleaned, isNot(contains('[١]')));
+      expect(cleaned, isNot(contains('(*)')));
+      expect(cleaned, isNot(contains('[ص: ٤٥]')));
+      expect(cleaned, isNot(contains('[]')));
+      expect(cleaned, isNot(contains('()')));
+      expect(cleaned, contains('إِسْمَاعِيل'));
+      expect(cleaned, contains('وصفته'));
+    });
+
+    test('normalizeDigits accurately converts Eastern Arabic-Indic numerals', () {
+      expect(IslamicBookService.normalizeDigits('١٢٣'), equals('123'));
+      expect(IslamicBookService.normalizeDigits('٤٥٦'), equals('456'));
+      expect(IslamicBookService.normalizeDigits('٧٨٩٠'), equals('7890'));
+      expect(IslamicBookService.normalizeDigits('ص ٤٥ من ٨٨٨'), equals('ص 45 من 888'));
+    });
+
+    test('getScopedBook creates perfectly bounded sub-book for Adam', () async {
+      final fullBook = await IslamicBookService.loadBook('qisas_al_anbiya');
+      final scoped = IslamicBookService.getScopedBook(
+        fullBook,
+        1,
+        87,
+        scopeTitleAr: 'قصة آدم عليه السلام',
+      );
+
+      expect(scoped.titleAr, equals('قصة آدم عليه السلام'));
+      expect(scoped.totalPages, equals(87));
+      expect(scoped.allPages.length, equals(87));
+      expect(scoped.allPages.first.pageNum, equals(1));
+      expect(scoped.allPages.last.pageNum, equals(87));
+      expect(scoped.chapters, isNotEmpty);
+      expect(scoped.chapters.first.title, contains('آدم'));
+    });
+
+    test('all 25 Prophets have valid non-null bookStartPage and bookEndPage', () {
+      for (final p in ProphetsData.prophets) {
+        expect(p.bookStartPage, isNotNull, reason: '${p.nameAr} missing bookStartPage');
+        expect(p.bookEndPage, isNotNull, reason: '${p.nameAr} missing bookEndPage');
+        expect(p.bookStartPage!, greaterThan(0));
+        expect(p.bookEndPage!, greaterThanOrEqualTo(p.bookStartPage!));
+      }
+    });
+
+    test('all 22 Sirah chapters have valid non-null bookStartPage and bookEndPage', () {
+      for (final c in SirahData.chapters) {
+        expect(c.bookStartPage, isNotNull, reason: '${c.titleAr} missing bookStartPage');
+        expect(c.bookEndPage, isNotNull, reason: '${c.titleAr} missing bookEndPage');
+        expect(c.bookStartPage!, greaterThan(0));
+        expect(c.bookEndPage!, greaterThanOrEqualTo(c.bookStartPage!));
+      }
+    });
   });
 }
