@@ -166,6 +166,8 @@ class IslamicBookService {
     t = t.replaceAllMapped(RegExp(r'\[\s*([^\]]*?)\s*\]'), (m) => m[1] ?? '');
     t = t.replaceAll(RegExp(r'\[\s*\]'), '');
     t = t.replaceAll(RegExp(r'\(\s*\)'), '');
+    t = t.replaceAll(RegExp(r'''[\(\[\"'\s]*[م\d\s\-]*\d*[\s\-]*قص[صـَ]+ الانبياء[\s\d\-]*[\)\]\"'\s]*'''), ' ');
+    t = t.replaceAll(RegExp(r'www\.islambasics\.[a-zA-Z0-9]+', caseSensitive: false), '');
     t = t.replaceAll(RegExp(r'[ \t]+'), ' ');
     return t.trim();
   }

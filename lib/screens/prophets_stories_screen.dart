@@ -63,8 +63,45 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
     setState(() {});
   }
 
+  bool get _isIntroRead {
+    return widget.storage.getBool('qisas_al_anbiya_intro_read', defaultValue: false);
+  }
+
+  void _toggleIntroRead() {
+    HapticFeedback.lightImpact();
+    final current = _isIntroRead;
+    widget.storage.setBool('qisas_al_anbiya_intro_read', !current);
+    setState(() {});
+  }
+
+  bool get _showIntro {
+    if (_searchQuery.isEmpty) return true;
+    final q = _searchQuery.toLowerCase();
+    return 'مقدمة الكتاب قصص الأنبياء ابن كثير introduction intro preface author'.contains(q);
+  }
+
   int get _readCount {
     return ProphetsData.prophets.where((p) => _isProphetRead(p.id)).length;
+  }
+
+  void _openIntroReader() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullBookReaderScreen(
+          bookKey: 'qisas_al_anbiya',
+          defaultTitleAr: 'مقدمة كتاب قصص الأنبياء (ابن كثير)',
+          defaultTitleEn: 'Introduction to Stories of the Prophets',
+          storage: widget.storage,
+          startPage: 1,
+          endPage: 17,
+          startPageEn: 1,
+          endPageEn: 2,
+          scopeTitleAr: 'مقدمة قصص الأنبياء (ابن كثير)',
+          scopeTitleEn: 'Introduction (Ibn Kathir)',
+        ),
+      ),
+    ).then((_) => setState(() {}));
   }
 
   void _openReader(ProphetStory story) {
@@ -255,7 +292,7 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
 
           // List of Prophets
           Expanded(
-            child: _filteredProphets.isEmpty
+            child: (_filteredProphets.isEmpty && !_showIntro)
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -278,10 +315,14 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: _filteredProphets.length,
+                    itemCount: _filteredProphets.length + (_showIntro ? 1 : 0),
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemBuilder: (context, index) {
-                      final story = _filteredProphets[index];
+                      if (_showIntro && index == 0) {
+                        return _buildIntroCard(theme, isDark);
+                      }
+                      final storyIndex = _showIntro ? index - 1 : index;
+                      final story = _filteredProphets[storyIndex];
                       final isRead = _isProphetRead(story.id);
 
                       return Card(
@@ -502,6 +543,178 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIntroCard(ThemeData theme, bool isDark) {
+    final isRead = _isIntroRead;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isRead
+              ? AppColors.teal.withAlpha(80)
+              : AppColors.gold.withAlpha(80),
+        ),
+      ),
+      elevation: 0,
+      color: isDark
+          ? theme.colorScheme.surfaceContainerHighest.withAlpha(80)
+          : Colors.white,
+      child: InkWell(
+        onTap: _openIntroReader,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon Badge
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isRead
+                      ? AppColors.teal.withAlpha(40)
+                      : AppColors.gold.withAlpha(30),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isRead ? AppColors.teal : AppColors.gold,
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.auto_stories,
+                    color: isRead ? AppColors.teal : AppColors.gold,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            TranslationService.isArabic
+                                ? 'مقدمة كتاب قصص الأنبياء'
+                                : 'Book Introduction & Preface',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            isRead
+                                ? Icons.check_circle
+                                : Icons.check_circle_outline,
+                            color: isRead ? AppColors.teal : theme.dividerColor,
+                            size: 22,
+                          ),
+                          onPressed: _toggleIntroRead,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      TranslationService.isArabic
+                          ? 'ترجمة الحافظ ابن كثير ومنهج التحقيق والتصنيف'
+                          : 'Biography of Ibn Kathir & Methodology',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      TranslationService.isArabic
+                          ? 'دراسة موجزة في حياة الحافظ ابن كثير، منهجه في سياق أخبار الأنبياء والرد على الإسرائيليات والدخيل.'
+                          : 'A scholarly overview of Ibn Kathir’s biography, his methodology in relying on authentic sources, and refutation of Israiliyat.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface.withAlpha(180),
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.teal.withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            TranslationService.isArabic
+                                ? 'دراسة تمهيدية'
+                                : 'Introductory Study',
+                            style: const TextStyle(
+                              color: AppColors.teal,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withAlpha(35),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.gold.withAlpha(120),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.menu_book,
+                                color: AppColors.gold,
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                TranslationService.isArabic
+                                    ? 'ابن كثير (١٧ ص)'
+                                    : 'Ibn Kathir (2p)',
+                                style: const TextStyle(
+                                  color: Color(0xFFB45309),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

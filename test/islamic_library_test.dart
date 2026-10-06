@@ -169,22 +169,36 @@ void main() {
       expect(IslamicBookService.normalizeDigits('ص ٤٥ من ٨٨٨'), equals('ص 45 من 888'));
     });
 
-    test('getScopedBook creates perfectly bounded sub-book for Adam', () async {
+    test('getScopedBook creates perfectly bounded sub-book for Adam and Introduction', () async {
       final fullBook = await IslamicBookService.loadBook('qisas_al_anbiya');
-      final scoped = IslamicBookService.getScopedBook(
+      
+      // Introduction: pages 1 to 17
+      final intro = IslamicBookService.getScopedBook(
         fullBook,
         1,
+        17,
+        scopeTitleAr: 'مقدمة كتاب قصص الأنبياء (ابن كثير)',
+      );
+      expect(intro.titleAr, equals('مقدمة كتاب قصص الأنبياء (ابن كثير)'));
+      expect(intro.totalPages, equals(17));
+      expect(intro.allPages.length, equals(17));
+      expect(intro.allPages.first.pageNum, equals(1));
+      expect(intro.allPages.last.pageNum, equals(17));
+
+      // Adam: pages 18 to 87
+      final adam = IslamicBookService.getScopedBook(
+        fullBook,
+        18,
         87,
         scopeTitleAr: 'قصة آدم عليه السلام',
       );
-
-      expect(scoped.titleAr, equals('قصة آدم عليه السلام'));
-      expect(scoped.totalPages, equals(87));
-      expect(scoped.allPages.length, equals(87));
-      expect(scoped.allPages.first.pageNum, equals(1));
-      expect(scoped.allPages.last.pageNum, equals(87));
-      expect(scoped.chapters, isNotEmpty);
-      expect(scoped.chapters.first.title, contains('آدم'));
+      expect(adam.titleAr, equals('قصة آدم عليه السلام'));
+      expect(adam.totalPages, equals(70));
+      expect(adam.allPages.length, equals(70));
+      expect(adam.allPages.first.pageNum, equals(18));
+      expect(adam.allPages.last.pageNum, equals(87));
+      expect(adam.chapters, isNotEmpty);
+      expect(adam.chapters.first.title, contains('آدم'));
     });
 
     test('all 25 Prophets have valid non-null bookStartPage and bookEndPage', () {
