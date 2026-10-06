@@ -51,6 +51,15 @@
 - **FTS5 full-text search** across all books, no tashkeel needed
 - **Lazy loading** with pre-fetch — first 20, then 20-40 pre-cached, rest on demand
 
+### Stories of the Prophets & Prophetic Sirah (قصص الأنبياء والسيرة النبوية)
+- **All 25 Quranic Prophets** — Comprehensive bilingual coverage (Adam to Muhammad ﷺ) with interactive summaries, timelines, key life lessons, and direct Quranic verse citations
+- **22 Prophetic Sirah Chapters** — Chronological coverage from pre-Islamic Arabia and the Year of the Elephant through the Makkan and Madinan eras to the Farewell Pilgrimage
+- **Unabridged Classical Books Reader** — 1,340 pages bundled 100% offline:
+  - *Qisas al-Anbiya* (قصص الأنبياء) by Al-Hafiz Ibn Kathir (888 pages)
+  - *Ar-Raheeq Al-Makhtum* (الرحيق المختوم) by Sheikh Safiur Rahman al-Mubarakpuri (452 pages)
+- **Scoped Book Reading** — 1-tap entry points from any Prophet or Sirah milestone jumping straight into the exact unabridged pages for that topic
+- **Modern E-Reader UI** — Natural RTL physical page-turning, fixed chapter headlines, font scaling, jump-to-page supporting Eastern Arabic numerals, and clean typography with footnote/bracket stripping
+
 ### Azkar & Supplications
 - **11 categories** — Morning, Evening, Post-Prayer, Daily Duas, Names of Allah, Sleep/Waking, Salah, Life Events, Protection/Ruqyah, Forgiveness/Tawbah, Custom
 - **60+ authentic adhkar** with Arabic text, transliteration, English translation, and hadith references
@@ -114,6 +123,9 @@ lib/
 │   │   └── surah_pager_screen.dart   # 114-page PageView + fixed AppBar with reader settings
 │   ├── hadith_screen.dart            # 13-book browser, FTS5 search, lazy loading
 │   ├── hadith_explanation_screen.dart # Sharh/grading (grading: always Dorar; sharh: cache→CDN→Dorar)
+│   ├── prophets_stories_screen.dart  # 25 Prophets profiles + scoped Ibn Kathir links
+│   ├── sirah_screen.dart             # 22 Sirah chapters + scoped Raheeq links
+│   ├── full_book_reader_screen.dart  # Scoped & full classical book e-reader (RTL swiping)
 │   ├── prayer_times_screen.dart      # Today / Prayer Calendar / Hijri Calendar tabs
 │   ├── prayer_tracker_screen.dart    # Calendar / Yearly / Statistics with donut charts
 │   ├── azkar_screen.dart             # 11-tab azkar: counter, 99 Names, custom "My Azkar"
@@ -154,6 +166,7 @@ lib/
 │   ├── local_quran_service.dart      # Bundled JSON for non-Hafs Qira'at
 │   ├── adhan_audio_service.dart      # 8 adhan reciters (MP3 assets), preview playback
 │   ├── sharh_cache_service.dart      # CDN sharh downloader + offline JSON cache
+│   ├── islamic_book_service.dart     # Gzip asset loader, caching, text cleaning & search
 │   ├── backup_service.dart           # Full export/import: bookmarks, settings, tracker
 │   └── reciters_cache_service.dart   # mp3quran.net API v3 aggregated + 7-day disk cache
 │
@@ -194,6 +207,7 @@ android/app/src/main/kotlin/com/quran/aya/
 └── ExactAlarmPermissionReceiver.kt   # Re-schedules alarms when permission is granted
 
 assets/
+├── books/                            # 2 classical books: Qisas al-Anbiya & Raheeq (gzipped JSON)
 ├── tafsir/                            # 10 pre-bundled Tafsir JSON books (8 AR + 2 EN)
 ├── timestamps/                       # 12 reciters × 114 surahs — per-ayah timing (5.7 MB)
 ├── quran/                            # Quran text: Hafs + 10 Qira'at JSON
@@ -270,6 +284,7 @@ Aya is built on the shoulders of giants. All data is either bundled, cached, or 
 
 | Source | Used for | Attribution |
 |--------|----------|-------------|
+| [Al-Maktaba Al-Shamela](https://shamela.ws) | Classical Islamic books | *Qisas al-Anbiya* (Book 932) by Al-Hafiz Ibn Kathir & *Ar-Raheeq Al-Makhtum* (Book 9820) by Safiur Rahman al-Mubarakpuri |
 | [mp3quran.net API v3](https://mp3quran.net) | Reciter discovery, Qira'at listings, surah audio | Reciter metadata and audio streams |
 | [Quran.com CDN (QDC)](https://quran.com) | Per-ayah audio timestamps | 12 Hafs reciters — bundled as assets (5.7 MB) |
 | [AlQuran.cloud / cdn.islamic.network](https://alquran.cloud) | Hafs reciter audio streaming | CDN fallback for Hafs reciters |
@@ -287,7 +302,7 @@ Aya is built on the shoulders of giants. All data is either bundled, cached, or 
 | [Amiri Font](https://fonts.google.com/specimen/Amiri) | Quranic Arabic text rendering | Google Fonts |
 | [Scheherazade New](https://fonts.google.com/specimen/Scheherazade+New) | Alternative Quran font | Google Fonts |
 
-Quran text, hadith collections, tafsir, and azkar are compiled from classical sources into bundled JSON assets. All data remains in the public domain / open-access tradition of Islamic scholarship.
+Quran text, hadith collections, tafsir, classical prophetic literature, and azkar are compiled from classical sources into bundled JSON assets. All data remains in the public domain / open-access tradition of Islamic scholarship.
 
 ---
 
