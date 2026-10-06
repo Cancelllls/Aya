@@ -201,6 +201,22 @@ void main() {
       expect(adam.chapters.first.title, contains('آدم'));
     });
 
+    test('getScopedBook creates perfectly bounded sub-book for Raheeq Al-Makhtum Introduction', () async {
+      final fullBook = await IslamicBookService.loadBook('raheeq_makhtum');
+      final intro = IslamicBookService.getScopedBook(
+        fullBook,
+        1,
+        6,
+        scopeTitleAr: 'مقدمة كتاب الرحيق المختوم',
+      );
+      expect(intro.titleAr, equals('مقدمة كتاب الرحيق المختوم'));
+      expect(intro.totalPages, equals(6));
+      expect(intro.allPages.length, equals(6));
+      expect(intro.allPages.first.pageNum, equals(1));
+      expect(intro.allPages.last.pageNum, equals(6));
+      expect(SirahData.chapters.first.bookStartPage, equals(7));
+    });
+
     test('all 25 Prophets have valid non-null bookStartPage and bookEndPage', () {
       for (final p in ProphetsData.prophets) {
         expect(p.bookStartPage, isNotNull, reason: '${p.nameAr} missing bookStartPage');

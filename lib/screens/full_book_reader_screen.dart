@@ -47,14 +47,14 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
 
   late PageController _pageController;
   int _currentPageIndex = 0;
-  double _fontSize = 19.0;
+  double _fontSize = 15.0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
     _isEnglish = widget.storage.getBool('book_reader_is_english', defaultValue: !TranslationService.isArabic);
-    _fontSize = widget.storage.getDouble('book_reader_font_size', defaultValue: 19.0);
+    _fontSize = widget.storage.getDouble('book_reader_font_size', defaultValue: 15.0);
     _isScopedMode = widget.startPage != null && widget.endPage != null;
     _pageController = PageController(initialPage: 0);
     _loadBook();
@@ -478,7 +478,7 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.text_decrease),
-                  onPressed: _fontSize > 14
+                  onPressed: _fontSize > 10
                       ? () {
                           setState(() => _fontSize -= 2);
                           widget.storage.setDouble('book_reader_font_size', _fontSize);

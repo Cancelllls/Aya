@@ -72,11 +72,49 @@ class _SirahScreenState extends State<SirahScreen> {
     return SirahData.chapters.where((c) => _isChapterRead(c.id)).length;
   }
 
+  bool get _isIntroRead {
+    return widget.storage.getBool('raheeq_makhtum_intro_read', defaultValue: false);
+  }
+
+  void _toggleIntroRead() {
+    HapticFeedback.lightImpact();
+    final current = _isIntroRead;
+    widget.storage.setBool('raheeq_makhtum_intro_read', !current);
+    setState(() {});
+  }
+
+  bool get _showIntro {
+    if (_selectedPeriodIndex == 2) return false;
+    if (_searchQuery.isEmpty) return true;
+    final q = _searchQuery.toLowerCase();
+    return 'مقدمة الكتاب الرحيق المختوم صفي الرحمن المباركفوري introduction intro preface author'.contains(q);
+  }
+
   void _toggleChapterRead(int id) {
     HapticFeedback.lightImpact();
     final current = _isChapterRead(id);
     widget.storage.setBool('sirah_read_$id', !current);
     setState(() {});
+  }
+
+  void _openIntroReader() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullBookReaderScreen(
+          bookKey: 'raheeq_makhtum',
+          defaultTitleAr: 'مقدمة كتاب الرحيق المختوم',
+          defaultTitleEn: 'Introduction to The Sealed Nectar',
+          storage: widget.storage,
+          startPage: 1,
+          endPage: 6,
+          startPageEn: 1,
+          endPageEn: 6,
+          scopeTitleAr: 'مقدمة الرحيق المختوم',
+          scopeTitleEn: 'Introduction (The Sealed Nectar)',
+        ),
+      ),
+    ).then((_) => setState(() {}));
   }
 
   void _openReader(SirahChapter chapter) {
@@ -291,7 +329,7 @@ class _SirahScreenState extends State<SirahScreen> {
 
           // Chapters List
           Expanded(
-            child: _filteredChapters.isEmpty
+            child: (_filteredChapters.isEmpty && !_showIntro)
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -314,10 +352,14 @@ class _SirahScreenState extends State<SirahScreen> {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: _filteredChapters.length,
+                    itemCount: _filteredChapters.length + (_showIntro ? 1 : 0),
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemBuilder: (context, index) {
-                      final chapter = _filteredChapters[index];
+                      if (_showIntro && index == 0) {
+                        return _buildIntroCard(theme, isDark);
+                      }
+                      final chapterIndex = _showIntro ? index - 1 : index;
+                      final chapter = _filteredChapters[chapterIndex];
                       final isRead = _isChapterRead(chapter.id);
 
                       return Card(
@@ -555,6 +597,178 @@ class _SirahScreenState extends State<SirahScreen> {
         fontSize: 12,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
+  }
+
+  Widget _buildIntroCard(ThemeData theme, bool isDark) {
+    final isRead = _isIntroRead;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isRead
+              ? AppColors.teal.withAlpha(80)
+              : AppColors.gold.withAlpha(80),
+        ),
+      ),
+      elevation: 0,
+      color: isDark
+          ? theme.colorScheme.surfaceContainerHighest.withAlpha(80)
+          : Colors.white,
+      child: InkWell(
+        onTap: _openIntroReader,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon Badge
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isRead
+                      ? AppColors.teal.withAlpha(40)
+                      : AppColors.gold.withAlpha(30),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isRead ? AppColors.teal : AppColors.gold,
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.auto_stories,
+                    color: isRead ? AppColors.teal : AppColors.gold,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            TranslationService.isArabic
+                                ? 'مقدمة كتاب الرحيق المختوم'
+                                : 'Introduction to The Sealed Nectar',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            isRead
+                                ? Icons.check_circle
+                                : Icons.check_circle_outline,
+                            color: isRead ? AppColors.teal : theme.dividerColor,
+                            size: 22,
+                          ),
+                          onPressed: _toggleIntroRead,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      TranslationService.isArabic
+                          ? 'تصدير رابطة العالم الإسلامي ومقدمة الشيخ صفي الرحمن المباركفوري'
+                          : 'Muslim World League Address & Author Preface',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      TranslationService.isArabic
+                          ? 'المدخل التمهيدي لكتاب الرحيق المختوم الفائز بالجائزة الأولى لرابطة العالم الإسلامي في مسابقة السيرة النبوية العالمية.'
+                          : 'The opening address and author\'s introduction to the premier prize-winning prophetic biography.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface.withAlpha(180),
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.teal.withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            TranslationService.isArabic
+                                ? 'تصدير وتمهيد'
+                                : 'Prologue & Preface',
+                            style: const TextStyle(
+                              color: AppColors.teal,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withAlpha(35),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.gold.withAlpha(120),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.menu_book,
+                                color: AppColors.gold,
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                TranslationService.isArabic
+                                    ? 'الرحيق المختوم (٦ ص)'
+                                    : 'Sealed Nectar (6p)',
+                                style: const TextStyle(
+                                  color: Color(0xFFB45309),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

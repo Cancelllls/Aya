@@ -6,6 +6,7 @@ import '../services/storage_service.dart';
 import '../services/translation_service.dart';
 import '../theme/app_colors.dart';
 import 'full_book_reader_screen.dart';
+import 'sirah_screen.dart';
 
 class ProphetsStoriesScreen extends StatefulWidget {
   final StorageService storage;
@@ -105,26 +106,30 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
   }
 
   void _openReader(ProphetStory story) {
+    if (story.id == 25) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SirahScreen(storage: widget.storage),
+        ),
+      ).then((_) => setState(() {}));
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => FullBookReaderScreen(
-          bookKey: story.id == 25 ? 'raheeq_makhtum' : 'qisas_al_anbiya',
-          defaultTitleAr: story.id == 25
-              ? 'السيرة النبوية (الرحيق المختوم)'
-              : 'قصة ${story.nameAr} (ابن كثير)',
-          defaultTitleEn: story.id == 25 ? 'Prophetic Sirah' : 'Story of ${story.nameEn}',
+          bookKey: 'qisas_al_anbiya',
+          defaultTitleAr: 'قصة ${story.nameAr} (ابن كثير)',
+          defaultTitleEn: 'Story of ${story.nameEn}',
           storage: widget.storage,
           startPage: story.bookStartPage,
           endPage: story.bookEndPage,
           startPageEn: story.bookStartPageEn,
           endPageEn: story.bookEndPageEn,
-          scopeTitleAr: story.id == 25
-              ? 'الرحيق المختوم: ${story.nameAr}'
-              : 'قصص الأنبياء (ابن كثير): ${story.nameAr}',
-          scopeTitleEn: story.id == 25
-              ? 'The Sealed Nectar: ${story.nameEn}'
-              : 'Ibn Kathir: ${story.nameEn}',
+          scopeTitleAr: 'قصص الأنبياء (ابن كثير): ${story.nameAr}',
+          scopeTitleEn: 'Ibn Kathir: ${story.nameEn}',
         ),
       ),
     ).then((_) => setState(() {}));
@@ -510,13 +515,17 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  const Icon(Icons.menu_book, color: AppColors.gold, size: 12),
+                                                  Icon(
+                                                    story.id == 25 ? Icons.auto_stories : Icons.menu_book,
+                                                    color: AppColors.gold,
+                                                    size: 12,
+                                                  ),
                                                   const SizedBox(width: 4),
                                                   Text(
                                                     story.id == 25
                                                         ? (TranslationService.isArabic
-                                                            ? 'الرحيق المختوم (٤٥٢ ص)'
-                                                            : 'Sealed Nectar (452p)')
+                                                            ? 'السيرة النبوية (٢٢ فصلاً)'
+                                                            : 'Prophetic Sirah (22 Chapters)')
                                                         : (TranslationService.isArabic
                                                             ? 'ابن كثير (${story.bookEndPage! - story.bookStartPage! + 1} ص)'
                                                             : 'Ibn Kathir (${story.bookEndPage! - story.bookStartPage! + 1}p)'),
@@ -526,6 +535,10 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
+                                                  if (story.id == 25) ...[
+                                                    const SizedBox(width: 4),
+                                                    const Icon(Icons.arrow_forward_ios, color: AppColors.gold, size: 9),
+                                                  ],
                                                 ],
                                               ),
                                             ),

@@ -44,7 +44,7 @@ class SirahData {
           quranRef: 'Surah Al-Fil 105:1',
         ),
       ],
-      bookStartPage: 1,
+      bookStartPage: 7,
       bookEndPage: 44,
       bookStartPageEn: 7,
       bookEndPageEn: 29,
