@@ -1,21 +1,6 @@
 part of 'settings_screen.dart';
 
 extension SettingsNotificationsSection on _SettingsScreenState {
-  Future<void> _toggleAutoDndEnabled(bool val) async {
-    setState(() {
-      _autoDndEnabled = val;
-    });
-    await widget.storage.setBool('auto_dnd_enabled', val);
-  }
-
-  Future<void> _changeAutoDndDuration(int val) async {
-    setState(() {
-      _autoDndDuration = val;
-    });
-    await widget.storage.setInt('auto_dnd_duration', val);
-    await widget.storage.setInt('auto_dnd_minutes', val);
-  }
-
   Future<void> _toggleMorningAzkarReminder(bool val) async {
     setState(() {
       _morningAzkarReminder = val;

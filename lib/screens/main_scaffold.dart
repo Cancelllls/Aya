@@ -10,7 +10,6 @@ import '../services/api_service.dart';
 import '../services/audio_manager.dart';
 import '../models/prayer_models.dart';
 import '../widgets/audio_player_overlay.dart';
-import '../widgets/islamic_logo_painter.dart';
 import 'dashboard_screen.dart';
 import 'quran_screen.dart';
 import 'hadith_screen.dart';
@@ -20,7 +19,6 @@ import 'settings/settings_screen.dart';
 import 'surah_reader/surah_pager_screen.dart';
 import 'quran_download_screen.dart';
 import 'bookmarks_screen.dart';
-import 'tajweed_guide_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   final StorageService storage;
@@ -37,17 +35,12 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with WidgetsBindingObserver {
   int _currentTab = 0;
   int _azkarInitialTab = 0;
   int _prayerInitialTab = 0;
   int? _hadithInitialNumber;
   String? _hadithInitialBookId;
-  Timer? _focusTimer;
-  Timer? _autoLockTimer;
-  int _focusTimeRemaining = 0;
-  bool _isFocusOverlayShowing = false;
-  late AnimationController _pulseController;
   DateTime? _lastPressedAt;
   StreamSubscription<String?>? _notificationSubscription;
 
@@ -56,15 +49,6 @@ class _MainScaffoldState extends State<MainScaffold>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadLastBookmark();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-
-    _autoLockTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      _checkAutoStartFocusLock();
-    });
-
     _applyWakeLockOnLaunch();
 
     _notificationSubscription = NotificationService
@@ -164,9 +148,6 @@ class _MainScaffoldState extends State<MainScaffold>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _focusTimer?.cancel();
-    _autoLockTimer?.cancel();
-    _pulseController.dispose();
     _notificationSubscription?.cancel();
     super.dispose();
   }
@@ -208,118 +189,6 @@ class _MainScaffoldState extends State<MainScaffold>
 
   Future<void> _loadLastBookmark() async {
     // DashboardScreen fetches it directly
-  }
-
-  void _checkAutoStartFocusLock() {
-    final autoStart = widget.storage.getBool(
-      'focus_auto_start',
-      defaultValue: false,
-    );
-    final duration = widget.storage.getInt(
-      'focus_lock_duration',
-      defaultValue: 0,
-    );
-    if (!autoStart || duration <= 0 || _focusTimeRemaining > 0) return;
-
-    final nowStr = DateTime.now().toIso8601String().substring(11, 16);
-
-    for (final key in [
-      'widget_prayer_fajr',
-      'widget_prayer_dhuhr',
-      'widget_prayer_asr',
-      'widget_prayer_maghrib',
-      'widget_prayer_isha',
-    ]) {
-      if (nowStr == widget.storage.getString(key).split(' ')[0]) {
-        startFocusLock(duration);
-        return;
-      }
-    }
-  }
-
-  void startFocusLock(int minutes) {
-    if (minutes <= 0) return;
-    _focusTimer?.cancel();
-    _pulseController.repeat(reverse: true);
-    setState(() {
-      _focusTimeRemaining = minutes * 60;
-      _isFocusOverlayShowing = true;
-    });
-
-    final lockType = widget.storage.getString(
-      'focus_lock_type',
-      defaultValue: 'app_only',
-    );
-    if (lockType == 'whole_phone') {
-      try {
-        const platform = MethodChannel('com.quran.aya/system');
-        platform.invokeMethod('startLockTask');
-      } catch (_) {}
-    }
-
-    _focusTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_focusTimeRemaining <= 1) {
-        timer.cancel();
-        _pulseController.stop();
-
-        final lt = widget.storage.getString(
-          'focus_lock_type',
-          defaultValue: 'app_only',
-        );
-        if (lt == 'whole_phone') {
-          try {
-            const platform = MethodChannel('com.quran.aya/system');
-            platform.invokeMethod('stopLockTask');
-          } catch (_) {}
-        }
-
-        setState(() {
-          _focusTimeRemaining = 0;
-          _isFocusOverlayShowing = false;
-        });
-      } else {
-        setState(() {
-          _focusTimeRemaining--;
-        });
-      }
-    });
-  }
-
-  String _formatFocusTime() {
-    final minutes = (_focusTimeRemaining ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_focusTimeRemaining % 60).toString().padLeft(2, '0');
-    return "$minutes:$seconds";
-  }
-
-  void _bypassFocusLock() {
-    _focusTimer?.cancel();
-    _pulseController.stop();
-
-    final lockType = widget.storage.getString(
-      'focus_lock_type',
-      defaultValue: 'app_only',
-    );
-    if (lockType == 'whole_phone') {
-      try {
-        const platform = MethodChannel('com.quran.aya/system');
-        platform.invokeMethod('stopLockTask');
-      } catch (_) {}
-    }
-
-    setState(() {
-      _focusTimeRemaining = 0;
-      _isFocusOverlayShowing = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          TranslationService.isArabic
-              ? "تم تجاوز قفل التركيز"
-              : "Focus Lock Bypassed",
-        ),
-        backgroundColor: Colors.redAccent,
-      ),
-    );
   }
 
   void _navigateToSpecificVerse(int surahNum, int ayahNum) async {
@@ -415,7 +284,6 @@ class _MainScaffoldState extends State<MainScaffold>
           });
         },
         onContinueReading: _navigateToBookmark,
-        onStartFocusLock: (mins) => startFocusLock(mins),
       ),
       QuranScreen(storage: widget.storage),
       HadithScreen(
@@ -554,131 +422,6 @@ class _MainScaffoldState extends State<MainScaffold>
                               8.0,
                     isDark: isDark,
                     theme: theme,
-                  ),
-                if (_isFocusOverlayShowing)
-                  Positioned.fill(
-                    child: PopScope(
-                      canPop: false,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF041A16), Color(0xFF000806)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                        child: SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
-                              vertical: 32.0,
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Spacer(),
-                                ScaleTransition(
-                                  scale: Tween<double>(begin: 0.92, end: 1.08)
-                                      .animate(
-                                        CurvedAnimation(
-                                          parent: _pulseController,
-                                          curve: Curves.easeInOutCubic,
-                                        ),
-                                      ),
-                                  child: FadeTransition(
-                                    opacity: Tween<double>(begin: 0.7, end: 1.0)
-                                        .animate(
-                                          CurvedAnimation(
-                                            parent: _pulseController,
-                                            curve: Curves.easeInOutCubic,
-                                          ),
-                                        ),
-                                    child: Container(
-                                      width: 140,
-                                      height: 140,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFFE5C158,
-                                            ).withValues(alpha: 0.15),
-                                            blurRadius: 40,
-                                            spreadRadius: 2,
-                                          ),
-                                        ],
-                                      ),
-                                      child: CustomPaint(
-                                        painter: IslamicLogoPainter(
-                                          animationValue:
-                                              _pulseController.value,
-                                          color: const Color(0xFFE5C158),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 48),
-                                Text(
-                                  TranslationService.t('focus_active'),
-                                  style: const TextStyle(
-                                    color: Color(0xFFE5C158),
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _formatFocusTime(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 56,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2,
-                                    fontFeatures: [
-                                      FontFeature.tabularFigures(),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20.0,
-                                  ),
-                                  child: Text(
-                                    TranslationService.t('focus_warning'),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 15,
-                                      height: 1.6,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                const Spacer(),
-                                GestureDetector(
-                                  onDoubleTap: _bypassFocusLock,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      TranslationService.t('focus_bypass'),
-                                      style: const TextStyle(
-                                        color: Colors.white24,
-                                        fontSize: 12,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
               ],
             );

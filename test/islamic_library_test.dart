@@ -28,14 +28,6 @@ void main() {
         expect(p.periodEn, isNotEmpty);
         expect(p.quranMentions, greaterThan(0));
         expect(p.keySurahs, isNotEmpty);
-        expect(p.sections, isNotEmpty);
-
-        for (final sec in p.sections) {
-          expect(sec.titleAr, isNotEmpty);
-          expect(sec.titleEn, isNotEmpty);
-          expect(sec.contentAr, isNotEmpty);
-          expect(sec.contentEn, isNotEmpty);
-        }
       }
     });
 
@@ -73,7 +65,7 @@ void main() {
       expect(madinanChapters.first.number, equals(12));
     });
 
-    test('every chapter has valid read time, summaries, and sections', () {
+    test('every chapter has valid read time and summaries', () {
       for (final ch in SirahData.chapters) {
         expect(ch.titleAr, isNotEmpty);
         expect(ch.titleEn, isNotEmpty);
@@ -82,14 +74,6 @@ void main() {
         expect(ch.yearAr, isNotEmpty);
         expect(ch.yearEn, isNotEmpty);
         expect(ch.readTimeMinutes, greaterThan(0));
-        expect(ch.sections, isNotEmpty);
-
-        for (final sec in ch.sections) {
-          expect(sec.titleAr, isNotEmpty);
-          expect(sec.titleEn, isNotEmpty);
-          expect(sec.contentAr, isNotEmpty);
-          expect(sec.contentEn, isNotEmpty);
-        }
       }
     });
   });

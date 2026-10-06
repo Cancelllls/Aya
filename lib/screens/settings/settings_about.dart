@@ -1,7 +1,7 @@
 part of 'settings_screen.dart';
 
-extension SettingsFocusLockSection on _SettingsScreenState {
-  List<Widget> _buildFocusLockSection(ThemeData theme) {
+extension SettingsAboutSection on _SettingsScreenState {
+  List<Widget> _buildAboutSection(ThemeData theme) {
     final isAr = TranslationService.isArabic;
     final primary = theme.colorScheme.primary;
 

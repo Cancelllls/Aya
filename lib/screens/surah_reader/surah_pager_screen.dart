@@ -8,7 +8,6 @@ import '../../services/audio_manager.dart';
 import '../../models/offline_surahs.dart';
 import '../tajweed_guide_screen.dart';
 import 'surah_reader_screen.dart';
-import '../../services/database_service.dart';
 
 class SurahPagerScreen extends StatefulWidget {
   final Surah initialSurah;
@@ -43,7 +42,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   // toggling it never remounts or rebuilds the SurahReaderScreen.
   final ValueNotifier<bool> _hifzNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _tajweedNotifier = ValueNotifier(true);
-  final ValueNotifier<Set<int>> _bookmarksNotifier = ValueNotifier({});
 
   @override
   void initState() {
@@ -59,7 +57,6 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _translationEdition = widget.storage.getString('default_translation', defaultValue: 'en.sahih');
     _fontSizeMultiplier = widget.storage.getDouble('setting_quran_font_size_multiplier', defaultValue: 1.0);
     _tajweedNotifier.value = widget.storage.getBool('tajweed_enabled', defaultValue: true);
-    _loadBookmarks();
   }
 
   @override
@@ -68,55 +65,7 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
     _pageController.dispose();
     _hifzNotifier.dispose();
     _tajweedNotifier.dispose();
-    _bookmarksNotifier.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadBookmarks() async {
-    final bookmarks = await widget.storage.getBookmarks();
-    final surahNums = bookmarks.map((b) => b['surahNumber'] as int).toSet();
-    _bookmarksNotifier.value = surahNums;
-  }
-
-  Future<void> _toggleSurahBookmark(Surah surahData) async {
-    final current = Set<int>.from(_bookmarksNotifier.value);
-    final isBookmarked = current.contains(surahData.number);
-
-    if (isBookmarked) {
-      await widget.storage.removeBookmark(surahData.number);
-      current.remove(surahData.number);
-      _bookmarksNotifier.value = current;
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? 'تم إزالة العلامة من سورة ${surahData.name}'
-                : 'Removed Bookmark from Surah ${surahData.englishName}',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    } else {
-      await widget.storage.addBookmark(
-        surahData.number,
-        surahData.englishName,
-        1,
-      );
-      current.add(surahData.number);
-      _bookmarksNotifier.value = current;
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            TranslationService.isArabic
-                ? 'تم حفظ علامة لسورة ${surahData.name}'
-                : 'Bookmarked Surah ${surahData.englishName}',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
   }
 
   int _riwayahIdFor(String script) {
@@ -147,11 +96,11 @@ class _SurahPagerScreenState extends State<SurahPagerScreen> {
   /// Hafs, otherwise returns empty string (auto-select first available).
   String _getReciterFor(String script) {
     final perKey = widget.storage.getString('default_reciter_$script');
-    if (perKey != null && perKey.isNotEmpty) return perKey;
+    if (perKey.isNotEmpty) return perKey;
     // For Hafs, try legacy global key
     if (script == 'hafs') {
       final old = widget.storage.getString('default_reciter');
-      if (old != null && old.isNotEmpty && !old.startsWith('mp3quran_server_')) {
+      if (old.isNotEmpty && !old.startsWith('mp3quran_server_')) {
         return old;
       }
     }

@@ -136,7 +136,7 @@ void main() {
   });
 
   group('Quran Dynamic Text Scaling & Pager Stability Tests', () {
-    test('MadinahMushafView dynamically adapts font size to both width and height', () {
+    test('Quran reader dynamically adapts font size to both width and height', () {
       double computeBaseFontSize({
         required double availableWidth,
         required double availableHeight,

@@ -55,7 +55,6 @@ class _RamadanRemindersScreenState extends State<RamadanRemindersScreen> {
   @override
   Widget build(BuildContext context) {
     final isAr = TranslationService.isArabic;
-    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       appBar: AppBar(

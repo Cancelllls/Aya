@@ -23,14 +23,12 @@ class DashboardScreen extends StatefulWidget {
   final StorageService storage;
   final Function(int, {int? subTab}) onTabChange;
   final VoidCallback onContinueReading;
-  final Function(int) onStartFocusLock;
 
   const DashboardScreen({
     super.key,
     required this.storage,
     required this.onTabChange,
     required this.onContinueReading,
-    required this.onStartFocusLock,
   });
 
   @override
