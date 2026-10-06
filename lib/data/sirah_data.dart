@@ -46,6 +46,8 @@ class SirahData {
       ],
       bookStartPage: 1,
       bookEndPage: 44,
+      bookStartPageEn: 7,
+      bookEndPageEn: 29,
     ),
     SirahChapter(
       id: 2,
@@ -78,6 +80,8 @@ class SirahData {
       ],
       bookStartPage: 45,
       bookEndPage: 48,
+      bookStartPageEn: 30,
+      bookEndPageEn: 35,
     ),
     SirahChapter(
       id: 3,
@@ -116,6 +120,8 @@ class SirahData {
       ],
       bookStartPage: 49,
       bookEndPage: 54,
+      bookStartPageEn: 36,
+      bookEndPageEn: 41,
     ),
     SirahChapter(
       id: 4,
@@ -156,6 +162,8 @@ class SirahData {
       ],
       bookStartPage: 55,
       bookEndPage: 63,
+      bookStartPageEn: 42,
+      bookEndPageEn: 45,
     ),
     SirahChapter(
       id: 5,
@@ -188,6 +196,8 @@ class SirahData {
       ],
       bookStartPage: 64,
       bookEndPage: 102,
+      bookStartPageEn: 46,
+      bookEndPageEn: 54,
     ),
     SirahChapter(
       id: 6,
@@ -228,6 +238,8 @@ class SirahData {
       ],
       bookStartPage: 103,
       bookEndPage: 116,
+      bookStartPageEn: 55,
+      bookEndPageEn: 60,
     ),
     SirahChapter(
       id: 7,
@@ -255,6 +267,8 @@ class SirahData {
       ],
       bookStartPage: 117,
       bookEndPage: 128,
+      bookStartPageEn: 61,
+      bookEndPageEn: 66,
     ),
     SirahChapter(
       id: 8,
@@ -290,6 +304,8 @@ class SirahData {
       ],
       bookStartPage: 129,
       bookEndPage: 139,
+      bookStartPageEn: 67,
+      bookEndPageEn: 72,
     ),
     SirahChapter(
       id: 9,
@@ -325,6 +341,8 @@ class SirahData {
       ],
       bookStartPage: 140,
       bookEndPage: 157,
+      bookStartPageEn: 73,
+      bookEndPageEn: 76,
     ),
     SirahChapter(
       id: 10,
@@ -365,6 +383,8 @@ class SirahData {
       ],
       bookStartPage: 158,
       bookEndPage: 183,
+      bookStartPageEn: 77,
+      bookEndPageEn: 88,
     ),
     SirahChapter(
       id: 11,
@@ -392,6 +412,8 @@ class SirahData {
       ],
       bookStartPage: 184,
       bookEndPage: 210,
+      bookStartPageEn: 89,
+      bookEndPageEn: 98,
     ),
     SirahChapter(
       id: 12,
@@ -432,6 +454,8 @@ class SirahData {
       ],
       bookStartPage: 211,
       bookEndPage: 263,
+      bookStartPageEn: 99,
+      bookEndPageEn: 104,
     ),
     SirahChapter(
       id: 13,
@@ -472,6 +496,8 @@ class SirahData {
       ],
       bookStartPage: 264,
       bookEndPage: 307,
+      bookStartPageEn: 105,
+      bookEndPageEn: 121,
     ),
     SirahChapter(
       id: 14,
@@ -504,6 +530,8 @@ class SirahData {
       ],
       bookStartPage: 308,
       bookEndPage: 330,
+      bookStartPageEn: 122,
+      bookEndPageEn: 155,
     ),
     SirahChapter(
       id: 15,
@@ -539,6 +567,8 @@ class SirahData {
       ],
       bookStartPage: 331,
       bookEndPage: 332,
+      bookStartPageEn: 156,
+      bookEndPageEn: 163,
     ),
     SirahChapter(
       id: 16,
@@ -579,6 +609,8 @@ class SirahData {
       ],
       bookStartPage: 333,
       bookEndPage: 354,
+      bookStartPageEn: 164,
+      bookEndPageEn: 173,
     ),
     SirahChapter(
       id: 17,
@@ -609,6 +641,8 @@ class SirahData {
       ],
       bookStartPage: 355,
       bookEndPage: 361,
+      bookStartPageEn: 174,
+      bookEndPageEn: 186,
     ),
     SirahChapter(
       id: 18,
@@ -636,6 +670,8 @@ class SirahData {
       ],
       bookStartPage: 362,
       bookEndPage: 388,
+      bookStartPageEn: 187,
+      bookEndPageEn: 201,
     ),
     SirahChapter(
       id: 19,
@@ -676,6 +712,8 @@ class SirahData {
       ],
       bookStartPage: 389,
       bookEndPage: 393,
+      bookStartPageEn: 202,
+      bookEndPageEn: 215,
     ),
     SirahChapter(
       id: 20,
@@ -703,6 +741,8 @@ class SirahData {
       ],
       bookStartPage: 394,
       bookEndPage: 417,
+      bookStartPageEn: 216,
+      bookEndPageEn: 230,
     ),
     SirahChapter(
       id: 21,
@@ -735,6 +775,8 @@ class SirahData {
       ],
       bookStartPage: 418,
       bookEndPage: 425,
+      bookStartPageEn: 231,
+      bookEndPageEn: 241,
     ),
     SirahChapter(
       id: 22,
@@ -775,6 +817,8 @@ class SirahData {
       ],
       bookStartPage: 426,
       bookEndPage: 452,
+      bookStartPageEn: 242,
+      bookEndPageEn: 256,
     ),
   ];
 }

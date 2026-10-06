@@ -193,6 +193,10 @@ void main() {
         expect(p.bookEndPage, isNotNull, reason: '${p.nameAr} missing bookEndPage');
         expect(p.bookStartPage!, greaterThan(0));
         expect(p.bookEndPage!, greaterThanOrEqualTo(p.bookStartPage!));
+        expect(p.bookStartPageEn, isNotNull, reason: '${p.nameEn} missing bookStartPageEn');
+        expect(p.bookEndPageEn, isNotNull, reason: '${p.nameEn} missing bookEndPageEn');
+        expect(p.bookStartPageEn!, greaterThan(0));
+        expect(p.bookEndPageEn!, greaterThanOrEqualTo(p.bookStartPageEn!));
       }
     });
 
@@ -202,7 +206,27 @@ void main() {
         expect(c.bookEndPage, isNotNull, reason: '${c.titleAr} missing bookEndPage');
         expect(c.bookStartPage!, greaterThan(0));
         expect(c.bookEndPage!, greaterThanOrEqualTo(c.bookStartPage!));
+        expect(c.bookStartPageEn, isNotNull, reason: '${c.titleEn} missing bookStartPageEn');
+        expect(c.bookEndPageEn, isNotNull, reason: '${c.titleEn} missing bookEndPageEn');
+        expect(c.bookStartPageEn!, greaterThan(0));
+        expect(c.bookEndPageEn!, greaterThanOrEqualTo(c.bookStartPageEn!));
       }
+    });
+
+    test('loads and parses full English Raheeq Al-Makhtum book (256 pages)', () async {
+      final book = await IslamicBookService.loadBook('raheeq_makhtum_en');
+      expect(book.bookId, equals('raheeq_makhtum_en'));
+      expect(book.totalPages, equals(256));
+      expect(book.allPages.length, equals(256));
+      expect(book.allPages.first.text, contains('Sealed Nectar'));
+    });
+
+    test('loads and parses full English Qisas al-Anbiya book (227 pages)', () async {
+      final book = await IslamicBookService.loadBook('qisas_al_anbiya_en');
+      expect(book.bookId, equals('qisas_al_anbiya_en'));
+      expect(book.totalPages, equals(227));
+      expect(book.allPages.length, equals(227));
+      expect(book.allPages[1].text, contains('Stories of the Prophets'));
     });
   });
 }

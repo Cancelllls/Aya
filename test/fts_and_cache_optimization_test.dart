@@ -6,7 +6,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:aya_app/utils/text_helpers.dart';
 import 'package:aya_app/services/storage/prayer_preferences.dart';
-import 'package:aya_app/services/audio_cache_service.dart';
 
 void main() {
   setUpAll(() {

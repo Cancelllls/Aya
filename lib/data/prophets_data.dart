@@ -46,6 +46,8 @@ class ProphetsData {
       ],
       bookStartPage: 1,
       bookEndPage: 87,
+      bookStartPageEn: 3,
+      bookEndPageEn: 19,
     ),
     ProphetStory(
       id: 2,
@@ -78,6 +80,8 @@ class ProphetsData {
       ],
       bookStartPage: 88,
       bookEndPage: 131,
+      bookStartPageEn: 20,
+      bookEndPageEn: 20,
     ),
     ProphetStory(
       id: 3,
@@ -123,6 +127,8 @@ class ProphetsData {
       ],
       bookStartPage: 132,
       bookEndPage: 179,
+      bookStartPageEn: 21,
+      bookEndPageEn: 28,
     ),
     ProphetStory(
       id: 4,
@@ -168,6 +174,8 @@ class ProphetsData {
       ],
       bookStartPage: 180,
       bookEndPage: 195,
+      bookStartPageEn: 29,
+      bookEndPageEn: 33,
     ),
     ProphetStory(
       id: 5,
@@ -213,6 +221,8 @@ class ProphetsData {
       ],
       bookStartPage: 196,
       bookEndPage: 203,
+      bookStartPageEn: 34,
+      bookEndPageEn: 37,
     ),
     ProphetStory(
       id: 6,
@@ -263,6 +273,8 @@ class ProphetsData {
       ],
       bookStartPage: 204,
       bookEndPage: 307,
+      bookStartPageEn: 38,
+      bookEndPageEn: 47,
     ),
     ProphetStory(
       id: 7,
@@ -308,6 +320,8 @@ class ProphetsData {
       ],
       bookStartPage: 208,
       bookEndPage: 216,
+      bookStartPageEn: 63,
+      bookEndPageEn: 66,
     ),
     ProphetStory(
       id: 8,
@@ -340,6 +354,8 @@ class ProphetsData {
       ],
       bookStartPage: 217,
       bookEndPage: 234,
+      bookStartPageEn: 48,
+      bookEndPageEn: 54,
     ),
     ProphetStory(
       id: 9,
@@ -372,6 +388,8 @@ class ProphetsData {
       ],
       bookStartPage: 235,
       bookEndPage: 240,
+      bookStartPageEn: 55,
+      bookEndPageEn: 55,
     ),
     ProphetStory(
       id: 10,
@@ -404,6 +422,8 @@ class ProphetsData {
       ],
       bookStartPage: 323,
       bookEndPage: 345,
+      bookStartPageEn: 56,
+      bookEndPageEn: 62,
     ),
     ProphetStory(
       id: 11,
@@ -449,6 +469,8 @@ class ProphetsData {
       ],
       bookStartPage: 346,
       bookEndPage: 377,
+      bookStartPageEn: 69,
+      bookEndPageEn: 91,
     ),
     ProphetStory(
       id: 12,
@@ -481,6 +503,8 @@ class ProphetsData {
       ],
       bookStartPage: 378,
       bookEndPage: 388,
+      bookStartPageEn: 92,
+      bookEndPageEn: 96,
     ),
     ProphetStory(
       id: 13,
@@ -513,6 +537,8 @@ class ProphetsData {
       ],
       bookStartPage: 389,
       bookEndPage: 391,
+      bookStartPageEn: 67,
+      bookEndPageEn: 68,
     ),
     ProphetStory(
       id: 14,
@@ -562,6 +588,8 @@ class ProphetsData {
       ],
       bookStartPage: 392,
       bookEndPage: 412,
+      bookStartPageEn: 101,
+      bookEndPageEn: 136,
     ),
     ProphetStory(
       id: 15,
@@ -594,6 +622,8 @@ class ProphetsData {
       ],
       bookStartPage: 413,
       bookEndPage: 416,
+      bookStartPageEn: 101,
+      bookEndPageEn: 136,
     ),
     ProphetStory(
       id: 16,
@@ -626,6 +656,8 @@ class ProphetsData {
       ],
       bookStartPage: 417,
       bookEndPage: 612,
+      bookStartPageEn: 97,
+      bookEndPageEn: 97,
     ),
     ProphetStory(
       id: 17,
@@ -658,6 +690,8 @@ class ProphetsData {
       ],
       bookStartPage: 462,
       bookEndPage: 545,
+      bookStartPageEn: 144,
+      bookEndPageEn: 149,
     ),
     ProphetStory(
       id: 18,
@@ -690,6 +724,8 @@ class ProphetsData {
       ],
       bookStartPage: 628,
       bookEndPage: 645,
+      bookStartPageEn: 150,
+      bookEndPageEn: 166,
     ),
     ProphetStory(
       id: 19,
@@ -722,6 +758,8 @@ class ProphetsData {
       ],
       bookStartPage: 646,
       bookEndPage: 660,
+      bookStartPageEn: 139,
+      bookEndPageEn: 139,
     ),
     ProphetStory(
       id: 20,
@@ -754,6 +792,8 @@ class ProphetsData {
       ],
       bookStartPage: 661,
       bookEndPage: 710,
+      bookStartPageEn: 139,
+      bookEndPageEn: 139,
     ),
     ProphetStory(
       id: 21,
@@ -786,6 +826,8 @@ class ProphetsData {
       ],
       bookStartPage: 711,
       bookEndPage: 728,
+      bookStartPageEn: 98,
+      bookEndPageEn: 100,
     ),
     ProphetStory(
       id: 22,
@@ -818,6 +860,8 @@ class ProphetsData {
       ],
       bookStartPage: 729,
       bookEndPage: 765,
+      bookStartPageEn: 169,
+      bookEndPageEn: 170,
     ),
     ProphetStory(
       id: 23,
@@ -850,6 +894,8 @@ class ProphetsData {
       ],
       bookStartPage: 766,
       bookEndPage: 797,
+      bookStartPageEn: 171,
+      bookEndPageEn: 172,
     ),
     ProphetStory(
       id: 24,
@@ -895,6 +941,8 @@ class ProphetsData {
       ],
       bookStartPage: 798,
       bookEndPage: 888,
+      bookStartPageEn: 173,
+      bookEndPageEn: 187,
     ),
     ProphetStory(
       id: 25,
@@ -937,6 +985,8 @@ class ProphetsData {
       ],
       bookStartPage: 1,
       bookEndPage: 452,
+      bookStartPageEn: 1,
+      bookEndPageEn: 256,
     ),
   ];
 }

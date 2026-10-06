@@ -478,6 +478,8 @@ class _ProphetsStoriesScreenState extends State<ProphetsStoriesScreen> {
                                                       storage: widget.storage,
                                                       startPage: story.bookStartPage,
                                                       endPage: story.bookEndPage,
+                                                      startPageEn: story.bookStartPageEn,
+                                                      endPageEn: story.bookEndPageEn,
                                                       scopeTitleAr: story.id == 25
                                                           ? 'الرحيق المختوم: ${story.nameAr}'
                                                           : 'قصص الأنبياء (ابن كثير): ${story.nameAr}',
@@ -889,6 +891,8 @@ class _ProphetReaderScreenState extends State<ProphetReaderScreen> {
                         storage: widget.storage,
                         startPage: widget.story.bookStartPage,
                         endPage: widget.story.bookEndPage,
+                        startPageEn: widget.story.bookStartPageEn,
+                        endPageEn: widget.story.bookEndPageEn,
                         scopeTitleAr: widget.story.id == 25
                             ? 'الرحيق المختوم: ${widget.story.nameAr}'
                             : 'قصص الأنبياء (ابن كثير): ${widget.story.nameAr}',
