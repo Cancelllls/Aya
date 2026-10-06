@@ -52,13 +52,13 @@
 - **Lazy loading** with pre-fetch — first 20, then 20-40 pre-cached, rest on demand
 
 ### Stories of the Prophets & Prophetic Sirah (قصص الأنبياء والسيرة النبوية)
-- **All 25 Quranic Prophets** — Comprehensive bilingual coverage (Adam to Muhammad ﷺ) with interactive summaries, timelines, key life lessons, and direct Quranic verse citations
-- **22 Prophetic Sirah Chapters** — Chronological coverage from pre-Islamic Arabia and the Year of the Elephant through the Makkan and Madinan eras to the Farewell Pilgrimage
-- **Unabridged Classical Books Reader** — 1,340 pages bundled 100% offline:
-  - *Qisas al-Anbiya* (قصص الأنبياء) by Al-Hafiz Ibn Kathir (888 pages)
-  - *Ar-Raheeq Al-Makhtum* (الرحيق المختوم) by Sheikh Safiur Rahman al-Mubarakpuri (452 pages)
-- **Scoped Book Reading** — 1-tap entry points from any Prophet or Sirah milestone jumping straight into the exact unabridged pages for that topic
-- **Modern E-Reader UI** — Natural RTL physical page-turning, fixed chapter headlines, font scaling, jump-to-page supporting Eastern Arabic numerals, and clean typography with footnote/bracket stripping
+- **All 25 Quranic Prophets & 22 Sirah Epochs** — Complete chronological catalog from Adam to the Final Messenger Muhammad ﷺ, categorized by Makkan and Madinan eras.
+- **Unabridged Classical Books (1,823 Pages 100% Offline)**:
+  - *Qisas al-Anbiya* (قصص الأنبياء) by Al-Hafiz Ibn Kathir — Arabic (888 pages) & English (227 pages).
+  - *Ar-Raheeq Al-Makhtum* (الرحيق المختوم) by Sheikh Safiur Rahman al-Mubarakpuri — Arabic (452 pages) & English (256 pages).
+- **Direct Scoped Book Reader** — 1-tap entry directly opens the unabridged book bounded strictly to that specific prophet (e.g. Adam: 87 pages) or Sirah chapter, without having to navigate an 888-page volume.
+- **Strict Arabic vs English Toggle** — Seamless 2-way toggle with natural RTL page-turning for Arabic (Amiri typography) and LTR page-turning for English, with independent page mapping.
+- **Modern E-Reader UI** — Fixed chapter headlines pinned to the top, font scaling (+/-), jump-to-page dialog with Eastern Arabic numeral support, instant full-text search, persistent bookmarking, and automated footnote/bracket OCR cleaning.
 
 ### Azkar & Supplications
 - **11 categories** — Morning, Evening, Post-Prayer, Daily Duas, Names of Allah, Sleep/Waking, Salah, Life Events, Protection/Ruqyah, Forgiveness/Tawbah, Custom
@@ -102,10 +102,65 @@
 
 ## Architecture
 
+Aya is engineered with a **100% local-first, offline-ready architecture**. All core features — Quran mushaf, Hadith collections, Tafsir commentaries, classical Prophetic literature, mathematical prayer calculations, native Android adhan alarms, and home screen widgets — execute with zero runtime network dependencies.
+
+```mermaid
+flowchart TD
+    subgraph UI["Presentation Layer (Flutter 3.x)"]
+        Dashboard["Dashboard & Prayers Bar"]
+        Mushaf["Quran Mushaf & Surah Pager (10 Qira'at)"]
+        HadithUI["Hadith Browser (13 Collections)"]
+        LibraryUI["Prophets & Sirah Milestone Catalogs"]
+        Reader["Scoped Classical Book Reader (AR / EN)"]
+        WidgetsUI["8 Native Android Home Screen Widgets"]
+    end
+
+    subgraph Domain["Business Logic & Services"]
+        PrayerEngine["OfflinePrayerService (Adhan Lib + Hijri)"]
+        BookService["IslamicBookService (Gzip Loader, Scoper, FTS)"]
+        AudioEngine["AudioManager & QDC Per-Ayah Timestamps"]
+        HadithService["HadithDatabaseService & SharhCache"]
+        TrackerCalc["PrayerTrackerStatsCalculator"]
+    end
+
+    subgraph Native["Native Android & Kotlin (com.adhan.app / com.quran.aya)"]
+        MethodChannels["MethodChannel Bridge (12 Channels)"]
+        AlarmEngine["AlarmManager + AdhanBroadcastReceiver"]
+        SensorEngine["Accelerometer (Flip-to-Silence) + MediaSession"]
+        WidgetProviders["Kotlin AppWidgetProvider Classes (8 Widgets)"]
+    end
+
+    subgraph Storage["100% Offline Local Data Layer"]
+        DB["SQLite aya_app.db (v10, WAL Mode, FTS5)"]
+        GzipBooks["4 Classical Books (1,823 Pages, Gzip JSON)"]
+        BundledTafsir["10 Bundled Tafsir Editions (8 AR + 2 EN)"]
+        BundledAudio["Offline Adhan MP3s & Per-Ayah Timestamps"]
+        Prefs["SharedPreferences (Settings, Bookmarks, Reading Progress)"]
+    end
+
+    subgraph Remote["Optional Remote Fallbacks (Non-Critical)"]
+        CDN["jsDelivr / Islamic Network CDN"]
+        Dorar["Dorar Hadith Grading API"]
+        MP3Quran["mp3quran.net API v3"]
+    end
+
+    UI --> Domain
+    Domain --> Storage
+    Domain --> MethodChannels
+    MethodChannels --> Native
+    Domain -. Optional Fallback .-> Remote
+```
+
+### Directory Structure
+
 ```
 lib/
 ├── main.dart                         # App entry, locale detection, theming (~110 lines)
 ├── version.dart                      # Semantic version (auto-incremented)
+│
+├── data/                             # Curated domain datasets & page mappings
+│   ├── prophets_data.dart            # 25 Prophets metadata + exact AR/EN book page ranges
+│   └── sirah_data.dart               # 22 Sirah chapters + exact AR/EN book page ranges
 │
 ├── screens/
 │   ├── dashboard_screen.dart         # Home: countdown, quick actions, prayer bar
@@ -123,9 +178,9 @@ lib/
 │   │   └── surah_pager_screen.dart   # 114-page PageView + fixed AppBar with reader settings
 │   ├── hadith_screen.dart            # 13-book browser, FTS5 search, lazy loading
 │   ├── hadith_explanation_screen.dart # Sharh/grading (grading: always Dorar; sharh: cache→CDN→Dorar)
-│   ├── prophets_stories_screen.dart  # 25 Prophets profiles + scoped Ibn Kathir links
-│   ├── sirah_screen.dart             # 22 Sirah chapters + scoped Raheeq links
-│   ├── full_book_reader_screen.dart  # Scoped & full classical book e-reader (RTL swiping)
+│   ├── prophets_stories_screen.dart  # 25 Prophets profiles, search, progress tracker, direct reader launcher
+│   ├── sirah_screen.dart             # 22 Sirah chapters, Makkan/Madinan epoch filters, progress tracker
+│   ├── full_book_reader_screen.dart  # Unabridged classical book e-reader (scoped per topic, AR/EN toggle, RTL/LTR)
 │   ├── prayer_times_screen.dart      # Today / Prayer Calendar / Hijri Calendar tabs
 │   ├── prayer_tracker_screen.dart    # Calendar / Yearly / Statistics with donut charts
 │   ├── azkar_screen.dart             # 11-tab azkar: counter, 99 Names, custom "My Azkar"
@@ -155,7 +210,7 @@ lib/
 │   ├── audio_manager.dart            # Singleton: surah playback, ayah sync, adhan playback
 │   ├── api_service.dart              # Prayer times (offline), Quran data, reverse geocode
 │   ├── offline_prayer_service.dart   # adhan library + hijri calendar (zero internet)
-│   ├── database_service.dart         # SQLite v9: Quran, tracker, bookmarks (~500 lines)
+│   ├── database_service.dart         # SQLite v10: Quran, tracker, bookmarks (~500 lines)
 │   ├── hadith_database_service.dart  # Hadith CRUD, FTS5 MATCH, LIKE fallback
 │   ├── storage_service.dart          # SharedPreferences + DB migration + smart calc method
 │   ├── translation_service.dart      # ~430 AR/EN key-value pairs (no i18n packages)
@@ -173,6 +228,7 @@ lib/
 ├── models/
 │   ├── quran_models.dart             # Surah, Ayah, TafsirEdition, ReciterInfo, juz/hizb maps
 │   ├── prayer_models.dart            # PrayerTimeData (AlAdhan + Pray.zone + Local factories)
+│   ├── islamic_library_models.dart   # ProphetStory, SirahChapter, StorySection, ClassicalBook models
 │   └── offline_surahs.dart           # 114 surahs — compile-time fallback
 │
 ├── theme/
@@ -207,8 +263,8 @@ android/app/src/main/kotlin/com/quran/aya/
 └── ExactAlarmPermissionReceiver.kt   # Re-schedules alarms when permission is granted
 
 assets/
-├── books/                            # 2 classical books: Qisas al-Anbiya & Raheeq (gzipped JSON)
-├── tafsir/                            # 10 pre-bundled Tafsir JSON books (8 AR + 2 EN)
+├── books/                            # 4 unabridged classical books: Qisas al-Anbiya & Raheeq (AR & EN, 1,823 p)
+├── tafsir/                           # 10 pre-bundled Tafsir JSON books (8 AR + 2 EN)
 ├── timestamps/                       # 12 reciters × 114 surahs — per-ayah timing (5.7 MB)
 ├── quran/                            # Quran text: Hafs + 10 Qira'at JSON
 ├── hadith/                           # 26 bundled collections (AR + EN)
@@ -284,7 +340,8 @@ Aya is built on the shoulders of giants. All data is either bundled, cached, or 
 
 | Source | Used for | Attribution |
 |--------|----------|-------------|
-| [Al-Maktaba Al-Shamela](https://shamela.ws) | Classical Islamic books | *Qisas al-Anbiya* (Book 932) by Al-Hafiz Ibn Kathir & *Ar-Raheeq Al-Makhtum* (Book 9820) by Safiur Rahman al-Mubarakpuri |
+| [Al-Maktaba Al-Shamela](https://shamela.ws) | Classical Islamic books (Arabic) | *Qisas al-Anbiya* (Book 932) by Al-Hafiz Ibn Kathir & *Ar-Raheeq Al-Makhtum* (Book 9820) by Safiur Rahman al-Mubarakpuri |
+| [Darussalam / Al-Firdous] | Classical Islamic books (English) | *Stories of the Prophets* (Al-Firdous / Darussalam) & *The Sealed Nectar* (Darussalam) |
 | [mp3quran.net API v3](https://mp3quran.net) | Reciter discovery, Qira'at listings, surah audio | Reciter metadata and audio streams |
 | [Quran.com CDN (QDC)](https://quran.com) | Per-ayah audio timestamps | 12 Hafs reciters — bundled as assets (5.7 MB) |
 | [AlQuran.cloud / cdn.islamic.network](https://alquran.cloud) | Hafs reciter audio streaming | CDN fallback for Hafs reciters |
