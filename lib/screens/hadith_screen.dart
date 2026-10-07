@@ -1,11 +1,9 @@
 import 'dart:ui';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../services/storage_service.dart';
@@ -95,16 +93,6 @@ class _HadithScreenState extends State<HadithScreen> {
     _jumpController.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<String> _getLocalPath(String bookId, String lang) async {
-    final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/hadiths/${lang}_$bookId.json';
-  }
-
-  Future<bool> isBookDownloaded(String bookId, String lang) async {
-    final path = await _getLocalPath(bookId, lang);
-    return await File(path).exists();
   }
 
   Future<void> _loadSelectedBookData() async {

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/data/prophets_data.dart';
 import 'package:aya_app/data/sirah_data.dart';
+import 'package:aya_app/data/fiqh_chapters_data.dart';
 import 'package:aya_app/services/translation_service.dart';
 import 'package:aya_app/services/islamic_book_service.dart';
 
@@ -28,14 +29,6 @@ void main() {
         expect(p.periodEn, isNotEmpty);
         expect(p.quranMentions, greaterThan(0));
         expect(p.keySurahs, isNotEmpty);
-        expect(p.sections, isNotEmpty);
-
-        for (final sec in p.sections) {
-          expect(sec.titleAr, isNotEmpty);
-          expect(sec.titleEn, isNotEmpty);
-          expect(sec.contentAr, isNotEmpty);
-          expect(sec.contentEn, isNotEmpty);
-        }
       }
     });
 
@@ -73,7 +66,7 @@ void main() {
       expect(madinanChapters.first.number, equals(12));
     });
 
-    test('every chapter has valid read time, summaries, and sections', () {
+    test('every chapter has valid read time and summaries', () {
       for (final ch in SirahData.chapters) {
         expect(ch.titleAr, isNotEmpty);
         expect(ch.titleEn, isNotEmpty);
@@ -82,14 +75,6 @@ void main() {
         expect(ch.yearAr, isNotEmpty);
         expect(ch.yearEn, isNotEmpty);
         expect(ch.readTimeMinutes, greaterThan(0));
-        expect(ch.sections, isNotEmpty);
-
-        for (final sec in ch.sections) {
-          expect(sec.titleAr, isNotEmpty);
-          expect(sec.titleEn, isNotEmpty);
-          expect(sec.contentAr, isNotEmpty);
-          expect(sec.contentEn, isNotEmpty);
-        }
       }
     });
   });
@@ -257,6 +242,75 @@ void main() {
       expect(book.totalPages, equals(227));
       expect(book.allPages.length, equals(227));
       expect(book.allPages[1].text, contains('Stories of the Prophets'));
+    });
+
+    test('loads and parses full Al-Fiqh Al-Muyassar book (439 pages)', () async {
+      final book = await IslamicBookService.loadBook('fiqh_muyassar');
+      expect(book.titleAr, contains('الفقه الميسر'));
+      expect(book.allPages.length, equals(439));
+      expect(book.chapters.length, equals(15));
+
+      final searchResults = IslamicBookService.searchBook(book, 'الوضوء');
+      expect(searchResults, isNotEmpty);
+      expect(searchResults.first.pageNum, greaterThan(0));
+    });
+
+    test('loads and parses full English Al-Fiqh Al-Muyassar book (439 pages)', () async {
+      final book = await IslamicBookService.loadBook('fiqh_muyassar_en');
+      expect(book.bookId, equals('fiqh_muyassar_en'));
+      expect(book.titleEn, contains('Al-Fiqh Al-Muyassar'));
+      expect(book.totalPages, equals(439));
+      expect(book.allPages.length, equals(439));
+      expect(book.allPages.first.text.toLowerCase(), contains('jurisprudence'));
+    });
+  });
+
+  group('Al-Fiqh Al-Muyassar Chapters Tests', () {
+    test('contains all 15 canonical books and chapters', () {
+      expect(FiqhChaptersData.chapters.length, equals(15));
+    });
+
+    test('chapter IDs and numbers are sequentially 1 to 15', () {
+      for (int i = 0; i < FiqhChaptersData.chapters.length; i++) {
+        expect(FiqhChaptersData.chapters[i].id, equals(i + 1));
+        expect(FiqhChaptersData.chapters[i].number, equals(i + 1));
+      }
+    });
+
+    test('all 15 chapters have valid non-empty titles, summaries, and categories', () {
+      for (final ch in FiqhChaptersData.chapters) {
+        expect(ch.titleAr, isNotEmpty);
+        expect(ch.titleEn, isNotEmpty);
+        expect(ch.summaryAr, isNotEmpty);
+        expect(ch.summaryEn, isNotEmpty);
+        expect(ch.categoryAr, isNotEmpty);
+        expect(ch.categoryEn, isNotEmpty);
+        expect(ch.readTimeMinutes, greaterThan(0));
+      }
+    });
+
+    test('chapters cover full book from page 1 to page 439 continuously without gaps', () {
+      expect(FiqhChaptersData.chapters.first.bookStartPage, equals(1));
+      expect(FiqhChaptersData.chapters.last.bookEndPage, equals(439));
+
+      for (int i = 0; i < FiqhChaptersData.chapters.length; i++) {
+        final ch = FiqhChaptersData.chapters[i];
+        expect(ch.bookStartPage, greaterThan(0));
+        expect(ch.bookEndPage, greaterThanOrEqualTo(ch.bookStartPage));
+
+        if (i > 0) {
+          final prev = FiqhChaptersData.chapters[i - 1];
+          expect(ch.bookStartPage, equals(prev.bookEndPage + 1),
+              reason: '${ch.titleAr} should follow ${prev.titleAr}');
+        }
+      }
+    });
+
+    test('getChapterById retrieves correct chapter', () {
+      final ch = FiqhChaptersData.getChapterById(2);
+      expect(ch, isNotNull);
+      expect(ch!.titleAr, contains('الطهارة'));
+      expect(FiqhChaptersData.getChapterById(999), isNull);
     });
   });
 }

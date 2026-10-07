@@ -9,7 +9,6 @@ import '../../services/translation_service.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../models/prayer_models.dart';
-import '../../models/quran_models.dart';
 import '../quran_download_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,13 +29,11 @@ import '../../widgets/settings_value_chip.dart';
 import '../../widgets/permission_status_badge.dart';
 
 part 'settings_appearance.dart';
-part 'settings_language.dart';
 part 'settings_calculations.dart';
-part 'settings_app_preferences.dart';
 part 'settings_notifications.dart';
 part 'settings_audio.dart';
 part 'settings_permissions.dart';
-part 'settings_focus_lock.dart';
+part 'settings_about.dart';
 part 'settings_backup.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -60,7 +57,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _themePreset = 'dark';
   String _bottomNavbarStyle = 'solid';
   String _quranFont = 'font-amiri';
-  String _tafsirEdition = 'ar.muyassar';
 
   // Add calculation settings
   int _calcMethod = 0;
@@ -74,7 +70,6 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   // Permissions and wake lock
   bool _exactAlarmPermitted = true;
-  bool _batteryOptIgnored = true;
   bool _notificationPermitted = true;
   bool _locationPermitted = true;
   bool _dndPolicyPermitted = true;
@@ -83,23 +78,15 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _morningAzkarReminder = true;
   bool _eveningAzkarReminder = true;
   bool _todaysVerseReminder = true;
-  bool _ramadanImsakEnabled = true;
-  int _ramadanImsakOffset = 0;
-  bool _ramadanIftarEnabled = true;
   bool _islamicEventsEnabled = true;
 
   // New settings options
   bool _use24hFormat = false;
   bool _swipeSurahNavigation = true;
   int _firstDayOfWeek = 1;
-  String _preAdhanAlertMode = 'vibrate'; // vibrate vs voice
-  int _preAdhanDuration = 10; // minutes before adhan
-  String _adhanAlertMode = 'real_reciter'; // silent vs vibrate vs real_reciter
   String _adhanReciter = 'mishary'; // mishary, abdul_basit, makkah, madinah
   String _notificationLang = 'follow_app'; // follow_app, ar, en
   String _athanStopGesture = 'both'; // both, volume_only, flip_only, none
-  bool _autoDndEnabled = false;
-  int _autoDndDuration = 20;
   Timer? _rescheduleTimer;
   @override
   void initState() {
@@ -117,10 +104,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     _quranFont = widget.storage.getString(
       'quran_font',
       defaultValue: 'font-amiri',
-    );
-    _tafsirEdition = widget.storage.getString(
-      'default_tafsir',
-      defaultValue: 'ar.muyassar',
     );
 
     _calcMethod = widget.storage.getInt('calc_method', defaultValue: 0);
@@ -167,18 +150,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       'todays_verse_reminder',
       defaultValue: true,
     );
-    _ramadanImsakEnabled = widget.storage.getBool(
-      'ramadan_imsak_enabled',
-      defaultValue: true,
-    );
-    _ramadanImsakOffset = widget.storage.getInt(
-      'ramadan_imsak_offset',
-      defaultValue: 0,
-    );
-    _ramadanIftarEnabled = widget.storage.getBool(
-      'ramadan_iftar_enabled',
-      defaultValue: true,
-    );
     _islamicEventsEnabled = widget.storage.getBool(
       'islamic_events_enabled',
       defaultValue: true,
@@ -196,18 +167,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       'swipe_surah_navigation',
       defaultValue: true,
     );
-    _preAdhanAlertMode = widget.storage.getString(
-      'pre_adhan_alert_mode',
-      defaultValue: 'vibrate',
-    );
-    _preAdhanDuration = widget.storage.getInt(
-      'pre_adhan_duration',
-      defaultValue: 10,
-    );
-    _adhanAlertMode = widget.storage.getString(
-      'adhan_alert_mode',
-      defaultValue: 'real_reciter',
-    );
     _adhanReciter = widget.storage.getString(
       'adhan_reciter',
       defaultValue: 'mishary',
@@ -219,14 +178,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     _athanStopGesture = widget.storage.getString(
       'athan_stop_gesture',
       defaultValue: 'both',
-    );
-    _autoDndEnabled = widget.storage.getBool(
-      'auto_dnd_enabled',
-      defaultValue: false,
-    );
-    _autoDndDuration = widget.storage.getInt(
-      'auto_dnd_duration',
-      defaultValue: 20,
     );
 
     _checkPermissions();
@@ -254,9 +205,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       final alarm =
           await _platform.invokeMethod<bool>('checkExactAlarmPermission') ??
           true;
-      final battery =
-          await _platform.invokeMethod<bool>('checkBatteryOptimization') ??
-          true;
       final notif = await NotificationService().checkPermissions();
       final locPerm = await Geolocator.checkPermission();
       final loc =
@@ -268,7 +216,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       if (mounted) {
         setState(() {
           _exactAlarmPermitted = alarm;
-          _batteryOptIgnored = battery;
           _notificationPermitted = notif;
           _locationPermitted = loc;
           _dndPolicyPermitted = dnd;
@@ -280,13 +227,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _requestExactAlarm() async {
     try {
       await _platform.invokeMethod('requestExactAlarmPermission');
-      Future.delayed(const Duration(seconds: 2), _checkPermissions);
-    } catch (_) {}
-  }
-
-  Future<void> _requestBatteryOptimization() async {
-    try {
-      await _platform.invokeMethod('requestDisableBatteryOptimization');
       Future.delayed(const Duration(seconds: 2), _checkPermissions);
     } catch (_) {}
   }
@@ -346,195 +286,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     await widget.storage.setBool('swipe_surah_navigation', val);
   }
 
-  Future<void> _changeFirstDayOfWeek(int? val) async {
-    if (val != null) {
-      setState(() => _firstDayOfWeek = val);
-      await widget.storage.setInt('first_day_of_week', val);
-    }
-  }
-
-  Future<void> _changePreAdhanDuration(int? val) async {
-    if (val != null) {
-      final wasOff = _preAdhanDuration == 0;
-      setState(() {
-        _preAdhanDuration = val;
-      });
-      await widget.storage.setInt('pre_adhan_duration', val);
-      if (val > 0 && wasOff) {
-        final granted = await _ensureAdhanPermissions();
-        if (!granted) {
-          setState(() {
-            _preAdhanDuration = 0;
-          });
-          await widget.storage.setInt('pre_adhan_duration', 0);
-          return;
-        }
-      }
-      _debouncedReschedule();
-    }
-  }
-
-  Future<void> _changePreAdhanAlertMode(String? val) async {
-    if (val != null) {
-      // If turning ON from OFF, check exact alarm permission first
-      final wasOff = _preAdhanAlertMode == 'off';
-      setState(() {
-        _preAdhanAlertMode = val;
-      });
-      await widget.storage.setString('pre_adhan_alert_mode', val);
-      if (val != 'off' && wasOff) {
-        final granted = await _ensureAdhanPermissions();
-        if (!granted) {
-          // User refused — revert to OFF
-          setState(() {
-            _preAdhanAlertMode = 'off';
-          });
-          await widget.storage.setString('pre_adhan_alert_mode', 'off');
-          return;
-        }
-      }
-      if (val == 'voice' || val == 'vibrate_and_voice') {
-        await AdhanAudioService.instance.stopPreview();
-        await AdhanAudioService.instance.playPreAdhanPreview(
-          TranslationService.currentLanguage,
-        );
-      }
-      _debouncedReschedule();
-    }
-  }
-
-  Future<void> _changeAdhanAlertMode(String? val) async {
-    if (val != null) {
-      // If turning ON from OFF, check all permissions first
-      final wasOff = _adhanAlertMode == 'off';
-      setState(() {
-        _adhanAlertMode = val;
-      });
-      await widget.storage.setString('adhan_alert_mode', val);
-      if (val != 'off' && wasOff) {
-        final granted = await _ensureAdhanPermissions();
-        if (!granted) {
-          // User refused — revert to OFF
-          setState(() {
-            _adhanAlertMode = 'off';
-          });
-          await widget.storage.setString('adhan_alert_mode', 'off');
-          return;
-        }
-      }
-      _debouncedReschedule();
-    }
-  }
-
-  /// Strict permission gate — loops until all 3 permissions are granted
-  /// or the user explicitly cancels. Mirrors onboarding exactly:
-  /// exact-alarm on API 31+, notification, and location **always** (not just while-in-use).
-  ///
-  /// Returns true if all permissions were granted, false if user cancelled.
-  Future<bool> _ensureAdhanPermissions() async {
-    while (mounted) {
-      final perm = await Geolocator.checkPermission();
-      final hasLocation = perm == LocationPermission.always;
-      final hasNotif = await NotificationService().checkPermissions();
-      final canSchedule = await NotificationService.canScheduleExactAlarms();
-
-      final missing = <String>[];
-      if (!canSchedule)
-        missing.add(
-          TranslationService.isArabic
-              ? 'المنبهات الدقيقة (Alarms & Reminders)'
-              : 'Exact Alarm schedule',
-        );
-      if (!hasNotif)
-        missing.add(
-          TranslationService.isArabic ? 'الإشعارات' : 'Notification access',
-        );
-      if (!hasLocation)
-        missing.add(
-          TranslationService.isArabic
-              ? 'الموقع (السماح دائماً)'
-              : 'Location (Allow all the time)',
-        );
-
-      if (missing.isEmpty) return true;
-
-      if (!mounted) return false;
-
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          title: Text(
-            TranslationService.isArabic
-                ? "صلاحيات مطلوبة"
-                : "Permissions Required",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFE5C158),
-            ),
-          ),
-          content: Text(
-            TranslationService.isArabic
-                ? "لتشغيل الأذان بدقة في الخلفية، يجب منح الصلاحيات التالية:\n• ${missing.join('\n• ')}\n\nسيتم فتح إعدادات الهاتف لكل صلاحية."
-                : "For the adhan to work reliably in the background, the following must be granted:\n• ${missing.join('\n• ')}\n\nSettings will open for each one.",
-            style: const TextStyle(height: 1.6, fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(TranslationService.t('cancel')),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE5C158),
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
-                TranslationService.isArabic
-                    ? "منح الصلاحيات"
-                    : "Grant Permissions",
-                style: const TextStyle(color: Colors.black),
-              ),
-            ),
-          ],
-        ),
-      );
-
-      if (ok != true) return false; // user cancelled
-
-      // Request each missing permission — these open system settings
-      if (!hasNotif) {
-        await NotificationService().requestPermissions();
-      }
-      if (!canSchedule) {
-        await _platform.invokeMethod('requestExactAlarmPermission');
-        // Give the user time to toggle the switch
-        await Future<void>.delayed(const Duration(seconds: 2));
-      }
-      if (!hasLocation) {
-        await Geolocator.openAppSettings();
-        await Future<void>.delayed(const Duration(seconds: 2));
-      }
-      // Loop back and re-check
-    }
-    return false;
-  }
-
-  Future<void> _changeAdhanReciter(String? val) async {
-    if (val != null) {
-      setState(() {
-        _adhanReciter = val;
-      });
-      await widget.storage.setString('adhan_reciter', val);
-
-      _debouncedReschedule();
-
-      // Auto-play the newly selected reciter
-      await AdhanAudioService.instance.stopPreview();
-      await AdhanAudioService.instance.playPreview(val);
-    }
-  }
-
   Future<void> _changeAthanStopGesture(String? val) async {
     if (val != null) {
       setState(() {
@@ -542,20 +293,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       await widget.storage.setString('athan_stop_gesture', val);
     }
-  }
-
-  Future<void> _toggleDailyReminder(
-    String key,
-    bool val,
-    Function(bool) updateState,
-  ) async {
-    await widget.storage.setBool(key, val);
-    setState(() {
-      updateState(val);
-    });
-    try {
-      await NotificationService().scheduleDailyReminders(widget.storage);
-    } catch (_) {}
   }
 
   void _showDonateDialog() {
@@ -664,16 +401,6 @@ class _SettingsScreenState extends State<SettingsScreen>
         _quranFont = val;
       });
       await widget.storage.setString('quran_font', val);
-      widget.onThemeChanged();
-    }
-  }
-
-  Future<void> _changeTafsirEdition(String? val) async {
-    if (val != null) {
-      setState(() {
-        _tafsirEdition = val;
-      });
-      await widget.storage.setString('default_tafsir', val);
       widget.onThemeChanged();
     }
   }
@@ -806,140 +533,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     await widget.storage.setBool('setting_immersive_reader', val);
   }
 
-  Future<void> _resetApp() async {
-    unawaited(
-      showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          title: Text(
-            "${TranslationService.t('reset_settings')}?",
-            style: const TextStyle(
-              color: Color(0xFFE5C158),
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.start,
-          ),
-          content: Text(
-            TranslationService.t('reset_settings_sub'),
-            textAlign: TextAlign.start,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                TranslationService.t('cancel'),
-                style: TextStyle(
-                  color:
-                      (Theme.of(context).textTheme.bodyMedium?.color ??
-                              Colors.white)
-                          .withValues(alpha: 0.7),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () async {
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                final navigator = Navigator.of(dialogContext);
-
-                await widget.storage.setString('theme_preset', 'dark');
-                await widget.storage.setBool('widget_is_dark', true);
-                await widget.storage.setString(
-                  'quran_font',
-                  'font-scheherazade',
-                );
-                await widget.storage.setString('default_reciter', 'ar.alafasy');
-                await widget.storage.setString('default_tafsir', 'ar.muyassar');
-                await widget.storage.setString(
-                  'default_translation',
-                  'en.sahih',
-                );
-                await widget.storage.setString('lang_code', 'ar');
-                await widget.storage.setString('quran_bookmarks', '[]');
-                await widget.storage.setString('custom_dhikrs', '[]');
-                await widget.storage.setInt('calc_method', 2);
-                await widget.storage.setInt('asr_method', 0);
-                await widget.storage.setBool('setting_continuous_play', true);
-                await widget.storage.setBool(
-                  'setting_hide_continuous_borders',
-                  false,
-                );
-                await widget.storage.setBool('setting_auto_bookmark', true);
-                await widget.storage.setBool('setting_immersive_reader', false);
-                await widget.storage.setBool(
-                  'first_time_v2',
-                  true,
-                ); // Reset onboarding too
-
-                await widget.storage.setBool('alert_fajr', true);
-                await widget.storage.setBool('alert_dhuhr', true);
-                await widget.storage.setBool('alert_asr', true);
-                await widget.storage.setBool('alert_maghrib', true);
-                await widget.storage.setBool('alert_isha', true);
-
-                await widget.storage.setBool('keep_screen_awake', false);
-                await widget.storage.setInt('focus_lock_duration', 0);
-                await widget.storage.setBool('focus_auto_start', false);
-                await widget.storage.setString('focus_lock_type', 'app_only');
-
-                await widget.storage.setBool('use_24h_format', false);
-                await widget.storage.setBool('swipe_surah_navigation', true);
-                await widget.storage.setString(
-                  'pre_adhan_alert_mode',
-                  'vibrate',
-                );
-                await widget.storage.setInt('pre_adhan_duration', 10);
-                await widget.storage.setString(
-                  'adhan_alert_mode',
-                  'real_reciter',
-                );
-                await widget.storage.setString('adhan_reciter', 'mishary');
-
-                TranslationService.setLanguage('ar');
-
-                setState(() {
-                  _themePreset = 'dark';
-                  _quranFont = 'font-amiri';
-                  _tafsirEdition = 'ar.muyassar';
-                  _calcMethod = 2;
-                  _asrMethod = 0;
-                  _continuousPlay = true;
-                  _hideContinuousBorders = false;
-                  _autoBookmark = true;
-                  _immersiveReader = false;
-                  _keepScreenAwake = false;
-                  _use24hFormat = false;
-                  _swipeSurahNavigation = true;
-                  _preAdhanAlertMode = 'vibrate';
-                  _preAdhanDuration = 10;
-                  _adhanAlertMode = 'real_reciter';
-                  _adhanReciter = 'mishary';
-                  _athanStopGesture = 'both';
-                });
-                navigator.pop();
-                widget.onThemeChanged();
-                try {
-                  await _platform.invokeMethod('updateWidget');
-                } catch (_) {}
-                scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      TranslationService.isArabic
-                          ? 'تم إعادة تعيين التطبيق.'
-                          : 'Application reset.',
-                    ),
-                  ),
-                );
-              },
-              child: Text(TranslationService.t('reset_settings')),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -964,7 +557,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           ..._buildAudioSection(theme),
           ..._buildPermissionsSection(theme),
           ..._buildBackupSection(theme),
-          ..._buildFocusLockSection(theme),
+          ..._buildAboutSection(theme),
           const SizedBox(height: 40),
 
           // App info credits
@@ -1007,26 +600,6 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(
-        start: 4.0,
-        bottom: 8.0,
-        end: 4.0,
-      ),
-      child: Text(
-        title.toUpperCase(),
-        style: const TextStyle(
-          color: Color(0xFF0F766E),
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.0,
-        ),
-        textAlign: TextAlign.start,
       ),
     );
   }

@@ -142,18 +142,15 @@ lib/
 │   ├── qiraat_screen.dart            # Live mp3quran.net Qira'at + reciter browser
 │   ├── about_screen.dart             # Features, developer, basmalah
 │   ├── splash_screen.dart            # Animated Islamic logo + auto language detect
-│   ├── permission_guard_screen.dart  # Runtime permission gate (mirrors onboarding)
 │   ├── welcome_screen.dart           # 3-page onboarding: intro, features, permissions
-│   └── settings/                     # 9 part files (glassmorphism cards)
-│       ├── settings_screen.dart      # Master state, donation, reset, version display
+│   └── settings/                     # 7 part files (glassmorphism cards)
+│       ├── settings_screen.dart      # Master state, donation, version display
 │       ├── settings_appearance.dart  # Theme preset, nav style, Quran font
-│       ├── settings_language.dart    # AR/EN toggle
 │       ├── settings_calculations.dart # Prayer method, Asr school
-│       ├── settings_app_preferences.dart # 24h format, immersive reader, swipe nav, focus lock
 │       ├── settings_notifications.dart   # Adhan/pre-adhan, Ramadan, Islamic events
 │       ├── settings_audio.dart       # Continuous play, auto-bookmark, refresh reciters
 │       ├── settings_permissions.dart # Exact alarm, keep screen awake
-│       ├── settings_focus_lock.dart  # About, Donate, Reset (bottom of settings)
+│       ├── settings_about.dart       # About Aya, developer credits, support & donations
 │       └── settings_backup.dart      # Export/import via share sheet or file picker
 │
 ├── services/
@@ -179,13 +176,12 @@ lib/
 ├── models/
 │   ├── quran_models.dart             # Surah, Ayah, TafsirEdition, ReciterInfo, juz/hizb maps
 │   ├── prayer_models.dart            # PrayerTimeData (AlAdhan + Pray.zone + Local factories)
-│   ├── islamic_library_models.dart   # ProphetStory, SirahChapter, StorySection, ClassicalBook models
+│   ├── islamic_library_models.dart   # ProphetStory, SirahChapter, ClassicalBook models
 │   └── offline_surahs.dart           # 114 surahs — compile-time fallback
 │
 ├── theme/
 │   ├── app_colors.dart               # Gold (#E5C158), teal (#0F766E), green (#10B981)
-│   ├── app_themes.dart               # 6 presets: dark, light, sepia, black, dark_monet, white_monet
-│   └── ui_helpers.dart               # Responsive scaling, haptic feedback presets
+│   └── app_themes.dart               # 6 presets: dark, light, sepia, black, dark_monet, white_monet
 │
 ├── utils/
 │   └── text_helpers.dart             # stripTashkeel (full alef/hamza/teh/kashida normalization),
@@ -193,11 +189,9 @@ lib/
 │
 ├── widgets/
 │   ├── audio_player_overlay.dart     # Floating mini-player with seek bar
-│   ├── changelog_dialog.dart         # Version-aware changelog from bundled JSON
 │   ├── grid_service_card.dart        # Home screen quick-access grid tile
 │   ├── islamic_logo_painter.dart     # CustomPaint 8-point star + crescent
 │   ├── prayer_bar_card.dart          # Horizontal prayer time pill
-│   ├── prayers_countdown_card.dart   # Self-contained countdown + prayer times widget
 │   ├── quick_access_pill.dart        # Continue Reading / Azkar shortcut row
 │   └── welcome_header.dart           # Dashboard greeting banner with random verse
 │

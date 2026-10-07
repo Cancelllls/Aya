@@ -4,14 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
 import android.app.AlarmManager
 import android.view.WindowManager
 import android.provider.Settings
-import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.os.Vibrator
-import android.os.VibrationEffect
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -190,81 +186,12 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                 }
-                "checkBatteryOptimization" -> {
-                    val ignored = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-                        powerManager.isIgnoringBatteryOptimizations(packageName)
-                    } else {
-                        true
-                    }
-                    result.success(ignored)
-                }
-                "requestDisableBatteryOptimization" -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        try {
-                            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                data = Uri.parse("package:$packageName")
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                            startActivity(intent)
-                            result.success(true)
-                        } catch (e: Exception) {
-                            try {
-                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                startActivity(intent)
-                                result.success(true)
-                            } catch (ex: Exception) {
-                                result.error("ERROR", ex.message, null)
-                            }
-                        }
-                    } else {
-                        result.success(true)
-                    }
-                }
                 "setKeepScreenOn" -> {
                     val enabled = call.argument<Boolean>("enabled") ?: false
                     if (enabled) {
                         activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     } else {
                         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                    }
-                    result.success(true)
-                }
-                "startLockTask" -> {
-                    try {
-                        startLockTask()
-                        result.success(true)
-                    } catch (e: Exception) {
-                        result.error("ERROR", e.message, null)
-                    }
-                }
-                "stopLockTask" -> {
-                    try {
-                        stopLockTask()
-                        result.success(true)
-                    } catch (e: Exception) {
-                        result.error("ERROR", e.message, null)
-                    }
-                }
-                "vibrate" -> {
-                    val patternList = call.argument<List<Int>>("pattern")
-                    val pattern = patternList?.map { it.toLong() }?.toLongArray() ?: longArrayOf(0, 500, 300, 500)
-                    val amplitudesList = call.argument<List<Int>>("amplitudes")
-                    val amplitudes = amplitudesList?.map { it }?.toIntArray()
-                    val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    if (vibrator.hasVibrator()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if (amplitudes != null && amplitudes.size == pattern.size) {
-                                vibrator.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
-                            } else {
-                                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-                            }
-                        } else {
-                            @Suppress("DEPRECATION")
-                            vibrator.vibrate(pattern, -1)
-                        }
                     }
                     result.success(true)
                 }
@@ -309,17 +236,6 @@ class MainActivity : FlutterActivity() {
                             }
                             startActivity(intent)
                         } catch (_: Exception) {}
-                    }
-                    result.success(true)
-                }
-                "setDoNotDisturbMode" -> {
-                    val enable = call.argument<Boolean>("enabled") ?: false
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-                        if (nm.isNotificationPolicyAccessGranted) {
-                            val filter = if (enable) android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY else android.app.NotificationManager.INTERRUPTION_FILTER_ALL
-                            nm.setInterruptionFilter(filter)
-                        }
                     }
                     result.success(true)
                 }
