@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/translation_service.dart';
 
 enum SahwCause { addition, omission, doubt }
 enum DoubtCertainty { hasPrevailingBelief, completelyUncertain }
 
 class SujoodSahwWizardScreen extends StatefulWidget {
-  const SujoodSahwWizardScreen({super.key});
+  final bool? isEnglish;
+  const SujoodSahwWizardScreen({super.key, this.isEnglish});
 
   @override
   State<SujoodSahwWizardScreen> createState() => _SujoodSahwWizardScreenState();
@@ -14,6 +16,20 @@ class SujoodSahwWizardScreen extends StatefulWidget {
 class _SujoodSahwWizardScreenState extends State<SujoodSahwWizardScreen> {
   SahwCause? _cause;
   DoubtCertainty? _doubtType;
+  late bool _isEnglish;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEnglish = widget.isEnglish ?? !TranslationService.isArabic;
+  }
+
+  void _toggleLanguage() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isEnglish = !_isEnglish;
+    });
+  }
 
   void _reset() {
     setState(() {
@@ -25,25 +41,49 @@ class _SujoodSahwWizardScreenState extends State<SujoodSahwWizardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isArabic = TranslationService.isArabic;
+    final isArabic = !_isEnglish;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          isArabic ? 'مساعد سجود السهو الذكي' : 'Sujood as-Sahw Wizard',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        actions: [
-          if (_cause != null)
+    return Directionality(
+      textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text(
+            isArabic ? 'مساعد سجود السهو الذكي' : 'Sujood as-Sahw Wizard',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          actions: [
             IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: isArabic ? 'إعادة البدء' : 'Restart',
-              onPressed: _reset,
+              icon: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  _isEnglish ? 'EN' : 'عربي',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE5C158),
+                  ),
+                ),
+              ),
+              tooltip: _isEnglish ? 'Switch to Arabic (عربي)' : 'Switch to English (EN)',
+              onPressed: _toggleLanguage,
             ),
-        ],
-      ),
+            if (_cause != null)
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: isArabic ? 'إعادة البدء' : 'Restart',
+                onPressed: _reset,
+              ),
+          ],
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -219,8 +259,9 @@ class _SujoodSahwWizardScreenState extends State<SujoodSahwWizardScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   bool get _shouldShowRuling {
     if (_cause == SahwCause.omission || _cause == SahwCause.addition) {

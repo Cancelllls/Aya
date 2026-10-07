@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../services/translation_service.dart';
 
 class ZakatCalculatorScreen extends StatefulWidget {
-  const ZakatCalculatorScreen({super.key});
+  final bool? isEnglish;
+  const ZakatCalculatorScreen({super.key, this.isEnglish});
 
   @override
   State<ZakatCalculatorScreen> createState() => _ZakatCalculatorScreenState();
@@ -19,6 +21,20 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
   final _debtsController = TextEditingController();
 
   int _selectedGoldKarat = 24; // 24, 21, 18
+  late bool _isEnglish;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEnglish = widget.isEnglish ?? !TranslationService.isArabic;
+  }
+
+  void _toggleLanguage() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isEnglish = !_isEnglish;
+    });
+  }
 
   @override
   void dispose() {
@@ -106,30 +122,56 @@ Zakah Due (2.5%): ${_zakatAmount.toStringAsFixed(2)}
 "And establish prayer and give Zakah" (Quran 2:43)
 Calculated via Aya App
 ''';
-    Share.share(summary);
+    SharePlus.instance.share(
+      ShareParams(text: summary),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isArabic = TranslationService.isArabic;
+    final isArabic = !_isEnglish;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          isArabic ? 'حاسبة الزكاة الذكية' : 'Smart Zakah Calculator',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            tooltip: isArabic ? 'مشاركة الحساب' : 'Share calculation',
-            onPressed: () => _shareSummary(isArabic),
+    return Directionality(
+      textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text(
+            isArabic ? 'حاسبة الزكاة الذكية' : 'Smart Zakah Calculator',
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-        ],
-      ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  _isEnglish ? 'EN' : 'عربي',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE5C158),
+                  ),
+                ),
+              ),
+              tooltip: _isEnglish ? 'Switch to Arabic (عربي)' : 'Switch to English (EN)',
+              onPressed: _toggleLanguage,
+            ),
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: isArabic ? 'مشاركة الحساب' : 'Share calculation',
+              onPressed: () => _shareSummary(isArabic),
+            ),
+          ],
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -318,8 +360,9 @@ Calculated via Aya App
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildResultCard(ThemeData theme, bool isArabic) {
     return Container(

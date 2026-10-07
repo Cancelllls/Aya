@@ -703,7 +703,9 @@ class _FiqhScreenState extends State<FiqhScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const SujoodSahwWizardScreen(),
+                              builder: (_) => SujoodSahwWizardScreen(
+                                isEnglish: _isEnglish,
+                              ),
                             ),
                           );
                         },
@@ -721,7 +723,9 @@ class _FiqhScreenState extends State<FiqhScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const ZakatCalculatorScreen(),
+                              builder: (_) => ZakatCalculatorScreen(
+                                isEnglish: _isEnglish,
+                              ),
                             ),
                           );
                         },
@@ -1113,6 +1117,7 @@ class _FiqhScreenState extends State<FiqhScreen> {
               builder: (_) => FiqhTopicDetailScreen(
                 topic: topic,
                 storage: _storage,
+                isEnglish: _isEnglish,
               ),
             ),
           );

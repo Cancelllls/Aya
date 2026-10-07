@@ -1,5 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/data/fiqh_data.dart';
+import 'package:aya_app/screens/fiqh/fiqh_topic_detail_screen.dart';
+import 'package:aya_app/screens/fiqh/sujood_sahw_wizard_screen.dart';
+import 'package:aya_app/screens/fiqh/zakat_calculator_screen.dart';
 import 'package:aya_app/services/translation_service.dart';
 
 void main() {
@@ -136,6 +140,88 @@ void main() {
 
       TranslationService.setLanguage('ar');
       expect(TranslationService.t('islamic_fiqh'), equals('الفقه الإسلامي'));
+    });
+  });
+
+  group('Fiqh Tools Bilingual Language Selection Widget Tests', () {
+    testWidgets('SujoodSahwWizardScreen renders English when isEnglish is true', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SujoodSahwWizardScreen(isEnglish: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sujood as-Sahw Wizard'), findsOneWidget);
+      expect(find.text('EN'), findsOneWidget);
+    });
+
+    testWidgets('SujoodSahwWizardScreen renders Arabic when isEnglish is false', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SujoodSahwWizardScreen(isEnglish: false),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('مساعد سجود السهو الذكي'), findsOneWidget);
+      expect(find.text('عربي'), findsOneWidget);
+    });
+
+    testWidgets('ZakatCalculatorScreen renders English when isEnglish is true', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: ZakatCalculatorScreen(isEnglish: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Smart Zakah Calculator'), findsOneWidget);
+      expect(find.text('EN'), findsOneWidget);
+    });
+
+    testWidgets('ZakatCalculatorScreen renders Arabic when isEnglish is false', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: ZakatCalculatorScreen(isEnglish: false),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('حاسبة الزكاة الذكية'), findsOneWidget);
+      expect(find.text('عربي'), findsOneWidget);
+    });
+
+    testWidgets('FiqhTopicDetailScreen renders English when isEnglish is true', (tester) async {
+      final sampleTopic = FiqhData.topics.first;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FiqhTopicDetailScreen(
+            topic: sampleTopic,
+            isEnglish: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(sampleTopic.titleEn), findsOneWidget);
+      expect(find.text('EN'), findsOneWidget);
+    });
+
+    testWidgets('FiqhTopicDetailScreen renders Arabic when isEnglish is false', (tester) async {
+      final sampleTopic = FiqhData.topics.first;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FiqhTopicDetailScreen(
+            topic: sampleTopic,
+            isEnglish: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(sampleTopic.titleAr), findsOneWidget);
+      expect(find.text('عربي'), findsOneWidget);
     });
   });
 }
