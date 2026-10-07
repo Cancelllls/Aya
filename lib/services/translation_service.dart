@@ -257,6 +257,7 @@ class TranslationService {
       'daily_prayers_for': 'Prayer Times for',
       'view_table': 'Full Month Table',
       'view_calendar': 'Calendar Grid',
+      'islamic_fiqh': 'Islamic Fiqh',
     },
     'ar': {
       'app_title': 'آية',
@@ -499,6 +500,7 @@ class TranslationService {
       'daily_prayers_for': 'مواقيت الصلاة ليوم',
       'view_table': 'جدول الشهر بالكامل',
       'view_calendar': 'تقويم الأيام',
+      'islamic_fiqh': 'الفقه الإسلامي',
     },
   };
 

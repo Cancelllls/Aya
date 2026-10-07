@@ -18,6 +18,7 @@ import '../services/offline_prayer_service.dart';
 import 'prayer_tracker_screen.dart';
 import 'prophets_stories_screen.dart';
 import 'sirah_screen.dart';
+import 'fiqh/fiqh_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final StorageService storage;
@@ -950,6 +951,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     GridServiceCard(
                       theme: theme,
+                      icon: Icons.track_changes,
+                      title: TranslationService.isArabic
+                          ? 'متتبع الصلاة'
+                          : 'Prayer Tracker',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrayerTrackerScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    GridServiceCard(
+                      theme: theme,
+                      icon: Icons.calendar_month,
+                      title: TranslationService.t('hijri_calendar'),
+                      onTap: () => widget.onTabChange(2, subTab: 2),
+                    ),
+                    GridServiceCard(
+                      theme: theme,
                       icon: Icons.auto_stories,
                       title: TranslationService.t('stories_of_prophets'),
                       onTap: () {
@@ -978,32 +1000,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     GridServiceCard(
                       theme: theme,
-                      icon: Icons.track_changes,
-                      title: TranslationService.isArabic
-                          ? 'متتبع الصلاة'
-                          : 'Prayer Tracker',
+                      icon: Icons.menu_book_rounded,
+                      title: TranslationService.t('islamic_fiqh'),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PrayerTrackerScreen(),
+                            builder: (context) => const FiqhScreen(),
                           ),
                         );
                       },
-                    ),
-                    GridServiceCard(
-                      theme: theme,
-                      icon: Icons.calendar_month,
-                      title: TranslationService.t('hijri_calendar'),
-                      onTap: () => widget.onTabChange(2, subTab: 2),
-                    ),
-                    GridServiceCard(
-                      theme: theme,
-                      icon: Icons.date_range,
-                      title: TranslationService.isArabic
-                          ? 'جدول الصلوات'
-                          : 'Prayer Calendar',
-                      onTap: () => widget.onTabChange(2, subTab: 1),
                     ),
                   ],
                 ),
