@@ -211,11 +211,6 @@ class _FiqhScreenState extends State<FiqhScreen> {
                 tooltip: _isEnglish ? 'Switch to Arabic (عربي)' : 'Switch to English (EN)',
                 onPressed: _toggleLanguage,
               ),
-              IconButton(
-                icon: const Icon(Icons.auto_stories),
-                tooltip: isArabic ? 'قراءة كتاب الفقه الميسر' : 'Read Full Book',
-                onPressed: _openFullBookReader,
-              ),
             ],
           bottom: TabBar(
             indicatorColor: const Color(0xFFE5C158),

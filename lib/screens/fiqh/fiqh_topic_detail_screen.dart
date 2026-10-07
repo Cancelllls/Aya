@@ -4,7 +4,6 @@ import 'package:share_plus/share_plus.dart';
 import '../../models/fiqh_model.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
-import '../full_book_reader_screen.dart';
 
 class FiqhTopicDetailScreen extends StatefulWidget {
   final FiqhTopic topic;
@@ -213,89 +212,7 @@ $sectionsText
                 ...widget.topic.faqs.map((faq) => _buildFaqTile(faq, theme, isArabic)),
               ],
 
-              const SizedBox(height: 20),
-              _buildBookReferenceCard(context, theme, isArabic),
               const SizedBox(height: 36),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBookReferenceCard(BuildContext context, ThemeData theme, bool isArabic) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5C158).withValues(alpha: 0.4),
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () async {
-          final s = widget.storage ?? await StorageService.getInstance();
-          await s.setBool('book_reader_is_english', _isEnglish);
-          if (!context.mounted) return;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => FullBookReaderScreen(
-                bookKey: 'fiqh_muyassar',
-                defaultTitleAr: 'كتاب الفقه الميسر في ضوء الكتاب والسنة',
-                defaultTitleEn: 'Al-Fiqh Al-Muyassar (Simplified Fiqh)',
-                storage: s,
-              ),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5C158).withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.menu_book_rounded,
-                  color: Color(0xFFE5C158),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'الاستزادة من كتاب الفقه الميسر' : 'Read in Al-Fiqh Al-Muyassar',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isArabic
-                          ? 'تصفح نصوص الكتاب الكاملة (439 صفحة) مع البحث والفهرس'
-                          : 'Browse full canonical text (439 pages) with search and index',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                isArabic ? Icons.chevron_left : Icons.chevron_right,
-                color: const Color(0xFFE5C158),
-              ),
             ],
           ),
         ),
