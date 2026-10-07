@@ -520,22 +520,20 @@ class _FiqhScreenState extends State<FiqhScreen> {
 
               // Title
               Text(
-                chapter.titleAr,
+                isArabic ? chapter.titleAr : chapter.titleEn,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (!isArabic) ...[
-                const SizedBox(height: 2),
-                Text(
-                  chapter.titleEn,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
-                  ),
+              const SizedBox(height: 2),
+              Text(
+                isArabic ? chapter.titleEn : chapter.titleAr,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
                 ),
-              ],
+              ),
               const SizedBox(height: 6),
 
               // Summary
