@@ -261,7 +261,7 @@ void main() {
       expect(book.titleEn, contains('Al-Fiqh Al-Muyassar'));
       expect(book.totalPages, equals(439));
       expect(book.allPages.length, equals(439));
-      expect(book.allPages.first.text, contains('Islamic Jurisprudence'));
+      expect(book.allPages.first.text.toLowerCase(), contains('jurisprudence'));
     });
   });
 

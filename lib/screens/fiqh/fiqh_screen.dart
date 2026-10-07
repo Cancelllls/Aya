@@ -31,16 +31,43 @@ class _FiqhScreenState extends State<FiqhScreen> {
   final _chapterSearchController = TextEditingController();
 
   StorageService? _storage;
+  bool _isEnglish = false;
 
   @override
   void initState() {
     super.initState();
     _storage = widget.storage;
+    _isEnglish = widget.storage?.getBool(
+          'fiqh_screen_is_english',
+          defaultValue: !TranslationService.isArabic,
+        ) ??
+        !TranslationService.isArabic;
+    if (_isEnglish) {
+      _selectedChapterCategory = 'All';
+    }
     if (_storage == null) {
       StorageService.getInstance().then((s) {
-        if (mounted) setState(() => _storage = s);
+        if (mounted) {
+          setState(() {
+            _storage = s;
+            _isEnglish = s.getBool(
+              'fiqh_screen_is_english',
+              defaultValue: !TranslationService.isArabic,
+            );
+            _selectedChapterCategory = _isEnglish ? 'All' : 'الكل';
+          });
+        }
       });
     }
+  }
+
+  void _toggleLanguage() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isEnglish = !_isEnglish;
+      _selectedChapterCategory = _isEnglish ? 'All' : 'الكل';
+    });
+    _storage?.setBool('fiqh_screen_is_english', _isEnglish);
   }
 
   @override
@@ -67,6 +94,7 @@ class _FiqhScreenState extends State<FiqhScreen> {
 
   Future<void> _openFullBookReader() async {
     final storage = _storage ?? await StorageService.getInstance();
+    await storage.setBool('book_reader_is_english', _isEnglish);
     if (!mounted) return;
     await Navigator.push(
       context,
@@ -84,6 +112,7 @@ class _FiqhScreenState extends State<FiqhScreen> {
 
   Future<void> _openChapterReader(FiqhChapter chapter) async {
     final storage = _storage ?? await StorageService.getInstance();
+    await storage.setBool('book_reader_is_english', _isEnglish);
     if (!mounted) return;
     await Navigator.push(
       context,
@@ -106,7 +135,7 @@ class _FiqhScreenState extends State<FiqhScreen> {
   }
 
   List<FiqhChapter> get _filteredChapters {
-    final isArabic = TranslationService.isArabic;
+    final isArabic = !_isEnglish;
     var list = FiqhChaptersData.chapters;
 
     if (_selectedChapterCategory != 'الكل' && _selectedChapterCategory != 'All') {
@@ -131,7 +160,7 @@ class _FiqhScreenState extends State<FiqhScreen> {
   }
 
   List<FiqhTopic> get _filteredTopics {
-    final isArabic = TranslationService.isArabic;
+    final isArabic = !_isEnglish;
     List<FiqhTopic> list = _searchQuery.isEmpty
         ? FiqhData.topics
         : FiqhData.searchTopics(_searchQuery, isArabic);
@@ -145,25 +174,49 @@ class _FiqhScreenState extends State<FiqhScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isArabic = TranslationService.isArabic;
+    final isArabic = !_isEnglish;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: Text(
-            isArabic ? 'الفقه الإسلامي' : 'Islamic Fiqh',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.auto_stories),
-              tooltip: isArabic ? 'قراءة كتاب الفقه الميسر' : 'Read Full Book',
-              onPressed: _openFullBookReader,
+    return Directionality(
+      textDirection: _isEnglish ? TextDirection.ltr : TextDirection.rtl,
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(
+              isArabic ? 'الفقه الإسلامي' : 'Islamic Fiqh',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-          ],
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFE5C158).withValues(alpha: 0.6),
+                    ),
+                  ),
+                  child: Text(
+                    _isEnglish ? 'EN' : 'عربي',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE5C158),
+                    ),
+                  ),
+                ),
+                tooltip: _isEnglish ? 'Switch to Arabic (عربي)' : 'Switch to English (EN)',
+                onPressed: _toggleLanguage,
+              ),
+              IconButton(
+                icon: const Icon(Icons.auto_stories),
+                tooltip: isArabic ? 'قراءة كتاب الفقه الميسر' : 'Read Full Book',
+                onPressed: _openFullBookReader,
+              ),
+            ],
           bottom: TabBar(
             indicatorColor: const Color(0xFFE5C158),
             labelColor: const Color(0xFFE5C158),
@@ -189,8 +242,9 @@ class _FiqhScreenState extends State<FiqhScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ---------------------------------------------------------------------------
   // TAB 1: BOOK CHAPTERS (فصول وأبواب كتاب الفقه الميسر)
