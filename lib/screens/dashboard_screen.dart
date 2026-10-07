@@ -1006,7 +1006,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const FiqhScreen(),
+                            builder: (context) =>
+                                FiqhScreen(storage: widget.storage),
                           ),
                         );
                       },

@@ -419,6 +419,17 @@ class _FullBookReaderScreenState extends State<FullBookReaderScreen> {
             tooltip: TranslationService.isArabic ? 'بحث في الكتاب' : 'Search in Book',
             onPressed: _openSearchDialog,
           ),
+          if (widget.startPage != null && widget.endPage != null)
+            IconButton(
+              icon: Icon(
+                _isScopedMode ? Icons.filter_alt_outlined : Icons.menu_book,
+                color: _isScopedMode ? AppColors.gold : null,
+              ),
+              tooltip: _isScopedMode
+                  ? (_isEnglish ? 'View Full Book' : 'عرض الكتاب كاملاً')
+                  : (_isEnglish ? 'View Chapter Only' : 'عرض الباب المخصص'),
+              onPressed: _toggleFullBookMode,
+            ),
           IconButton(
             icon: const Icon(Icons.list_alt),
             tooltip: TranslationService.isArabic ? 'الفهرس' : 'Table of Contents',

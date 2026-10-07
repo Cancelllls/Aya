@@ -69,3 +69,35 @@ class SirahChapter {
     this.bookEndPageEn,
   });
 }
+
+class FiqhChapter {
+  final int id;
+  final int number;
+  final String titleAr;
+  final String titleEn;
+  final String categoryAr;
+  final String categoryEn;
+  final String summaryAr;
+  final String summaryEn;
+  final int readTimeMinutes;
+  final int bookStartPage;
+  final int bookEndPage;
+  final int? bookStartPageEn;
+  final int? bookEndPageEn;
+
+  const FiqhChapter({
+    required this.id,
+    required this.number,
+    required this.titleAr,
+    required this.titleEn,
+    required this.categoryAr,
+    required this.categoryEn,
+    required this.summaryAr,
+    required this.summaryEn,
+    required this.readTimeMinutes,
+    required this.bookStartPage,
+    required this.bookEndPage,
+    this.bookStartPageEn,
+    this.bookEndPageEn,
+  });
+}

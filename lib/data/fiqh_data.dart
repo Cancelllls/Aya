@@ -833,6 +833,13 @@ class FiqhData {
     ),
   ];
 
+  static FiqhCategory getCategory(String categoryId) {
+    return categories.firstWhere(
+      (c) => c.id == categoryId,
+      orElse: () => categories.first,
+    );
+  }
+
   static List<FiqhTopic> getTopicsByCategory(String categoryId) {
     return topics.where((t) => t.categoryId == categoryId).toList();
   }

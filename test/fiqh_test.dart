@@ -119,7 +119,7 @@ void main() {
       const double netWealth = cash - debts; // 280,000
       expect(netWealth, greaterThanOrEqualTo(goldNisab));
 
-      final double zakatDue = netWealth * 0.025;
+      const double zakatDue = netWealth * 0.025;
       expect(zakatDue, equals(7000.0));
 
       // 5. Net wealth below Nisab -> 0 Zakat
