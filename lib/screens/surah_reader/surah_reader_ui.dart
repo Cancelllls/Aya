@@ -598,8 +598,8 @@ extension SurahReaderUi on _SurahReaderScreenState {
     AudioPlayState playState,
   ) {
     return Container(
-      height: 40.0,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      height: 44.0,
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
       decoration: BoxDecoration(
         color: theme.appBarTheme.backgroundColor,
         border: Border(
@@ -612,16 +612,63 @@ extension SurahReaderUi on _SurahReaderScreenState {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(
-              playState.isPlaying ? Icons.pause : Icons.play_arrow,
-              color: const Color(0xFFE5C158),
-              size: 24,
+            icon: const Icon(
+              Icons.skip_previous_rounded,
+              color: Color(0xFFE5C158),
+              size: 22,
             ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
+            tooltip: TranslationService.isArabic ? "الآية السابقة" : "Previous Verse",
+            onPressed: () => AudioManager.instance.previousAyah(),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(
+              playState.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              color: const Color(0xFFE5C158),
+              size: 26,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            tooltip: playState.isPlaying
+                ? (TranslationService.isArabic ? "إيقاف مؤقت" : "Pause")
+                : (TranslationService.isArabic ? "تشغيل" : "Play"),
             onPressed: () => AudioManager.instance.togglePlayPause(),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(
+              Icons.skip_next_rounded,
+              color: Color(0xFFE5C158),
+              size: 22,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            tooltip: TranslationService.isArabic ? "الآية التالية" : "Next Verse",
+            onPressed: () => AudioManager.instance.nextAyah(),
+          ),
+          if (playState.ayahNum > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5C158).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                TranslationService.isArabic
+                    ? "آية ${playState.ayahNum}"
+                    : "Ayah ${playState.ayahNum}",
+                style: const TextStyle(
+                  color: Color(0xFFE5C158),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(width: 8),
           Expanded(
             child: ValueListenableBuilder<Duration>(
               valueListenable: AudioManager.instance.durationNotifier,
@@ -685,9 +732,12 @@ extension SurahReaderUi on _SurahReaderScreenState {
                         onChangeEnd: (val) async {
                           if (isSplit) {
                             int targetAyah = val.floor() + 1;
-                            if (targetAyah > totalAyahs)
+                            if (targetAyah > totalAyahs) {
                               targetAyah = totalAyahs;
-                            if (targetAyah < 1) targetAyah = 1;
+                            }
+                            if (targetAyah < 1) {
+                              targetAyah = 1;
+                            }
                             AudioManager.instance.seekToAyahInSplitMode(
                               targetAyah,
                             );
@@ -709,6 +759,18 @@ extension SurahReaderUi on _SurahReaderScreenState {
                 );
               },
             ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(
+              Icons.close_rounded,
+              color: Color(0xFFE5C158),
+              size: 20,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            tooltip: TranslationService.isArabic ? "إيقاف الصوت" : "Stop Recitation",
+            onPressed: () => AudioManager.instance.stop(),
           ),
         ],
       ),

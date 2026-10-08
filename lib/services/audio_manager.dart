@@ -164,19 +164,7 @@ class AudioManager {
             isLoading: false,
           );
 
-          final autoBookmark = _storage.getBool(
-            'setting_auto_bookmark',
-            defaultValue: true,
-          );
-          if (autoBookmark) {
-            _autoBookmarkTimer?.cancel();
-            final sNum = _surahNum;
-            final sName = _surahName;
-            final aNum = detectedAyah;
-            _autoBookmarkTimer = Timer(const Duration(milliseconds: 1500), () {
-              _storage.addBookmark(sNum, sName, aNum);
-            });
-          }
+          _handleAutoBookmark(detectedAyah);
         }
       }
     });
@@ -469,11 +457,119 @@ class AudioManager {
     }
   }
 
+  Future<void> nextAyah() async {
+    if (playState.value.surahNum <= 0) return;
+
+    if (isTimestampSyncMode && _currentTimestamps != null) {
+      int currentAyah = playState.value.ayahNum;
+      if (currentAyah <= 0) {
+        final pos = await _player.getCurrentPosition();
+        if (pos != null) {
+          int posMs = pos.inMilliseconds;
+          for (var entry in _currentTimestamps!.entries) {
+            if (posMs >= entry.value[0] && posMs <= entry.value[1]) {
+              currentAyah = entry.key;
+              break;
+            }
+          }
+        }
+      }
+      int targetAyah = currentAyah + 1;
+      if (_currentTimestamps!.containsKey(targetAyah)) {
+        int startMs = _currentTimestamps![targetAyah]![0];
+        await seekTo(Duration(milliseconds: startMs));
+        playState.value = AudioPlayState(
+          surahNum: _surahNum,
+          ayahNum: targetAyah,
+          isPlaying: playState.value.isPlaying,
+          title: _surahName,
+          subtitle: TranslationService.isArabic
+              ? "الآية $targetAyah"
+              : "Ayah $targetAyah",
+          isLoading: false,
+        );
+        _handleAutoBookmark(targetAyah);
+      }
+    } else if (_isPerAyahSequenceMode && _currentPlaylist.isNotEmpty) {
+      if (_currentIndex + 1 < _currentPlaylist.length) {
+        _currentIndex++;
+        await _playNextAyahInSequence();
+      }
+    } else {
+      await seekBy(const Duration(seconds: 10));
+    }
+  }
+
+  Future<void> previousAyah() async {
+    if (playState.value.surahNum <= 0) return;
+
+    if (isTimestampSyncMode && _currentTimestamps != null) {
+      int currentAyah = playState.value.ayahNum;
+      if (currentAyah <= 0) {
+        final pos = await _player.getCurrentPosition();
+        if (pos != null) {
+          int posMs = pos.inMilliseconds;
+          for (var entry in _currentTimestamps!.entries) {
+            if (posMs >= entry.value[0] && posMs <= entry.value[1]) {
+              currentAyah = entry.key;
+              break;
+            }
+          }
+        }
+      }
+      if (currentAyah > 1) {
+        int targetAyah = currentAyah - 1;
+        if (_currentTimestamps!.containsKey(targetAyah)) {
+          int startMs = _currentTimestamps![targetAyah]![0];
+          await seekTo(Duration(milliseconds: startMs));
+          playState.value = AudioPlayState(
+            surahNum: _surahNum,
+            ayahNum: targetAyah,
+            isPlaying: playState.value.isPlaying,
+            title: _surahName,
+            subtitle: TranslationService.isArabic
+                ? "الآية $targetAyah"
+                : "Ayah $targetAyah",
+            isLoading: false,
+          );
+          _handleAutoBookmark(targetAyah);
+        }
+      } else {
+        await seekTo(Duration.zero);
+      }
+    } else if (_isPerAyahSequenceMode && _currentPlaylist.isNotEmpty) {
+      if (_currentIndex > 0) {
+        _currentIndex--;
+        await _playNextAyahInSequence();
+      } else {
+        _currentIndex = 0;
+        await _playNextAyahInSequence();
+      }
+    } else {
+      await seekBy(const Duration(seconds: -10));
+    }
+  }
+
+  void _handleAutoBookmark(int ayahNum) {
+    final autoBookmark = _storage.getBool(
+      'setting_auto_bookmark',
+      defaultValue: true,
+    );
+    if (autoBookmark) {
+      _autoBookmarkTimer?.cancel();
+      final sNum = _surahNum;
+      final sName = _surahName;
+      _autoBookmarkTimer = Timer(const Duration(milliseconds: 1500), () {
+        _storage.addBookmark(sNum, sName, ayahNum);
+      });
+    }
+  }
+
   void stop() async {
     _isPerAyahSequenceMode = false;
     final pos = await _player.getCurrentPosition();
     if (pos != null) {
-      _storage.saveLastAudioTimestamp(pos.inMilliseconds);
+      await _storage.saveLastAudioTimestamp(pos.inMilliseconds);
     }
     await _player.stop();
     positionNotifier.value = Duration.zero;

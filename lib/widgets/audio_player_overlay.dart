@@ -97,15 +97,15 @@ class AudioPlayerOverlay extends StatelessWidget {
                           ),
                           IconButton(
                             icon: Icon(
-                              Icons.replay_10,
+                              Icons.skip_previous_rounded,
                               color: isDark ? Colors.white70 : Colors.black87,
-                              size: 22,
+                              size: 24,
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            onPressed: () => AudioManager.instance.seekBy(
-                              const Duration(seconds: -10),
-                            ),
+                            tooltip: 'Previous Verse / الآية السابقة',
+                            onPressed: () =>
+                                AudioManager.instance.previousAyah(),
                           ),
                           const SizedBox(width: 12),
                           IconButton(
@@ -126,15 +126,15 @@ class AudioPlayerOverlay extends StatelessWidget {
                           const SizedBox(width: 12),
                           IconButton(
                             icon: Icon(
-                              Icons.forward_10,
+                              Icons.skip_next_rounded,
                               color: isDark ? Colors.white70 : Colors.black87,
-                              size: 22,
+                              size: 24,
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            onPressed: () => AudioManager.instance.seekBy(
-                              const Duration(seconds: 10),
-                            ),
+                            tooltip: 'Next Verse / الآية التالية',
+                            onPressed: () =>
+                                AudioManager.instance.nextAyah(),
                           ),
                           const SizedBox(width: 8),
                           Container(
