@@ -75,19 +75,26 @@ class _QiraatScreenState extends State<QiraatScreen> {
       _isLoadingReciters = true;
       _reciters = [];
       _selectedReciter = null;
+      _stopAudio();
     });
     try {
       final lang = TranslationService.isArabic ? 'ar' : 'en';
       final res = await http.get(
         Uri.parse(
-          'https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId',
+          'https://mp3quran.net/api/v3/reciters?language=$lang&rewaya=$riwayahId',
         ),
       );
       if (res.statusCode == 200) {
         final data = json.decode(utf8.decode(res.bodyBytes));
         if (mounted) {
+          final rawReciters = List<dynamic>.from(data['reciters'] ?? []);
+          rawReciters.sort((a, b) {
+            final nameA = (a['name'] as String?) ?? '';
+            final nameB = (b['name'] as String?) ?? '';
+            return nameA.compareTo(nameB);
+          });
           setState(() {
-            _reciters = data['reciters'];
+            _reciters = rawReciters;
             _isLoadingReciters = false;
           });
         }
@@ -99,9 +106,14 @@ class _QiraatScreenState extends State<QiraatScreen> {
 
   Future<void> _playSurah(int surahNumber) async {
     if (_selectedReciter == null) return;
-    final moshaf = _selectedReciter!['moshaf'] as List;
+    final moshaf = (_selectedReciter!['moshaf'] as List?) ?? [];
     if (moshaf.isEmpty) return;
-    final server = moshaf[0]['server'] as String;
+    final currentRiwayahId = _selectedRiwayah?['id'];
+    final matchingMoshaf = moshaf.firstWhere(
+      (m) => currentRiwayahId != null && m['rewaya_id'] == currentRiwayahId,
+      orElse: () => moshaf.first,
+    );
+    final server = matchingMoshaf['server'] as String;
     final formattedNumber = surahNumber.toString().padLeft(3, '0');
     final url = server.endsWith('/')
         ? '$server$formattedNumber.mp3'

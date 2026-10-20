@@ -2,6 +2,10 @@ part of 'prayer_times_screen.dart';
 
 extension PrayerTimesScreenUi on _PrayerTimesScreenState {
   Widget _buildPrayerScreenBody(BuildContext context, ThemeData theme, Map<String, dynamic> loc) {
+    final isFloatingNavbar =
+        widget.storage.getString('bottom_navbar_style') == 'floating';
+    final bottomScrollPadding = isFloatingNavbar ? 85.0 : 20.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,7 +29,7 @@ extension PrayerTimesScreenUi on _PrayerTimesScreenState {
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 100.0),
+              padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, bottomScrollPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

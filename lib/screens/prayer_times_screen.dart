@@ -361,8 +361,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   @override
   void didUpdateWidget(covariant PrayerTimesScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialSubTab != widget.initialSubTab ||
-        _selectedSubTab != widget.initialSubTab) {
+    if (oldWidget.initialSubTab != widget.initialSubTab) {
       setState(() {
         _selectedSubTab = widget.initialSubTab;
       });
@@ -688,6 +687,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     final isSelected = _selectedSubTab == index;
     return Expanded(
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           setState(() {
             _selectedSubTab = index;

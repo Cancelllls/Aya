@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/quran_models.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
@@ -11,6 +10,7 @@ import '../models/offline_surahs.dart';
 import 'qdc_audio_service.dart';
 import 'notification_service.dart';
 import 'audio_cache_service.dart';
+import 'quran_download_service.dart';
 
 class AudioPlayState {
   final int surahNum;
@@ -313,11 +313,7 @@ class AudioManager {
       }
     }
 
-    final dir = await getApplicationDocumentsDirectory();
-    final fileName = isTimestampSyncMode
-        ? 'surah_${surahNum}_qdc_v2.mp3'
-        : 'surah_$surahNum.mp3';
-    final localPath = '${dir.path}/quran_audio/$reciter/$fileName';
+    final localPath = await QuranDownloadService.instance.getLocalSurahPath(surahNum, reciter);
     final isOffline = await File(localPath).exists();
 
     final streamCacheKey = 'surah_${surahNum}_${reciter}_${isTimestampSyncMode ? "qdc" : "std"}.mp3';
@@ -338,9 +334,19 @@ class AudioManager {
       await _player.stop();
       await _player.setVolume(1.0);
       if (isOffline) {
-        await _player.play(DeviceFileSource(localPath));
+        try {
+          await _player.play(DeviceFileSource(localPath));
+        } catch (e) {
+          debugPrint('AudioManager: error playing local file, falling back to stream: $e');
+          await _player.play(UrlSource(url));
+        }
       } else if (cachedStreamFile != null) {
-        await _player.play(DeviceFileSource(cachedStreamFile.path));
+        try {
+          await _player.play(DeviceFileSource(cachedStreamFile.path));
+        } catch (e) {
+          debugPrint('AudioManager: error playing cached stream, falling back to stream: $e');
+          await _player.play(UrlSource(url));
+        }
       } else {
         await _player.play(UrlSource(url));
         unawaited(AudioCacheService.instance.cacheStreamUrl(url, streamCacheKey));
@@ -354,7 +360,17 @@ class AudioManager {
           await _player.seek(Duration(milliseconds: startMs));
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('AudioManager.playSurahWithSync error: $e');
+      playState.value = AudioPlayState(
+        surahNum: surahNum,
+        ayahNum: 0,
+        isPlaying: false,
+        title: surahName,
+        subtitle: "Playback error",
+        isLoading: false,
+      );
+    }
   }
 
   void playSurah(int surahNum, String surahName, List<Ayah> ayahs) async {
@@ -420,16 +436,22 @@ class AudioManager {
           defaultValue: 'ar.alafasy',
         );
         final url = ApiService.buildSurahAudioUrl(_surahNum, reciter: reciter);
-        final dir = await getApplicationDocumentsDirectory();
-        final localPath =
-            '${dir.path}/quran_audio/$reciter/surah_$_surahNum.mp3';
+        final localPath = await QuranDownloadService.instance.getLocalSurahPath(_surahNum, reciter);
         final streamCacheKey = 'surah_${_surahNum}_${reciter}_std.mp3';
         final cachedStreamFile = await AudioCacheService.instance.getCachedAudio(streamCacheKey);
 
         if (await File(localPath).exists()) {
-          await _player.play(DeviceFileSource(localPath));
+          try {
+            await _player.play(DeviceFileSource(localPath));
+          } catch (_) {
+            await _player.play(UrlSource(url));
+          }
         } else if (cachedStreamFile != null) {
-          await _player.play(DeviceFileSource(cachedStreamFile.path));
+          try {
+            await _player.play(DeviceFileSource(cachedStreamFile.path));
+          } catch (_) {
+            await _player.play(UrlSource(url));
+          }
         } else {
           await _player.play(UrlSource(url));
           unawaited(AudioCacheService.instance.cacheStreamUrl(url, streamCacheKey));
