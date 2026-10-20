@@ -1212,6 +1212,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
 
               // Calendar 7-column Grid
               GridView.builder(
+                padding: EdgeInsets.zero,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -1668,128 +1669,131 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             ),
           )
         else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: upcoming.length > 8 ? 8 : upcoming.length,
-            itemBuilder: (context, idx) {
-              final ev = upcoming[idx];
-              final int days = ev['daysRemaining'];
-              final String pillText = _formatCountdownPill(days, isArabic);
+          Column(
+            children: [
+              for (int idx = 0; idx < (upcoming.length > 8 ? 8 : upcoming.length); idx++)
+                Builder(
+                  builder: (context) {
+                    final ev = upcoming[idx];
+                    final int days = ev['daysRemaining'];
+                    final String pillText = _formatCountdownPill(days, isArabic);
+                    final isLast = idx == (upcoming.length > 8 ? 7 : upcoming.length - 1);
 
-              return Card(
-                color: theme.cardColor,
-                margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).dividerColor.withValues(alpha: 0.10),
-                  ),
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => _showReminderDialog(ev),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14.0,
-                      vertical: 12.0,
-                    ),
-                    child: Row(
-                      children: [
-                        // Event Emoji Icon Container
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFE5C158,
-                            ).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: Text(
-                              ev['icon'] as String,
-                              style: const TextStyle(fontSize: 22),
-                            ),
-                          ),
+                    return Card(
+                      color: theme.cardColor,
+                      margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withValues(alpha: 0.10),
                         ),
-                        const SizedBox(width: 14),
-
-                        // Title & Subtitle
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => _showReminderDialog(ev),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14.0,
+                            vertical: 12.0,
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                ev['title'] as String,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                              // Event Emoji Icon Container
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFE5C158,
+                                  ).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    ev['icon'] as String,
+                                    style: const TextStyle(fontSize: 22),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                ev['subtitle'] as String,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: theme.textTheme.bodyMedium?.color
-                                      ?.withValues(alpha: 0.60),
+                              const SizedBox(width: 14),
+
+                              // Title & Subtitle
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      ev['title'] as String,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      ev['subtitle'] as String,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: theme.textTheme.bodyMedium?.color
+                                            ?.withValues(alpha: 0.60),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              const SizedBox(width: 10),
+
+                              // Countdown Pill Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFE5C158,
+                                  ).withValues(alpha: days == 0 ? 0.9 : 0.18),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(0xFFE5C158),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Text(
+                                  pillText,
+                                  style: TextStyle(
+                                    color: days == 0
+                                        ? Colors.black
+                                        : const Color(0xFFE5C158),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+
+                              // Reminder button
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_active_outlined,
+                                  color: Color(0xFFE5C158),
+                                  size: 20,
+                                ),
+                                onPressed: () => _showReminderDialog(ev),
+                                tooltip: isArabic ? "ضبط تذكير" : "Set Reminder",
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 10),
-
-                        // Countdown Pill Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFE5C158,
-                            ).withValues(alpha: days == 0 ? 0.9 : 0.18),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFE5C158),
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Text(
-                            pillText,
-                            style: TextStyle(
-                              color: days == 0
-                                  ? Colors.black
-                                  : const Color(0xFFE5C158),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-
-                        // Reminder button
-                        IconButton(
-                          icon: const Icon(
-                            Icons.notifications_active_outlined,
-                            color: Color(0xFFE5C158),
-                            size: 20,
-                          ),
-                          onPressed: () => _showReminderDialog(ev),
-                          tooltip: isArabic ? "ضبط تذكير" : "Set Reminder",
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+            ],
           ),
       ],
     );
@@ -1974,7 +1978,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       color: isNext
           ? const Color(0xFFE5C158).withValues(alpha: 0.08)
           : theme.cardColor,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.only(bottom: name == 'Isha' ? 0 : 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(

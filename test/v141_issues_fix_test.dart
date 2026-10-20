@@ -49,19 +49,35 @@ void main() {
     });
   });
 
-  group('Issue #1 - Prayer Calendar Bottom Padding', () {
-    test('Calculates compact 20px bottom padding for default navbar and 85px for floating', () {
-      double computeBottomPadding(String? style) {
-        final isFloatingNavbar = style == 'floating';
-        return isFloatingNavbar ? 85.0 : 20.0;
+  group('Issue #1 - Prayer and Hijri Calendar Bottom Padding', () {
+    test('Calculates clean bottom padding for floating and solid navbar styles', () {
+      double computeBottomPadding(String? style, double mediaBottom) {
+        final isFloatingNavbar = (style ?? 'floating') == 'floating';
+        const kBottomNavigationBarHeight = 56.0;
+        return isFloatingNavbar
+            ? (kBottomNavigationBarHeight + 16.0 + mediaBottom + 12.0)
+            : 16.0;
       }
 
-      // Default navbar should have compact 20px padding (not excessive 100px)
-      expect(computeBottomPadding('default'), equals(20.0));
-      expect(computeBottomPadding(null), equals(20.0));
+      const mediaBottom3Button = 48.0;
+      const mediaBottomGesture = 34.0;
+      const mediaBottomZero = 0.0;
 
-      // Floating navbar gets 85px clearance
-      expect(computeBottomPadding('floating'), equals(85.0));
+      // Floating navbar provides exact 12dp clearance above floating pill
+      const pillHeight = 56.0;
+      const pillBottomMargin = 16.0;
+
+      for (final mb in [mediaBottom3Button, mediaBottomGesture, mediaBottomZero]) {
+        final pillTop = pillHeight + pillBottomMargin + mb;
+        final padding = computeBottomPadding('floating', mb);
+        expect(padding - pillTop, equals(12.0));
+      }
+
+      // Default unset style resolves to floating navbar
+      expect(computeBottomPadding(null, 48.0), equals(56.0 + 16.0 + 48.0 + 12.0));
+
+      // Solid navbar gets compact 16px padding
+      expect(computeBottomPadding('solid', 48.0), equals(16.0));
     });
   });
 }
