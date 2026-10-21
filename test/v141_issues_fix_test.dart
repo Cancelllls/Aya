@@ -50,34 +50,18 @@ void main() {
   });
 
   group('Issue #1 - Prayer and Hijri Calendar Bottom Padding', () {
-    test('Calculates clean bottom padding for floating and solid navbar styles', () {
-      double computeBottomPadding(String? style, double mediaBottom) {
+    test('Calculates clean compact bottom padding for floating and solid navbar styles', () {
+      double computeBottomPadding(String? style) {
         final isFloatingNavbar = (style ?? 'floating') == 'floating';
-        const kBottomNavigationBarHeight = 56.0;
-        return isFloatingNavbar
-            ? (kBottomNavigationBarHeight + 16.0 + mediaBottom + 12.0)
-            : 16.0;
+        return isFloatingNavbar ? 20.0 : 16.0;
       }
 
-      const mediaBottom3Button = 48.0;
-      const mediaBottomGesture = 34.0;
-      const mediaBottomZero = 0.0;
-
-      // Floating navbar provides exact 12dp clearance above floating pill
-      const pillHeight = 56.0;
-      const pillBottomMargin = 16.0;
-
-      for (final mb in [mediaBottom3Button, mediaBottomGesture, mediaBottomZero]) {
-        final pillTop = pillHeight + pillBottomMargin + mb;
-        final padding = computeBottomPadding('floating', mb);
-        expect(padding - pillTop, equals(12.0));
-      }
-
-      // Default unset style resolves to floating navbar
-      expect(computeBottomPadding(null, 48.0), equals(56.0 + 16.0 + 48.0 + 12.0));
+      // Default unset style resolves to floating navbar (compact 20px, no huge 132px void)
+      expect(computeBottomPadding(null), equals(20.0));
+      expect(computeBottomPadding('floating'), equals(20.0));
 
       // Solid navbar gets compact 16px padding
-      expect(computeBottomPadding('solid', 48.0), equals(16.0));
+      expect(computeBottomPadding('solid'), equals(16.0));
     });
   });
 }
