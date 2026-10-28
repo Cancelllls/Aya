@@ -51,33 +51,22 @@ void main() {
 
   group('Issue #1 - Prayer and Hijri Calendar Bottom Padding', () {
     test('Calculates clean bottom padding for floating and solid navbar styles', () {
-      double computeBottomPadding(String? style, double mediaBottom) {
-        final isFloatingNavbar = (style ?? 'floating') == 'floating';
-        const kBottomNavigationBarHeight = 56.0;
-        return isFloatingNavbar
-            ? (kBottomNavigationBarHeight + 16.0 + mediaBottom + 12.0)
-            : 16.0;
+      double computeBottomPadding(double mediaBottom) {
+        return mediaBottom + 16.0;
       }
 
-      const mediaBottom3Button = 48.0;
-      const mediaBottomGesture = 34.0;
-      const mediaBottomZero = 0.0;
+      // In Flutter Scaffold with extendBody == true (floating pill):
+      // mediaBottom already represents the top edge of the floating navbar (e.g. 120.0 on 3-button nav, 72.0 on gesture nav).
+      // mediaBottom + 16.0 guarantees exact 16.0 clearance above the pill with zero redundant gaps.
+      const floatingPillTop3Button = 120.0;
+      const floatingPillTopGesture = 72.0;
 
-      // Floating navbar provides exact 12dp clearance above floating pill
-      const pillHeight = 56.0;
-      const pillBottomMargin = 16.0;
+      expect(computeBottomPadding(floatingPillTop3Button) - floatingPillTop3Button, equals(16.0));
+      expect(computeBottomPadding(floatingPillTopGesture) - floatingPillTopGesture, equals(16.0));
 
-      for (final mb in [mediaBottom3Button, mediaBottomGesture, mediaBottomZero]) {
-        final pillTop = pillHeight + pillBottomMargin + mb;
-        final padding = computeBottomPadding('floating', mb);
-        expect(padding - pillTop, equals(12.0));
-      }
-
-      // Default unset style resolves to floating navbar
-      expect(computeBottomPadding(null, 48.0), equals(56.0 + 16.0 + 48.0 + 12.0));
-
-      // Solid navbar gets compact 16px padding
-      expect(computeBottomPadding('solid', 48.0), equals(16.0));
+      // In Flutter Scaffold with extendBody == false (solid bar):
+      // mediaBottom inside body is 0.0, so padding resolves to compact 16.0dp.
+      expect(computeBottomPadding(0.0), equals(16.0));
     });
   });
 }

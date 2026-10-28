@@ -2,15 +2,8 @@ part of 'prayer_times_screen.dart';
 
 extension PrayerTimesScreenUi on _PrayerTimesScreenState {
   Widget _buildPrayerScreenBody(BuildContext context, ThemeData theme, Map<String, dynamic> loc) {
-    final isFloatingNavbar = widget.storage.getString(
-          'bottom_navbar_style',
-          defaultValue: 'floating',
-        ) ==
-        'floating';
     final mediaBottom = MediaQuery.of(context).padding.bottom;
-    final bottomScrollPadding = isFloatingNavbar
-        ? (kBottomNavigationBarHeight + 16.0 + mediaBottom + 12.0)
-        : 16.0;
+    final bottomScrollPadding = mediaBottom + 16.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
