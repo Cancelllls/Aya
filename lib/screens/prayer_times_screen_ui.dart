@@ -7,7 +7,10 @@ extension PrayerTimesScreenUi on _PrayerTimesScreenState {
           defaultValue: 'floating',
         ) ==
         'floating';
-    final bottomScrollPadding = isFloatingNavbar ? 20.0 : 16.0;
+    final mediaBottom = MediaQuery.of(context).padding.bottom;
+    final bottomScrollPadding = isFloatingNavbar
+        ? (kBottomNavigationBarHeight + 16.0 + mediaBottom + 12.0)
+        : 16.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
