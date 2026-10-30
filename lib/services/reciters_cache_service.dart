@@ -96,36 +96,42 @@ class RecitersCacheService {
     final lang = TranslationService.isArabic ? 'ar' : 'en';
     final client = http.Client();
     final all = <Map<String, dynamic>>[];
-    final seen = <String>{}; // dedup by reciter name across riwayat
 
     try {
-      // Fetch list of riwayat
+      // 1. Try single comprehensive endpoint (fetches all reciters and all moshafs instantly)
+      final uri = Uri.parse('https://mp3quran.net/api/v3/reciters?language=$lang');
+      final res = await client.get(uri);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+        final list = (data['reciters'] as List?) ?? [];
+        for (final r in list) {
+          all.add(Map<String, dynamic>.from(r as Map));
+        }
+        if (all.isNotEmpty) return all;
+      }
+
+      // 2. Fallback to per-riwayah endpoints if needed
       final riwayatUri = Uri.parse(
         'https://mp3quran.net/api/v3/riwayat?language=$lang',
       );
       final riwayatRes = await client.get(riwayatUri);
-      if (riwayatRes.statusCode != 200) {
-        throw Exception('Failed to fetch riwayat: HTTP ${riwayatRes.statusCode}');
-      }
+      if (riwayatRes.statusCode == 200) {
+        final riwayatData = jsonDecode(utf8.decode(riwayatRes.bodyBytes))
+            as Map<String, dynamic>;
+        final riwayatList = (riwayatData['riwayat'] as List?) ?? [];
+        final seen = <String>{};
 
-      final riwayatData = jsonDecode(utf8.decode(riwayatRes.bodyBytes))
-          as Map<String, dynamic>;
-      final riwayatList = (riwayatData['riwayat'] as List?) ?? [];
-
-      // Fetch reciters for each riwayah, 2 at a time
-      for (int i = 0; i < riwayatList.length; i += 2) {
-        final batch = <Future<void>>[];
-        for (int j = i;
-            j < i + 2 && j < riwayatList.length;
-            j++) {
-          final rw = riwayatList[j] as Map<String, dynamic>;
-          final riwayahId = rw['id'] as int;
-          batch.add(_fetchRecitersForRiwayah(client, riwayahId, lang, all, seen));
-        }
-        await Future.wait(batch);
-        // Small delay between batches to be kind to the server
-        if (i + 2 < riwayatList.length) {
-          await Future<void>.delayed(const Duration(milliseconds: 400));
+        for (int i = 0; i < riwayatList.length; i += 2) {
+          final batch = <Future<void>>[];
+          for (int j = i; j < i + 2 && j < riwayatList.length; j++) {
+            final rw = riwayatList[j] as Map<String, dynamic>;
+            final riwayahId = rw['id'] as int;
+            batch.add(_fetchRecitersForRiwayah(client, riwayahId, lang, all, seen));
+          }
+          await Future.wait(batch);
+          if (i + 2 < riwayatList.length) {
+            await Future<void>.delayed(const Duration(milliseconds: 300));
+          }
         }
       }
     } finally {
@@ -144,7 +150,7 @@ class RecitersCacheService {
   ) async {
     try {
       final uri = Uri.parse(
-        'https://mp3quran.net/api/v3/reciters?language=$lang&riwayah=$riwayahId',
+        'https://mp3quran.net/api/v3/reciters?language=$lang&rewaya=$riwayahId',
       );
       final res = await client.get(uri);
       if (res.statusCode != 200) return;

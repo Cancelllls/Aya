@@ -2,6 +2,9 @@ part of 'prayer_times_screen.dart';
 
 extension PrayerTimesScreenUi on _PrayerTimesScreenState {
   Widget _buildPrayerScreenBody(BuildContext context, ThemeData theme, Map<String, dynamic> loc) {
+    final mediaBottom = MediaQuery.of(context).padding.bottom;
+    final bottomScrollPadding = mediaBottom + 16.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,7 +28,7 @@ extension PrayerTimesScreenUi on _PrayerTimesScreenState {
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 100.0),
+              padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, bottomScrollPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

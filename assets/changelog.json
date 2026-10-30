@@ -1,6 +1,25 @@
 {
   "versions": [
     {
+      "version": "1.4.1",
+      "date": "2026-10-30",
+      "title": "Prayer & Hijri Calendar Redesign, Audio Playback & Qira'at Filtering",
+      "changes": {
+        "en": [
+          "Prayer & Hijri Calendar — Snug layout clearance for floating navigation bar, eliminating bottom overlaps and empty gaps",
+          "Dual Calendar Display — Gregorian and spanning Hijri month titles with daily prayer timeline and upcoming holy days reminders",
+          "Offline Audio Playback — Directory sanitization preventing MediaPlayer crashes on downloaded recitation files with automatic migration and CDN streaming fallback",
+          "Qira'at Moshaf Matching — Rewaya-specific moshaf selection and API query alignment for accurate reciter playback"
+        ],
+        "ar": [
+          "تصميم جديد لتقويم الصلاة والتقويم الهجري — ضبط دقيق للمسافات السفلية لشريط التنقل العائم وإلغاء التداخلات والفراغات",
+          "عرض مزدوج للتقويم — عرض هجري وميلادي مدمج مع أوقات الصلاة اليومية وتنبيهات المناسبات الدينية القادمة",
+          "تشغيل الصوتيات بدون إنترنت — تنقية وتأمين مسارات التنزيل لتفادي تعطل مشغل الصوت التلقائي مع دعم البث الاحتياطي",
+          "تصفية مصاحف القراءات — اختيار دقيق للمصحف المناسب للرواية المحددة ومطابقة استعلامات البحث"
+        ]
+      }
+    },
+    {
       "version": "1.3.6",
       "date": "2026-10-03",
       "title": "Sunni Endowment Iraq Calculation & Regional Astronomical Presets",

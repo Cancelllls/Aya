@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.1] - 2026-10-30
+
+### Fixed
+- **Prayer & Hijri Calendar Bottom Layout**: Snug layout clearance for floating pill navigation bar (`mediaBottom + 16.0`), eliminating content overlaps and redundant empty voids across all subtabs.
+- **Offline Audio Playback & Directory Sanitization**: Safe URI directory name sanitization for downloaded audio files, preventing MediaPlayer errors, with automatic legacy migration and CDN fallback.
+- **Qira'at Moshaf Matching**: Fixed API query parameter to `rewaya` and ensured moshaf selection matches the active Rewaya ID rather than index 0.
+
+### Added
+- **Dual Gregorian & Hijri Calendar**: Redesigned month grid with spanning Hijri month range, 1st-of-month indicators, selected-day prayer schedule, and upcoming Islamic holy days with countdown pill badges.
+
 ## [1.3.6] - 2026-10-03
 
 ### Added

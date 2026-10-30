@@ -42,6 +42,16 @@ class QuranDownloadService extends ChangeNotifier {
   static final QuranDownloadService instance = QuranDownloadService._internal();
   QuranDownloadService._internal();
 
+  /// Sanitizes reciter IDs (specifically URLs from mp3quran_server_*) so that
+  /// directory paths on disk do not contain colons, slashes, or invalid characters.
+  /// This prevents Android MediaPlayer from mistaking local file paths for remote URLs.
+  static String safeReciterDir(String reciter) {
+    if (reciter.startsWith('mp3quran_server_')) {
+      return reciter.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    }
+    return reciter;
+  }
+
   final Map<int, SurahDownloadState> _downloadStates = {};
   final Map<int, http.Client> _activeClients = {};
 
@@ -56,14 +66,30 @@ class QuranDownloadService extends ChangeNotifier {
   Future<int> updateCountForReciter(String reciterId) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final reciterDir = Directory('${dir.path}/quran_audio/$reciterId');
+      final safeDir = safeReciterDir(reciterId);
+      final reciterDir = Directory('${dir.path}/quran_audio/$safeDir');
+
+      // Check legacy directory if safeDir differs and safe directory doesn't exist
+      if (!await reciterDir.exists() && safeDir != reciterId) {
+        final legacyDir = Directory('${dir.path}/quran_audio/$reciterId');
+        if (await legacyDir.exists()) {
+          int legacyCount = 0;
+          await for (final entity in legacyDir.list(recursive: true)) {
+            if (entity is File && entity.path.endsWith('.mp3')) legacyCount++;
+          }
+          final safe = legacyCount > 114 ? 114 : legacyCount;
+          _countCache[reciterId] = safe;
+          return safe;
+        }
+      }
+
       if (!await reciterDir.exists()) {
         _countCache[reciterId] = 0;
         return 0;
       }
       int count = 0;
-      await for (final entity in reciterDir.list()) {
-        if (entity.path.endsWith('.mp3')) count++;
+      await for (final entity in reciterDir.list(recursive: true)) {
+        if (entity is File && entity.path.endsWith('.mp3')) count++;
       }
       final safe = count > 114 ? 114 : count;
       _countCache[reciterId] = safe;
@@ -114,7 +140,22 @@ class QuranDownloadService extends ChangeNotifier {
     final fileName = QdcAudioService.getQdcReciterId(reciter) != null
         ? 'surah_${surahNum}_qdc_v2.mp3'
         : 'surah_$surahNum.mp3';
-    return '${dir.path}/quran_audio/$reciter/$fileName';
+    final safeDir = safeReciterDir(reciter);
+    final targetPath = '${dir.path}/quran_audio/$safeDir/$fileName';
+
+    // Legacy migration: if file exists at legacy path with colons/slashes, migrate to safe path
+    if (safeDir != reciter) {
+      final legacyPath = '${dir.path}/quran_audio/$reciter/$fileName';
+      final legacyFile = File(legacyPath);
+      if (await legacyFile.exists() && !await File(targetPath).exists()) {
+        try {
+          await File(targetPath).parent.create(recursive: true);
+          await legacyFile.rename(targetPath);
+        } catch (_) {}
+      }
+    }
+
+    return targetPath;
   }
 
   Future<bool> isSurahDownloaded(int surahNum, String reciter) async {
@@ -137,12 +178,24 @@ class QuranDownloadService extends ChangeNotifier {
   Future<double> getTotalSpaceMB(String reciter) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final audioDir = Directory('${dir.path}/quran_audio/$reciter');
-      if (!await audioDir.exists()) return 0.0;
+      final safeDir = safeReciterDir(reciter);
+      final audioDir = Directory('${dir.path}/quran_audio/$safeDir');
       int totalBytes = 0;
-      await for (final entity in audioDir.list(recursive: true)) {
-        if (entity is File && entity.path.endsWith('.mp3')) {
-          totalBytes += await entity.length();
+      if (await audioDir.exists()) {
+        await for (final entity in audioDir.list(recursive: true)) {
+          if (entity is File && entity.path.endsWith('.mp3')) {
+            totalBytes += await entity.length();
+          }
+        }
+      }
+      if (safeDir != reciter) {
+        final legacyDir = Directory('${dir.path}/quran_audio/$reciter');
+        if (await legacyDir.exists()) {
+          await for (final entity in legacyDir.list(recursive: true)) {
+            if (entity is File && entity.path.endsWith('.mp3')) {
+              totalBytes += await entity.length();
+            }
+          }
         }
       }
       return totalBytes / (1024 * 1024);
@@ -171,9 +224,16 @@ class QuranDownloadService extends ChangeNotifier {
   Future<void> deleteReciterCache(String reciter) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final audioDir = Directory('${dir.path}/quran_audio/$reciter');
+      final safeDir = safeReciterDir(reciter);
+      final audioDir = Directory('${dir.path}/quran_audio/$safeDir');
       if (await audioDir.exists()) {
         await audioDir.delete(recursive: true);
+      }
+      if (safeDir != reciter) {
+        final legacyDir = Directory('${dir.path}/quran_audio/$reciter');
+        if (await legacyDir.exists()) {
+          await legacyDir.delete(recursive: true);
+        }
       }
       _countCache.remove(reciter);
       await initStates(reciter);
