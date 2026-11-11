@@ -17,6 +17,7 @@ import 'adhan_audio_service.dart';
 import 'database_service.dart';
 import '../core/adhan_native_controller.dart';
 import 'offline_prayer_service.dart';
+import 'audio_manager.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(
@@ -51,6 +52,14 @@ void notificationTapBackground(
   } else if (notificationResponse.actionId == 'action_stop_adhan') {
     try {
       const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
+    } catch (_) {}
+  } else if (notificationResponse.actionId == 'action_toggle_audio') {
+    try {
+      AudioManager.instance.togglePlayPause();
+    } catch (_) {}
+  } else if (notificationResponse.actionId == 'action_stop_audio') {
+    try {
+      AudioManager.instance.stop();
     } catch (_) {}
   }
 }
@@ -370,19 +379,11 @@ class NotificationService {
           return;
         }
         if (response.actionId == 'action_toggle_audio') {
-          try {
-            const MethodChannel(
-              'com.quran.aya/system',
-            ).invokeMethod('toggleAudio');
-          } catch (_) {}
+          AudioManager.instance.togglePlayPause();
           return;
         }
         if (response.actionId == 'action_stop_audio') {
-          try {
-            const MethodChannel(
-              'com.quran.aya/system',
-            ).invokeMethod('stopAudio');
-          } catch (_) {}
+          AudioManager.instance.stop();
           return;
         }
         if (response.actionId == 'action_prayed' ||
@@ -1638,6 +1639,11 @@ class NotificationService {
       ongoing: isPlaying,
       autoCancel: false,
       showWhen: false,
+      playSound: false,
+      enableVibration: false,
+      onlyAlertOnce: true,
+      visibility: NotificationVisibility.public,
+      category: AndroidNotificationCategory.transport,
       icon: 'ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
       color: const Color(0xFFE5C158),

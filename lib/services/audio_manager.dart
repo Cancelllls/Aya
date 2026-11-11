@@ -94,21 +94,23 @@ class AudioManager {
   }
 
   void _setupPlayer(AudioPlayer p) {
-    p.setAudioContext(
-      AudioContext(
-        android: const AudioContextAndroid(
-          isSpeakerphoneOn: true,
-          stayAwake: true,
-          contentType: AndroidContentType.music,
-          usageType: AndroidUsageType.media,
-          audioFocus: AndroidAudioFocus.gain,
-        ),
-        iOS: AudioContextIOS(
-          category: AVAudioSessionCategory.playback,
-          options: {AVAudioSessionOptions.mixWithOthers},
-        ),
+    final audioContext = AudioContext(
+      android: const AudioContextAndroid(
+        isSpeakerphoneOn: false,
+        stayAwake: true,
+        contentType: AndroidContentType.music,
+        usageType: AndroidUsageType.media,
+        audioFocus: AndroidAudioFocus.gain,
+      ),
+      iOS: AudioContextIOS(
+        category: AVAudioSessionCategory.playback,
+        options: {AVAudioSessionOptions.mixWithOthers},
       ),
     );
+
+    AudioPlayer.global.setAudioContext(audioContext);
+    p.setAudioContext(audioContext);
+    p.setReleaseMode(ReleaseMode.stop);
 
     p.onPlayerStateChanged.listen((state) {
       final isPlaying = state == PlayerState.playing;
