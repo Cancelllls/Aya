@@ -87,6 +87,9 @@ class AdhanAudioService {
       case 'takbeer':
         assetPath = 'audio/adhan/adhan_meshary_al_fasy_kuwait.mp3';
         break;
+      case 'salati':
+        assetPath = 'audio/adhan/pre_adhan_ela_salati.mp3';
+        break;
       case 'system':
         return; // System sound cannot be played via asset
       case 'chime':

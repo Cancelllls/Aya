@@ -600,6 +600,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                             'chime',
                             'call',
                             'takbeer',
+                            'salati',
                             'system',
                           ].contains(currentSoundTone)
                           ? currentSoundTone
@@ -623,6 +624,13 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                           value: 'takbeer',
                           child: Text(
                             isAr ? 'تكبيرات' : 'Takbeer',
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'salati',
+                          child: Text(
+                            isAr ? 'إلا صلاتي (العفاسي)' : 'Ela Salati (Alafasy)',
                             style: const TextStyle(fontSize: 12.5),
                           ),
                         ),

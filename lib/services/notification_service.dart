@@ -316,6 +316,17 @@ class NotificationService {
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
+          'pre_adhan_tone_salati_v1',
+          'Pre-Adhan Ela Salati Alerts',
+          description: 'Ela Salati reminders before prayer time',
+          importance: Importance.max,
+          enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          sound: RawResourceAndroidNotificationSound('pre_adhan_ela_salati'),
+        ),
+      );
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
           'pre_adhan_system_channel_v1',
           'Pre-Adhan System Sound Alerts',
           description: 'Standard system tone reminders before prayer time',
@@ -574,6 +585,10 @@ class NotificationService {
             return const RawResourceAndroidNotificationSound(
               'adhan_meshary_al_fasy_kuwait',
             );
+          case 'salati':
+            return const RawResourceAndroidNotificationSound(
+              'pre_adhan_ela_salati',
+            );
           case 'system':
             return null;
           case 'chime':
@@ -591,6 +606,8 @@ class NotificationService {
             return 'pre_adhan_tone_call_v1';
           case 'takbeer':
             return 'pre_adhan_tone_takbeer_v1';
+          case 'salati':
+            return 'pre_adhan_tone_salati_v1';
           case 'system':
             return 'pre_adhan_system_channel_v1';
           case 'chime':

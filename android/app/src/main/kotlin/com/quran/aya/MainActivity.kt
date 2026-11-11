@@ -24,15 +24,26 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
-        // Natively support up to 144Hz screens
+
+        // Prevent duplicate instances when launched from Samsung launcher vs notifications/installer
+        if (!isTaskRoot && intent.hasCategory(Intent.CATEGORY_LAUNCHER) && Intent.ACTION_MAIN == intent.action) {
+            finish()
+            return
+        }
+
+        // Natively support high refresh rate without triggering resolution change or activity recreation
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.decorView.post {
                 try {
                     val display = window.context.display
                     if (display != null) {
-                        val modes = display.supportedModes
-                        val highestMode = modes.maxByOrNull { it.refreshRate }
-                        if (highestMode != null) {
+                        val currentMode = display.mode
+                        // Only match display modes with identical physical resolution to avoid recreation
+                        val matchingModes = display.supportedModes.filter {
+                            it.physicalWidth == currentMode.physicalWidth && it.physicalHeight == currentMode.physicalHeight
+                        }
+                        val highestMode = matchingModes.maxByOrNull { it.refreshRate }
+                        if (highestMode != null && highestMode.modeId != currentMode.modeId && highestMode.refreshRate > currentMode.refreshRate) {
                             val params = window.attributes
                             params.preferredDisplayModeId = highestMode.modeId
                             window.attributes = params
@@ -43,7 +54,7 @@ class MainActivity : FlutterActivity() {
         } else {
             try {
                 val params = window.attributes
-                params.preferredRefreshRate = 144f
+                params.preferredRefreshRate = 120f
                 window.attributes = params
             } catch (_: Exception) {}
         }

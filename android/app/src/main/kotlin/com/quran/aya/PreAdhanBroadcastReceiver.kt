@@ -67,6 +67,7 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
         val soundRawName = when (soundTone) {
             "call" -> "prayer_reminder_call"
             "takbeer" -> "adhan_meshary_al_fasy_kuwait"
+            "salati" -> "pre_adhan_ela_salati"
             "system" -> null
             else -> "default_pre_adhan"
         }
