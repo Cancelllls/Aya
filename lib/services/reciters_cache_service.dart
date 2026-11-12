@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import '../models/quran_models.dart';
 import '../services/translation_service.dart';
 
 /// Fetches the full reciter list from mp3quran.net API v3 once,
@@ -55,6 +56,64 @@ class RecitersCacheService {
   /// Return all reciters across all riwayat (for the download picker).
   static Future<List<Map<String, dynamic>>> getAllReciters() async {
     return List<Map<String, dynamic>>.from(await _ensureLoaded());
+  }
+
+  /// Synchronously resolve a localized reciter display name from static Hafs
+  /// reciters or already-loaded mp3quran cache. Returns `null` if unknown.
+  static String? resolveCachedReciterName(
+    String reciterId, {
+    bool? isArabic,
+  }) {
+    final ar = isArabic ?? TranslationService.isArabic;
+    if (!reciterId.startsWith('mp3quran_server_')) {
+      final staticReciter = availableReciters
+          .where((r) => r.id == reciterId)
+          .firstOrNull;
+      if (staticReciter == null) return null;
+      return ar ? staticReciter.nameAr : staticReciter.nameEn;
+    }
+
+    final cached = _allReciters;
+    if (cached == null) return null;
+    final target = _normalizeServerUrl(reciterId.substring(16));
+    for (final r in cached) {
+      final moshafs = r['moshaf'] as List?;
+      if (moshafs == null) continue;
+      for (final m in moshafs) {
+        final server = m is Map ? m['server'] as String? : null;
+        if (server != null && _normalizeServerUrl(server) == target) {
+          final name = r['name'] as String?;
+          if (name != null && name.isNotEmpty) return name;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Resolve a reciter ID to its display name, loading cached mp3quran data
+  /// from disk/network if not already in memory.
+  static Future<String?> resolveReciterName(
+    String reciterId, {
+    bool? isArabic,
+  }) async {
+    final immediate = resolveCachedReciterName(reciterId, isArabic: isArabic);
+    if (immediate != null || !reciterId.startsWith('mp3quran_server_')) {
+      return immediate;
+    }
+    try {
+      await _ensureLoaded();
+    } catch (_) {
+      return null;
+    }
+    return resolveCachedReciterName(reciterId, isArabic: isArabic);
+  }
+
+  static String _normalizeServerUrl(String url) =>
+      url.trim().replaceAll(RegExp(r'/+$'), '');
+
+  @visibleForTesting
+  static void setCachedRecitersForTest(List<Map<String, dynamic>>? reciters) {
+    _allReciters = reciters;
   }
 
   /// Re-fetch everything from the API and overwrite the disk cache.

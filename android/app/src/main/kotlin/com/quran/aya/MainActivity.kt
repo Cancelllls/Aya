@@ -262,9 +262,10 @@ class MainActivity : FlutterActivity() {
                 }
                 "startMediaService" -> {
                     val title = call.argument<String>("title") ?: "Aya Quran"
+                    val artist = call.argument<String>("artist") ?: ""
                     val subtitle = call.argument<String>("subtitle") ?: ""
                     val isPlaying = call.argument<Boolean>("isPlaying") ?: false
-                    MediaPlaybackService.startService(this, title, subtitle, isPlaying)
+                    MediaPlaybackService.startService(this, title, artist, subtitle, isPlaying)
                     result.success(true)
                 }
                 "stopMediaService" -> {

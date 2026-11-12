@@ -12,6 +12,7 @@ import 'qdc_audio_service.dart';
 import 'notification_service.dart';
 import 'audio_cache_service.dart';
 import 'quran_download_service.dart';
+import 'reciters_cache_service.dart';
 
 class AudioPlayState {
   final int surahNum;
@@ -19,6 +20,7 @@ class AudioPlayState {
   final bool isPlaying;
   final String title;
   final String subtitle;
+  final String reciterName;
   final bool isLoading;
 
   AudioPlayState({
@@ -27,6 +29,7 @@ class AudioPlayState {
     this.isPlaying = false,
     this.title = '',
     this.subtitle = '',
+    this.reciterName = '',
     this.isLoading = false,
   });
 }
@@ -50,9 +53,16 @@ class AudioManager {
 
   int _surahNum = 0;
   String _surahName = '';
-  late StorageService _storage;
+  String _activeReciterId = '';
+  String _activeReciterName = '';
+  StorageService? _storage;
   final NotificationService _notificationService = NotificationService();
   Timer? _autoBookmarkTimer;
+
+  String? _lastNativeTitle;
+  String? _lastNativeArtist;
+  String? _lastNativeSubtitle;
+  bool? _lastNativeIsPlaying;
 
   // Playlist & sequence state for non-QDC per-ayah reciters
   List<Ayah> _currentPlaylist = [];
@@ -64,12 +74,43 @@ class AudioManager {
   bool isTimestampSyncMode = false;
   static const MethodChannel _systemChannel = MethodChannel('com.quran.aya/system');
 
+  /// Format the Track Name (Surah) shown by native OS media controls.
+  static String resolveNativeTrackTitle({
+    required int surahNum,
+    required String fallbackTitle,
+    required bool isArabic,
+  }) {
+    if (surahNum >= 1 && surahNum <= allOfflineSurahs.length) {
+      final surah = allOfflineSurahs[surahNum - 1];
+      if (isArabic) return surah.name;
+      return fallbackTitle.isNotEmpty ? fallbackTitle : surah.englishName;
+    }
+    if (fallbackTitle.isNotEmpty) return fallbackTitle;
+    return isArabic ? 'القرآن الكريم' : 'Aya Quran Recitation';
+  }
+
+  /// Format the Artist Name (Reciter) shown by native OS media controls.
+  static String resolveNativeArtistName({
+    required String reciterName,
+    required int surahNum,
+    required String fallbackSubtitle,
+    required bool isArabic,
+  }) {
+    if (surahNum <= 0) {
+      return fallbackSubtitle;
+    }
+    if (reciterName.isNotEmpty) {
+      return reciterName;
+    }
+    return isArabic ? 'القرآن الكريم' : 'Holy Quran';
+  }
+
   void init(StorageService storage) {
     _storage = storage;
     _setupPlayer(_player);
     _setupMethodChannel();
 
-    final lastAudio = _storage.getLastAudioPosition();
+    final lastAudio = storage.getLastAudioPosition();
     if (lastAudio != null) {
       _surahNum = lastAudio['surah'];
       _surahName = lastAudio['surahName'];
@@ -84,23 +125,29 @@ class AudioManager {
 
     playState.addListener(() {
       final state = playState.value;
-      if (state.isPlaying || state.isLoading) {
+      if (state.isPlaying || state.isLoading || state.title.isNotEmpty) {
         _syncNativeMediaService(state);
-        _notificationService.showAudioMediaNotification(
-          title: state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
-          subtitle: state.subtitle,
-          isPlaying: state.isPlaying,
-        );
-      } else if (state.title.isEmpty) {
-        _stopNativeMediaService();
-        _notificationService.cancelAudioMediaNotification();
+        if (!Platform.isAndroid) {
+          _notificationService.showAudioMediaNotification(
+            title: resolveNativeTrackTitle(
+              surahNum: state.surahNum,
+              fallbackTitle: state.title,
+              isArabic: TranslationService.isArabic,
+            ),
+            subtitle: resolveNativeArtistName(
+              reciterName: state.reciterName,
+              surahNum: state.surahNum,
+              fallbackSubtitle: state.subtitle,
+              isArabic: TranslationService.isArabic,
+            ),
+            isPlaying: state.isPlaying,
+          );
+        }
       } else {
-        _syncNativeMediaService(state);
-        _notificationService.showAudioMediaNotification(
-          title: state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
-          subtitle: state.subtitle,
-          isPlaying: false,
-        );
+        _stopNativeMediaService();
+        if (!Platform.isAndroid) {
+          _notificationService.cancelAudioMediaNotification();
+        }
       }
     });
   }
@@ -111,6 +158,14 @@ class AudioManager {
         final action = call.arguments as String?;
         if (action == 'toggle') {
           await togglePlayPause();
+        } else if (action == 'play') {
+          if (_player.state != PlayerState.playing) {
+            await togglePlayPause();
+          }
+        } else if (action == 'pause') {
+          if (_player.state == PlayerState.playing) {
+            await _player.pause();
+          }
         } else if (action == 'stop') {
           stop();
         } else if (action == 'next') {
@@ -122,19 +177,115 @@ class AudioManager {
     });
   }
 
-  void _syncNativeMediaService(AudioPlayState state) {
-    if (Platform.isAndroid) {
-      try {
-        _systemChannel.invokeMethod('startMediaService', {
-          'title': state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
-          'subtitle': state.subtitle,
-          'isPlaying': state.isPlaying,
-        });
-      } catch (_) {}
+  void _refreshActiveReciter() {
+    final id =
+        _storage?.getString('default_reciter', defaultValue: 'ar.alafasy') ??
+        'ar.alafasy';
+    _activeReciterId = id;
+    final resolved = RecitersCacheService.resolveCachedReciterName(
+      id,
+      isArabic: TranslationService.isArabic,
+    );
+    if (resolved != null && resolved.isNotEmpty) {
+      _activeReciterName = resolved;
+      return;
+    }
+    _activeReciterName = '';
+    if (id.startsWith('mp3quran_server_')) {
+      unawaited(_resolveDynamicReciterAndSync(id));
     }
   }
 
+  Future<void> _resolveDynamicReciterAndSync(String reciterId) async {
+    final resolved = await RecitersCacheService.resolveReciterName(
+      reciterId,
+      isArabic: TranslationService.isArabic,
+    );
+    if (resolved == null || resolved.isEmpty) return;
+    if (_activeReciterId != reciterId || playState.value.surahNum <= 0) return;
+    _activeReciterName = resolved;
+    final current = playState.value;
+    playState.value = AudioPlayState(
+      surahNum: current.surahNum,
+      ayahNum: current.ayahNum,
+      isPlaying: current.isPlaying,
+      title: current.title,
+      subtitle: current.subtitle,
+      reciterName: resolved,
+      isLoading: current.isLoading,
+    );
+  }
+
+  void _setSurahPlayState({
+    required int surahNum,
+    required int ayahNum,
+    required bool isPlaying,
+    required String title,
+    required String subtitle,
+    bool isLoading = false,
+  }) {
+    playState.value = AudioPlayState(
+      surahNum: surahNum,
+      ayahNum: ayahNum,
+      isPlaying: isPlaying,
+      title: title,
+      subtitle: subtitle,
+      reciterName: _activeReciterName,
+      isLoading: isLoading,
+    );
+  }
+
+  void _syncNativeMediaService(AudioPlayState state) {
+    if (!Platform.isAndroid) return;
+    final isAr = TranslationService.isArabic;
+    final trackTitle = resolveNativeTrackTitle(
+      surahNum: state.surahNum,
+      fallbackTitle: state.title,
+      isArabic: isAr,
+    );
+    final reciterName = state.reciterName.isNotEmpty
+        ? state.reciterName
+        : (_activeReciterId.isNotEmpty
+              ? (RecitersCacheService.resolveCachedReciterName(
+                      _activeReciterId,
+                      isArabic: isAr,
+                    ) ??
+                    '')
+              : '');
+    final artistName = resolveNativeArtistName(
+      reciterName: reciterName,
+      surahNum: state.surahNum,
+      fallbackSubtitle: state.subtitle,
+      isArabic: isAr,
+    );
+    final subtitle = state.surahNum > 0 ? state.subtitle : '';
+
+    if (_lastNativeTitle == trackTitle &&
+        _lastNativeArtist == artistName &&
+        _lastNativeSubtitle == subtitle &&
+        _lastNativeIsPlaying == state.isPlaying) {
+      return;
+    }
+    _lastNativeTitle = trackTitle;
+    _lastNativeArtist = artistName;
+    _lastNativeSubtitle = subtitle;
+    _lastNativeIsPlaying = state.isPlaying;
+
+    try {
+      _systemChannel.invokeMethod('startMediaService', {
+        'title': trackTitle,
+        'artist': artistName,
+        'subtitle': subtitle,
+        'isPlaying': state.isPlaying,
+      });
+    } catch (_) {}
+  }
+
   void _stopNativeMediaService() {
+    _lastNativeTitle = null;
+    _lastNativeArtist = null;
+    _lastNativeSubtitle = null;
+    _lastNativeIsPlaying = null;
     if (Platform.isAndroid) {
       try {
         _systemChannel.invokeMethod('stopMediaService');
@@ -172,7 +323,7 @@ class AudioManager {
 
       int currentAyah = playState.value.ayahNum;
 
-      playState.value = AudioPlayState(
+      _setSurahPlayState(
         surahNum: _surahNum,
         ayahNum: currentAyah,
         isPlaying: isPlaying,
@@ -182,7 +333,6 @@ class AudioManager {
                   ? "الآية $currentAyah"
                   : "Ayah $currentAyah")
             : "Full Surah Recitation",
-        isLoading: false,
       );
     });
 
@@ -210,7 +360,7 @@ class AudioManager {
         }
 
         if (detectedAyah > 0 && detectedAyah != playState.value.ayahNum) {
-          playState.value = AudioPlayState(
+          _setSurahPlayState(
             surahNum: _surahNum,
             ayahNum: detectedAyah,
             isPlaying: playState.value.isPlaying,
@@ -218,7 +368,6 @@ class AudioManager {
             subtitle: TranslationService.isArabic
                 ? "الآية $detectedAyah"
                 : "Ayah $detectedAyah",
-            isLoading: false,
           );
 
           _handleAutoBookmark(detectedAyah);
@@ -245,11 +394,11 @@ class AudioManager {
     }
 
     final ayah = _currentPlaylist[_currentIndex];
-    final reciter = _storage.getString(
-      'default_reciter',
-      defaultValue: 'ar.alafasy',
-    );
-    final quranScriptType = _storage.getString('quran_script_type', defaultValue: 'hafs');
+    _refreshActiveReciter();
+    final reciter = _activeReciterId;
+    final quranScriptType =
+        _storage?.getString('quran_script_type', defaultValue: 'hafs') ??
+        'hafs';
 
     final url = ApiService.buildAyahAudioUrl(
       ayah.number,
@@ -259,7 +408,7 @@ class AudioManager {
       quranScriptType: quranScriptType,
     );
 
-    playState.value = AudioPlayState(
+    _setSurahPlayState(
       surahNum: _surahNum,
       ayahNum: ayah.numberInSurah,
       isPlaying: true,
@@ -267,7 +416,6 @@ class AudioManager {
       subtitle: TranslationService.isArabic
           ? "الآية ${ayah.numberInSurah}"
           : "Ayah ${ayah.numberInSurah}",
-      isLoading: false,
     );
 
     final ayahCacheKey = 'ayah_${_surahNum}_${ayah.numberInSurah}_${reciter}_$quranScriptType.mp3';
@@ -308,10 +456,8 @@ class AudioManager {
     _currentPlaylist = ayahs;
     _currentIndex = (index >= 0 && index < ayahs.length) ? index : 0;
 
-    final reciter = _storage.getString(
-      'default_reciter',
-      defaultValue: 'ar.alafasy',
-    );
+    _refreshActiveReciter();
+    final reciter = _activeReciterId;
 
     isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
 
@@ -331,16 +477,14 @@ class AudioManager {
     int initialAyahNum = 0,
   }) async {
     _isPerAyahSequenceMode = false;
-    final reciter = _storage.getString(
-      'default_reciter',
-      defaultValue: 'ar.alafasy',
-    );
+    _refreshActiveReciter();
+    final reciter = _activeReciterId;
 
     // Check if we can sync timestamps
     isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
 
     if (isTimestampSyncMode) {
-      playState.value = AudioPlayState(
+      _setSurahPlayState(
         surahNum: surahNum,
         ayahNum: initialAyahNum,
         isPlaying: false,
@@ -376,7 +520,7 @@ class AudioManager {
     final streamCacheKey = 'surah_${surahNum}_${reciter}_${isTimestampSyncMode ? "qdc" : "std"}.mp3';
     final cachedStreamFile = await AudioCacheService.instance.getCachedAudio(streamCacheKey);
 
-    playState.value = AudioPlayState(
+    _setSurahPlayState(
       surahNum: surahNum,
       ayahNum: isTimestampSyncMode ? initialAyahNum : 0,
       isPlaying: true,
@@ -384,7 +528,6 @@ class AudioManager {
       subtitle: isTimestampSyncMode
           ? "Syncing Ayah..."
           : "Full Surah Recitation",
-      isLoading: false,
     );
 
     try {
@@ -419,13 +562,12 @@ class AudioManager {
       }
     } catch (e) {
       debugPrint('AudioManager.playSurahWithSync error: $e');
-      playState.value = AudioPlayState(
+      _setSurahPlayState(
         surahNum: surahNum,
         ayahNum: 0,
         isPlaying: false,
         title: surahName,
         subtitle: "Playback error",
-        isLoading: false,
       );
     }
   }
@@ -433,10 +575,8 @@ class AudioManager {
   void playSurah(int surahNum, String surahName, List<Ayah> ayahs) async {
     _currentPlaylist = ayahs;
     _currentIndex = 0;
-    final reciter = _storage.getString(
-      'default_reciter',
-      defaultValue: 'ar.alafasy',
-    );
+    _refreshActiveReciter();
+    final reciter = _activeReciterId;
 
     isTimestampSyncMode = QdcAudioService.getQdcReciterId(reciter) != null;
 
@@ -452,6 +592,8 @@ class AudioManager {
 
   void playAdhan(String adhanPath) async {
     try {
+      _activeReciterId = '';
+      _activeReciterName = '';
       await _player.stop();
       playState.value = AudioPlayState(
         surahNum: 0,
@@ -480,6 +622,7 @@ class AudioManager {
     if (state == PlayerState.playing) {
       await _player.pause();
     } else if (state == PlayerState.paused) {
+      _refreshActiveReciter();
       await _player.resume();
     } else if (state == PlayerState.completed || state == PlayerState.stopped) {
       if (isTimestampSyncMode && _currentTimestamps != null) {
@@ -488,10 +631,8 @@ class AudioManager {
             : 1;
         playSurahWithSync(_surahNum, _surahName, initialAyahNum: startAyah);
       } else {
-        final reciter = _storage.getString(
-          'default_reciter',
-          defaultValue: 'ar.alafasy',
-        );
+        _refreshActiveReciter();
+        final reciter = _activeReciterId;
         final url = ApiService.buildSurahAudioUrl(_surahNum, reciter: reciter);
         final localPath = await QuranDownloadService.instance.getLocalSurahPath(_surahNum, reciter);
         final streamCacheKey = 'surah_${_surahNum}_${reciter}_std.mp3';
@@ -557,7 +698,7 @@ class AudioManager {
       if (_currentTimestamps!.containsKey(targetAyah)) {
         int startMs = _currentTimestamps![targetAyah]![0];
         await seekTo(Duration(milliseconds: startMs));
-        playState.value = AudioPlayState(
+        _setSurahPlayState(
           surahNum: _surahNum,
           ayahNum: targetAyah,
           isPlaying: playState.value.isPlaying,
@@ -565,7 +706,6 @@ class AudioManager {
           subtitle: TranslationService.isArabic
               ? "الآية $targetAyah"
               : "Ayah $targetAyah",
-          isLoading: false,
         );
         _handleAutoBookmark(targetAyah);
       }
@@ -601,7 +741,7 @@ class AudioManager {
         if (_currentTimestamps!.containsKey(targetAyah)) {
           int startMs = _currentTimestamps![targetAyah]![0];
           await seekTo(Duration(milliseconds: startMs));
-          playState.value = AudioPlayState(
+          _setSurahPlayState(
             surahNum: _surahNum,
             ayahNum: targetAyah,
             isPlaying: playState.value.isPlaying,
@@ -609,7 +749,6 @@ class AudioManager {
             subtitle: TranslationService.isArabic
                 ? "الآية $targetAyah"
                 : "Ayah $targetAyah",
-            isLoading: false,
           );
           _handleAutoBookmark(targetAyah);
         }
@@ -630,16 +769,14 @@ class AudioManager {
   }
 
   void _handleAutoBookmark(int ayahNum) {
-    final autoBookmark = _storage.getBool(
-      'setting_auto_bookmark',
-      defaultValue: true,
-    );
+    final autoBookmark =
+        _storage?.getBool('setting_auto_bookmark', defaultValue: true) ?? true;
     if (autoBookmark) {
       _autoBookmarkTimer?.cancel();
       final sNum = _surahNum;
       final sName = _surahName;
       _autoBookmarkTimer = Timer(const Duration(milliseconds: 1500), () {
-        _storage.addBookmark(sNum, sName, ayahNum);
+        _storage?.addBookmark(sNum, sName, ayahNum);
       });
     }
   }
@@ -648,19 +785,23 @@ class AudioManager {
     _isPerAyahSequenceMode = false;
     _surahNum = 0;
     _surahName = '';
+    _activeReciterId = '';
+    _activeReciterName = '';
     _currentPlaylist = [];
     _currentIndex = 0;
     isTimestampSyncMode = false;
     _currentTimestamps = null;
     final pos = await _player.getCurrentPosition();
     if (pos != null) {
-      await _storage.saveLastAudioTimestamp(pos.inMilliseconds);
+      await _storage?.saveLastAudioTimestamp(pos.inMilliseconds);
     }
     await _player.stop();
     positionNotifier.value = Duration.zero;
     durationNotifier.value = Duration.zero;
     playState.value = AudioPlayState();
     _stopNativeMediaService();
-    _notificationService.cancelAudioMediaNotification();
+    if (!Platform.isAndroid) {
+      _notificationService.cancelAudioMediaNotification();
+    }
   }
 }
