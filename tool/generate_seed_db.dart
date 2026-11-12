@@ -137,7 +137,7 @@ Future<void> main() async {
     ''');
 
     print('Reading Surahs asset...');
-    final surahsFile = File('assets/quran/surahs.json');
+    final surahsFile = File('tool/seed_data/surahs.json');
     final List<dynamic> surahs = jsonDecode(await surahsFile.readAsString());
     var batch = db.batch();
     for (final s in surahs) {
@@ -154,7 +154,7 @@ Future<void> main() async {
     print('Inserted ${surahs.length} surahs.');
 
     print('Reading Hafs Quran asset (14MB)...');
-    final hafsFile = File('assets/quran/quran_hafs.json');
+    final hafsFile = File('tool/seed_data/quran_hafs.json');
     final List<dynamic> quranData = jsonDecode(await hafsFile.readAsString());
 
     print('Populating ayahs...');

@@ -8,7 +8,7 @@ extension SurahReaderBookmarks on _SurahReaderScreenState {
       orElse: () => {},
     );
     if (mounted) {
-      setState(() {
+      updateState(() {
         _isBookmarked = b.isNotEmpty;
         _bookmarkedAyahNumber = b.isNotEmpty ? b['ayahNumber'] as int? : null;
       });
@@ -22,7 +22,7 @@ extension SurahReaderBookmarks on _SurahReaderScreenState {
         ayahNumber: ayahNum,
       );
       if (!mounted) return;
-      setState(() {
+      updateState(() {
         _isBookmarked = false;
         _bookmarkedAyahNumber = null;
       });
@@ -43,7 +43,7 @@ extension SurahReaderBookmarks on _SurahReaderScreenState {
       ayahNum,
     );
     if (!mounted) return;
-    setState(() {
+    updateState(() {
       _isBookmarked = true;
       _bookmarkedAyahNumber = ayahNum;
     });

@@ -16,8 +16,6 @@ class FiqhCategory {
   });
 
   String getTitle(bool isArabic) => isArabic ? titleAr : titleEn;
-  String getDescription(bool isArabic) =>
-      isArabic ? descriptionAr : descriptionEn;
 }
 
 class FiqhEvidence {

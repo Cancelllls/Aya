@@ -59,6 +59,10 @@ class _HadithScreenState extends State<HadithScreen> {
     });
   }
 
+  void updateState(VoidCallback fn) {
+    if (mounted) setState(fn);
+  }
+
   void _autoClearHighlight() {
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _highlightedHadithNumber = null);

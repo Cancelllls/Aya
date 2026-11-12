@@ -172,22 +172,4 @@ class BackupService {
       return null;
     }
   }
-
-  /// Read from the default backup location (app documents).
-  static Future<String?> readDefaultBackup() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/aya_backup.json');
-    if (!await file.exists()) {
-      // Also check Downloads
-      final dlDir = Directory('/storage/emulated/0/Download');
-      if (await dlDir.exists()) {
-        final dlFile = File('${dlDir.path}/aya_backup.json');
-        if (await dlFile.exists()) {
-          return await dlFile.readAsString();
-        }
-      }
-      return null;
-    }
-    return await file.readAsString();
-  }
 }

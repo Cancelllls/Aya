@@ -5,23 +5,41 @@ import '../models/quran_models.dart';
 class LocalQuranService {
   static final Map<String, List<dynamic>> _data = {};
 
+  static const Set<String> _qaloonEquivalentScripts = {
+    'bazzi',
+    'duri',
+    'hisham',
+    'ibn-dhakwan',
+    'qaloon',
+    'qunbul',
+    'shuba',
+    'susi',
+  };
+
   static Future<void> _loadData(String scriptType) async {
-    if (!_data.containsKey(scriptType)) {
-      try {
-        final jsonStr = await rootBundle.loadString(
-          'assets/quran/$scriptType.json',
+    if (_data.containsKey(scriptType)) return;
+    final assetScript =
+        _qaloonEquivalentScripts.contains(scriptType) ? 'qaloon' : scriptType;
+    if (_data.containsKey(assetScript)) {
+      _data[scriptType] = _data[assetScript]!;
+      return;
+    }
+    try {
+      final jsonStr = await rootBundle.loadString(
+        'assets/quran/$assetScript.json',
+      );
+      final decoded = json.decode(jsonStr) as List<dynamic>;
+      _data[assetScript] = decoded;
+      _data[scriptType] = decoded;
+    } catch (e) {
+      // Fallback to warsh if not found
+      if (!_data.containsKey('warsh')) {
+        final warshStr = await rootBundle.loadString(
+          'assets/quran/warsh.json',
         );
-        _data[scriptType] = json.decode(jsonStr);
-      } catch (e) {
-        // Fallback to warsh if not found
-        if (!_data.containsKey('warsh')) {
-          final warshStr = await rootBundle.loadString(
-            'assets/quran/warsh.json',
-          );
-          _data['warsh'] = json.decode(warshStr);
-        }
-        _data[scriptType] = _data['warsh']!;
+        _data['warsh'] = json.decode(warshStr);
       }
+      _data[scriptType] = _data['warsh']!;
     }
   }
 

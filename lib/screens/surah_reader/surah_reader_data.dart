@@ -6,10 +6,11 @@ extension SurahReaderData on _SurahReaderScreenState {
     StateSetter? modalSetState,
   }) async {
     if (scriptType == 'hafs') {
-      if (mounted)
-        setState(() {
+      if (mounted) {
+        updateState(() {
           _dynamicReciters = [];
         });
+      }
       if (modalSetState != null) modalSetState(() {});
       return;
     }
@@ -47,7 +48,7 @@ extension SurahReaderData on _SurahReaderScreenState {
     }
 
     if (mounted) {
-      setState(() => _isLoadingReciters = true);
+      updateState(() => _isLoadingReciters = true);
       if (modalSetState != null) modalSetState(() {});
     }
     try {
@@ -56,7 +57,7 @@ extension SurahReaderData on _SurahReaderScreenState {
       );
 
       if (mounted) {
-        setState(() {
+        updateState(() {
           _dynamicReciters = filteredReciters;
           _dynamicReciters.sort(
             (a, b) => (a['name'] as String).compareTo(b['name'] as String),

@@ -9,7 +9,6 @@ import 'storage_service.dart';
 import 'translation_service.dart';
 import '../models/offline_surahs.dart';
 import 'qdc_audio_service.dart';
-import 'notification_service.dart';
 import 'audio_cache_service.dart';
 import 'quran_download_service.dart';
 import 'reciters_cache_service.dart';
@@ -56,7 +55,6 @@ class AudioManager {
   String _activeReciterId = '';
   String _activeReciterName = '';
   StorageService? _storage;
-  final NotificationService _notificationService = NotificationService();
   Timer? _autoBookmarkTimer;
 
   String? _lastNativeTitle;
@@ -127,27 +125,8 @@ class AudioManager {
       final state = playState.value;
       if (state.isPlaying || state.isLoading || state.title.isNotEmpty) {
         _syncNativeMediaService(state);
-        if (!Platform.isAndroid) {
-          _notificationService.showAudioMediaNotification(
-            title: resolveNativeTrackTitle(
-              surahNum: state.surahNum,
-              fallbackTitle: state.title,
-              isArabic: TranslationService.isArabic,
-            ),
-            subtitle: resolveNativeArtistName(
-              reciterName: state.reciterName,
-              surahNum: state.surahNum,
-              fallbackSubtitle: state.subtitle,
-              isArabic: TranslationService.isArabic,
-            ),
-            isPlaying: state.isPlaying,
-          );
-        }
       } else {
         _stopNativeMediaService();
-        if (!Platform.isAndroid) {
-          _notificationService.cancelAudioMediaNotification();
-        }
       }
     });
   }
@@ -590,33 +569,6 @@ class AudioManager {
     }
   }
 
-  void playAdhan(String adhanPath) async {
-    try {
-      _activeReciterId = '';
-      _activeReciterName = '';
-      await _player.stop();
-      playState.value = AudioPlayState(
-        surahNum: 0,
-        ayahNum: 0,
-        isPlaying: true,
-        title: TranslationService.isArabic ? "أذان" : "Adhan",
-        subtitle: TranslationService.isArabic ? "وقت الصلاة" : "Prayer Time",
-        isLoading: false,
-      );
-
-      if (adhanPath.startsWith('assets/')) {
-        await _player.play(AssetSource(adhanPath.substring(7)));
-      } else {
-        final file = File(adhanPath);
-        if (await file.exists()) {
-          await _player.play(DeviceFileSource(adhanPath));
-        }
-      }
-    } catch (e) {
-      print('Error playing Adhan: $e');
-    }
-  }
-
   Future<void> togglePlayPause() async {
     final state = _player.state;
     if (state == PlayerState.playing) {
@@ -800,8 +752,5 @@ class AudioManager {
     durationNotifier.value = Duration.zero;
     playState.value = AudioPlayState();
     _stopNativeMediaService();
-    if (!Platform.isAndroid) {
-      _notificationService.cancelAudioMediaNotification();
-    }
   }
 }

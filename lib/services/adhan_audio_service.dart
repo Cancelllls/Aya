@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
-
-enum DownloadStatus { notDownloaded, downloading, downloaded }
+import 'package:flutter/foundation.dart' show VoidCallback;
 
 class AdhanAudioService {
   AdhanAudioService._();
@@ -33,75 +33,65 @@ class AdhanAudioService {
   };
 
   AudioPlayer? _previewPlayer;
+  StreamSubscription<void>? _completeSub;
 
-  Future<void> init() async {
-    // No-op: files are bundled as assets
-  }
-
-  Future<bool> downloadReciterAudio(
-    String reciterId, {
-    bool isFajr = false,
+  Future<void> _playAsset(
+    String assetPath, {
+    VoidCallback? onComplete,
   }) async {
-    return true; // Files are bundled
-  }
-
-  Future<bool> downloadPreAdhanVoice() async {
-    return true; // Files are bundled
-  }
-
-  Future<bool> isReciterDownloaded(
-    String reciterId, {
-    bool isFajr = false,
-  }) async {
-    return true; // Always available
-  }
-
-  Future<bool> isPreAdhanDownloaded() async {
-    return true; // Always available
-  }
-
-  Future<void> playPreview(String reciterId, {bool isFajr = false}) async {
     await stopPreview();
-    _previewPlayer = AudioPlayer();
+    final player = AudioPlayer();
+    _previewPlayer = player;
+    _completeSub = player.onPlayerComplete.listen((_) {
+      if (_previewPlayer == player) {
+        onComplete?.call();
+      }
+    });
+    await player.play(AssetSource(assetPath));
+  }
 
-    final filename = isFajr
-        ? fajrReciterUrls[reciterId]
-        : standardReciterUrls[reciterId];
-    if (filename != null) {
-      await _previewPlayer!.play(AssetSource('audio/adhan/$filename'));
+  Future<void> playPreview(
+    String reciterId, {
+    bool isFajr = false,
+    VoidCallback? onComplete,
+  }) async {
+    final map = isFajr ? fajrReciterUrls : standardReciterUrls;
+    final filename =
+        map[reciterId] ??
+        (isFajr
+            ? 'adhan_fajr_meshary_al_fasy_kuwait.mp3'
+            : 'adhan_meshary_al_fasy_kuwait.mp3');
+    await _playAsset('audio/adhan/$filename', onComplete: onComplete);
+  }
+
+  Future<void> playNotificationTonePreview(
+    String tone, {
+    VoidCallback? onComplete,
+  }) async {
+    if (tone == 'system') {
+      await stopPreview();
+      return; // System sound cannot be played via asset
     }
-  }
-
-  Future<void> playPreAdhanPreview([String lang = 'ar']) async {
-    await playNotificationTonePreview('call');
-  }
-
-  Future<void> playNotificationTonePreview(String tone) async {
-    await stopPreview();
-    _previewPlayer = AudioPlayer();
-
     String assetPath;
     switch (tone) {
-      case 'call':
-        assetPath = 'audio/adhan/prayer_reminder_call.mp3';
-        break;
       case 'takbeer':
         assetPath = 'audio/adhan/adhan_meshary_al_fasy_kuwait.mp3';
         break;
       case 'salati':
         assetPath = 'audio/adhan/pre_adhan_ela_salati.mp3';
         break;
-      case 'system':
-        return; // System sound cannot be played via asset
+      case 'call':
       case 'chime':
       default:
-        assetPath = 'audio/default_pre_adhan.mp3';
+        assetPath = 'audio/adhan/prayer_reminder_call.mp3';
         break;
     }
-    await _previewPlayer!.play(AssetSource(assetPath));
+    await _playAsset(assetPath, onComplete: onComplete);
   }
 
   Future<void> stopPreview() async {
+    await _completeSub?.cancel();
+    _completeSub = null;
     if (_previewPlayer != null) {
       try {
         await _previewPlayer!.stop();
@@ -128,13 +118,5 @@ class AdhanAudioService {
     return (defaultReciter != null && defaultReciter.isNotEmpty)
         ? defaultReciter
         : 'mishary';
-  }
-
-  Future<String> getLocalPath(String reciterId, bool isFajr) async {
-    return ''; // Not needed anymore
-  }
-
-  Future<String> getPreAdhanLocalPath(String lang) async {
-    return ''; // Not needed anymore
   }
 }

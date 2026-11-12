@@ -227,42 +227,7 @@ class ApiService {
     return list;
   }
 
-  /// Fetch translation text for a surah and update [ayahs] list in-place.
-  static Future<void> fetchTranslationForSurah(
-    int surahNumber,
-    List<Ayah> ayahs, {
-    required String translationEdition,
-  }) async {
-    final db = await DatabaseService.getInstance();
-    if (translationEdition == 'en.sahih') {
-      final rows = await db.getAyahsForSurah(surahNumber);
-      final lookup = <int, String>{};
-      for (final r in rows) {
-        lookup[r['ayah_number'] as int] = cleanTranslationText(
-          (r['text_english'] as String?) ?? '',
-        );
-      }
-      for (final a in ayahs) {
-        if (lookup.containsKey(a.numberInSurah)) {
-          a.translation = lookup[a.numberInSurah]!;
-        }
-      }
-      return;
-    }
-
-    final map = await db.getExtraTranslationsForSurah(
-      surahNumber,
-      translationEdition,
-    );
-    if (map.isNotEmpty) {
-      for (final a in ayahs) {
-        if (map.containsKey(a.numberInSurah) &&
-            map[a.numberInSurah]!.isNotEmpty) {
-          a.translation = cleanTranslationText(map[a.numberInSurah]!);
-        }
-      }
-    }
-  }
+  /// Fetch a single Ayah's text and translation
 
   /// Clean HTML tags and common entities from Tafsir text.
   static String _cleanTafsirHtml(String raw) {
@@ -321,41 +286,35 @@ class ApiService {
     _tafsirMemoryCache[key] = text;
   }
 
+  /// Resolves bundled tafsir asset IDs where equivalent editions share a JSON file.
+  static String resolveBundledTafsirAssetId(String editionId) =>
+      editionId == 'ar.miqbas' ? 'ar.waseet' : editionId;
+
   static Future<String> _loadFromBundledTafsirAsset(
     String editionId,
     int surahNumber,
     int ayahNumber,
   ) async {
     try {
-      if (!_bundledTafsirAssetCache.containsKey(editionId)) {
+      final effectiveId = resolveBundledTafsirAssetId(editionId);
+      if (!_bundledTafsirAssetCache.containsKey(effectiveId)) {
         if (_bundledTafsirAssetCache.length >= _maxBundledTafsirAssetEntries) {
           _bundledTafsirAssetCache.remove(_bundledTafsirAssetCache.keys.first);
         }
         final jsonStr = await rootBundle.loadString(
-          'assets/tafsir/$editionId.json',
+          'assets/tafsir/$effectiveId.json',
         );
-        _bundledTafsirAssetCache[editionId] =
+        _bundledTafsirAssetCache[effectiveId] =
             jsonDecode(jsonStr) as Map<String, dynamic>;
       }
       final surahData =
-          _bundledTafsirAssetCache[editionId]?[surahNumber.toString()]
+          _bundledTafsirAssetCache[effectiveId]?[surahNumber.toString()]
               as Map<String, dynamic>?;
       if (surahData != null) {
         return (surahData[ayahNumber.toString()] as String? ?? '').trim();
       }
     } catch (_) {}
     return '';
-  }
-
-  /// Returns true if the tafsir for this ayah is already in the memory cache.
-  static bool isTafsirCached(
-    String editionId,
-    int surahNumber,
-    int ayahNumber,
-  ) {
-    return _tafsirMemoryCache.containsKey(
-      '$editionId:$surahNumber:$ayahNumber',
-    );
   }
 
   /// Fetch specific Tafsir text for a single Ayah given an edition ID.
@@ -443,76 +402,6 @@ class ApiService {
         ? 'Tafsir for this verse is unavailable offline. Connect to the internet once to load it.'
         : 'التفسير غير متوفر لهذه الآية دون إنترنت. يرجى الاتصال بالإنترنت لتحميله.';
     return fallbackMsg;
-  }
-
-  /// Download an entire Tafsir edition (all 114 surahs) for 100% offline access.
-  static Future<void> downloadFullTafsirEdition(
-    String editionId, {
-    void Function(double progress)? onProgress,
-    bool Function()? isCancelled,
-  }) async {
-    final db = await DatabaseService.getInstance();
-    if (editionId == 'ar.muyassar') {
-      if (onProgress != null) onProgress(1.0);
-      return; // Already bundled locally!
-    }
-
-    final tafsirMap = {
-      'ar.jalalayn': 91,
-      'ar.qurtubi': 90,
-      'ar.miqbas': 93,
-      'ar.waseet': 94,
-      'ar.baghawi': 94,
-      'en.ibnkathir': 169,
-      'en.jalalayn': 171,
-      'en.maududi': 168,
-    };
-    final tId = tafsirMap[editionId] ?? 16;
-    final List<Map<String, dynamic>> batchItems = [];
-
-    for (int surah = 1; surah <= 114; surah++) {
-      if (isCancelled?.call() == true) {
-        break;
-      }
-      try {
-        final url = Uri.parse(
-          'https://api.quran.com/api/v4/tafsirs/$tId/by_chapter/$surah?per_page=300',
-        );
-        final res = await http.get(url).timeout(const Duration(seconds: 15));
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body);
-          final tafsirsList = data['tafsirs'] as List? ?? [];
-          for (final t in tafsirsList) {
-            final verseKey = t['verse_key'] as String? ?? '';
-            final parts = verseKey.split(':');
-            if (parts.length == 2) {
-              final sNum = int.tryParse(parts[0]) ?? surah;
-              final aNum = int.tryParse(parts[1]) ?? 1;
-              final rawText = t['text'] as String? ?? '';
-              final cleanText = _cleanTafsirHtml(rawText);
-              if (cleanText.isNotEmpty) {
-                batchItems.add({
-                  'edition_id': editionId,
-                  'surah_number': sNum,
-                  'ayah_number': aNum,
-                  'text': cleanText,
-                });
-              }
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Tafsir download error surah $surah: $e');
-      }
-
-      if (onProgress != null) {
-        onProgress(surah / 114.0);
-      }
-    }
-
-    if (batchItems.isNotEmpty) {
-      await db.saveExtraTafsirsBatch(editionId, batchItems);
-    }
   }
 
   // ─── Reverse Geocoding ───────────────────────────────────────────────────
@@ -717,13 +606,5 @@ class ApiService {
           : '$server/$formattedNumber.mp3';
     }
     return 'https://cdn.islamic.network/quran/audio/128/$reciter/$surahNumber.mp3';
-  }
-
-  static String buildSurahAudioUrlForQiraat(
-    int surahNumber, {
-    String quranScriptType = 'hafs',
-    String reciter = 'ar.alafasy',
-  }) {
-    return buildSurahAudioUrl(surahNumber, reciter: reciter);
   }
 }

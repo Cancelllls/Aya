@@ -33,7 +33,6 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
     _loadReciterLabel();
     _loadSurahList();
     QuranDownloadService.instance.initStates(_reciter);
-    QuranDownloadService.instance.calculateCounts(widget.storage);
     QuranDownloadService.instance.addListener(_onDownloadServiceUpdate);
   }
 
@@ -388,14 +387,9 @@ class _QuranDownloadScreenState extends State<QuranDownloadScreen> {
                                         );
                                         _loadReciterLabel();
                                         QuranDownloadService.instance
-                                            .calculateCounts(widget.storage);
-                                        QuranDownloadService.instance
                                             .initStates(id);
                                       },
                                     ),
-                                  );
-                                  QuranDownloadService.instance.calculateCounts(
-                                    widget.storage,
                                   );
                                   await _updateTotalSpace();
                                 },

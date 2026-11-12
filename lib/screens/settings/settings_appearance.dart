@@ -14,7 +14,7 @@ extension SettingsAppearanceSection on _SettingsScreenState {
   }
 
   Future<void> _changeFirstDayOfWeek(int day) async {
-    setState(() {
+    updateState(() {
       _firstDayOfWeek = day;
     });
     await widget.storage.setInt('first_day_of_week', day);

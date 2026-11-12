@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import '../../services/storage_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/adhan_audio_service.dart';
@@ -21,7 +20,6 @@ class AdhanSettingsScreen extends StatefulWidget {
 class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   StorageService? _storage;
   bool _loading = true;
-  AudioPlayer? _previewPlayer;
   String? _previewingReciter;
   String? _previewingTone;
   Timer? _debounceRescheduleTimer;
@@ -90,7 +88,6 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   Future<void> _initStorage() async {
     _storage = await StorageService.getInstance();
-    _previewPlayer = AudioPlayer();
     await _loadHealthStatus();
     if (mounted) {
       setState(() {
@@ -111,7 +108,6 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   @override
   void dispose() {
     _debounceRescheduleTimer?.cancel();
-    _previewPlayer?.dispose();
     AdhanAudioService.instance.stopPreview();
     super.dispose();
   }
@@ -124,13 +120,38 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           _previewingTone = null;
         });
       }
-    } else {
-      if (mounted) {
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _previewingReciter = null;
+        _previewingTone = tone;
+      });
+    }
+    try {
+      await AdhanAudioService.instance.playNotificationTonePreview(
+        tone,
+        onComplete: () {
+          if (mounted && _previewingTone == tone) {
+            setState(() {
+              _previewingTone = null;
+            });
+          }
+        },
+      );
+      if (tone == 'system' && mounted) {
         setState(() {
-          _previewingTone = tone;
+          _previewingTone = null;
         });
       }
-      await AdhanAudioService.instance.playNotificationTonePreview(tone);
+    } catch (e) {
+      debugPrint('Error playing tone preview: $e');
+      if (mounted && _previewingTone == tone) {
+        setState(() {
+          _previewingTone = null;
+        });
+      }
     }
   }
 
@@ -142,37 +163,39 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   Future<void> _togglePreview(String reciterKey, bool isFajr) async {
     if (_previewingReciter == reciterKey) {
-      await _previewPlayer?.stop();
-      setState(() {
-        _previewingReciter = null;
-      });
+      await AdhanAudioService.instance.stopPreview();
+      if (mounted) {
+        setState(() {
+          _previewingReciter = null;
+        });
+      }
       return;
     }
 
     setState(() {
+      _previewingTone = null;
       _previewingReciter = reciterKey;
     });
 
     try {
-      final map = isFajr
-          ? AdhanAudioService.fajrReciterUrls
-          : AdhanAudioService.standardReciterUrls;
-      final fileName =
-          map[reciterKey] ??
-          (isFajr
-              ? 'adhan_fajr_meshary_al_fasy_kuwait.mp3'
-              : 'adhan_meshary_al_fasy_kuwait.mp3');
-      await _previewPlayer?.stop();
-      await _previewPlayer?.setAsset('assets/audio/adhan/$fileName');
-      await _previewPlayer?.play();
+      await AdhanAudioService.instance.playPreview(
+        reciterKey,
+        isFajr: isFajr,
+        onComplete: () {
+          if (mounted && _previewingReciter == reciterKey) {
+            setState(() {
+              _previewingReciter = null;
+            });
+          }
+        },
+      );
     } catch (e) {
       debugPrint('Error playing preview: $e');
-    }
-
-    if (mounted) {
-      setState(() {
-        _previewingReciter = null;
-      });
+      if (mounted && _previewingReciter == reciterKey) {
+        setState(() {
+          _previewingReciter = null;
+        });
+      }
     }
   }
 

@@ -91,14 +91,6 @@ class HadithDatabaseService {
     });
   }
 
-  Future<void> deleteHadithBook(String bookId, String lang) async {
-    final dbBookId = '${lang}_$bookId';
-    await _db.transaction((txn) async {
-      await txn.delete('hadiths', where: 'book_id = ?', whereArgs: [dbBookId]);
-      await txn.delete('hadith_books', where: 'book_id = ?', whereArgs: [dbBookId]);
-    });
-  }
-
   Future<List<Map<String, dynamic>>> getHadiths(
     String bookId, String lang, int limit, int offset,
   ) async {
@@ -218,24 +210,5 @@ class HadithDatabaseService {
         whereArgs: [langPrefix, p, p],
         orderBy: 'hadith_number ASC', limit: limit);
     }
-  }
-
-  Future<String?> getCachedTranslation(String textHash) async {
-    final results = await _db.query('hadith_translations',
-      where: 'text_hash = ?', whereArgs: [textHash], limit: 1);
-    if (results.isEmpty) return null;
-    return results.first['translated_text'] as String?;
-  }
-
-  Future<void> cacheTranslation(
-    String textHash, String sourceText, String translatedText, String targetLang,
-  ) async {
-    await _db.insert('hadith_translations', {
-      'text_hash': textHash,
-      'source_text': sourceText,
-      'translated_text': translatedText,
-      'target_lang': targetLang,
-      'created_at': DateTime.now().millisecondsSinceEpoch,
-    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

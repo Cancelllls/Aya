@@ -13,18 +13,12 @@ import '../services/translation_service.dart';
 /// On first access the service fetches all riwayat then all reciters
 /// for each riwayah with controlled concurrency.  Results are written
 /// to `reciters_cache.json` in the app documents directory.
-///
-/// Callers that currently import the 405 KB `reciters_data.dart` bundle
-/// should route through this service instead so the list stays up to date.
 class RecitersCacheService {
   RecitersCacheService._();
 
   static final ValueNotifier<bool> loadingNotifier = ValueNotifier(false);
 
   static List<Map<String, dynamic>>? _allReciters;
-
-  /// True once the cache has been loaded (from disk or network).
-  static bool get isLoaded => _allReciters != null;
 
   // ── Public API ──────────────────────────────────────────────────────────
 

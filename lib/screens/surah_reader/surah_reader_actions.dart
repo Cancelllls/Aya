@@ -305,7 +305,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
   }
 
   void _changeFontSize(double delta) {
-    setState(() {
+    updateState(() {
       _fontSizeMultiplier = (_fontSizeMultiplier + delta).clamp(0.8, 1.8);
     });
   }
@@ -421,7 +421,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
   }
 
   void _toggleAyahSelection(int num) {
-    setState(() {
+    updateState(() {
       if (_selectedAyahs.contains(num)) {
         if (_selectedAyahs.length == 1) {
           _selectedAyahs.clear();
@@ -467,7 +467,7 @@ extension SurahReaderActions on _SurahReaderScreenState {
   }
 
   void _clearAyahSelection() {
-    setState(() {
+    updateState(() {
       _selectedAyahs.clear();
     });
   }

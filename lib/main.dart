@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:dorar_hadith_flutter/dorar_hadith_flutter.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/storage_service.dart';
 import 'services/translation_service.dart';
@@ -29,11 +28,6 @@ void main() async {
 
   // Migrate huge caches from SharedPreferences to Files to fix startup memory lag
   await ApiService.migrateCacheToFiles();
-
-  // Initialize Android Alarm Manager (Android only)
-  try {
-    await AndroidAlarmManager.initialize();
-  } catch (_) {}
 
   final storage = await StorageService.getInstance();
   TranslationService.setLanguage(

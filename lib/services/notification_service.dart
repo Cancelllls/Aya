@@ -6,18 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
-import 'api_service.dart';
 import 'translation_service.dart';
 import 'quran_verses.dart';
 import 'adhan_audio_service.dart';
 import 'database_service.dart';
 import '../core/adhan_native_controller.dart';
-import 'offline_prayer_service.dart';
-import 'audio_manager.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(
@@ -53,74 +49,6 @@ void notificationTapBackground(
     try {
       const MethodChannel('com.quran.aya/system').invokeMethod('stopAdhan');
     } catch (_) {}
-  } else if (notificationResponse.actionId == 'action_toggle_audio') {
-    try {
-      AudioManager.instance.togglePlayPause();
-    } catch (_) {}
-  } else if (notificationResponse.actionId == 'action_stop_audio') {
-    try {
-      AudioManager.instance.stop();
-    } catch (_) {}
-  }
-}
-
-@pragma('vm:entry-point')
-void backgroundPrayerTimesUpdateCallback() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    final storage = await StorageService.getInstance();
-    final loc = storage.getLocation();
-    if (loc['source'] == 'gps') {
-      try {
-        Position? position = await ApiService.getBestLocation();
-        double lat;
-        double lng;
-        String city;
-        String country;
-
-        if (position != null) {
-          lat = position.latitude;
-          lng = position.longitude;
-          final cityCountry = await ApiService.reverseGeocode(lat, lng);
-          city = cityCountry['city'] ?? 'My Location';
-          country = cityCountry['country'] ?? 'GPS';
-        } else {
-          throw Exception('GPS position unavailable');
-        }
-
-        await storage.setLocation(city, country, lat, lng, 'gps');
-        final method = storage.getInt('calc_method', defaultValue: 0);
-        final school = storage.getInt('asr_method', defaultValue: 0);
-        final prayerData = await ApiService.fetchPrayerTimes(
-          latitude: lat,
-          longitude: lng,
-          method: method,
-          school: school,
-        );
-        await NotificationService().schedulePrayerAlarms(prayerData, storage);
-      } catch (e) {
-        // Fallback to offline prayer times when in deep Doze mode or network fails
-        double lat = loc['latitude'] as double? ?? 0.0;
-        double lng = loc['longitude'] as double? ?? 0.0;
-        if (lat != 0.0 && lng != 0.0) {
-          final method = storage.getInt('calc_method', defaultValue: 0);
-          final school = storage.getInt('asr_method', defaultValue: 0);
-          final offlineData = await OfflinePrayerService.getPrayerTimes(
-            latitude: lat,
-            longitude: lng,
-            method: method,
-            school: school,
-          );
-          await NotificationService().schedulePrayerAlarms(
-            offlineData,
-            storage,
-          );
-        }
-      }
-    }
-  } catch (e) {
-    // ignore: avoid_print
-    print('Error in background location prayer times update callback: $e');
   }
 }
 
@@ -128,10 +56,6 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
-
-  String? _lastAudioTitle;
-  String? _lastAudioSubtitle;
-  bool? _lastAudioIsPlaying;
 
   bool _isScheduling = false;
   bool _pendingReschedule = false;
@@ -290,13 +214,13 @@ class NotificationService {
       );
       await androidPlugin.createNotificationChannel(
         const AndroidNotificationChannel(
-          'pre_adhan_tone_chime_v1',
+          'pre_adhan_tone_chime_v2',
           'Pre-Adhan Chime Alerts',
           description: 'Gentle chime reminders before prayer time',
           importance: Importance.max,
           enableVibration: true,
           audioAttributesUsage: AudioAttributesUsage.alarm,
-          sound: RawResourceAndroidNotificationSound('default_pre_adhan'),
+          sound: RawResourceAndroidNotificationSound('prayer_reminder_call'),
         ),
       );
       await androidPlugin.createNotificationChannel(
@@ -376,14 +300,6 @@ class NotificationService {
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         if (response.actionId == 'action_stop_adhan') {
           stopActiveAdhan();
-          return;
-        }
-        if (response.actionId == 'action_toggle_audio') {
-          AudioManager.instance.togglePlayPause();
-          return;
-        }
-        if (response.actionId == 'action_stop_audio') {
-          AudioManager.instance.stop();
           return;
         }
         if (response.actionId == 'action_prayed' ||
@@ -595,7 +511,7 @@ class NotificationService {
           case 'chime':
           default:
             return const RawResourceAndroidNotificationSound(
-              'default_pre_adhan',
+              'prayer_reminder_call',
             );
         }
       }
@@ -613,7 +529,7 @@ class NotificationService {
             return 'pre_adhan_system_channel_v1';
           case 'chime':
           default:
-            return 'pre_adhan_tone_chime_v1';
+            return 'pre_adhan_tone_chime_v2';
         }
       }
 
@@ -1617,77 +1533,5 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return tz.TZDateTime.from(scheduled, tz.local);
-  }
-
-  Future<void> showAudioMediaNotification({
-    required String title,
-    required String subtitle,
-    required bool isPlaying,
-  }) async {
-    if (_lastAudioTitle == title &&
-        _lastAudioSubtitle == subtitle &&
-        _lastAudioIsPlaying == isPlaying) {
-      return;
-    }
-    _lastAudioTitle = title;
-    _lastAudioSubtitle = subtitle;
-    _lastAudioIsPlaying = isPlaying;
-
-    final isAr = TranslationService.isArabic;
-
-    final androidDetails = AndroidNotificationDetails(
-      'aya_media_playback',
-      'Media Playback / مشغل الصوت',
-      channelDescription:
-          'Lock screen and notification controls for Quran audio playback',
-      importance: Importance.high,
-      priority: Priority.high,
-      ongoing: isPlaying,
-      autoCancel: false,
-      showWhen: false,
-      playSound: false,
-      enableVibration: false,
-      onlyAlertOnce: true,
-      visibility: NotificationVisibility.public,
-      category: AndroidNotificationCategory.transport,
-      icon: 'ic_notification',
-      largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
-      color: const Color(0xFFE5C158),
-      actions: [
-        AndroidNotificationAction(
-          'action_toggle_audio',
-          isPlaying
-              ? (isAr ? 'إيقاف مؤقت' : 'Pause')
-              : (isAr ? 'تشغيل' : 'Play'),
-          showsUserInterface: false,
-        ),
-        AndroidNotificationAction(
-          'action_stop_audio',
-          isAr ? 'إنهاء' : 'Stop',
-          showsUserInterface: false,
-        ),
-      ],
-    );
-
-    final notificationDetails = NotificationDetails(android: androidDetails);
-
-    try {
-      await _notificationsPlugin.show(
-        id: 8888,
-        title: title,
-        body: subtitle,
-        notificationDetails: notificationDetails,
-        payload: 'audio_media_player',
-      );
-    } catch (_) {}
-  }
-
-  Future<void> cancelAudioMediaNotification() async {
-    _lastAudioTitle = null;
-    _lastAudioSubtitle = null;
-    _lastAudioIsPlaying = null;
-    try {
-      await _notificationsPlugin.cancel(id: 8888);
-    } catch (_) {}
   }
 }

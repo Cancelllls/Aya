@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart' show compute;
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'dart:io';
 import '../utils/text_helpers.dart';
 import 'hadith_database_service.dart';
@@ -11,7 +9,6 @@ import 'hadith_database_service.dart';
 class DatabaseService {
   static DatabaseService? _instance;
   static Database? _database;
-  static Future<void>? _seeding;
   static const int _version = 12;
   // Keep in sync with android/app/build.gradle.kts applicationId
   static const String _packageName = 'com.quran.aya';
@@ -417,7 +414,9 @@ class DatabaseService {
           )
         ''');
         await db.execute('CREATE INDEX idx_hadiths_book ON hadiths(book_id)');
-      } catch (e) {}
+      } catch (_) {
+        // Ignore if v5 tables already exist
+      }
     }
 
     if (oldVersion < 6) {
@@ -436,7 +435,9 @@ class DatabaseService {
             SELECT DISTINCT book_id FROM hadiths
           )
         ''');
-      } catch (e) {}
+      } catch (_) {
+        // Ignore best-effort v6 cleanup
+      }
     }
 
     if (oldVersion < 7) {
@@ -447,7 +448,9 @@ class DatabaseService {
         await db.execute(
           "DELETE FROM hadith_books WHERE book_id IN ('ara_muslim', 'eng_muslim')",
         );
-      } catch (e) {}
+      } catch (_) {
+        // Ignore best-effort v7 cleanup
+      }
     }
 
     if (oldVersion < 8) {
@@ -529,93 +532,9 @@ class DatabaseService {
     }
   }
 
-  static Future<void> _seedQuranData(Database db) async {
-    try {
-      final count = Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM surahs'),
-      );
-      if (count == 0) {
-        final String surahsStr = await rootBundle.loadString(
-          'assets/quran/surahs.json',
-        );
-        final List<dynamic> surahs = jsonDecode(surahsStr);
-        Batch batch = db.batch();
-        for (var s in surahs) {
-          batch.insert('surahs', {
-            'number': s['number'],
-            'name': s['name'],
-            'englishName': s['englishName'],
-            'englishNameTranslation': s['englishNameTranslation'],
-            'numberOfAyahs': s['numberOfAyahs'],
-            'revelationType': s['revelationType'],
-          });
-        }
-        await batch.commit(noResult: true);
-
-        final String ayahsStr = await rootBundle.loadString(
-          'assets/quran/quran_hafs.json',
-        );
-        final List<dynamic> quranData = await compute(_parseJsonList, ayahsStr);
-        batch = db.batch();
-        for (var editions in quranData) {
-          final arabic = editions[0]['ayahs'];
-          final english = editions[1]['ayahs'];
-          final tafsir = editions.length > 2 ? editions[2]['ayahs'] : null;
-
-          for (int i = 0; i < arabic.length; i++) {
-            final hizbQuarter = arabic[i]['hizbQuarter'] as int? ?? 1;
-            final calculatedHizb = ((hizbQuarter - 1) ~/ 4) + 1;
-            final page = arabic[i]['page'] as int? ?? 1;
-            batch.insert('ayahs', {
-              'surah_number': editions[0]['number'],
-              'ayah_number': arabic[i]['numberInSurah'],
-              'global_number': arabic[i]['number'],
-              'text_arabic': arabic[i]['text'],
-              'text_arabic_clean': stripTashkeel(
-                arabic[i]['text'],
-              ).toLowerCase(),
-              'text_english': english[i]['text'],
-              'tafsir': tafsir != null ? tafsir[i]['text'] : null,
-              'juz': arabic[i]['juz'],
-              'hizb': calculatedHizb,
-              'page': page,
-            });
-          }
-        }
-        await batch.commit(noResult: true);
-
-        // Populate ayahs_fts for instant full-text search
-        try {
-          await db.execute('''
-            CREATE VIRTUAL TABLE IF NOT EXISTS ayahs_fts USING fts5(
-              text_arabic_clean, text_english,
-              tokenize='unicode61 remove_diacritics 2'
-            )
-          ''');
-          await db.execute(
-            'INSERT INTO ayahs_fts(rowid, text_arabic_clean, text_english) '
-            'SELECT id, text_arabic_clean, text_english FROM ayahs',
-          );
-        } catch (_) {}
-      }
-    } catch (e) {
-      // Quran seed failed — will retry on next cold start
-    }
-  }
-
-  /// Seed Quran data lazily — on first surah open rather than cold start.
-  /// This avoids loading ~130 MB of bundled JSON into SQLite before the
-  /// splash screen even renders.
-  static Future<void> _ensureQuranSeeded() async {
-    if (_seeding != null) return _seeding!;
-    _seeding = _seedQuranData(_database!);
-    await _seeding;
-  }
-
   // ── Quran Data ─────────────────────────────────────────────
   Future<List<Map<String, dynamic>>> getSurahs() async {
     final db = _database!;
-    await _ensureQuranSeeded();
     return await db.query('surahs', orderBy: 'number ASC');
   }
 
@@ -624,7 +543,6 @@ class DatabaseService {
     bool includeTafsir = false,
   }) async {
     final db = _database!;
-    await _ensureQuranSeeded();
     final columns = includeTafsir
         ? null // all columns
         : <String>[
@@ -644,7 +562,6 @@ class DatabaseService {
   /// Fetch all ayahs for a standard 604-page Madinah Mushaf page.
   Future<List<Map<String, dynamic>>> getAyahsForPage(int pageNumber) async {
     final db = _database!;
-    await _ensureQuranSeeded();
     return await db.rawQuery(
       '''
       SELECT ayahs.id, ayahs.surah_number, ayahs.ayah_number, ayahs.global_number,
@@ -660,27 +577,11 @@ class DatabaseService {
     );
   }
 
-  /// Fetch standard Madinah Mushaf page number for a given ayah.
-  Future<int> getPageForAyah(int surahNumber, int ayahNumber) async {
-    final db = _database!;
-    await _ensureQuranSeeded();
-    final rows = await db.query(
-      'ayahs',
-      columns: ['page'],
-      where: 'surah_number = ? AND ayah_number = ?',
-      whereArgs: [surahNumber, ayahNumber],
-      limit: 1,
-    );
-    if (rows.isEmpty) return 1;
-    return (rows.first['page'] as int?) ?? 1;
-  }
-
   /// Fetch only tafsir text for a surah — used for lazy loading.
   Future<List<Map<String, dynamic>>> getTafsirForSurah(
     int surahNumber,
   ) async {
     final db = _database!;
-    await _ensureQuranSeeded();
     return await db.query(
       'ayahs',
       columns: ['ayah_number', 'tafsir'],
@@ -693,7 +594,6 @@ class DatabaseService {
   /// Fetch tafsir text for a single ayah — O(1) via idx_ayahs_surah (fix #2).
   Future<String> getTafsirForAyah(int surahNumber, int ayahNumber) async {
     final db = _database!;
-    await _ensureQuranSeeded();
     final rows = await db.query(
       'ayahs',
       columns: ['tafsir'],
@@ -707,7 +607,6 @@ class DatabaseService {
 
   Future<List<Map<String, dynamic>>> searchAyahs(String query) async {
     final db = _database!;
-    await _ensureQuranSeeded();
     final queryClean = stripTashkeel(query).toLowerCase().trim();
     if (queryClean.isEmpty) return [];
 
@@ -841,11 +740,6 @@ class DatabaseService {
     }
   }
 
-  Future<void> clearAllBookmarks() async {
-    final db = _database!;
-    await db.delete('bookmarks');
-  }
-
   // ── Custom Dhikrs ──────────────────────────────────────────
   Future<List<Map<String, dynamic>>> getCustomDhikrs() async {
     final db = _database!;
@@ -872,49 +766,9 @@ class DatabaseService {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> updateDhikrCount(String id, int count) async {
-    final db = _database!;
-    await db.update(
-      'custom_dhikrs',
-      {'current_count': count},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
   Future<void> deleteCustomDhikr(String id) async {
     final db = _database!;
     await db.delete('custom_dhikrs', where: 'id = ?', whereArgs: [id]);
-  }
-
-  Future<void> clearAllCustomDhikrs() async {
-    final db = _database!;
-    await db.delete('custom_dhikrs');
-  }
-
-  // ── Audio Downloads ────────────────────────────────────────
-  Future<bool> isAudioDownloaded(String reciterId, String type) async {
-    final db = _database!;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'audio_downloads',
-      where: 'reciter_id = ? AND audio_type = ?',
-      whereArgs: [reciterId, type],
-    );
-    return maps.isNotEmpty;
-  }
-
-  Future<void> markAudioDownloaded(
-    String reciterId,
-    String type,
-    String path,
-  ) async {
-    final db = _database!;
-    await db.insert('audio_downloads', {
-      'reciter_id': reciterId,
-      'audio_type': type,
-      'local_path': path,
-      'downloaded_at': DateTime.now().millisecondsSinceEpoch,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // ── Prayer Tracker ────────────────────────────────────────
@@ -1007,22 +861,6 @@ class DatabaseService {
     );
   }
 
-  Future<void> saveExtraTafsirsBatch(
-    String editionId,
-    List<Map<String, dynamic>> items,
-  ) async {
-    final db = _database!;
-    final batch = db.batch();
-    for (final item in items) {
-      batch.insert(
-        'extra_tafsirs',
-        item,
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    }
-    await batch.commit(noResult: true);
-  }
-
   Future<String?> getExtraTafsir(
     String editionId,
     int surahNumber,
@@ -1038,27 +876,6 @@ class DatabaseService {
     );
     if (rows.isEmpty) return null;
     return rows.first['text'] as String?;
-  }
-
-  Future<bool> isTafsirEditionDownloaded(String editionId) async {
-    if (editionId == 'ar.muyassar') return true;
-    final db = _database!;
-    final count = Sqflite.firstIntValue(
-      await db.rawQuery(
-        'SELECT COUNT(*) FROM extra_tafsirs WHERE edition_id = ?',
-        [editionId],
-      ),
-    );
-    return (count ?? 0) >= 5000;
-  }
-
-  Future<void> deleteTafsirEdition(String editionId) async {
-    final db = _database!;
-    await db.delete(
-      'extra_tafsirs',
-      where: 'edition_id = ?',
-      whereArgs: [editionId],
-    );
   }
 
   // ─── Extra Translations Methods ───
@@ -1166,8 +983,4 @@ class DatabaseService {
       whereArgs: [editionId],
     );
   }
-}
-
-List<dynamic> _parseJsonList(String input) {
-  return jsonDecode(input) as List<dynamic>;
 }

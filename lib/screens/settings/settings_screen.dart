@@ -92,7 +92,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    AdhanAudioService.instance.init();
     _themePreset = widget.storage.getString(
       'theme_preset',
       defaultValue: 'dark',
@@ -531,6 +530,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       _immersiveReader = val;
     });
     await widget.storage.setBool('setting_immersive_reader', val);
+  }
+
+  void updateState(VoidCallback fn) {
+    if (mounted) setState(fn);
   }
 
   @override

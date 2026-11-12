@@ -2,7 +2,7 @@ part of 'settings_screen.dart';
 
 extension SettingsNotificationsSection on _SettingsScreenState {
   Future<void> _toggleMorningAzkarReminder(bool val) async {
-    setState(() {
+    updateState(() {
       _morningAzkarReminder = val;
     });
     await widget.storage.setBool('morning_azkar_reminder', val);
@@ -12,7 +12,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
   }
 
   Future<void> _toggleEveningAzkarReminder(bool val) async {
-    setState(() {
+    updateState(() {
       _eveningAzkarReminder = val;
     });
     await widget.storage.setBool('evening_azkar_reminder', val);
@@ -22,7 +22,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
   }
 
   Future<void> _toggleTodaysVerseReminder(bool val) async {
-    setState(() {
+    updateState(() {
       _todaysVerseReminder = val;
     });
     await widget.storage.setBool('todays_verse_reminder', val);
@@ -32,7 +32,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
   }
 
   Future<void> _toggleIslamicEventsEnabled(bool val) async {
-    setState(() {
+    updateState(() {
       _islamicEventsEnabled = val;
     });
     await widget.storage.setBool('islamic_events_enabled', val);
@@ -42,7 +42,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
   }
 
   Future<void> _changeNotificationLang(String val) async {
-    setState(() {
+    updateState(() {
       _notificationLang = val;
     });
     await widget.storage.setString('notification_lang', val);
@@ -53,7 +53,7 @@ extension SettingsNotificationsSection on _SettingsScreenState {
   }
 
   Future<void> _changeDefaultAdhanReciter(String val) async {
-    setState(() {
+    updateState(() {
       _adhanReciter = val;
     });
     await widget.storage.setString('adhan_reciter', val);

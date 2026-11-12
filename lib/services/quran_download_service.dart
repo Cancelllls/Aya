@@ -7,7 +7,6 @@ import 'database_service.dart';
 import 'storage_service.dart';
 import 'qdc_audio_service.dart';
 import 'translation_cache_service.dart';
-import '../models/quran_models.dart';
 
 enum DownloadStatus { notDownloaded, downloading, downloaded, error }
 
@@ -100,20 +99,8 @@ class QuranDownloadService extends ChangeNotifier {
     }
   }
 
-  void invalidateCountCache() => _countCache.clear();
-
   bool _isDownloadingAll = false;
   bool get isDownloadingAll => _isDownloadingAll;
-
-  bool _isDownloadingText = false;
-  double _textDownloadProgress = 0.0;
-  int _downloadedTextCount = 0;
-  int _downloadedTafsirCount = 0;
-
-  bool get isDownloadingText => _isDownloadingText;
-  double get textDownloadProgress => _textDownloadProgress;
-  int get downloadedTextCount => _downloadedTextCount;
-  int get downloadedTafsirCount => _downloadedTafsirCount;
 
   Map<int, SurahDownloadState> get downloadStates => _downloadStates;
 
@@ -161,18 +148,6 @@ class QuranDownloadService extends ChangeNotifier {
   Future<bool> isSurahDownloaded(int surahNum, String reciter) async {
     final path = await getLocalSurahPath(surahNum, reciter);
     return File(path).exists();
-  }
-
-  Future<double> getSurahSizeMB(int surahNum, String reciter) async {
-    try {
-      final path = await getLocalSurahPath(surahNum, reciter);
-      final file = File(path);
-      if (await file.exists()) {
-        final bytes = await file.length();
-        return bytes / (1024 * 1024);
-      }
-    } catch (_) {}
-    return 0.0;
   }
 
   Future<double> getTotalSpaceMB(String reciter) async {
@@ -383,186 +358,6 @@ class QuranDownloadService extends ChangeNotifier {
     for (var key in keys) {
       cancelDownload(key);
     }
-    notifyListeners();
-  }
-
-  Future<void> calculateCounts(StorageService storage) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final tafsirEdition = storage.getString(
-      'tafsir_edition',
-      defaultValue: 'ar.muyassar',
-    );
-    int textCount = 0;
-    int tafsirCount = 0;
-    for (int i = 1; i <= 114; i++) {
-      if (File(
-            '${dir.path}/cached_surah_${i}_details_$tafsirEdition.json',
-          ).existsSync() ||
-          File(
-            '${dir.path}/cached_surah_${i}_details_qurancom.json',
-          ).existsSync()) {
-        textCount++;
-      }
-      if (File(
-            '${dir.path}/cached_tafsir_${tafsirEdition}_$i.json',
-          ).existsSync() ||
-          File('${dir.path}/cached_tafsir_$i.json').existsSync()) {
-        tafsirCount++;
-      }
-    }
-    _downloadedTextCount = textCount;
-    _downloadedTafsirCount = tafsirCount;
-    notifyListeners();
-  }
-
-  Future<void> downloadAllText(StorageService storage) async {
-    if (_isDownloadingText) return;
-    _isDownloadingText = true;
-    _textDownloadProgress = 0.0;
-    notifyListeners();
-
-    int downloaded = 0;
-    final tafsirEdition = storage.getString(
-      'tafsir_edition',
-      defaultValue: 'ar.muyassar',
-    );
-    for (int i = 1; i <= 114; i++) {
-      if (!_isDownloadingText) break;
-      final dir = await getApplicationDocumentsDirectory();
-      bool hasCache =
-          File(
-            '${dir.path}/cached_surah_${i}_details_$tafsirEdition.json',
-          ).existsSync() ||
-          File(
-            '${dir.path}/cached_surah_${i}_details_qurancom.json',
-          ).existsSync();
-      if (!hasCache) {
-        try {
-          await ApiService.fetchSurahDetails(i, tafsirEdition: tafsirEdition);
-        } catch (_) {}
-      }
-      downloaded++;
-      _downloadedTextCount = downloaded;
-      _textDownloadProgress = downloaded / 114.0;
-      notifyListeners();
-    }
-
-    _isDownloadingText = false;
-    notifyListeners();
-  }
-
-  void cancelTextDownload() {
-    _isDownloadingText = false;
-    notifyListeners();
-  }
-
-  Future<void> deleteAllText(StorageService storage) async {
-    _isDownloadingText = false;
-    final tafsirEdition = storage.getString(
-      'tafsir_edition',
-      defaultValue: 'ar.muyassar',
-    );
-    final dir = await getApplicationDocumentsDirectory();
-    for (int i = 1; i <= 114; i++) {
-      final f1 = File(
-        '${dir.path}/cached_surah_${i}_details_$tafsirEdition.json',
-      );
-      if (f1.existsSync()) f1.deleteSync();
-      final f2 = File('${dir.path}/cached_surah_${i}_details_qurancom.json');
-      if (f2.existsSync()) f2.deleteSync();
-    }
-    _downloadedTextCount = 0;
-    _textDownloadProgress = 0.0;
-    notifyListeners();
-  }
-
-  // --- Tafsir Download Logic ---
-  bool _isDownloadingTafsir = false;
-  double _tafsirDownloadProgress = 0.0;
-  String? _downloadingTafsirEdition;
-  bool get isDownloadingTafsir => _isDownloadingTafsir;
-  double get tafsirDownloadProgress => _tafsirDownloadProgress;
-  String? get downloadingTafsirEdition => _downloadingTafsirEdition;
-
-  Future<void> downloadAllTafsir(
-    StorageService storage,
-    String tafsirEdition,
-  ) async {
-    final edition = availableTafsirs.firstWhere(
-      (e) => e.identifier == tafsirEdition,
-      orElse: () => TafsirEdition(tafsirEdition, '', '', '', isBundled: false),
-    );
-    if (edition.isBundled || tafsirEdition == 'ar.muyassar') {
-      _isDownloadingTafsir = false;
-      _downloadingTafsirEdition = null;
-      _tafsirDownloadProgress = 1.0;
-      notifyListeners();
-      return;
-    }
-    _isDownloadingTafsir = true;
-    _downloadingTafsirEdition = tafsirEdition;
-    _tafsirDownloadProgress = 0.0;
-    notifyListeners();
-
-    try {
-      await ApiService.downloadFullTafsirEdition(
-        tafsirEdition,
-        onProgress: (p) {
-          if (!_isDownloadingTafsir) return;
-          _tafsirDownloadProgress = p;
-          notifyListeners();
-        },
-        isCancelled: () => !_isDownloadingTafsir,
-      );
-    } catch (_) {}
-
-    _isDownloadingTafsir = false;
-    _downloadingTafsirEdition = null;
-    _tafsirDownloadProgress = 1.0;
-    notifyListeners();
-  }
-
-  void cancelTafsirDownload() {
-    _isDownloadingTafsir = false;
-    _downloadingTafsirEdition = null;
-    _tafsirDownloadProgress = 0.0;
-    notifyListeners();
-  }
-
-  Future<int> getTafsirCountForEdition(String tafsirEdition) async {
-    final edition = availableTafsirs.firstWhere(
-      (e) => e.identifier == tafsirEdition,
-      orElse: () => TafsirEdition(tafsirEdition, '', '', '', isBundled: false),
-    );
-    if (edition.isBundled || tafsirEdition == 'ar.muyassar') {
-      return 114;
-    }
-    try {
-      final db = await DatabaseService.getInstance();
-      final downloaded = await db.isTafsirEditionDownloaded(tafsirEdition);
-      return downloaded ? 114 : 0;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  Future<void> deleteAllTafsir(
-    StorageService storage,
-    String tafsirEdition,
-  ) async {
-    final edition = availableTafsirs.firstWhere(
-      (e) => e.identifier == tafsirEdition,
-      orElse: () => TafsirEdition(tafsirEdition, '', '', '', isBundled: false),
-    );
-    if (!edition.isBundled && tafsirEdition != 'ar.muyassar') {
-      try {
-        final db = await DatabaseService.getInstance();
-        await db.deleteTafsirEdition(tafsirEdition);
-      } catch (_) {}
-    }
-    _isDownloadingTafsir = false;
-    _downloadingTafsirEdition = null;
-    _tafsirDownloadProgress = 0.0;
     notifyListeners();
   }
 

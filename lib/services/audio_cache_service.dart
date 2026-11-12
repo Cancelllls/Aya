@@ -121,15 +121,4 @@ class AudioCacheService {
       }
     } catch (_) {}
   }
-
-  /// Clears entire stream cache.
-  Future<void> clearCache() async {
-    try {
-      final dir = await _getCacheDirectory();
-      if (await dir.exists()) {
-        await dir.delete(recursive: true);
-        _cacheDir = null;
-      }
-    } catch (_) {}
-  }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'translation_service.dart';
 
 enum TajweedRuleType {
   ghunnah,
@@ -199,100 +198,6 @@ class TajweedService {
         fontWeight: FontWeight.bold,
       ),
       recognizer: ayahRecognizer,
-    );
-  }
-
-  /// Displays an interactive glassmorphic sheet explaining the tapped Tajweed rule.
-  static void showTajweedRuleSheet(BuildContext context, TajweedRuleInfo rule) {
-    final isAr = TranslationService.isArabic;
-    final theme = Theme.of(context);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: theme.cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.dividerColor.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: rule.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    isAr ? rule.nameAr : rule.nameEn,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: rule.color,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: rule.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: rule.color, width: 1),
-                    ),
-                    child: Text(
-                      isAr ? "قاعدة تجويد" : "Tajweed Rule",
-                      style: TextStyle(
-                        color: rule.color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                isAr ? rule.descriptionAr : rule.descriptionEn,
-                style: const TextStyle(fontSize: 14, height: 1.6),
-                textAlign: isAr ? TextAlign.right : TextAlign.left,
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5C158),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(
-                    TranslationService.t('close'),
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

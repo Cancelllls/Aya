@@ -120,36 +120,4 @@ class TranslationCacheService {
     onLog?.call('Saved ${items.length} verses locally.');
     return items.length;
   }
-
-  /// Get translation for a single ayah. Checks memory cache -> SQLite -> null.
-  Future<String?> getAyahTranslation(
-    int surahNumber,
-    int ayahNumber, {
-    String? editionId,
-  }) async {
-    final edition = editionId ?? 'en.sahih';
-    final cached = getFromMemory(edition, surahNumber, ayahNumber);
-    if (cached != null) return cleanTranslationText(cached);
-
-    final db = await DatabaseService.getInstance();
-    final text = await db.getExtraTranslation(edition, surahNumber, ayahNumber);
-    if (text != null) {
-      final clean = cleanTranslationText(text);
-      cacheAyah(edition, surahNumber, ayahNumber, clean);
-      return clean;
-    }
-    if (edition != 'en.sahih') {
-      try {
-        await downloadFromCdn(edition);
-        final fresh =
-            await db.getExtraTranslation(edition, surahNumber, ayahNumber);
-        if (fresh != null) {
-          final clean = cleanTranslationText(fresh);
-          cacheAyah(edition, surahNumber, ayahNumber, clean);
-          return clean;
-        }
-      } catch (_) {}
-    }
-    return null;
-  }
 }

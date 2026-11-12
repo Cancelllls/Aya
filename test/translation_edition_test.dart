@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aya_app/models/quran_models.dart';
 import 'package:aya_app/models/offline_surahs.dart';
+import 'package:aya_app/services/api_service.dart';
+import 'package:aya_app/services/local_quran_service.dart';
 import 'package:aya_app/services/translation_cache_service.dart';
 import 'package:aya_app/services/quran_download_service.dart';
 import 'package:aya_app/utils/text_helpers.dart';
@@ -106,23 +109,6 @@ void main() {
       }
     });
 
-    test('getTafsirCountForEdition returns 114 for bundled editions', () async {
-      final service = QuranDownloadService.instance;
-      for (final edition in availableTafsirs) {
-        final count = await service.getTafsirCountForEdition(edition.identifier);
-        expect(count, 114,
-            reason: '${edition.identifier} should return 114 surahs');
-      }
-    });
-
-    test('cancelTafsirDownload resets downloading state', () {
-      final service = QuranDownloadService.instance;
-      service.cancelTafsirDownload();
-      expect(service.isDownloadingTafsir, isFalse);
-      expect(service.downloadingTafsirEdition, isNull);
-      expect(service.tafsirDownloadProgress, 0.0);
-    });
-
     test('cancelTranslationDownload resets downloading state', () {
       final service = QuranDownloadService.instance;
       service.cancelTranslationDownload();
@@ -173,6 +159,43 @@ void main() {
         'Guidance for the God-fearing.',
       );
       expect(cleanTranslationText(''), '');
+    });
+
+    test('deduplicated Riwayat scripts and aliased bundled Tafsir assets load cleanly', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+
+      for (final script in const [
+        'qaloon',
+        'warsh',
+        'bazzi',
+        'duri',
+        'hisham',
+        'ibn-dhakwan',
+        'qunbul',
+        'shuba',
+        'susi',
+      ]) {
+        final ayahs = await LocalQuranService.getSurahAyahs(1, script);
+        expect(ayahs, hasLength(7), reason: '$script must load Al-Fatihah');
+      }
+
+      for (final edition in availableTafsirs.where(
+        (e) => e.identifier != 'ar.muyassar',
+      )) {
+        final assetId = ApiService.resolveBundledTafsirAssetId(edition.identifier);
+        final raw = await rootBundle.loadString('assets/tafsir/$assetId.json');
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
+        expect(
+          decoded['1'],
+          isA<Map<String, dynamic>>(),
+          reason: '${edition.identifier} ($assetId) must contain Surah 1',
+        );
+      }
+
+      final preAdhanBytes = await rootBundle.load(
+        'assets/audio/adhan/prayer_reminder_call.mp3',
+      );
+      expect(preAdhanBytes.lengthInBytes, greaterThan(0));
     });
   });
 }

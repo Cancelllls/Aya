@@ -30,14 +30,6 @@ void main() {
       expect(standard['en'], equals('prayer_reminder_call.mp3'));
     });
 
-    test('bundled audio verification methods return true immediately', () async {
-      final service = AdhanAudioService.instance;
-      expect(await service.isReciterDownloaded('mishary'), isTrue);
-      expect(await service.isReciterDownloaded('mishary', isFajr: true), isTrue);
-      expect(await service.isPreAdhanDownloaded(), isTrue);
-      expect(await service.downloadReciterAudio('mishary'), isTrue);
-    });
-
     test('resolveReciterId falls back when per-prayer key is empty', () {
       expect(
         AdhanAudioService.resolveReciterId(

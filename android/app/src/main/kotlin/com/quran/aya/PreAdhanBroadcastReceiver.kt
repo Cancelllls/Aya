@@ -69,12 +69,15 @@ class PreAdhanBroadcastReceiver : BroadcastReceiver() {
             "takbeer" -> "adhan_meshary_al_fasy_kuwait"
             "salati" -> "pre_adhan_ela_salati"
             "system" -> null
-            else -> "default_pre_adhan"
+            else -> "prayer_reminder_call"
         }
         val channelId = if (!isSound) {
             "pre_adhan_silent_channel_v2"
         } else if (soundRawName != null) {
-            "pre_adhan_tone_${soundTone}_v1"
+            when (soundTone) {
+                "call", "takbeer", "salati" -> "pre_adhan_tone_${soundTone}_v1"
+                else -> "pre_adhan_tone_chime_v2"
+            }
         } else {
             "pre_adhan_system_channel_v1"
         }
