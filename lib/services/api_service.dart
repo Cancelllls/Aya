@@ -25,69 +25,8 @@ class ApiService {
     'FLAVOR',
     defaultValue: 'fdroid',
   );
+
   // ─── Prayer Times ────────────────────────────────────────────────────────
-  static Future<void> cachePrayerTimes(String key, PrayerTimeData data) async {
-    try {
-      final wrapper = {
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-        'data': data.toJson(),
-      };
-      final jsonStr = jsonEncode(wrapper);
-      await _cacheString(key, jsonStr);
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error caching prayer times: $e');
-    }
-  }
-
-  static Future<PrayerTimeData?> getCachedPrayerTimes(String key) async {
-    try {
-      final jsonStr = await _getCachedString(key);
-      if (jsonStr != null) {
-        final Map<String, dynamic> decoded =
-            jsonDecode(jsonStr) as Map<String, dynamic>;
-
-        // Invalidate cache if it was created before the most recent 7:00 AM
-        if (decoded.containsKey('timestamp')) {
-          final int timestamp = decoded['timestamp'] as int;
-          final DateTime cachedTime = DateTime.fromMillisecondsSinceEpoch(
-            timestamp,
-          );
-          final DateTime now = DateTime.now();
-
-          // Calculate the most recent 7:00 AM
-          DateTime mostRecent7am = DateTime(
-            now.year,
-            now.month,
-            now.day,
-            7,
-            0,
-            0,
-          );
-          if (now.isBefore(mostRecent7am)) {
-            // If it is currently before 7 AM today, the most recent 7 AM was yesterday
-            mostRecent7am = mostRecent7am.subtract(const Duration(days: 1));
-          }
-
-          if (cachedTime.isBefore(mostRecent7am)) {
-            // ignore: avoid_print
-            print('Cached prayer times expired at 7:00 AM for key: $key');
-            return null;
-          }
-        }
-
-        final dataMap = decoded.containsKey('data')
-            ? decoded['data'] as Map<String, dynamic>
-            : decoded;
-        return PrayerTimeData.fromLocalJson(dataMap);
-      }
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error reading cached prayer times: $e');
-    }
-    return null;
-  }
-
   static Future<PrayerTimeData> fetchPrayerTimes({
     required double latitude,
     required double longitude,
@@ -132,36 +71,6 @@ class ApiService {
         debugPrint("Migrated large JSONs from SharedPreferences to Files.");
       }
     } catch (_) {}
-  }
-
-  static Future<void> _cacheString(String key, String value) async {
-    try {
-      if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
-        final dir = await getApplicationDocumentsDirectory();
-        final file = File('${dir.path}/$key.json');
-        await file.writeAsString(value);
-        return;
-      }
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(key, value);
-    } catch (_) {}
-  }
-
-  static Future<String?> _getCachedString(String key) async {
-    try {
-      if (key.startsWith('cached_surah_') || key.startsWith('cached_tafsir_')) {
-        final dir = await getApplicationDocumentsDirectory();
-        final file = File('${dir.path}/$key.json');
-        if (await file.exists()) {
-          return await file.readAsString();
-        }
-        return null; // Don't fallback to prefs to avoid memory spikes, they should be migrated
-      }
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(key);
-    } catch (_) {
-      return null;
-    }
   }
 
   static Future<List<Surah>> fetchSurahList() async {

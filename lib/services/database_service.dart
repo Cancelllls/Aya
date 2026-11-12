@@ -559,24 +559,6 @@ class DatabaseService {
     );
   }
 
-  /// Fetch all ayahs for a standard 604-page Madinah Mushaf page.
-  Future<List<Map<String, dynamic>>> getAyahsForPage(int pageNumber) async {
-    final db = _database!;
-    return await db.rawQuery(
-      '''
-      SELECT ayahs.id, ayahs.surah_number, ayahs.ayah_number, ayahs.global_number,
-             ayahs.text_arabic, ayahs.text_arabic_clean, ayahs.text_english,
-             ayahs.juz, ayahs.hizb, ayahs.page,
-             surahs.name as surah_name, surahs.englishName as surah_englishName 
-      FROM ayahs 
-      JOIN surahs ON ayahs.surah_number = surahs.number 
-      WHERE ayahs.page = ?
-      ORDER BY ayahs.surah_number ASC, ayahs.ayah_number ASC
-      ''',
-      [pageNumber],
-    );
-  }
-
   /// Fetch only tafsir text for a surah — used for lazy loading.
   Future<List<Map<String, dynamic>>> getTafsirForSurah(
     int surahNumber,
@@ -650,60 +632,6 @@ class DatabaseService {
     return results;
   }
 
-  // ── Prayer Times Cache ──────────────────────────────────────
-  Future<void> cachePrayerTimes(String key, Map<String, dynamic> data) async {
-    final db = _database!;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final expires = now + const Duration(hours: 12).inMilliseconds;
-
-    await db.insert('prayer_times_cache', {
-      'cache_key': key,
-      'fajr': data['Fajr'],
-      'sunrise': data['Sunrise'],
-      'dhuhr': data['Dhuhr'],
-      'asr': data['Asr'],
-      'maghrib': data['Maghrib'],
-      'isha': data['Isha'],
-      'sunset': data['Sunset'],
-      'imsak': data['Imsak'],
-      'gregorian_date': data['gregorian_date'],
-      'hijri_date': data['hijri_date'],
-      'hijri_month': data['hijri_month'],
-      'hijri_year': data['hijri_year'],
-      'cached_at': now,
-      'expires_at': expires,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  Future<Map<String, dynamic>?> getCachedPrayerTimes(String key) async {
-    final db = _database!;
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    final List<Map<String, dynamic>> maps = await db.query(
-      'prayer_times_cache',
-      where: 'cache_key = ? AND expires_at > ?',
-      whereArgs: [key, now],
-    );
-
-    if (maps.isEmpty) return null;
-
-    final map = maps.first;
-    return {
-      'Fajr': map['fajr'],
-      'Sunrise': map['sunrise'],
-      'Dhuhr': map['dhuhr'],
-      'Asr': map['asr'],
-      'Maghrib': map['maghrib'],
-      'Isha': map['isha'],
-      'Sunset': map['sunset'],
-      'Imsak': map['imsak'],
-      'gregorian_date': map['gregorian_date'],
-      'hijri_date': map['hijri_date'],
-      'hijri_month': map['hijri_month'],
-      'hijri_year': map['hijri_year'],
-    };
-  }
-
   // ── Bookmarks ──────────────────────────────────────────────
   Future<List<Map<String, dynamic>>> getBookmarks() async {
     final db = _database!;
@@ -766,32 +694,7 @@ class DatabaseService {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> deleteCustomDhikr(String id) async {
-    final db = _database!;
-    await db.delete('custom_dhikrs', where: 'id = ?', whereArgs: [id]);
-  }
-
   // ── Prayer Tracker ────────────────────────────────────────
-  Future<Map<String, dynamic>> getPrayerTracker(String date) async {
-    final db = _database!;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'prayer_tracker',
-      where: 'date = ?',
-      whereArgs: [date],
-    );
-    if (maps.isNotEmpty) {
-      return maps.first;
-    }
-    return {
-      'date': date,
-      'fajr': 0,
-      'dhuhr': 0,
-      'asr': 0,
-      'maghrib': 0,
-      'isha': 0,
-    };
-  }
-
   Future<void> updatePrayerTracker(
     String date,
     String prayer,
@@ -919,35 +822,6 @@ class DatabaseService {
       map[r['ayah_number'] as int] = (r['text'] as String?) ?? '';
     }
     return map;
-  }
-
-  Future<String?> getExtraTranslation(
-    String editionId,
-    int surahNumber,
-    int ayahNumber,
-  ) async {
-    if (editionId == 'en.sahih') {
-      final db = _database!;
-      final rows = await db.query(
-        'ayahs',
-        columns: ['text_english'],
-        where: 'surah_number = ? AND ayah_number = ?',
-        whereArgs: [surahNumber, ayahNumber],
-        limit: 1,
-      );
-      if (rows.isEmpty) return null;
-      return rows.first['text_english'] as String?;
-    }
-    final db = _database!;
-    final rows = await db.query(
-      'extra_translations',
-      columns: ['text'],
-      where: 'edition_id = ? AND surah_number = ? AND ayah_number = ?',
-      whereArgs: [editionId, surahNumber, ayahNumber],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    return rows.first['text'] as String?;
   }
 
   Future<bool> isTranslationEditionDownloaded(String editionId) async {

@@ -245,42 +245,6 @@ class Surah {
     );
   }
 
-  /// Factory for Quran.com API fallback
-  factory Surah.fromQuranCom(Map<String, dynamic> json) {
-    final trans = json['translated_name'] as Map<String, dynamic>?;
-    return Surah(
-      number: json['id'] as int? ?? json['number'] as int? ?? 0,
-      name: json['name_arabic'] as String? ?? json['name'] as String? ?? '',
-      englishName:
-          json['name_simple'] as String? ??
-          json['english_name'] as String? ??
-          json['englishName'] as String? ??
-          '',
-      englishNameTranslation: trans != null
-          ? trans['name'] as String? ?? ''
-          : json['english_name_translation'] as String? ?? '',
-      numberOfAyahs:
-          json['verses_count'] as int? ??
-          json['number_of_ayahs'] as int? ??
-          json['numberOfAyahs'] as int? ??
-          0,
-      revelationType:
-          json['revelation_place'] as String? ??
-          json['revelation_type'] as String? ??
-          json['revelationType'] as String? ??
-          '',
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'number': number,
-    'name': name,
-    'englishName': englishName,
-    'englishNameTranslation': englishNameTranslation,
-    'numberOfAyahs': numberOfAyahs,
-    'revelationType': revelationType,
-  };
-
   static const Map<int, int> _surahJuzMap = {
     1: 1,
     2: 1,
@@ -595,80 +559,5 @@ class Ayah {
       }
     }
     return text;
-  }
-
-  factory Ayah.fromEditions(
-    Map<String, dynamic> arabicJson,
-    Map<String, dynamic> englishJson, [
-    Map<String, dynamic>? tafseerJson,
-  ]) {
-    final hizbQuarter = arabicJson['hizbQuarter'] as int? ?? 1;
-    final calculatedHizb = ((hizbQuarter - 1) ~/ 4) + 1;
-    final numInSurah = arabicJson['numberInSurah'] as int;
-    final rawText = arabicJson['text'] as String;
-    final globalNum = arabicJson['number'] as int;
-    return Ayah(
-      number: globalNum,
-      numberInSurah: numInSurah,
-      text: cleanBasmalah(rawText, numInSurah, globalNum),
-      translation: englishJson['text'] as String,
-      juz: arabicJson['juz'] as int,
-      hizb: calculatedHizb,
-      tafseer: tafseerJson != null ? tafseerJson['text'] as String? ?? '' : '',
-    );
-  }
-
-  /// Factory for Quran.com verses fallback
-  factory Ayah.fromQuranCom(Map<String, dynamic> json) {
-    final transList = json['translations'] as List<dynamic>?;
-    final transText = (transList != null && transList.isNotEmpty)
-        ? transList[0]['text'] as String? ?? ''
-        : '';
-    final numInSurah =
-        json['verse_number'] as int? ??
-        (json['verse_key'] != null
-            ? int.parse(json['verse_key'].toString().split(':')[1])
-            : 1);
-    final rawText =
-        json['text_uthmani'] as String? ?? json['text'] as String? ?? '';
-    final globalNum = json['id'] as int? ?? 0;
-    return Ayah(
-      number: globalNum,
-      numberInSurah: numInSurah,
-      text: cleanBasmalah(rawText, numInSurah, globalNum),
-      translation: transText.isNotEmpty
-          ? transText
-          : (json['text_simple'] as String? ??
-                json['translation'] as String? ??
-                ''),
-      juz: json['juz_number'] as int? ?? 0,
-      hizb: json['hizb_number'] as int? ?? 0,
-      tafseer: '',
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'number': number,
-    'numberInSurah': numberInSurah,
-    'text': text,
-    'translation': translation,
-    'juz': juz,
-    'hizb': hizb,
-    'tafseer': tafseer,
-  };
-
-  factory Ayah.fromJson(Map<String, dynamic> json) {
-    final numInSurah = json['numberInSurah'] as int;
-    final rawText = json['text'] as String;
-    final globalNum = json['number'] as int;
-    return Ayah(
-      number: globalNum,
-      numberInSurah: numInSurah,
-      text: cleanBasmalah(rawText, numInSurah, globalNum),
-      translation: json['translation'] as String,
-      juz: json['juz'] as int,
-      hizb: json['hizb'] as int? ?? 0,
-      tafseer: json['tafseer'] as String? ?? '',
-    );
   }
 }

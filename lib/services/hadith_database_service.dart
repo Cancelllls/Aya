@@ -117,54 +117,6 @@ class HadithDatabaseService {
     return results.isNotEmpty ? results.first : null;
   }
 
-  Future<List<Map<String, dynamic>>> searchHadiths(
-    String bookId, String lang, String query, int limit, int offset,
-  ) async {
-    final dbBookId = '${lang}_$bookId';
-    final cleanQuery = stripTashkeel(query).toLowerCase();
-    final intQuery = int.tryParse(query);
-
-    // FTS5 MATCH for instant single-book search
-    try {
-      if (intQuery != null) {
-        return await _db.rawQuery(
-          'SELECT h.*, '
-          'snippet(hadiths_fts, 0, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_arabic, '
-          'snippet(hadiths_fts, 1, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_english '
-          'FROM hadiths h '
-          'LEFT JOIN hadiths_fts f ON h.id = f.rowid '
-          'WHERE h.book_id = ? AND (h.hadith_number = ? OR hadiths_fts MATCH ?) '
-          'ORDER BY hadiths_fts MATCH ? IS NULL, h.hadith_number ASC '
-          'LIMIT ? OFFSET ?',
-          [dbBookId, intQuery, '"$cleanQuery"', '"$cleanQuery"', limit, offset],
-        );
-      }
-      return await _db.rawQuery(
-        'SELECT h.*, '
-        'snippet(hadiths_fts, 0, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_arabic, '
-        'snippet(hadiths_fts, 1, \'<mark>\', \'</mark>\', \'...\', 15) as snippet_english '
-        'FROM hadiths h '
-        'INNER JOIN hadiths_fts f ON h.id = f.rowid '
-        'WHERE h.book_id = ? AND hadiths_fts MATCH ? '
-        'ORDER BY rank LIMIT ? OFFSET ?',
-        [dbBookId, '"$cleanQuery"', limit, offset],
-      );
-    } catch (_) {
-      // Fallback: LIKE
-      final p = '%${stripTashkeel(query).toLowerCase()}%';
-      if (intQuery != null) {
-        return await _db.query('hadiths',
-          where: 'book_id = ? AND (hadith_number = ? OR search_arabic LIKE ? OR search_english LIKE ?)',
-          whereArgs: [dbBookId, intQuery, p, p],
-          orderBy: 'hadith_number ASC', limit: limit, offset: offset);
-      }
-      return await _db.query('hadiths',
-        where: 'book_id = ? AND (search_arabic LIKE ? OR search_english LIKE ?)',
-        whereArgs: [dbBookId, p, p],
-        orderBy: 'hadith_number ASC', limit: limit, offset: offset);
-    }
-  }
-
   Future<List<Map<String, dynamic>>> searchAllHadiths(
     String lang, String query, int limit,
     {List<String>? excludeBookIds}) async {

@@ -41,32 +41,11 @@ class ReadingTrackerStore {
     await _prefs.setInt('last_read_ayah_surah_$surahNum', ayahNum);
   }
 
-  Map<String, int>? getLastReadPosition() {
-    final surahNum = _prefs.getInt('last_read_surah');
-    final ayahNum = _prefs.getInt('last_read_ayah');
-    if (surahNum != null && ayahNum != null) {
-      return {'surah': surahNum, 'ayah': ayahNum};
-    }
-    return null;
-  }
-
   int? getLastReadAyahForSurah(int surahNum) {
     return _prefs.getInt('last_read_ayah_surah_$surahNum');
   }
 
   // ── Last Audio Position ────────────────────────────────────
-  Future<void> saveLastAudioPosition(
-    int surahNum,
-    int ayahNum,
-    String reciter,
-    String surahName,
-  ) async {
-    await _prefs.setInt('last_audio_surah', surahNum);
-    await _prefs.setInt('last_audio_ayah', ayahNum);
-    await _prefs.setString('last_audio_reciter', reciter);
-    await _prefs.setString('last_audio_surah_name', surahName);
-  }
-
   Future<void> saveLastAudioTimestamp(int positionMs) async {
     await _prefs.setInt('last_audio_timestamp_ms', positionMs);
   }
@@ -86,9 +65,5 @@ class ReadingTrackerStore {
       };
     }
     return null;
-  }
-
-  int? getLastAudioTimestamp() {
-    return _prefs.getInt('last_audio_timestamp_ms');
   }
 }

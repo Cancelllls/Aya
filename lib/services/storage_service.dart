@@ -207,10 +207,6 @@ class StorageService {
     );
   }
 
-  Future<void> deleteCustomDhikr(String id) async {
-    await _db!.deleteCustomDhikr(id);
-  }
-
   Future<bool> remove(String key) async {
     return await prefs.remove(key);
   }
@@ -219,32 +215,15 @@ class StorageService {
   Future<void> saveLastReadPosition(int surahNum, int ayahNum) =>
       readingTracker.saveLastReadPosition(surahNum, ayahNum);
 
-  Map<String, int>? getLastReadPosition() =>
-      readingTracker.getLastReadPosition();
-
   int? getLastReadAyahForSurah(int surahNum) =>
       readingTracker.getLastReadAyahForSurah(surahNum);
 
   // --- Last Audio Position (Delegated to ReadingTrackerStore) ---
-  Future<void> saveLastAudioPosition(
-    int surahNum,
-    int ayahNum,
-    String reciter,
-    String surahName,
-  ) => readingTracker.saveLastAudioPosition(
-    surahNum,
-    ayahNum,
-    reciter,
-    surahName,
-  );
-
   Future<void> saveLastAudioTimestamp(int positionMs) =>
       readingTracker.saveLastAudioTimestamp(positionMs);
 
   Map<String, dynamic>? getLastAudioPosition() =>
       readingTracker.getLastAudioPosition();
-
-  int? getLastAudioTimestamp() => readingTracker.getLastAudioTimestamp();
 
   Future<void> clearAll() async {
     await prefs.clear();

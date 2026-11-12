@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../services/translation_service.dart';
@@ -7,20 +6,6 @@ import 'flavor.dart';
 /// Google Play in-app purchase donations.
 /// Only compiled when `--dart-define=GOOGLE_PLAY=true`.
 class GooglePlayDonation {
-  StreamSubscription<List<PurchaseDetails>>? _subscription;
-  final BuildContext context;
-
-  GooglePlayDonation(this.context);
-
-  void init(void Function(List<PurchaseDetails>) onPurchase) {
-    if (!kIsGooglePlay) return;
-    _subscription = InAppPurchase.instance.purchaseStream.listen(onPurchase);
-  }
-
-  void dispose() {
-    _subscription?.cancel();
-  }
-
   /// Build the IAP donation buttons shown inside the dialog.
   static Future<Widget?> buildIapButtons(BuildContext context) async {
     if (!kIsGooglePlay) return null;
@@ -80,12 +65,6 @@ class GooglePlayDonation {
       );
     } catch (_) {
       return null;
-    }
-  }
-
-  static Future<void> completePurchase(PurchaseDetails purchase) async {
-    if (purchase.pendingCompletePurchase) {
-      await InAppPurchase.instance.completePurchase(purchase);
     }
   }
 }
