@@ -69,6 +69,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   final Map<String, String> _fajrRecitersAr = {
     'mishary': 'مشاري العفاسي - الفجر (الكويت)',
     'abdul_basit': 'عبد الباسط عبد الصمد - الفجر (مصر)',
+    'manssour': 'منصور الزهراني - الفجر (السعودية)',
     'madinah': 'أذان المسجد النبوي (المدينة المنورة)',
     'nurdin': 'نور الدين الهذيوي - الفجر (المغرب)',
   };
@@ -76,6 +77,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   final Map<String, String> _fajrRecitersEn = {
     'mishary': 'Mishary Al-Afasy - Fajr (Kuwait)',
     'abdul_basit': 'Abdul Basit - Fajr (Egypt)',
+    'manssour': 'Manssour Al-Zahrani - Fajr (Saudi Arabia)',
     'madinah': 'Madinah Prophet\'s Mosque Adhan',
     'nurdin': 'Nurdin Al-Haddiwi - Fajr (Morocco)',
   };
@@ -1057,10 +1059,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
         15;
     final currentPreMode =
         _storage?.getString(preModeKey, defaultValue: 'vibrate') ?? 'vibrate';
-    final currentReciter =
-        _storage?.getString(reciterKeyName) ??
-        _storage?.getString('adhan_reciter', defaultValue: 'mishary') ??
-        'mishary';
+    final currentReciter = prayer == 'fajr'
+        ? (_storage?.getString(reciterKeyName, defaultValue: 'mishary') ??
+              'mishary')
+        : (_storage?.getString(reciterKeyName) ??
+              _storage?.getString('adhan_reciter', defaultValue: 'mishary') ??
+              'mishary');
 
     final bool earlyEnabled =
         _storage?.getBool(
@@ -1266,7 +1270,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                         onChanged: (val) async {
                           if (val != null) {
                             await _storage?.setString(reciterKeyName, val);
-                            await _storage?.setString('adhan_reciter', val);
+                            if (reciterKeyName != 'fajr_adhan_reciter') {
+                              await _storage?.setString('adhan_reciter', val);
+                            }
                             setState(() {});
                             _debouncedReschedule();
                           }

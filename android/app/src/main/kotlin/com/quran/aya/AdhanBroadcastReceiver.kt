@@ -288,7 +288,13 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
         } catch (_: Exception) {}
 
         // ── MediaPlayer Reciter Selection ─────────────────────────────
+        // Match Fajr-specific resource names before general substrings (e.g., "meshary").
         val mappedResName = when {
+            mp3ResName.contains("fajr_meshary") -> "adhan_fajr_meshary_al_fasy_kuwait"
+            mp3ResName.contains("fajr_abdelbasset") -> "adhan_fajr_abdelbasset_abdessamad_egypte"
+            mp3ResName.contains("fajr_manssour") -> "adhan_fajr_manssour_el_zahrani"
+            mp3ResName.contains("fajr_al_haram") || mp3ResName == "madinah" -> "adhan_fajr_al_haram_el_madani_saoudia"
+            mp3ResName.contains("haddiwi") || mp3ResName == "nurdin" -> "adhan_fajr_nurdin_al_haddiwi_fajr_morocco"
             mp3ResName.contains("meshary") || mp3ResName == "mishary" -> "adhan_meshary_al_fasy_kuwait"
             mp3ResName.contains("abdelbasset") || mp3ResName == "abdul_basit" -> "adhan_abdelbasset_abdessamad_egypte"
             mp3ResName.contains("zahrani") || mp3ResName == "manssour" -> "adhan_manssour_el_zahrani"
@@ -296,10 +302,6 @@ class AdhanBroadcastReceiver : BroadcastReceiver(), SensorEventListener {
             mp3ResName.contains("kazabri") -> "adhan_omar_al_kazabri_morocco"
             mp3ResName.contains("riad") -> "adhan_riad_al_djazairi_algeria"
             mp3ResName.contains("nakshabandi") -> "adhan_sayed_al_nakshabandi_egypte"
-            mp3ResName.contains("fajr_meshary") -> "adhan_fajr_meshary_al_fasy_kuwait"
-            mp3ResName.contains("fajr_abdelbasset") -> "adhan_fajr_abdelbasset_abdessamad_egypte"
-            mp3ResName.contains("fajr_al_haram") || mp3ResName == "madinah" -> "adhan_fajr_al_haram_el_madani_saoudia"
-            mp3ResName.contains("haddiwi") || mp3ResName == "nurdin" -> "adhan_fajr_nurdin_al_haddiwi_fajr_morocco"
             else -> mp3ResName.replace(".mp3", "")
         }
 

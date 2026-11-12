@@ -5,8 +5,8 @@ import 'package:aya_app/services/translation_service.dart';
 
 void main() {
   group('AdhanAudioService reciter mappings', () {
-    test('fajrReciterUrls has 4 reciters', () {
-      expect(AdhanAudioService.fajrReciterUrls, hasLength(4));
+    test('fajrReciterUrls has 5 reciters', () {
+      expect(AdhanAudioService.fajrReciterUrls, hasLength(5));
     });
 
     test('standardReciterUrls has 7 reciters', () {
@@ -32,6 +32,10 @@ void main() {
       expect(
         AdhanAudioService.fajrReciterUrls['mishary'],
         isNot(AdhanAudioService.standardReciterUrls['mishary']),
+      );
+      expect(
+        AdhanAudioService.fajrReciterUrls['manssour'],
+        isNot(AdhanAudioService.standardReciterUrls['manssour']),
       );
     });
   });

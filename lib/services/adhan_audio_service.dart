@@ -9,6 +9,7 @@ class AdhanAudioService {
   static const Map<String, String> fajrReciterUrls = {
     'mishary': 'adhan_fajr_meshary_al_fasy_kuwait.mp3',
     'abdul_basit': 'adhan_fajr_abdelbasset_abdessamad_egypte.mp3',
+    'manssour': 'adhan_fajr_manssour_el_zahrani.mp3',
     'madinah': 'adhan_fajr_al_haram_el_madani_saoudia.mp3',
     'nurdin': 'adhan_fajr_nurdin_al_haddiwi_fajr_morocco.mp3',
   };

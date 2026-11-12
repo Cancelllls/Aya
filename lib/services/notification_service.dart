@@ -650,7 +650,11 @@ class NotificationService {
         final filename = isFajr
             ? AdhanAudioService.fajrReciterUrls[reciterKey]
             : AdhanAudioService.standardReciterUrls[reciterKey];
-        if (filename == null) return 'adhan_meshary_al_fasy_kuwait';
+        if (filename == null) {
+          return isFajr
+              ? 'adhan_fajr_meshary_al_fasy_kuwait'
+              : 'adhan_meshary_al_fasy_kuwait';
+        }
         return filename.replaceAll('.mp3', '');
       }
 

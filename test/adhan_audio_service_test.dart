@@ -14,10 +14,11 @@ void main() {
       expect(AdhanAudioService.standardReciterUrls.containsKey('nakshabandi'), isTrue);
     });
 
-    test('fajrReciterUrls contains all 4 Fajr-specific reciters', () {
-      expect(AdhanAudioService.fajrReciterUrls.length, equals(4));
+    test('fajrReciterUrls contains all 5 Fajr-specific reciters', () {
+      expect(AdhanAudioService.fajrReciterUrls.length, equals(5));
       expect(AdhanAudioService.fajrReciterUrls.containsKey('mishary'), isTrue);
       expect(AdhanAudioService.fajrReciterUrls.containsKey('abdul_basit'), isTrue);
+      expect(AdhanAudioService.fajrReciterUrls.containsKey('manssour'), isTrue);
       expect(AdhanAudioService.fajrReciterUrls.containsKey('madinah'), isTrue);
       expect(AdhanAudioService.fajrReciterUrls.containsKey('nurdin'), isTrue);
     });
