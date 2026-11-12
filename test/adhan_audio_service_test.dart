@@ -37,5 +37,40 @@ void main() {
       expect(await service.isPreAdhanDownloaded(), isTrue);
       expect(await service.downloadReciterAudio('mishary'), isTrue);
     });
+
+    test('resolveReciterId falls back when per-prayer key is empty', () {
+      expect(
+        AdhanAudioService.resolveReciterId(
+          isFajr: false,
+          customReciter: '',
+          defaultReciter: 'manssour',
+        ),
+        equals('manssour'),
+      );
+      expect(
+        AdhanAudioService.resolveReciterId(
+          isFajr: false,
+          customReciter: 'kazabri',
+          defaultReciter: 'manssour',
+        ),
+        equals('kazabri'),
+      );
+      expect(
+        AdhanAudioService.resolveReciterId(
+          isFajr: true,
+          customReciter: '',
+          defaultReciter: 'manssour',
+        ),
+        equals('mishary'),
+      );
+      expect(
+        AdhanAudioService.resolveReciterId(
+          isFajr: true,
+          customReciter: 'manssour',
+          defaultReciter: 'mishary',
+        ),
+        equals('manssour'),
+      );
+    });
   });
 }

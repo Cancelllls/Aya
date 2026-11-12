@@ -111,6 +111,25 @@ class AdhanAudioService {
     }
   }
 
+  /// Resolves the effective reciter ID, treating null or empty overrides as unset.
+  static String resolveReciterId({
+    required bool isFajr,
+    String? customReciter,
+    String? defaultReciter,
+  }) {
+    if (isFajr) {
+      return (customReciter != null && customReciter.isNotEmpty)
+          ? customReciter
+          : 'mishary';
+    }
+    if (customReciter != null && customReciter.isNotEmpty) {
+      return customReciter;
+    }
+    return (defaultReciter != null && defaultReciter.isNotEmpty)
+        ? defaultReciter
+        : 'mishary';
+  }
+
   Future<String> getLocalPath(String reciterId, bool isFajr) async {
     return ''; // Not needed anymore
   }

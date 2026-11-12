@@ -898,13 +898,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       final testTime = DateTime.now().add(
                         const Duration(seconds: 5),
                       );
-                      final selectedReciter =
-                          _storage?.getString('adhan_reciter_dhuhr') ??
-                          _storage?.getString(
-                            'adhan_reciter',
-                            defaultValue: 'mishary',
-                          ) ??
-                          'mishary';
+                      final selectedReciter = AdhanAudioService.resolveReciterId(
+                        isFajr: false,
+                        customReciter: _storage?.getString('adhan_reciter_dhuhr'),
+                        defaultReciter: _storage?.getString(
+                          'adhan_reciter',
+                          defaultValue: 'mishary',
+                        ),
+                      );
                       final rawName =
                           AdhanAudioService.standardReciterUrls[selectedReciter]
                               ?.replaceAll('.mp3', '') ??
@@ -1059,12 +1060,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
         15;
     final currentPreMode =
         _storage?.getString(preModeKey, defaultValue: 'vibrate') ?? 'vibrate';
-    final currentReciter = prayer == 'fajr'
-        ? (_storage?.getString(reciterKeyName, defaultValue: 'mishary') ??
-              'mishary')
-        : (_storage?.getString(reciterKeyName) ??
-              _storage?.getString('adhan_reciter', defaultValue: 'mishary') ??
-              'mishary');
+    final currentReciter = AdhanAudioService.resolveReciterId(
+      isFajr: prayer == 'fajr',
+      customReciter: _storage?.getString(reciterKeyName),
+      defaultReciter: _storage?.getString(
+        'adhan_reciter',
+        defaultValue: 'mishary',
+      ),
+    );
 
     final bool earlyEnabled =
         _storage?.getBool(

@@ -637,16 +637,18 @@ class NotificationService {
         final isFajr = prayerName == 'Fajr' || prayerName == 'fajr';
         final pLower = prayerName.toLowerCase();
         final customReciter = storage.getString(
-          'adhan_reciter_$pLower',
+          isFajr ? 'fajr_adhan_reciter' : 'adhan_reciter_$pLower',
           defaultValue: '',
         );
         final defaultReciter = storage.getString(
           'adhan_reciter',
           defaultValue: 'mishary',
         );
-        final reciterKey = isFajr
-            ? storage.getString('fajr_adhan_reciter', defaultValue: 'mishary')
-            : (customReciter.isNotEmpty ? customReciter : defaultReciter);
+        final reciterKey = AdhanAudioService.resolveReciterId(
+          isFajr: isFajr,
+          customReciter: customReciter,
+          defaultReciter: defaultReciter,
+        );
         final filename = isFajr
             ? AdhanAudioService.fajrReciterUrls[reciterKey]
             : AdhanAudioService.standardReciterUrls[reciterKey];

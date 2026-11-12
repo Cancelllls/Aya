@@ -57,6 +57,9 @@ extension SettingsNotificationsSection on _SettingsScreenState {
       _adhanReciter = val;
     });
     await widget.storage.setString('adhan_reciter', val);
+    for (final p in ['dhuhr', 'asr', 'maghrib', 'isha']) {
+      await widget.storage.setString('adhan_reciter_$p', val);
+    }
     _debouncedReschedule();
   }
 
