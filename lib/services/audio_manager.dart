@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/quran_models.dart';
 import 'api_service.dart';
@@ -61,10 +62,12 @@ class AudioManager {
   // QDC Timestamps for the current Surah
   Map<int, List<dynamic>>? _currentTimestamps;
   bool isTimestampSyncMode = false;
+  static const MethodChannel _systemChannel = MethodChannel('com.quran.aya/system');
 
   void init(StorageService storage) {
     _storage = storage;
     _setupPlayer(_player);
+    _setupMethodChannel();
 
     final lastAudio = _storage.getLastAudioPosition();
     if (lastAudio != null) {
@@ -82,15 +85,61 @@ class AudioManager {
     playState.addListener(() {
       final state = playState.value;
       if (state.isPlaying || state.isLoading) {
+        _syncNativeMediaService(state);
         _notificationService.showAudioMediaNotification(
           title: state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
           subtitle: state.subtitle,
           isPlaying: state.isPlaying,
         );
-      } else {
+      } else if (state.title.isEmpty) {
+        _stopNativeMediaService();
         _notificationService.cancelAudioMediaNotification();
+      } else {
+        _syncNativeMediaService(state);
+        _notificationService.showAudioMediaNotification(
+          title: state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
+          subtitle: state.subtitle,
+          isPlaying: false,
+        );
       }
     });
+  }
+
+  void _setupMethodChannel() {
+    _systemChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onMediaAction') {
+        final action = call.arguments as String?;
+        if (action == 'toggle') {
+          await togglePlayPause();
+        } else if (action == 'stop') {
+          stop();
+        } else if (action == 'next') {
+          await nextAyah();
+        } else if (action == 'previous') {
+          await previousAyah();
+        }
+      }
+    });
+  }
+
+  void _syncNativeMediaService(AudioPlayState state) {
+    if (Platform.isAndroid) {
+      try {
+        _systemChannel.invokeMethod('startMediaService', {
+          'title': state.title.isNotEmpty ? state.title : 'Aya Quran Recitation',
+          'subtitle': state.subtitle,
+          'isPlaying': state.isPlaying,
+        });
+      } catch (_) {}
+    }
+  }
+
+  void _stopNativeMediaService() {
+    if (Platform.isAndroid) {
+      try {
+        _systemChannel.invokeMethod('stopMediaService');
+      } catch (_) {}
+    }
   }
 
   void _setupPlayer(AudioPlayer p) {
@@ -113,6 +162,12 @@ class AudioManager {
     p.setReleaseMode(ReleaseMode.stop);
 
     p.onPlayerStateChanged.listen((state) {
+      if (state == PlayerState.stopped) {
+        return;
+      }
+      if (_surahName.isEmpty) {
+        return;
+      }
       final isPlaying = state == PlayerState.playing;
 
       int currentAyah = playState.value.ayahNum;
@@ -591,6 +646,12 @@ class AudioManager {
 
   void stop() async {
     _isPerAyahSequenceMode = false;
+    _surahNum = 0;
+    _surahName = '';
+    _currentPlaylist = [];
+    _currentIndex = 0;
+    isTimestampSyncMode = false;
+    _currentTimestamps = null;
     final pos = await _player.getCurrentPosition();
     if (pos != null) {
       await _storage.saveLastAudioTimestamp(pos.inMilliseconds);
@@ -599,5 +660,7 @@ class AudioManager {
     positionNotifier.value = Duration.zero;
     durationNotifier.value = Duration.zero;
     playState.value = AudioPlayState();
+    _stopNativeMediaService();
+    _notificationService.cancelAudioMediaNotification();
   }
 }

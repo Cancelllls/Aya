@@ -137,23 +137,27 @@ class AudioPlayerOverlay extends StatelessWidget {
                                 AudioManager.instance.nextAyah(),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.12)
-                                  : Colors.black.withValues(alpha: 0.06),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.close_rounded,
-                                size: 18,
-                                color: isDark ? Colors.white70 : Colors.black87,
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () => AudioManager.instance.stop(),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.12)
+                                      : Colors.black.withValues(alpha: 0.06),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                ),
                               ),
-                              padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(),
-                              tooltip: 'Stop Audio / إيقاف الصوت',
-                              onPressed: () => AudioManager.instance.stop(),
                             ),
                           ),
                         ],

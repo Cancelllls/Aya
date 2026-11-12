@@ -17,6 +17,14 @@ import android.app.PendingIntent
 class MainActivity : FlutterActivity() {
     companion object {
         const val PICK_FILE_REQUEST = 9001
+        var instance: MainActivity? = null
+        var methodChannel: MethodChannel? = null
+
+        fun sendMediaAction(action: String) {
+            instance?.runOnUiThread {
+                methodChannel?.invokeMethod("onMediaAction", action)
+            }
+        }
     }
 
     private val CHANNEL = "com.quran.aya/system"
@@ -83,8 +91,10 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        instance = this
 
         val mc = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel = mc
         val adhanChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.adhan.app/alarm")
 
         adhanChannel.setMethodCallHandler { call, result ->
@@ -248,6 +258,17 @@ class MainActivity : FlutterActivity() {
                             startActivity(intent)
                         } catch (_: Exception) {}
                     }
+                    result.success(true)
+                }
+                "startMediaService" -> {
+                    val title = call.argument<String>("title") ?: "Aya Quran"
+                    val subtitle = call.argument<String>("subtitle") ?: ""
+                    val isPlaying = call.argument<Boolean>("isPlaying") ?: false
+                    MediaPlaybackService.startService(this, title, subtitle, isPlaying)
+                    result.success(true)
+                }
+                "stopMediaService" -> {
+                    MediaPlaybackService.stopService(this)
                     result.success(true)
                 }
                 else -> result.notImplemented()
@@ -463,5 +484,13 @@ class MainActivity : FlutterActivity() {
             }
             startActivity(intent)
         } catch (_: Exception) {}
+    }
+
+    override fun onDestroy() {
+        if (instance == this) {
+            instance = null
+            methodChannel = null
+        }
+        super.onDestroy()
     }
 }
