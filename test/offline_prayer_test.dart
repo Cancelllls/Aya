@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aya_app/services/offline_prayer_service.dart';
@@ -255,5 +256,161 @@ void main() {
       );
       expect(customSchedule, contains('f_ms'));
     });
+
+    test(
+      'Offline GPS in Egypt resolves Auto (0) to Egyptian Survey (5, 19.5°) instead of MWL (18°)',
+      () async {
+        final testDate = DateTime(2026, 11, 28);
+        SharedPreferences.setMockInitialValues({
+          'user_location':
+              '{"city":"My Location","country":"GPS","latitude":30.0444,"longitude":31.2357,"source":"gps"}',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final prayerPrefs = PrayerPreferences(prefs);
+
+        expect(
+          prayerPrefs.determineSmartCalculationMethod(
+            'My Location',
+            'GPS',
+            latitude: 30.0444,
+            longitude: 31.2357,
+          ),
+          5,
+        );
+        expect(
+          prayerPrefs.determineSmartCalculationMethod(
+            'موقعي',
+            'GPS',
+            latitude: 31.2001,
+            longitude: 29.9187,
+          ),
+          5,
+        );
+        expect(
+          prayerPrefs.determineSmartCalculationMethod(
+            'My Location',
+            'GPS',
+            latitude: 24.7136,
+            longitude: 46.6753,
+          ),
+          4,
+        );
+
+        final autoCairo = await OfflinePrayerService.getPrayerTimes(
+          latitude: 30.0444,
+          longitude: 31.2357,
+          method: 0,
+          school: 0,
+          date: testDate,
+        );
+        final egyptCairo = await OfflinePrayerService.getPrayerTimes(
+          latitude: 30.0444,
+          longitude: 31.2357,
+          method: 5,
+          school: 0,
+          date: testDate,
+        );
+        final mwlCairo = await OfflinePrayerService.getPrayerTimes(
+          latitude: 30.0444,
+          longitude: 31.2357,
+          method: 3,
+          school: 0,
+          date: testDate,
+        );
+
+        expect(autoCairo.fajr, equals(egyptCairo.fajr));
+        expect(autoCairo.fajr, isNot(equals(mwlCairo.fajr)));
+
+        int toMinutes(String hhmm) {
+          final p = hhmm.split(':');
+          return int.parse(p[0]) * 60 + int.parse(p[1]);
+        }
+
+        // Egyptian 19.5° Fajr is 7–8 minutes earlier than MWL 18.0°
+        expect(toMinutes(mwlCairo.fajr) - toMinutes(autoCairo.fajr), inInclusiveRange(7, 8));
+      },
+    );
+
+    test(
+      'determineSmartCalculationMethod normalizes un-hamzated Arabic spellings',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final prayerPrefs = PrayerPreferences(prefs);
+
+        expect(
+          prayerPrefs.determineSmartCalculationMethod('الاسكندرية', 'محافظة'),
+          5,
+        );
+        expect(prayerPrefs.determineSmartCalculationMethod('القاهره', ''), 5);
+        expect(prayerPrefs.determineSmartCalculationMethod('المنصورة', ''), 5);
+      },
+    );
+
+    test(
+      'Manual fajr_offset shifts Fajr, Imsak, and 30-day widget schedule without shifting Dhuhr',
+      () async {
+        final testDate = DateTime(2026, 11, 28);
+        SharedPreferences.setMockInitialValues({'fajr_offset': 0});
+        final base = await OfflinePrayerService.getPrayerTimes(
+          latitude: 30.0444,
+          longitude: 31.2357,
+          method: 5,
+          school: 0,
+          date: testDate,
+        );
+        final baseSchedule = jsonDecode(
+          await OfflinePrayerService.get30DaysScheduleJson(
+            latitude: 30.0444,
+            longitude: 31.2357,
+            method: 5,
+            school: 0,
+          ),
+        ) as List<dynamic>;
+
+        SharedPreferences.setMockInitialValues({'fajr_offset': -3});
+        final minus3 = await OfflinePrayerService.getPrayerTimes(
+          latitude: 30.0444,
+          longitude: 31.2357,
+          method: 5,
+          school: 0,
+          date: testDate,
+        );
+        final minus3Schedule = jsonDecode(
+          await OfflinePrayerService.get30DaysScheduleJson(
+            latitude: 30.0444,
+            longitude: 31.2357,
+            method: 5,
+            school: 0,
+          ),
+        ) as List<dynamic>;
+
+        SharedPreferences.setMockInitialValues({'fajr_offset': 4});
+        final plus4 = await OfflinePrayerService.getPrayerTimes(
+          latitude: 30.0444,
+          longitude: 31.2357,
+          method: 5,
+          school: 0,
+          date: testDate,
+        );
+
+        int toMinutes(String hhmm) {
+          final p = hhmm.split(':');
+          return int.parse(p[0]) * 60 + int.parse(p[1]);
+        }
+
+        expect(toMinutes(minus3.fajr) - toMinutes(base.fajr), -3);
+        expect(toMinutes(minus3.imsak) - toMinutes(base.imsak), -3);
+        expect(minus3.dhuhr, equals(base.dhuhr));
+
+        expect(toMinutes(plus4.fajr) - toMinutes(base.fajr), 4);
+        expect(toMinutes(plus4.imsak) - toMinutes(base.imsak), 4);
+        expect(plus4.dhuhr, equals(base.dhuhr));
+
+        final baseMs = baseSchedule.first['f_ms'] as int;
+        final minus3Ms = minus3Schedule.first['f_ms'] as int;
+        expect(minus3Ms - baseMs, equals(-3 * 60 * 1000));
+      },
+    );
   });
 }

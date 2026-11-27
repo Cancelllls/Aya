@@ -462,6 +462,8 @@ class _SettingsScreenState extends State<SettingsScreen>
     final smartId = widget.storage.determineSmartCalculationMethod(
       loc['city']?.toString() ?? '',
       loc['country']?.toString() ?? '',
+      latitude: (loc['latitude'] as num?)?.toDouble(),
+      longitude: (loc['longitude'] as num?)?.toDouble(),
     );
     switch (smartId) {
       case 1:
@@ -476,6 +478,12 @@ class _SettingsScreenState extends State<SettingsScreen>
         return isAr ? "الهيئة المصرية العامة للمساحة" : "Egyptian Survey";
       case 6:
         return isAr ? "ديوان الوقف السني (العراق)" : "Sunni Endowment (Iraq)";
+      case 7:
+        return isAr ? "جامعة طهران" : "Tehran (Geophysics)";
+      case 8:
+        return isAr ? "دبي / الخليج" : "Dubai / Gulf";
+      case 9:
+        return isAr ? "الكويت" : "Kuwait";
       case 10:
         return isAr ? "وزارة الأوقاف (قطر)" : "Qatar Awqaf";
       case 11:

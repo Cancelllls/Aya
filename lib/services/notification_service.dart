@@ -9,6 +9,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:intl/intl.dart';
 import '../models/prayer_models.dart';
 import 'storage_service.dart';
+import 'offline_prayer_service.dart';
 import 'translation_service.dart';
 import 'quran_verses.dart';
 import 'adhan_audio_service.dart';
@@ -68,6 +69,23 @@ class NotificationService {
     final day = dt.day.toString().padLeft(2, '0');
     final cleanTime = timeStr.trim().split(' ')[0].padLeft(5, '0');
     return DateTime.parse("$year-$month-${day}T$cleanTime:00");
+  }
+
+  String _timeForPrayer(PrayerTimeData data, String prayerName) {
+    switch (prayerName.toLowerCase()) {
+      case 'fajr':
+        return data.fajr;
+      case 'dhuhr':
+        return data.dhuhr;
+      case 'asr':
+        return data.asr;
+      case 'maghrib':
+        return data.maghrib;
+      case 'isha':
+        return data.isha;
+      default:
+        return '';
+    }
   }
 
   static const List<int> islamicVibrationPattern = [
@@ -610,18 +628,43 @@ class NotificationService {
         return storage.getString(key, defaultValue: globalPreAdhanAlertMode);
       }
 
+      final loc = storage.getLocation();
+      final lat = (loc['latitude'] as num?)?.toDouble() ?? 30.0444;
+      final lng = (loc['longitude'] as num?)?.toDouble() ?? 31.2357;
+      final calcMethod = storage.getInt('calc_method', defaultValue: 0);
+      final asrSchool = storage.getInt('asr_method', defaultValue: 0);
+      final customFajr = storage.getDouble(
+        'custom_fajr_angle',
+        defaultValue: 18.0,
+      );
+      final customIsha = storage.getDouble(
+        'custom_isha_angle',
+        defaultValue: 17.0,
+      );
+      final List<PrayerTimeData> weekPrayerData = [];
+      for (int i = 0; i <= 7; i++) {
+        final dayDate = DateTime(now.year, now.month, now.day + i);
+        try {
+          weekPrayerData.add(
+            await OfflinePrayerService.getPrayerTimes(
+              latitude: lat,
+              longitude: lng,
+              method: calcMethod,
+              school: asrSchool,
+              date: dayDate,
+              customFajr: customFajr,
+              customIsha: customIsha,
+            ),
+          );
+        } catch (_) {
+          weekPrayerData.add(prayerData);
+        }
+      }
+
       int id = 1;
 
       for (final entry in prayersToSchedule.entries) {
         final name = entry.key;
-        final timeStr = entry.value.trim().split(' ')[0];
-        final parts = timeStr.split(':');
-        if (parts.length < 2) continue;
-
-        final hour = int.tryParse(parts[0]);
-        final minute = int.tryParse(parts[1]);
-        if (hour == null || minute == null) continue;
-
         final isAr = isNotificationArabic(storage);
         final localizedName = isAr ? _arabicPrayerName(name) : name;
 
@@ -630,13 +673,25 @@ class NotificationService {
         final String prayerAdhanMode = getPrayerAdhanMode(name);
 
         for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+          final dayData = weekPrayerData[dayOffset];
+          final rawTime = _timeForPrayer(dayData, name);
+          final timeStr = (rawTime.isNotEmpty ? rawTime : entry.value)
+              .trim()
+              .split(' ')[0];
+          final parts = timeStr.split(':');
+          if (parts.length < 2) continue;
+
+          final hour = int.tryParse(parts[0]);
+          final minute = int.tryParse(parts[1]);
+          if (hour == null || minute == null) continue;
+
           final scheduledDate = DateTime(
             now.year,
             now.month,
-            now.day,
+            now.day + dayOffset,
             hour,
             minute,
-          ).add(Duration(days: dayOffset));
+          );
 
           if (!scheduledDate.isAfter(now)) continue;
 
@@ -934,14 +989,14 @@ class NotificationService {
             try {
               final sunriseDt = _parsePrayerToday(
                 scheduledDate,
-                prayerData.sunrise,
+                dayData.sunrise,
               );
-              final asrDt = _parsePrayerToday(scheduledDate, prayerData.asr);
+              final asrDt = _parsePrayerToday(scheduledDate, dayData.asr);
               final maghribDt = _parsePrayerToday(
                 scheduledDate,
-                prayerData.maghrib,
+                dayData.maghrib,
               );
-              final ishaDt = _parsePrayerToday(scheduledDate, prayerData.isha);
+              final ishaDt = _parsePrayerToday(scheduledDate, dayData.isha);
 
               final ishaFiqh = storage.getString(
                 'isha_end_window_fiqh',
@@ -950,8 +1005,12 @@ class NotificationService {
 
               // Calculate Night Duration = Next Fajr - Maghrib
               final nextDayFajrDt = _parsePrayerToday(
-                scheduledDate.add(const Duration(days: 1)),
-                prayerData.fajr,
+                DateTime(
+                  scheduledDate.year,
+                  scheduledDate.month,
+                  scheduledDate.day + 1,
+                ),
+                weekPrayerData[dayOffset + 1].fajr,
               );
               final nightDurationMs = nextDayFajrDt
                   .difference(maghribDt)
@@ -1032,8 +1091,11 @@ class NotificationService {
           }
 
           // === RAMADAN: IMSAK & IFTAR ===
-          final hijriMonth = int.tryParse(prayerData.hijriMonth) ?? 0;
-          if (hijriMonth == 9) {
+          final isRamadan =
+              int.tryParse(dayData.hijriMonth) == 9 ||
+              dayData.hijriMonth.toLowerCase().contains('ramadan') ||
+              dayData.hijriMonth.contains('رمضان');
+          if (isRamadan) {
             final imsakEnabled = storage.getBool(
               'ramadan_imsak_enabled',
               defaultValue: true,
@@ -1047,7 +1109,7 @@ class NotificationService {
               defaultValue: true,
             );
 
-            if (imsakEnabled && prayerAdhanMode != 'off') {
+            if (imsakEnabled && prayerAdhanMode != 'off' && name == 'Fajr') {
               final imsakTime = scheduledDate.subtract(
                 Duration(minutes: imsakOffset),
               );
@@ -1226,6 +1288,12 @@ class NotificationService {
         }
         id++;
       }
+      try {
+        await OfflinePrayerService.syncHomeWidgets(
+          todayData: weekPrayerData.first,
+          isArabic: isNotificationArabic(storage),
+        );
+      } catch (_) {}
     } finally {
       _isScheduling = false;
       if (_pendingReschedule &&

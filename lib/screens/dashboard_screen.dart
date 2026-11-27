@@ -584,6 +584,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         final lat = (loc['latitude'] as num?)?.toDouble() ?? 30.0444;
         final lng = (loc['longitude'] as num?)?.toDouble() ?? 31.2357;
         final method = widget.storage.getInt('calc_method', defaultValue: 0);
+        final effectiveMethod =
+            await OfflinePrayerService.resolveEffectiveMethod(
+              method: method,
+              latitude: lat,
+              longitude: lng,
+            );
         final school = widget.storage.getInt('asr_method', defaultValue: 0);
         final customFajr = widget.storage.getDouble(
           'custom_fajr_angle',
@@ -597,7 +603,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         final scheduleJson = await OfflinePrayerService.get30DaysScheduleJson(
           latitude: lat,
           longitude: lng,
-          method: method,
+          method: effectiveMethod,
           school: school,
           use24h: use24h,
           isArabic: TranslationService.isArabic,
@@ -607,7 +613,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         await prefs.setString('widget_prayer_schedule_30d', scheduleJson);
         await prefs.setDouble('widget_user_latitude', lat);
         await prefs.setDouble('widget_user_longitude', lng);
-        await prefs.setInt('widget_calc_method', method);
+        await prefs.setInt('widget_calc_method', effectiveMethod);
         await prefs.setDouble('widget_custom_fajr_angle', customFajr);
         await prefs.setDouble('widget_custom_isha_angle', customIsha);
         await prefs.setInt('widget_asr_method', school);

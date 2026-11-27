@@ -98,6 +98,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
           _isLoading = false;
         });
       }
+      unawaited(
+        OfflinePrayerService.syncHomeWidgets(
+          todayData: data,
+          isArabic: TranslationService.isArabic,
+        ),
+      );
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -514,6 +520,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
       await widget.storage.setLocation(city, country, lat, lon, 'gps');
 
       await _loadPrayerTimes();
+      if (_prayerData != null) {
+        await NotificationService().schedulePrayerAlarms(
+          _prayerData!,
+          widget.storage,
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -632,7 +644,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     'manual',
                   );
                   navigator.pop();
-                  unawaited(_loadPrayerTimes());
+                  await _loadPrayerTimes();
+                  if (_prayerData != null) {
+                    await NotificationService().schedulePrayerAlarms(
+                      _prayerData!,
+                      widget.storage,
+                    );
+                  }
                 }
               },
               child: Text(TranslationService.t('get_times')),

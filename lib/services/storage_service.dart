@@ -153,8 +153,17 @@ class StorageService {
   // Location Cache (Delegated to PrayerPreferences)
   Map<String, dynamic> getLocation() => prayer.getLocation();
 
-  int determineSmartCalculationMethod(String city, String country) =>
-      prayer.determineSmartCalculationMethod(city, country);
+  int determineSmartCalculationMethod(
+    String city,
+    String country, {
+    double? latitude,
+    double? longitude,
+  }) => prayer.determineSmartCalculationMethod(
+    city,
+    country,
+    latitude: latitude,
+    longitude: longitude,
+  );
 
   Future<bool> setLocation(
     String city,

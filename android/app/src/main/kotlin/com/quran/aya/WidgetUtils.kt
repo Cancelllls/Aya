@@ -437,14 +437,17 @@ object WidgetUtils {
             }
         }
 
-        val method = getSafeInt(prefs, "widget_calc_method", 5)
+        val rawMethod = getSafeInt(prefs, "widget_calc_method", 0)
+        val method = if (rawMethod == 0) resolveAutoMethod(lat, lng) else rawMethod
         val madhab = getSafeInt(prefs, "widget_asr_method", 0)
         val use24h = getSafeBoolean(prefs, "widget_time_format_24h", false)
         val customFajr = getSafeDouble(prefs, "widget_custom_fajr_angle", 18.0)
         val customIsha = getSafeDouble(prefs, "widget_custom_isha_angle", 17.0)
 
         val cal = Calendar.getInstance()
-        val todayPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic, customFajr, customIsha)
+        val todayPrayers = computeSolarPrayersForDay(
+            cal, lat, lng, method, madhab, use24h, isArabic, customFajr, customIsha, prefs
+        )
 
         // Check if any prayer today is upcoming
         for (item in todayPrayers.values) {
@@ -456,7 +459,9 @@ object WidgetUtils {
 
         // All today passed, compute tomorrow
         cal.add(Calendar.DAY_OF_YEAR, 1)
-        val tomorrowPrayers = computeSolarPrayersForDay(cal, lat, lng, method, madhab, use24h, isArabic, customFajr, customIsha)
+        val tomorrowPrayers = computeSolarPrayersForDay(
+            cal, lat, lng, method, madhab, use24h, isArabic, customFajr, customIsha, prefs
+        )
         val tomorrowFajr = tomorrowPrayers["fajr"]
         if (tomorrowFajr != null) {
             val allTimes = tomorrowPrayers.mapValues { it.value.formattedTime }
@@ -464,6 +469,30 @@ object WidgetUtils {
         }
 
         return null
+    }
+
+    private fun resolveAutoMethod(lat: Double, lng: Double): Int {
+        if ((lat in 22.0..31.7 && lng in 24.7..34.25) ||
+            (lat in 27.5..31.35 && lng > 34.25 && lng <= 34.95) ||
+            (lat >= 22.0 && lat < 27.5 && lng > 34.25 && lng <= 36.9)
+        ) {
+            return 5 // Egypt
+        }
+        return when {
+            lat in 24.4..26.2 && lng in 50.7..51.7 -> 10 // Qatar
+            lat in 22.6..26.1 && lng in 51.5..56.4 -> 16 // UAE
+            lat in 28.5..30.1 && lng in 46.5..48.5 -> 9 // Kuwait
+            lat in 29.1..37.4 && lng in 38.8..48.6 -> 6 // Iraq
+            lat in 16.3..32.2 && lng in 34.5..55.7 -> 4 // Saudi Arabia
+            lat in 35.8..42.1 && lng in 25.6..44.8 -> 13 // Turkey
+            lat in 25.0..39.8 && lng in 44.0..63.3 -> 7 // Iran
+            lat in 8.0..37.1 && lng in 60.8..92.7 -> 1 // Karachi / South Asia
+            lat in 1.15..1.48 && lng in 103.6..104.1 -> 11 // Singapore
+            lat in 41.3..51.1 && lng in -5.2..9.6 -> 12 // France
+            lat in 41.2..82.0 && lng in 27.0..180.0 -> 14 // Russia
+            lat in 24.0..72.0 && lng in -168.0..-52.0 -> 2 // North America
+            else -> 3 // MWL
+        }
     }
 
     private fun computeSolarPrayersForDay(
@@ -475,7 +504,8 @@ object WidgetUtils {
         use24h: Boolean,
         isArabic: Boolean,
         customFajr: Double = 18.0,
-        customIsha: Double = 17.0
+        customIsha: Double = 17.0,
+        prefs: SharedPreferences? = null
     ): Map<String, UpcomingPrayerInfo> {
         val y = cal.get(Calendar.YEAR)
         val m = cal.get(Calendar.MONTH) + 1
@@ -524,11 +554,15 @@ object WidgetUtils {
             2 -> Triple(15.0, 15.0, 0) // North America (ISNA)
             3 -> Triple(18.0, 17.0, 0) // MWL
             4 -> Triple(18.5, 0.0, 90) // Umm Al-Qura (90 min)
-            5 -> Triple(19.5, 17.5, 0) // Egyptian
+            5, 6 -> Triple(19.5, 17.5, 0) // Egyptian / Iraq Sunni Endowment
             7 -> Triple(17.7, 14.0, 0) // Tehran
-            8 -> Triple(18.2, 18.2, 0) // Gulf / Dubai
+            8, 16 -> Triple(18.2, 18.2, 0) // Gulf / Dubai / UAE
             9 -> Triple(18.0, 17.5, 0) // Kuwait
             10 -> Triple(18.0, 0.0, 90) // Qatar
+            11 -> Triple(20.0, 18.0, 0) // Singapore
+            12 -> Triple(12.0, 12.0, 0) // France (UOIF)
+            13 -> Triple(18.0, 17.0, 0) // Turkey (Diyanet)
+            14 -> Triple(16.0, 15.0, 0) // Russia (SAMR)
             else -> Triple(18.0, 17.0, 0)
         }
 
@@ -579,11 +613,18 @@ object WidgetUtils {
             return "$displayHour:$minute $suffix"
         }
 
-        val fEpoch = toEpoch(fajrHours)
-        val dEpoch = toEpoch(dhuhrHours)
-        val aEpoch = toEpoch(asrHours)
-        val mEpoch = toEpoch(maghribHours)
-        val iEpoch = toEpoch(ishaHours)
+        val methodDhuhrAdj = if (method in setOf(3, 5, 6)) 1L else 0L
+        val fajrOffset = prefs?.let { getSafeInt(it, "fajr_offset", 0) } ?: 0
+        val dhuhrOffset = prefs?.let { getSafeInt(it, "dhuhr_offset", 0) } ?: 0
+        val asrOffset = prefs?.let { getSafeInt(it, "asr_offset", 0) } ?: 0
+        val maghribOffset = prefs?.let { getSafeInt(it, "maghrib_offset", 0) } ?: 0
+        val ishaOffset = prefs?.let { getSafeInt(it, "isha_offset", 0) } ?: 0
+
+        val fEpoch = toEpoch(fajrHours) + fajrOffset * 60_000L
+        val dEpoch = toEpoch(dhuhrHours) + (methodDhuhrAdj + dhuhrOffset) * 60_000L
+        val aEpoch = toEpoch(asrHours) + asrOffset * 60_000L
+        val mEpoch = toEpoch(maghribHours) + maghribOffset * 60_000L
+        val iEpoch = toEpoch(ishaHours) + ishaOffset * 60_000L
 
         return mapOf(
             "fajr" to UpcomingPrayerInfo(if (isArabic) "الفجر" else "Fajr", fEpoch, formatTime(fEpoch), "fajr"),
